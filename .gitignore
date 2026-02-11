@@ -1,0 +1,21 @@
+# Backend - Node/NestJS
+backend-pos/node_modules/
+backend-pos/dist/
+backend-pos/build/
+backend-pos/*.log
+
+# Frontend - Generic
+frontend-pos/node_modules/
+frontend-pos/dist/
+frontend-pos/.env
+
+# OS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+
+# Environment files
+*.local
+.env
