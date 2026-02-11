@@ -11,7 +11,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 
 @Module({
   imports: [
-    AuthModule.forRoot({ auth }),
+    AuthModule.forRoot({ auth, disableGlobalAuthGuard:true }),
     ThrottlerModule.forRoot([
       {
         name: 'short',
