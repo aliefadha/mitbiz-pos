@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { createZodDto } from 'nestjs-zod';
 
 /**
  * Order DTOs for validation
@@ -6,10 +7,21 @@ import { z } from 'zod';
  */
 
 // Payment method enum
-const PaymentMethodEnum = z.enum(['cash', 'card', 'digital_wallet', 'bank_transfer']);
+const PaymentMethodEnum = z.enum([
+  'cash',
+  'card',
+  'digital_wallet',
+  'bank_transfer',
+]);
 
 // Order status enum
-const OrderStatusEnum = z.enum(['pending', 'processing', 'completed', 'cancelled', 'refunded']);
+const OrderStatusEnum = z.enum([
+  'pending',
+  'processing',
+  'completed',
+  'cancelled',
+  'refunded',
+]);
 
 // Payment status enum
 const PaymentStatusEnum = z.enum(['pending', 'paid', 'failed', 'refunded']);
@@ -21,9 +33,7 @@ export const OrderItemSchema = z.object({
     .number()
     .int('Quantity must be an integer')
     .positive('Quantity must be at least 1'),
-  unitPrice: z
-    .number()
-    .positive('Unit price must be a positive number'),
+  unitPrice: z.number().positive('Unit price must be a positive number'),
   discount: z
     .number()
     .min(0, 'Discount cannot be negative')
@@ -33,13 +43,8 @@ export const OrderItemSchema = z.object({
 
 // Order creation schema
 export const CreateOrderSchema = z.object({
-  customerId: z
-    .string()
-    .uuid('Invalid customer ID format')
-    .optional(),
-  items: z
-    .array(OrderItemSchema)
-    .min(1, 'Order must have at least one item'),
+  customerId: z.string().uuid('Invalid customer ID format').optional(),
+  items: z.array(OrderItemSchema).min(1, 'Order must have at least one item'),
   notes: z
     .string()
     .max(500, 'Notes must be less than 500 characters')
@@ -49,10 +54,7 @@ export const CreateOrderSchema = z.object({
     .number()
     .min(0, 'Discount amount cannot be negative')
     .default(0),
-  taxAmount: z
-    .number()
-    .min(0, 'Tax amount cannot be negative')
-    .default(0),
+  taxAmount: z.number().min(0, 'Tax amount cannot be negative').default(0),
 });
 
 // Order update schema (for status updates, etc.)
@@ -72,18 +74,14 @@ export const OrderIdSchema = z.object({
 
 // Order query params for filtering/pagination
 export const OrderQuerySchema = z.object({
-  page: z
-    .string()
-    .transform((val) => {
-      const parsed = parseInt(val, 10);
-      return isNaN(parsed) || parsed < 1 ? 1 : parsed;
-    }),
-  limit: z
-    .string()
-    .transform((val) => {
-      const parsed = parseInt(val, 10);
-      return isNaN(parsed) || parsed < 1 ? 10 : Math.min(parsed, 100);
-    }),
+  page: z.string().transform((val) => {
+    const parsed = parseInt(val, 10);
+    return isNaN(parsed) || parsed < 1 ? 1 : parsed;
+  }),
+  limit: z.string().transform((val) => {
+    const parsed = parseInt(val, 10);
+    return isNaN(parsed) || parsed < 1 ? 10 : Math.min(parsed, 100);
+  }),
   status: OrderStatusEnum.optional(),
   customerId: z.string().uuid('Invalid customer ID format').optional(),
   startDate: z
@@ -102,10 +100,10 @@ export const OrderStatusParamSchema = z.object({
   status: OrderStatusEnum,
 });
 
-// Type exports for TypeScript
-export type CreateOrderDto = z.infer<typeof CreateOrderSchema>;
-export type UpdateOrderDto = z.infer<typeof UpdateOrderSchema>;
-export type OrderIdDto = z.infer<typeof OrderIdSchema>;
-export type OrderQueryDto = z.infer<typeof OrderQuerySchema>;
-export type OrderItemDto = z.infer<typeof OrderItemSchema>;
-export type OrderStatusParamDto = z.infer<typeof OrderStatusParamSchema>;
+// DTO Classes for Swagger/OpenAPI support
+export class CreateOrderDto extends createZodDto(CreateOrderSchema) {}
+export class UpdateOrderDto extends createZodDto(UpdateOrderSchema) {}
+export class OrderIdDto extends createZodDto(OrderIdSchema) {}
+export class OrderQueryDto extends createZodDto(OrderQuerySchema) {}
+export class OrderItemDto extends createZodDto(OrderItemSchema) {}
+export class OrderStatusParamDto extends createZodDto(OrderStatusParamSchema) {}

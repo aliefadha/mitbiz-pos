@@ -15,6 +15,13 @@
       "when": 1770816271926,
       "tag": "0001_happy_lila_cheney",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1770888129345,
+      "tag": "0002_nebulous_doctor_doom",
+      "breakpoints": true
     }
   ]
 }

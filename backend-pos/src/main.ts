@@ -1,19 +1,22 @@
 import { NestFactory } from '@nestjs/core';
-import { apiReference } from '@scalar/nestjs-api-reference'
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
-    bodyParser: false
+    bodyParser: false,
   });
+
+  const allowedOrigin = process.env.ALLOWED_ORIGINS?.trim() || 'http://localhost:3000';
 
   app.enableCors({
-      origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
-      credentials: true,
+    origin: allowedOrigin,
+    credentials: true,
   });
 
-    // Swagger Configuration
+  app.setGlobalPrefix('api');
+
+  // Swagger Configuration
   const config = new DocumentBuilder()
     .setTitle('mitbiz POS API')
     .setDescription('mitbiz Point of Sale Backend API Documentation')
@@ -30,17 +33,19 @@ async function bootstrap() {
       'JWT-auth',
     )
     .build();
-  
+
   const document = SwaggerModule.createDocument(app, config);
-  
+
   // Swagger UI at /api/docs
-    app.use(
-        '/api/docs',
-        apiReference({
-            content: document,
-        }),
-    )
-  
-  await app.listen(process.env.PORT ?? 3000);
+  // app.use(
+  //   '/api/docs',
+  //   apiReference({
+  //     content: document,
+  //   }),
+  // );
+
+  SwaggerModule.setup('docs', app, document);
+
+  await app.listen(process.env.PORT ?? 3001);
 }
 bootstrap();

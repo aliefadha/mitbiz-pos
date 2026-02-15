@@ -5,7 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import * as zod from 'zod';
-import {fromZodError} from 'zod-validation-error';
+import { fromZodError } from 'zod-validation-error';
 
 /**
  * Zod Validation Pipe for NestJS
@@ -22,11 +22,13 @@ import {fromZodError} from 'zod-validation-error';
  */
 @Injectable()
 export class ZodValidationPipe implements PipeTransform {
-  constructor(private schema: zod.ZodSchema) {
-  }
+  constructor(
+    private schema: zod.ZodSchema,
+    private validationType: 'body' | 'query' | 'params' = 'body',
+  ) {}
 
   transform(value: unknown, metadata: ArgumentMetadata): unknown {
-    if (metadata.type !== 'body') {
+    if (metadata.type !== this.validationType) {
       return value;
     }
 
@@ -48,4 +50,5 @@ export class ZodValidationPipe implements PipeTransform {
 /**
  * Helper function to create a Zod validation pipe with a schema
  */
-export const createZodPipe = (schema: zod.ZodSchema) => new ZodValidationPipe(schema);
+export const createZodPipe = (schema: zod.ZodSchema) =>
+  new ZodValidationPipe(schema);

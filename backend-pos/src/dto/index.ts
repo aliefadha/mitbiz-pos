@@ -1,8 +1,8 @@
 /**
  * DTO (Data Transfer Object) Index
- * 
+ *
  * This module exports all DTOs for validation in the POS system.
- * 
+ *
  * Usage:
  * import { CreateProductSchema, CreateOrderSchema, ZodValidationPipe } from '@/dto';
  */

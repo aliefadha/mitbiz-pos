@@ -1,0 +1,44 @@
+import {
+  pgTable,
+  serial,
+  text,
+  timestamp,
+  boolean,
+  jsonb,
+} from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
+import { user } from './auth-schema';
+import { outlets } from './outlet-schema';
+import { categories } from './category-schema';
+import { products } from './product-schema';
+
+export const tenants = pgTable('tenants', {
+  id: serial('id').primaryKey(),
+  nama: text('nama').notNull(),
+  slug: text('slug').unique().notNull(),
+  userId: text('user_id').references(() => user.id, { onDelete: 'cascade' }),
+  settings: jsonb('settings')
+    .$type<{
+      currency: string;
+      timezone: string;
+      taxRate: number;
+      receiptFooter?: string;
+    }>()
+    .default({ currency: 'IDR', timezone: 'Asia/Jakarta', taxRate: 0 }),
+  image: text('image'),
+  alamat: text('alamat'),
+  noHp: text('no_hp'),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const tenantsRelations = relations(tenants, ({ one, many }) => ({
+  user: one(user, {
+    fields: [tenants.userId],
+    references: [user.id],
+  }),
+  outlets: many(outlets),
+  categories: many(categories),
+  products: many(products),
+}));

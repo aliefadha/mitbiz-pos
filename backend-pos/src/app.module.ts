@@ -3,22 +3,38 @@ import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import {AuthModule} from "@thallesp/nestjs-better-auth";
-import {auth} from "./lib/auth";
+import { AuthModule } from '@thallesp/nestjs-better-auth';
+import { auth } from './lib/auth';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { ResponseEnvelopeInterceptor } from './common/interceptors/response-envelope.interceptor';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
+import { TenantsModule } from './tenants/tenants.module';
+import { OutletsModule } from './outlets/outlets.module';
+import { CategoriesModule } from './categories/categories.module';
+import { ProductsModule } from './products/products.module';
+import { StocksModule } from './stocks/stocks.module';
+import { StockAdjustmentsModule } from './stock-adjustments/stock-adjustments.module';
+import { ConfigModule } from '@nestjs/config';
+import { DbModule } from './db/db.module';
 
 @Module({
   imports: [
-    AuthModule.forRoot({ auth, disableGlobalAuthGuard:true }),
+    AuthModule.forRoot({ auth, disableGlobalAuthGuard: true }),
+    ConfigModule.forRoot({ isGlobal: true }),
+    DbModule,
     ThrottlerModule.forRoot([
       {
         name: 'short',
-        ttl: 60000,   // 1 minute
-        limit: 100,   // 100 requests per minute (POS-friendly)
+        ttl: 60000, // 1 minute
+        limit: 100, // 100 requests per minute (POS-friendly)
       },
     ]),
+    TenantsModule,
+    OutletsModule,
+    CategoriesModule,
+    ProductsModule,
+    StocksModule,
+    StockAdjustmentsModule,
   ],
   controllers: [AppController],
   providers: [
