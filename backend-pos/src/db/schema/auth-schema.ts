@@ -1,5 +1,15 @@
 import { relations } from 'drizzle-orm';
-import { pgTable, text, timestamp, boolean, index } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  text,
+  timestamp,
+  boolean,
+  index,
+  integer,
+  pgEnum,
+} from 'drizzle-orm/pg-core';
+
+export const userRoleEnum = pgEnum('user_role', ['admin', 'owner', 'cashier']);
 
 export const user = pgTable('user', {
   id: text('id').primaryKey(),
@@ -12,7 +22,8 @@ export const user = pgTable('user', {
     .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
-  role: text('role'),
+  role: userRoleEnum('role').notNull().default('cashier'),
+  outletId: integer('outlet_id'),
   banned: boolean('banned').default(false),
   banReason: text('ban_reason'),
   banExpires: timestamp('ban_expires'),
@@ -80,12 +91,17 @@ export const verification = pgTable(
 );
 
 import { tenants } from './tenant-schema';
+import { outlets } from './outlet-schema';
 import { stockAdjustments } from './stock-adjustment-schema';
 
-export const userRelations = relations(user, ({ many }) => ({
+export const userRelations = relations(user, ({ one, many }) => ({
   sessions: many(session),
   accounts: many(account),
   tenants: many(tenants),
+  outlet: one(outlets, {
+    fields: [user.outletId],
+    references: [outlets.id],
+  }),
   stockAdjustments: many(stockAdjustments),
 }));
 

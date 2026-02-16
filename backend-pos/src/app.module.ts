@@ -16,6 +16,7 @@ import { StocksModule } from './stocks/stocks.module';
 import { StockAdjustmentsModule } from './stock-adjustments/stock-adjustments.module';
 import { ConfigModule } from '@nestjs/config';
 import { DbModule } from './db/db.module';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { DbModule } from './db/db.module';
     ProductsModule,
     StocksModule,
     StockAdjustmentsModule,
+    UserModule,
   ],
   controllers: [AppController],
   providers: [

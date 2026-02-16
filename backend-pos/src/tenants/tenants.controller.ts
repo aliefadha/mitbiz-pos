@@ -27,7 +27,7 @@ import {
   TenantQueryDto,
   TenantSummaryDto,
 } from './dto';
-import { AuthGuard, AllowAnonymous } from '@thallesp/nestjs-better-auth';
+import {AuthGuard, AllowAnonymous, Roles, OptionalAuth} from '@thallesp/nestjs-better-auth';
 
 @ApiTags('tenants')
 @Controller('tenants')
@@ -35,6 +35,7 @@ import { AuthGuard, AllowAnonymous } from '@thallesp/nestjs-better-auth';
 export class TenantsController {
   constructor(private readonly tenantsService: TenantsService) {}
 
+  @Roles(["admin"])
   @Get()
   @ApiOperation({ summary: 'Get all tenants' })
   @UsePipes(new ZodValidationPipe(TenantQuerySchema, 'query'))
@@ -48,14 +49,15 @@ export class TenantsController {
     return this.tenantsService.findAll(query);
   }
 
+  @Roles(["admin"])
   @Get(':slug')
-  @AllowAnonymous()
   @ApiOperation({ summary: 'Get tenant by slug (public)' })
   @UsePipes(new ZodValidationPipe(TenantSlugSchema, 'params'))
   findBySlug(@Param() { slug }: TenantSlugDto) {
     return this.tenantsService.findBySlug(slug);
   }
 
+  @OptionalAuth()
   @Post()
   @ApiOperation({ summary: 'Create a new tenant' })
   @ApiBody({ type: CreateTenantDto })

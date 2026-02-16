@@ -15,6 +15,7 @@ import type { DrizzleDB } from '../db/type';
 export class OutletsService {
   constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) {}
 
+
   async findAll(query: OutletQueryDto) {
     const { page = 1, limit = 10, search, isActive, tenantId } = query;
     const offset = (page - 1) * limit;

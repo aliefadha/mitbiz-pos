@@ -12,4 +12,21 @@ export const auth = betterAuth({
   emailAndPassword: { enabled: true },
   trustedOrigins: ['http://localhost:3000'],
   plugins: [openAPI(), admin()],
+  user: {
+    additionalFields: {
+      role: {
+        type: ["admin", "owner", "cashier"],
+        required: false,
+        defaultValue: 'cashier',
+      },
+      outletId: {
+        type: 'number',
+        required: false,
+      },
+      isSubscribed: {
+        type: 'boolean',
+        defaultValue: false,
+      },
+    },
+  },
 });

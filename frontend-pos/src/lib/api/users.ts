@@ -1,19 +1,49 @@
 import { fetchApi } from './client'
 
 export type User = {
-  id: number
-  nama: string
+  id: string
+  name: string
   email: string
+  emailVerified: boolean
+  image: string | null
+  createdAt: Date
+  updatedAt: Date
 }
 
-async function getUsers(): Promise<User[]> {
-  return fetchApi('/auth/users')
+export type CreateUserDto = {
+  name: string
+  email: string
+  password: string
+  role?: "admin" | "owner" | "cashier"
+  outletId?: number
+  isSubscribed?: boolean
 }
 
-async function getUser(id: number): Promise<User> {
-  return fetchApi(`/auth/users/${id}`)
+async function getUsers(): Promise<{ users: User[]; total: number }> {
+  return fetchApi('/users')
 }
 
-export const useUsers = () => {
-  return { getUsers, getUser }
+async function getProfile(): Promise<User> {
+  return fetchApi('/users/me')
+}
+
+async function createUser(data: CreateUserDto): Promise<User> {
+  return fetchApi('/users', {
+    method: 'POST',
+    data,
+  })
+}
+
+async function updateProfile(data: { name?: string; image?: string }): Promise<User> {
+  return fetchApi('/users/me', {
+    method: 'PATCH',
+    data,
+  })
+}
+
+export const usersApi = {
+  getUsers,
+  getProfile,
+  createUser,
+  updateProfile,
 }

@@ -9,6 +9,7 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   TeamOutlined,
+  AccountBookOutlined,
 } from "@ant-design/icons";
 import { Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "../contexts/auth-context";
@@ -29,6 +30,11 @@ const menuItems = [
     key: "/tenants",
     icon: <TeamOutlined />,
     label: "Tenants",
+  },
+  {
+    key: "/account",
+    icon: <AccountBookOutlined />,
+    label: "Account",
   },
 ];
 
@@ -119,8 +125,9 @@ export function AppLayout() {
         />
         <Menu
           mode="inline"
-          items={bottomItems}
+          selectedKeys={location.pathname.startsWith("/settings") ? ["/settings"] : []}
           onClick={handleMenuClick}
+          items={bottomItems}
           style={{
             borderRight: 0,
             marginTop: "auto",

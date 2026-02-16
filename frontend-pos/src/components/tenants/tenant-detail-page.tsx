@@ -13,7 +13,7 @@ import { generateSlug } from "@/lib/utils";
 const { Title } = Typography;
 
 export function TenantDetailPage() {
-  const { id } = useParams({ from: "/_protected/tenants/$id" });
+  const { id } = useParams({ from: "/_protected/tenants/$id/" });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: session } = useSession();
@@ -201,9 +201,7 @@ export function TenantDetailPage() {
         style={{ marginBottom: 24 }}
       >
         <Descriptions column={2}>
-          <Descriptions.Item label="ID">{tenant.id}</Descriptions.Item>
           <Descriptions.Item label="Nama">{tenant.nama}</Descriptions.Item>
-          <Descriptions.Item label="Slug">{tenant.slug}</Descriptions.Item>
           <Descriptions.Item label="No. HP">{tenant.noHp || "-"}</Descriptions.Item>
           <Descriptions.Item label="Alamat">{tenant.alamat || "-"}</Descriptions.Item>
           <Descriptions.Item label="Dibuat">
@@ -285,6 +283,15 @@ export function TenantDetailPage() {
                       title: "Nama",
                       dataIndex: "name",
                       key: "name",
+                      render: (name: string, record: { id: number }) => (
+                        <Button
+                          type="link"
+                          onClick={() => navigate({ to: "/tenants/$id/outlets/$outletId", params: { id, outletId: String(record.id) } })}
+                          style={{ padding: 0 }}
+                        >
+                          {name}
+                        </Button>
+                      ),
                     },
                     {
                       title: "Alamat",
