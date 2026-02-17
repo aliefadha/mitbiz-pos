@@ -11,23 +11,12 @@ export const CreateProductSchema = z.object({
   deskripsi: z.string().max(1000).optional().nullable(),
   categoryId: z.number().int().positive().optional().nullable(),
   tipe: ProductTypeSchema.default('barang'),
-  hargaBeli: z.string().optional().nullable(),
-  hargaJual: z.string().min(1, 'Selling price is required'),
+  hargaBeli: z.string().optional().nullable().default('0'),
+  hargaJual: z.string().optional().default('0'),
   unit: z.string().max(20).default('pcs'),
   minStockLevel: z.number().int().min(0).default(0),
   isActive: z.boolean().default(true),
-}).refine(
-  (data) => {
-    if (data.tipe === 'barang' && !data.hargaBeli) {
-      return false;
-    }
-    return true;
-  },
-  {
-    message: 'Purchase price is required for barang (physical) type',
-    path: ['hargaBeli'],
-  }
-);
+});
 
 export const UpdateProductSchema = z.object({
   sku: z.string().min(1).max(50).optional(),

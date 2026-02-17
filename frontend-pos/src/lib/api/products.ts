@@ -37,8 +37,8 @@ export interface CreateProductDto {
   deskripsi?: string;
   categoryId?: number;
   tipe?: 'barang' | 'jasa' | 'digital';
-  hargaBeli?: number;
-  hargaJual: number;
+  hargaBeli?: string;
+  hargaJual: string;
   stockQuantity?: number;
   minStockLevel?: number;
   unit?: string;
@@ -52,8 +52,8 @@ export interface UpdateProductDto {
   deskripsi?: string;
   categoryId?: number;
   tipe?: 'barang' | 'jasa' | 'digital';
-  hargaBeli?: number;
-  hargaJual?: number;
+  hargaBeli?: string;
+  hargaJual?: string;
   minStockLevel?: number;
   unit?: string;
   isActive?: boolean;

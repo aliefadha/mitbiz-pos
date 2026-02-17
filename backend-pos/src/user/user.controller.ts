@@ -1,5 +1,14 @@
-import { Controller, Get, Post, Patch, Body, Request, UsePipes } from '@nestjs/common';
-import { AuthService } from '@thallesp/nestjs-better-auth';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Body,
+  Request,
+  UseGuards,
+  UsePipes,
+} from '@nestjs/common';
+import { AuthService, AuthGuard, Roles } from '@thallesp/nestjs-better-auth';
 import { auth } from '../lib/auth';
 import type { Request as ExpressRequest } from 'express';
 import { fromNodeHeaders } from 'better-auth/node';
@@ -7,9 +16,11 @@ import { CreateUserSchema, CreateUserDto } from './dto';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 
 @Controller('users')
+@UseGuards(AuthGuard)
 export class UserController {
   constructor(private authService: AuthService<typeof auth>) {}
 
+  @Roles(['admin'])
   @Get()
   async getUsers(@Request() req: ExpressRequest) {
     const users = await this.authService.api.listUsers({
@@ -19,6 +30,7 @@ export class UserController {
     return users;
   }
 
+  @Roles(['admin', 'owner'])
   @Post()
   @UsePipes(new ZodValidationPipe(CreateUserSchema))
   async createUser(

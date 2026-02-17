@@ -102,8 +102,8 @@ function CategoryPage() {
   const handleEdit = (category: Category) => {
     setEditingCategory(category);
     form.setFieldsValue({
-      name: category.name,
-      description: category.description,
+      name: category.nama,
+      description: category.deskripsi,
     });
     setIsModalOpen(true);
   };
@@ -144,9 +144,9 @@ function CategoryPage() {
   };
 
   const filteredCategories = categories?.filter(
-    (cat) =>
-      cat.name.toLowerCase().includes(searchText.toLowerCase()) ||
-      cat.description?.toLowerCase().includes(searchText.toLowerCase())
+    (cat: Category) =>
+      cat.nama.toLowerCase().includes(searchText.toLowerCase()) ||
+      cat.deskripsi?.toLowerCase().includes(searchText.toLowerCase())
   );
 
   const columns = [

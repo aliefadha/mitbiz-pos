@@ -35,5 +35,9 @@ export const StockAdjustmentQuerySchema = z.object({
   adjustedBy: z.string().optional(),
 });
 
-export class CreateStockAdjustmentDto extends createZodDto(CreateStockAdjustmentSchema) {}
-export class StockAdjustmentQueryDto extends createZodDto(StockAdjustmentQuerySchema) {}
+export class CreateStockAdjustmentDto extends createZodDto(
+  CreateStockAdjustmentSchema,
+) {}
+export class StockAdjustmentQueryDto extends createZodDto(
+  StockAdjustmentQuerySchema,
+) {}

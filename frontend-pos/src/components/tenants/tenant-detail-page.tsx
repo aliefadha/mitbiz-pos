@@ -1,6 +1,6 @@
 import { Typography, Spin, Card, Tag, Button, Space, Descriptions, Table, Modal, Form, Input, message, Tabs, Row, Col, Statistic } from "antd";
 import { useParams, useNavigate } from "@tanstack/react-router";
-import { ArrowLeftOutlined, EditOutlined, DeleteOutlined, UserOutlined, ShopOutlined, AppstoreOutlined, ShoppingOutlined } from "@ant-design/icons";
+import { ArrowLeftOutlined, EditOutlined, DeleteOutlined, UserOutlined, ShopOutlined, AppstoreOutlined, ShoppingOutlined, PlusOutlined } from "@ant-design/icons";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { tenantsApi } from "@/lib/api/tenants";
@@ -21,8 +21,10 @@ export function TenantDetailPage() {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [addOutletModalOpen, setAddOutletModalOpen] = useState(false);
+  const [addCategoryModalOpen, setAddCategoryModalOpen] = useState(false);
   const [form] = Form.useForm();
   const [outletForm] = Form.useForm();
+  const [categoryForm] = Form.useForm();
 
   const { data: tenant, isLoading: tenantLoading } = useQuery({
     queryKey: ["tenant", id],
@@ -65,6 +67,20 @@ export function TenantDetailPage() {
     },
     onError: (error: Error) => {
       message.error(error.message || "Failed to create outlet");
+    },
+  });
+
+  const createCategoryMutation = useMutation({
+    mutationFn: (data: { tenantId: number; nama: string; deskripsi?: string; isActive?: boolean }) =>
+      categoriesApi.create(data),
+    onSuccess: () => {
+      message.success("Category created successfully");
+      setAddCategoryModalOpen(false);
+      categoryForm.resetFields();
+      queryClient.invalidateQueries({ queryKey: ["categories", tenant?.id] });
+    },
+    onError: (error: Error) => {
+      message.error(error.message || "Failed to create category");
     },
   });
 
@@ -128,6 +144,15 @@ export function TenantDetailPage() {
       title: "Nama",
       dataIndex: "nama",
       key: "nama",
+      render: (nama: string, record: { id: number }) => (
+        <Button
+          type="link"
+          onClick={() => navigate({ to: "/tenants/$id/products/$productId", params: { id, productId: String(record.id) } })}
+          style={{ padding: 0 }}
+        >
+          {nama}
+        </Button>
+      ),
     },
     {
       title: "Kategori",
@@ -322,13 +347,24 @@ export function TenantDetailPage() {
                 </span>
               ),
               children: (
-                <Table
-                  dataSource={categories}
-                  columns={categoryColumns}
-                  rowKey="id"
-                  pagination={{ pageSize: 5 }}
-                  size="small"
-                />
+                <>
+                  <div style={{ marginBottom: 16, textAlign: "right" }}>
+                    <Button 
+                      type="primary" 
+                      icon={<PlusOutlined />} 
+                      onClick={() => setAddCategoryModalOpen(true)}
+                    >
+                      Tambah Kategori
+                    </Button>
+                  </div>
+                  <Table
+                    dataSource={categories}
+                    columns={categoryColumns}
+                    rowKey="id"
+                    pagination={{ pageSize: 5 }}
+                    size="small"
+                  />
+                </>
               ),
             },
             {
@@ -339,13 +375,24 @@ export function TenantDetailPage() {
                 </span>
               ),
               children: (
-                <Table
-                  dataSource={products}
-                  columns={productColumns}
-                  rowKey="id"
-                  pagination={{ pageSize: 5 }}
-                  size="small"
-                />
+                <>
+                  <div style={{ marginBottom: 16, textAlign: "right" }}>
+                    <Button 
+                      type="primary" 
+                      icon={<PlusOutlined />} 
+                      onClick={() => navigate({ to: "/tenants/$id/products/new", params: { id } })}
+                    >
+                      Tambah Produk
+                    </Button>
+                  </div>
+                  <Table
+                    dataSource={products}
+                    columns={productColumns}
+                    rowKey="id"
+                    pagination={{ pageSize: 5 }}
+                    size="small"
+                  />
+                </>
               ),
             },
             {
@@ -479,6 +526,42 @@ export function TenantDetailPage() {
               },
             ]}>
               <Input placeholder="contoh: 081234567890" />
+            </Form.Item>
+          </Form>
+        </Modal>
+
+        <Modal
+          title="Tambah Kategori"
+          open={addCategoryModalOpen}
+          onCancel={() => {
+            setAddCategoryModalOpen(false);
+            categoryForm.resetFields();
+          }}
+          onOk={() => categoryForm.submit()}
+          confirmLoading={createCategoryMutation.isPending}
+        >
+          <Form
+            form={categoryForm}
+            layout="vertical"
+            onFinish={(values) => {
+              if (tenant?.id) {
+                createCategoryMutation.mutate({
+                  ...values,
+                  tenantId: tenant.id,
+                });
+              }
+            }}
+            initialValues={{ isActive: true }}
+          >
+            <Form.Item
+              name="nama"
+              label="Nama Kategori"
+              rules={[{ required: true, message: "Nama kategori wajib diisi" }]}
+            >
+              <Input placeholder="Contoh: Elektronik" />
+            </Form.Item>
+            <Form.Item name="deskripsi" label="Deskripsi">
+              <Input.TextArea rows={2} placeholder="Masukkan deskripsi kategori" />
             </Form.Item>
           </Form>
         </Modal>

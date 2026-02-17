@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  ForbiddenException,
   Inject,
 } from '@nestjs/common';
 import { eq, and, like, desc, sql, SQL } from 'drizzle-orm';
@@ -10,15 +11,26 @@ import { tenants } from '../db/schema';
 import { CreateOutletDto, UpdateOutletDto, OutletQueryDto } from './dto';
 import { DB_CONNECTION } from '../db/db.module';
 import type { DrizzleDB } from '../db/type';
+import type { CurrentUserType } from '../common/decorators/current-user.decorator';
 
 @Injectable()
 export class OutletsService {
   constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) {}
 
-
-  async findAll(query: OutletQueryDto) {
+  async findAll(query: OutletQueryDto, user: CurrentUserType) {
     const { page = 1, limit = 10, search, isActive, tenantId } = query;
     const offset = (page - 1) * limit;
+
+    // Get user's tenant ID if owner or cashier
+    let effectiveTenantId = tenantId;
+    if (user.role === 'owner' || user.role === 'cashier') {
+      const userTenant = await this.db.query.tenants.findFirst({
+        where: eq(tenants.userId, user.id),
+      });
+      if (userTenant) {
+        effectiveTenantId = userTenant.id;
+      }
+    }
 
     const conditions: SQL<unknown>[] = [];
 
@@ -26,8 +38,8 @@ export class OutletsService {
       conditions.push(eq(outlets.isActive, isActive));
     }
 
-    if (tenantId) {
-      conditions.push(eq(outlets.tenantId, tenantId));
+    if (effectiveTenantId) {
+      conditions.push(eq(outlets.tenantId, effectiveTenantId));
     }
 
     if (search) {
@@ -61,7 +73,7 @@ export class OutletsService {
     };
   }
 
-  async findById(id: number) {
+  async findById(id: number, user: CurrentUserType) {
     const outlet = await this.db.query.outlets.findFirst({
       where: eq(outlets.id, id),
       with: {
@@ -73,16 +85,34 @@ export class OutletsService {
       throw new NotFoundException(`Outlet with ID ${id} not found`);
     }
 
+    // Check ownership for owner/cashier
+    if (user.role === 'owner' || user.role === 'cashier') {
+      const userTenant = await this.db.query.tenants.findFirst({
+        where: eq(tenants.userId, user.id),
+      });
+      if (userTenant && outlet.tenantId !== userTenant.id) {
+        throw new ForbiddenException('You do not have access to this outlet');
+      }
+    }
+
     return outlet;
   }
 
-  async create(data: CreateOutletDto) {
-    const tenantExists = await this.db.query.tenants.findFirst({
+  async create(data: CreateOutletDto, user: CurrentUserType) {
+    // Verify tenant exists and user has access
+    const tenant = await this.db.query.tenants.findFirst({
       where: eq(tenants.id, data.tenantId),
     });
 
-    if (!tenantExists) {
+    if (!tenant) {
       throw new NotFoundException(`Tenant with ID ${data.tenantId} not found`);
+    }
+
+    // Check ownership for owner
+    if (user.role === 'owner' && tenant.userId !== user.id) {
+      throw new ForbiddenException(
+        'You do not have permission to create outlets in this tenant',
+      );
     }
 
     const existing = await this.db.query.outlets.findFirst({
@@ -95,16 +125,25 @@ export class OutletsService {
       );
     }
 
-    const [outlet] = await this.db
-      .insert(outlets)
-      .values(data)
-      .returning();
+    const [outlet] = await this.db.insert(outlets).values(data).returning();
 
     return outlet;
   }
 
-  async update(id: number, data: UpdateOutletDto) {
-    const existingOutlet = await this.findById(id);
+  async update(id: number, data: UpdateOutletDto, user: CurrentUserType) {
+    const existingOutlet = await this.findById(id, user);
+
+    // Verify ownership again
+    if (user.role === 'owner') {
+      const userTenant = await this.db.query.tenants.findFirst({
+        where: eq(tenants.userId, user.id),
+      });
+      if (userTenant && existingOutlet.tenantId !== userTenant.id) {
+        throw new ForbiddenException(
+          'You do not have permission to update this outlet',
+        );
+      }
+    }
 
     if (data.kode && data.kode !== existingOutlet.kode) {
       const kodeExists = await this.db.query.outlets.findFirst({
@@ -130,14 +169,26 @@ export class OutletsService {
     return outlet;
   }
 
-  async remove(id: number) {
-    await this.findById(id);
+  async remove(id: number, user: CurrentUserType) {
+    const outlet = await this.findById(id, user);
 
-    const [outlet] = await this.db
+    // Verify ownership
+    if (user.role === 'owner') {
+      const userTenant = await this.db.query.tenants.findFirst({
+        where: eq(tenants.userId, user.id),
+      });
+      if (userTenant && outlet.tenantId !== userTenant.id) {
+        throw new ForbiddenException(
+          'You do not have permission to delete this outlet',
+        );
+      }
+    }
+
+    const [deletedOutlet] = await this.db
       .delete(outlets)
       .where(eq(outlets.id, id))
       .returning();
 
-    return outlet;
+    return deletedOutlet;
   }
 }

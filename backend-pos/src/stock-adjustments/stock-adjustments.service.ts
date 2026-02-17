@@ -1,6 +1,7 @@
 import {
   Injectable,
   NotFoundException,
+  ForbiddenException,
   Inject,
 } from '@nestjs/common';
 import { eq, and, desc, sql, SQL } from 'drizzle-orm';
@@ -8,17 +9,30 @@ import { stockAdjustments } from '../db/schema/stock-adjustment-schema';
 import { products } from '../db/schema/product-schema';
 import { outlets } from '../db/schema/outlet-schema';
 import { productStocks } from '../db/schema/stock-schema';
+import { tenants } from '../db/schema/tenant-schema';
 import { CreateStockAdjustmentDto, StockAdjustmentQueryDto } from './dto';
 import { DB_CONNECTION } from '../db/db.module';
 import type { DrizzleDB } from '../db/type';
+import type { CurrentUserType } from '../common/decorators/current-user.decorator';
 
 @Injectable()
 export class StockAdjustmentsService {
   constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) {}
 
-  async findAll(query: StockAdjustmentQueryDto) {
+  async findAll(query: StockAdjustmentQueryDto, user: CurrentUserType) {
     const { page = 1, limit = 10, productId, outletId, adjustedBy } = query;
     const offset = (page - 1) * limit;
+
+    // Get user's tenant ID if owner or cashier
+    let effectiveTenantId: number | undefined;
+    if (user.role === 'owner' || user.role === 'cashier') {
+      const userTenant = await this.db.query.tenants.findFirst({
+        where: eq(tenants.userId, user.id),
+      });
+      if (userTenant) {
+        effectiveTenantId = userTenant.id;
+      }
+    }
 
     const conditions: SQL<unknown>[] = [];
 
@@ -34,18 +48,49 @@ export class StockAdjustmentsService {
       conditions.push(eq(stockAdjustments.adjustedBy, adjustedBy));
     }
 
+    // If owner/cashier, filter by tenant via outlet
+    if (effectiveTenantId) {
+      const outletIdsInTenant = await this.db
+        .select({ id: outlets.id })
+        .from(outlets)
+        .where(eq(outlets.tenantId, effectiveTenantId));
+
+      const outletIdList = outletIdsInTenant.map((o) => o.id);
+
+      if (outletIdList.length === 0) {
+        return {
+          data: [],
+          meta: {
+            page,
+            limit,
+            total: 0,
+            totalPages: 0,
+          },
+        };
+      }
+
+      conditions.push(
+        sql`${stockAdjustments.outletId} IN (${sql.join(
+          outletIdList.map((id) => sql`${id}`),
+          sql`, `,
+        )})`,
+      );
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
     const [data, totalResult] = await Promise.all([
       this.db
         .select()
         .from(stockAdjustments)
-        .where(conditions.length > 0 ? and(...conditions) : undefined)
+        .where(whereClause)
         .limit(limit)
         .offset(offset)
         .orderBy(desc(stockAdjustments.createdAt)),
       this.db
         .select({ count: sql<number>`count(*)` })
         .from(stockAdjustments)
-        .where(conditions.length > 0 ? and(...conditions) : undefined),
+        .where(whereClause),
     ]);
 
     const total = Number(totalResult[0]?.count || 0);
@@ -61,7 +106,7 @@ export class StockAdjustmentsService {
     };
   }
 
-  async findById(id: number) {
+  async findById(id: number, user: CurrentUserType) {
     const adjustment = await this.db.query.stockAdjustments.findFirst({
       where: eq(stockAdjustments.id, id),
       with: {
@@ -75,29 +120,69 @@ export class StockAdjustmentsService {
       throw new NotFoundException(`Stock adjustment with ID ${id} not found`);
     }
 
+    // Check ownership for owner/cashier via outlet's tenant
+    if (user.role === 'owner' || user.role === 'cashier') {
+      const userTenant = await this.db.query.tenants.findFirst({
+        where: eq(tenants.userId, user.id),
+      });
+      if (userTenant && adjustment.outlet.tenantId !== userTenant.id) {
+        throw new ForbiddenException(
+          'You do not have access to this stock adjustment',
+        );
+      }
+    }
+
     return adjustment;
   }
 
-  async create(data: CreateStockAdjustmentDto) {
-    const productExists = await this.db.query.products.findFirst({
+  async create(data: CreateStockAdjustmentDto, user: CurrentUserType) {
+    // Verify product exists and user has access
+    const product = await this.db.query.products.findFirst({
       where: eq(products.id, data.productId),
     });
 
-    if (!productExists) {
-      throw new NotFoundException(`Product with ID ${data.productId} not found`);
+    if (!product) {
+      throw new NotFoundException(
+        `Product with ID ${data.productId} not found`,
+      );
     }
 
-    const outletExists = await this.db.query.outlets.findFirst({
+    // Verify outlet exists
+    const outlet = await this.db.query.outlets.findFirst({
       where: eq(outlets.id, data.outletId),
     });
 
-    if (!outletExists) {
+    if (!outlet) {
       throw new NotFoundException(`Outlet with ID ${data.outletId} not found`);
     }
 
+    // Check ownership for owner
+    if (user.role === 'owner') {
+      const userTenant = await this.db.query.tenants.findFirst({
+        where: eq(tenants.userId, user.id),
+      });
+      if (userTenant && outlet.tenantId !== userTenant.id) {
+        throw new ForbiddenException(
+          'You do not have permission to create stock adjustments in this tenant',
+        );
+      }
+    }
+
+    // Verify outlet and product belong to same tenant
+    if (outlet.tenantId !== product.tenantId) {
+      throw new ForbiddenException(
+        'Product and outlet do not belong to the same tenant',
+      );
+    }
+
+    const adjustmentData = {
+      ...data,
+      adjustedBy: user.id,
+    };
+
     const [adjustment] = await this.db
       .insert(stockAdjustments)
-      .values(data)
+      .values(adjustmentData)
       .returning();
 
     const existingStock = await this.db.query.productStocks.findFirst({

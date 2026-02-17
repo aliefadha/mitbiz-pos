@@ -7,7 +7,8 @@ async function bootstrap() {
     bodyParser: false,
   });
 
-  const allowedOrigin = process.env.ALLOWED_ORIGINS?.trim() || 'http://localhost:3000';
+  const allowedOrigin =
+    process.env.ALLOWED_ORIGINS?.trim() || 'http://localhost:3000';
 
   app.enableCors({
     origin: allowedOrigin,

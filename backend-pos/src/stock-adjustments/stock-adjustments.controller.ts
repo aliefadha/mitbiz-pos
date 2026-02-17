@@ -17,31 +17,46 @@ import {
   CreateStockAdjustmentDto,
   StockAdjustmentQueryDto,
 } from './dto';
-import { AuthGuard } from '@thallesp/nestjs-better-auth';
+import { AuthGuard, Roles } from '@thallesp/nestjs-better-auth';
+import {
+  CurrentUser,
+  type CurrentUserType,
+} from '../common/decorators/current-user.decorator';
 
 @ApiTags('stock-adjustments')
 @Controller('stock-adjustments')
 @UseGuards(AuthGuard)
 export class StockAdjustmentsController {
-  constructor(private readonly stockAdjustmentsService: StockAdjustmentsService) {}
+  constructor(
+    private readonly stockAdjustmentsService: StockAdjustmentsService,
+  ) {}
 
+  @Roles(['admin', 'owner'])
   @Get()
   @ApiOperation({ summary: 'Get all stock adjustments' })
   @UsePipes(new ZodValidationPipe(StockAdjustmentQuerySchema, 'query'))
-  findAll(@Query() query: StockAdjustmentQueryDto) {
-    return this.stockAdjustmentsService.findAll(query);
+  findAll(
+    @Query() query: StockAdjustmentQueryDto,
+    @CurrentUser() user: CurrentUserType,
+  ) {
+    return this.stockAdjustmentsService.findAll(query, user);
   }
 
+  @Roles(['admin', 'owner'])
   @Get(':id')
   @ApiOperation({ summary: 'Get stock adjustment by ID' })
-  findById(@Param('id') id: string) {
-    return this.stockAdjustmentsService.findById(parseInt(id, 10));
+  findById(@Param('id') id: string, @CurrentUser() user: CurrentUserType) {
+    return this.stockAdjustmentsService.findById(parseInt(id, 10), user);
   }
 
+  @Roles(['admin', 'owner'])
   @Post()
   @ApiOperation({ summary: 'Create a new stock adjustment' })
   @UsePipes(new ZodValidationPipe(CreateStockAdjustmentSchema))
-  create(@Body() data: CreateStockAdjustmentDto) {
-    return this.stockAdjustmentsService.create(data);
+  create(
+    @Body() data: CreateStockAdjustmentDto,
+    @CurrentUser() user: CurrentUserType,
+  ) {
+    return this.stockAdjustmentsService.create(data, user);
   }
 }

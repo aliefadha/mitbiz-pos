@@ -9,8 +9,6 @@ import {
   Query,
   UseGuards,
   UsePipes,
-  Req,
-  Headers,
 } from '@nestjs/common';
 import { ApiBody, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
@@ -27,7 +25,11 @@ import {
   TenantQueryDto,
   TenantSummaryDto,
 } from './dto';
-import {AuthGuard, AllowAnonymous, Roles, OptionalAuth} from '@thallesp/nestjs-better-auth';
+import { AuthGuard, Roles, OptionalAuth } from '@thallesp/nestjs-better-auth';
+import {
+  CurrentUser,
+  type CurrentUserType,
+} from '../common/decorators/current-user.decorator';
 
 @ApiTags('tenants')
 @Controller('tenants')
@@ -35,26 +37,26 @@ import {AuthGuard, AllowAnonymous, Roles, OptionalAuth} from '@thallesp/nestjs-b
 export class TenantsController {
   constructor(private readonly tenantsService: TenantsService) {}
 
-  @Roles(["admin"])
+  @Roles(['admin', 'owner'])
   @Get()
   @ApiOperation({ summary: 'Get all tenants' })
   @UsePipes(new ZodValidationPipe(TenantQuerySchema, 'query'))
-  findAll(@Query() query: TenantQueryDto, @Req() req: any, @Headers('x-user-id') headerUserId?: string) {
-    const role = req.user?.role;
-    
-    if (role !== 'admin' && headerUserId) {
-      query.userId = headerUserId;
-    }
-    
-    return this.tenantsService.findAll(query);
+  findAll(
+    @Query() query: TenantQueryDto,
+    @CurrentUser() user: CurrentUserType,
+  ) {
+    return this.tenantsService.findAll(query, user);
   }
 
-  @Roles(["admin"])
+  @Roles(['admin', 'owner'])
   @Get(':slug')
-  @ApiOperation({ summary: 'Get tenant by slug (public)' })
+  @ApiOperation({ summary: 'Get tenant by slug' })
   @UsePipes(new ZodValidationPipe(TenantSlugSchema, 'params'))
-  findBySlug(@Param() { slug }: TenantSlugDto) {
-    return this.tenantsService.findBySlug(slug);
+  findBySlug(
+    @Param() { slug }: TenantSlugDto,
+    @CurrentUser() user: CurrentUserType,
+  ) {
+    return this.tenantsService.findBySlug(slug, user);
   }
 
   @OptionalAuth()
@@ -62,42 +64,45 @@ export class TenantsController {
   @ApiOperation({ summary: 'Create a new tenant' })
   @ApiBody({ type: CreateTenantDto })
   @UsePipes(new ZodValidationPipe(CreateTenantSchema))
-  create(@Body() data: CreateTenantDto, @Req() req: any) {
-    const loggedInUserId = req.user?.id;
-    const role = req.user?.role;
-    let userId: string | undefined;
-
-    if (role === 'admin' && data.userId) {
-      userId = data.userId;
-    } else {
-      userId = loggedInUserId;
-    }
-
-    return this.tenantsService.create({
-      ...data,
-      userId,
-    });
+  create(@Body() data: CreateTenantDto, @CurrentUser() user: CurrentUserType) {
+    return this.tenantsService.create(data, user);
   }
 
+  @Roles(['admin', 'owner'])
   @Put(':slug')
   @ApiOperation({ summary: 'Update a tenant' })
   @UsePipes(new ZodValidationPipe(TenantSlugSchema, 'params'))
   @UsePipes(new ZodValidationPipe(UpdateTenantSchema))
-  update(@Param() { slug }: TenantSlugDto, @Body() data: UpdateTenantDto) {
-    return this.tenantsService.update(slug, data);
+  update(
+    @Param() { slug }: TenantSlugDto,
+    @Body() data: UpdateTenantDto,
+    @CurrentUser() user: CurrentUserType,
+  ) {
+    return this.tenantsService.update(slug, data, user);
   }
 
+  @Roles(['admin', 'owner'])
   @Delete(':slug')
   @ApiOperation({ summary: 'Delete a tenant' })
   @UsePipes(new ZodValidationPipe(TenantSlugSchema, 'params'))
-  remove(@Param() { slug }: TenantSlugDto) {
-    return this.tenantsService.remove(slug);
+  remove(
+    @Param() { slug }: TenantSlugDto,
+    @CurrentUser() user: CurrentUserType,
+  ) {
+    return this.tenantsService.remove(slug, user);
   }
 
+  @Roles(['admin', 'owner'])
   @Get(':slug/summary')
-  @ApiOperation({ summary: 'Get tenant summary (counts for outlets, categories, products, user)' })
+  @ApiOperation({
+    summary:
+      'Get tenant summary (counts for outlets, categories, products, user)',
+  })
   @UsePipes(new ZodValidationPipe(TenantSummarySchema, 'params'))
-  getSummary(@Param() { slug }: TenantSummaryDto) {
-    return this.tenantsService.getSummary(slug);
+  getSummary(
+    @Param() { slug }: TenantSummaryDto,
+    @CurrentUser() user: CurrentUserType,
+  ) {
+    return this.tenantsService.getSummary(slug, user);
   }
 }

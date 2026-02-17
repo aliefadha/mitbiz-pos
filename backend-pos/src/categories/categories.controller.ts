@@ -23,7 +23,11 @@ import {
   CategoryIdDto,
   CategoryQueryDto,
 } from './dto';
-import { AuthGuard } from '@thallesp/nestjs-better-auth';
+import { AuthGuard, Roles } from '@thallesp/nestjs-better-auth';
+import {
+  CurrentUser,
+  type CurrentUserType,
+} from '../common/decorators/current-user.decorator';
 
 @ApiTags('categories')
 @Controller('categories')
@@ -31,39 +35,57 @@ import { AuthGuard } from '@thallesp/nestjs-better-auth';
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
+  @Roles(['admin', 'owner', 'cashier'])
   @Get()
   @ApiOperation({ summary: 'Get all categories' })
   @UsePipes(new ZodValidationPipe(CategoryQuerySchema, 'query'))
-  findAll(@Query() query: CategoryQueryDto) {
-    return this.categoriesService.findAll(query);
+  findAll(
+    @Query() query: CategoryQueryDto,
+    @CurrentUser() user: CurrentUserType,
+  ) {
+    return this.categoriesService.findAll(query, user);
   }
 
+  @Roles(['admin', 'owner', 'cashier'])
   @Get(':id')
   @ApiOperation({ summary: 'Get category by ID' })
   @UsePipes(new ZodValidationPipe(CategoryIdSchema, 'params'))
-  findById(@Param() { id }: CategoryIdDto) {
-    return this.categoriesService.findById(id);
+  findById(
+    @Param() { id }: CategoryIdDto,
+    @CurrentUser() user: CurrentUserType,
+  ) {
+    return this.categoriesService.findById(id, user);
   }
 
+  @Roles(['admin', 'owner'])
   @Post()
   @ApiOperation({ summary: 'Create a new category' })
   @UsePipes(new ZodValidationPipe(CreateCategorySchema))
-  create(@Body() data: CreateCategoryDto) {
-    return this.categoriesService.create(data);
+  create(
+    @Body() data: CreateCategoryDto,
+    @CurrentUser() user: CurrentUserType,
+  ) {
+    return this.categoriesService.create(data, user);
   }
 
+  @Roles(['admin', 'owner'])
   @Put(':id')
   @ApiOperation({ summary: 'Update a category' })
   @UsePipes(new ZodValidationPipe(CategoryIdSchema, 'params'))
   @UsePipes(new ZodValidationPipe(UpdateCategorySchema))
-  update(@Param() { id }: CategoryIdDto, @Body() data: UpdateCategoryDto) {
-    return this.categoriesService.update(id, data);
+  update(
+    @Param() { id }: CategoryIdDto,
+    @Body() data: UpdateCategoryDto,
+    @CurrentUser() user: CurrentUserType,
+  ) {
+    return this.categoriesService.update(id, data, user);
   }
 
+  @Roles(['admin', 'owner'])
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a category' })
   @UsePipes(new ZodValidationPipe(CategoryIdSchema, 'params'))
-  remove(@Param() { id }: CategoryIdDto) {
-    return this.categoriesService.remove(id);
+  remove(@Param() { id }: CategoryIdDto, @CurrentUser() user: CurrentUserType) {
+    return this.categoriesService.remove(id, user);
   }
 }

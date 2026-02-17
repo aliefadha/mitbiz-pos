@@ -5,6 +5,7 @@ interface AuthContextType {
   user: any;
   isLoading: boolean;
   isAuthenticated: boolean;
+  role: 'admin' | 'owner' | 'cashier' | undefined;
   logout: () => void;
 }
 
@@ -17,10 +18,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signOutAuth();
   };
 
-  return (
+    return (
     <AuthContext.Provider
       value={{
         user: session?.user ?? null,
+        // @ts-ignore
+        role: session?.user?.role as 'admin' | 'owner' | 'cashier' | undefined,
         isLoading,
         isAuthenticated: !!session,
         logout,

@@ -13,7 +13,7 @@ const statement = {
 
 export const ac = createAccessControl(statement);
 
-export const admin = ac.newRole({
+export const adminRole = ac.newRole({
   ...defaultAdminStatement,
   product: ['create', 'read', 'update', 'delete'],
   category: ['create', 'read', 'update', 'delete'],
@@ -22,4 +22,24 @@ export const admin = ac.newRole({
   report: ['read', 'export'],
   settings: ['read', 'update'],
   tenant: ['create', 'read', 'update', 'delete'],
+});
+
+export const ownerRole = ac.newRole({
+  product: ['create', 'read', 'update', 'delete'],
+  category: ['create', 'read', 'update', 'delete'],
+  transaction: ['create', 'read', 'update', 'delete', 'refund'],
+  outlet: ['create', 'read', 'update', 'delete'],
+  report: ['read', 'export'],
+  settings: ['read', 'update'],
+  tenant: ['read', 'update'],
+});
+
+export const cashierRole = ac.newRole({
+  product: ['read'],
+  category: ['read'],
+  transaction: ['create', 'read', 'refund'],
+  outlet: ['read'],
+  report: ['read'],
+  settings: ['read'],
+  tenant: ['read'],
 });

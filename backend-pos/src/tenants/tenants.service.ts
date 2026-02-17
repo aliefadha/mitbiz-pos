@@ -2,31 +2,49 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  ForbiddenException,
   Inject,
 } from '@nestjs/common';
-import { eq, and, like, desc, sql, SQL, or, ilike, count } from 'drizzle-orm';
+import { eq, and, like, desc, sql, or, ilike, count, SQL } from 'drizzle-orm';
 import { tenants } from '../db/schema';
-import { user } from '../db/schema';
+import { user as userSchema } from '../db/schema';
 import { outlets } from '../db/schema/outlet-schema';
 import { categories } from '../db/schema/category-schema';
 import { products } from '../db/schema/product-schema';
 import { CreateTenantDto, UpdateTenantDto, TenantQueryDto } from './dto';
 import { DB_CONNECTION } from '../db/db.module';
 import type { DrizzleDB } from '../db/type';
+import type { CurrentUserType } from '../common/decorators/current-user.decorator';
 
 @Injectable()
 export class TenantsService {
   constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) {}
 
-  async findAll(query: TenantQueryDto) {
+  async findAll(query: TenantQueryDto, user: CurrentUserType) {
     const { page = 1, limit = 10, search, isActive, userId } = query;
     const offset = (page - 1) * limit;
 
-    const whereClause = and(
-      isActive !== undefined ? eq(tenants.isActive, isActive) : undefined,
-      userId ? eq(tenants.userId, userId) : undefined,
-      search ? like(tenants.nama, `%${search}%`) : undefined,
-    );
+    // If owner, only show their own tenant(s)
+    let effectiveUserId = userId;
+    if (user.role === 'owner') {
+      effectiveUserId = user.id;
+    }
+
+    const conditions: SQL<unknown>[] = [];
+
+    if (isActive !== undefined) {
+      conditions.push(eq(tenants.isActive, isActive));
+    }
+
+    if (effectiveUserId) {
+      conditions.push(eq(tenants.userId, effectiveUserId));
+    }
+
+    if (search) {
+      conditions.push(like(tenants.nama, `%${search}%`));
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
     const [data, totalResult] = await Promise.all([
       this.db
@@ -55,7 +73,7 @@ export class TenantsService {
     };
   }
 
-  async findBySlug(slug: string) {
+  async findBySlug(slug: string, user: CurrentUserType) {
     const tenant = await this.db.query.tenants.findFirst({
       where: eq(tenants.slug, slug),
       with: {
@@ -68,13 +86,18 @@ export class TenantsService {
       throw new NotFoundException(`Tenant tidak ditemukan`);
     }
 
+    // Check ownership for owner role
+    if (user.role === 'owner' && tenant.userId !== user.id) {
+      throw new ForbiddenException('You do not have access to this tenant');
+    }
+
     return tenant;
   }
 
-  async create(data: CreateTenantDto) {
+  async create(data: CreateTenantDto, user: CurrentUserType) {
     if (data.userId) {
       const userExists = await this.db.query.user.findFirst({
-        where: eq(user.id, data.userId),
+        where: eq(userSchema.id, data.userId),
       });
 
       if (!userExists) {
@@ -87,28 +110,28 @@ export class TenantsService {
     });
 
     if (slugExists) {
-      throw new ConflictException(
-        `Nama tenant sudah digunakan`,
-      );
+      throw new ConflictException(`Nama tenant sudah digunakan`);
     }
 
     const nameExists = await this.db.query.tenants.findFirst({
-      where: or(
-        ilike(tenants.nama, data.nama),
-        eq(tenants.nama, data.nama),
-      ),
+      where: or(ilike(tenants.nama, data.nama), eq(tenants.nama, data.nama)),
     });
 
     if (nameExists) {
-      throw new ConflictException(
-        `Nama tenant sudah digunakan`,
-      );
+      throw new ConflictException(`Nama tenant sudah digunakan`);
+    }
+
+    // If owner, force userId to be their own id
+    let finalUserId = data.userId;
+    if (user.role === 'owner') {
+      finalUserId = user.id;
     }
 
     const [tenant] = await this.db
       .insert(tenants)
       .values({
         ...data,
+        userId: finalUserId,
         settings: data.settings || {
           currency: 'IDR',
           timezone: 'Asia/Jakarta',
@@ -120,8 +143,15 @@ export class TenantsService {
     return tenant;
   }
 
-  async update(slug: string, data: UpdateTenantDto) {
-    const existingTenant = await this.findBySlug(slug);
+  async update(slug: string, data: UpdateTenantDto, user: CurrentUserType) {
+    const existingTenant = await this.findBySlug(slug, user);
+
+    // Verify ownership again
+    if (user.role === 'owner' && existingTenant.userId !== user.id) {
+      throw new ForbiddenException(
+        'You do not have permission to update this tenant',
+      );
+    }
 
     if (data.slug && data.slug !== slug) {
       const slugExists = await this.db.query.tenants.findFirst({
@@ -129,24 +159,17 @@ export class TenantsService {
       });
 
       if (slugExists) {
-        throw new ConflictException(
-          `Nama tenant sudah digunakan`,
-        );
+        throw new ConflictException(`Nama tenant sudah digunakan`);
       }
     }
 
     if (data.nama && data.nama !== existingTenant.nama) {
       const nameExists = await this.db.query.tenants.findFirst({
-        where: or(
-          ilike(tenants.nama, data.nama),
-          eq(tenants.nama, data.nama),
-        ),
+        where: or(ilike(tenants.nama, data.nama), eq(tenants.nama, data.nama)),
       });
 
       if (nameExists) {
-        throw new ConflictException(
-          `Nama tenant sudah digunakan`,
-        );
+        throw new ConflictException(`Nama tenant sudah digunakan`);
       }
     }
 
@@ -162,34 +185,43 @@ export class TenantsService {
     return tenant;
   }
 
-  async remove(slug: string) {
-    await this.findBySlug(slug);
+  async remove(slug: string, user: CurrentUserType) {
+    const tenant = await this.findBySlug(slug, user);
 
-    const [tenant] = await this.db
+    // Verify ownership
+    if (user.role === 'owner' && tenant.userId !== user.id) {
+      throw new ForbiddenException(
+        'You do not have permission to delete this tenant',
+      );
+    }
+
+    const [deletedTenant] = await this.db
       .delete(tenants)
       .where(eq(tenants.slug, slug))
       .returning();
 
-    return tenant;
+    return deletedTenant;
   }
 
-  async getSummary(slug: string) {
-    const tenant = await this.db.query.tenants.findFirst({
-      where: eq(tenants.slug, slug),
-      with: {
-        user: true,
-      },
-    });
+  async getSummary(slug: string, user: CurrentUserType) {
+    const tenant = await this.findBySlug(slug, user);
 
-    if (!tenant) {
-      throw new NotFoundException(`Tenant tidak ditemukan`);
-    }
-
-    const [outletsResult, categoriesResult, productsResult] = await Promise.all([
-      this.db.select({ count: count() }).from(outlets).where(eq(outlets.tenantId, tenant.id)),
-      this.db.select({ count: count() }).from(categories).where(eq(categories.tenantId, tenant.id)),
-      this.db.select({ count: count() }).from(products).where(eq(products.tenantId, tenant.id)),
-    ]);
+    const [outletsResult, categoriesResult, productsResult] = await Promise.all(
+      [
+        this.db
+          .select({ count: count() })
+          .from(outlets)
+          .where(eq(outlets.tenantId, tenant.id)),
+        this.db
+          .select({ count: count() })
+          .from(categories)
+          .where(eq(categories.tenantId, tenant.id)),
+        this.db
+          .select({ count: count() })
+          .from(products)
+          .where(eq(products.tenantId, tenant.id)),
+      ],
+    );
 
     return {
       outletsCount: Number(outletsResult[0]?.count || 0),
@@ -197,5 +229,13 @@ export class TenantsService {
       productsCount: Number(productsResult[0]?.count || 0),
       user: tenant.user,
     };
+  }
+
+  // Helper method to get user's tenant ID
+  async getUserTenantId(userId: string): Promise<number | null> {
+    const tenant = await this.db.query.tenants.findFirst({
+      where: eq(tenants.userId, userId),
+    });
+    return tenant?.id || null;
   }
 }

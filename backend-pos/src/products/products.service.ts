@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  ForbiddenException,
   Inject,
 } from '@nestjs/common';
 import { eq, and, like, desc, sql, SQL } from 'drizzle-orm';
@@ -11,14 +12,34 @@ import { categories } from '../db/schema/category-schema';
 import { CreateProductDto, UpdateProductDto, ProductQueryDto } from './dto';
 import { DB_CONNECTION } from '../db/db.module';
 import type { DrizzleDB } from '../db/type';
+import type { CurrentUserType } from '../common/decorators/current-user.decorator';
 
 @Injectable()
 export class ProductsService {
   constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) {}
 
-  async findAll(query: ProductQueryDto) {
-    const { page = 1, limit = 10, search, isActive, tenantId, categoryId, tipe } = query;
+  async findAll(query: ProductQueryDto, user: CurrentUserType) {
+    const {
+      page = 1,
+      limit = 10,
+      search,
+      isActive,
+      tenantId,
+      categoryId,
+      tipe,
+    } = query;
     const offset = (page - 1) * limit;
+
+    // Get user's tenant ID if owner
+    let effectiveTenantId = tenantId;
+    if (user.role === 'owner' || user.role === 'cashier') {
+      const userTenant = await this.db.query.tenants.findFirst({
+        where: eq(tenants.userId, user.id),
+      });
+      if (userTenant) {
+        effectiveTenantId = userTenant.id;
+      }
+    }
 
     const conditions: SQL<unknown>[] = [];
 
@@ -26,8 +47,8 @@ export class ProductsService {
       conditions.push(eq(products.isActive, isActive));
     }
 
-    if (tenantId) {
-      conditions.push(eq(products.tenantId, tenantId));
+    if (effectiveTenantId) {
+      conditions.push(eq(products.tenantId, effectiveTenantId));
     }
 
     if (categoryId) {
@@ -35,7 +56,7 @@ export class ProductsService {
     }
 
     if (tipe) {
-      const tipeValue = tipe as 'barang' | 'jasa' | 'digital';
+      const tipeValue = tipe;
       conditions.push(eq(products.tipe, tipeValue));
     }
 
@@ -47,6 +68,7 @@ export class ProductsService {
       this.db
         .select()
         .from(products)
+        .leftJoin(categories, eq(products.categoryId, categories.id))
         .where(conditions.length > 0 ? and(...conditions) : undefined)
         .limit(limit)
         .offset(offset)
@@ -57,10 +79,24 @@ export class ProductsService {
         .where(conditions.length > 0 ? and(...conditions) : undefined),
     ]);
 
+    const productsWithCategory = data.map((row) => ({
+      ...row.products,
+      category: row.categories
+        ? {
+            id: row.categories.id,
+            nama: row.categories.nama,
+            deskripsi: row.categories.deskripsi,
+            isActive: row.categories.isActive,
+            createdAt: row.categories.createdAt,
+            updatedAt: row.categories.updatedAt,
+          }
+        : null,
+    }));
+
     const total = Number(totalResult[0]?.count || 0);
 
     return {
-      data,
+      data: productsWithCategory,
       meta: {
         page,
         limit,
@@ -70,7 +106,7 @@ export class ProductsService {
     };
   }
 
-  async findById(id: number) {
+  async findById(id: number, user: CurrentUserType) {
     const product = await this.db.query.products.findFirst({
       where: eq(products.id, id),
       with: {
@@ -83,25 +119,50 @@ export class ProductsService {
       throw new NotFoundException(`Product with ID ${id} not found`);
     }
 
+    // Check ownership for owner/cashier
+    if (user.role === 'owner' || user.role === 'cashier') {
+      const userTenant = await this.db.query.tenants.findFirst({
+        where: eq(tenants.userId, user.id),
+      });
+      if (userTenant && product.tenantId !== userTenant.id) {
+        throw new ForbiddenException('You do not have access to this product');
+      }
+    }
+
     return product;
   }
 
-  async create(data: CreateProductDto) {
-    const tenantExists = await this.db.query.tenants.findFirst({
+  async create(data: CreateProductDto, user: CurrentUserType) {
+    // Verify tenant exists and user has access
+    const tenant = await this.db.query.tenants.findFirst({
       where: eq(tenants.id, data.tenantId),
     });
 
-    if (!tenantExists) {
+    if (!tenant) {
       throw new NotFoundException(`Tenant with ID ${data.tenantId} not found`);
     }
 
+    // Check ownership for owner
+    if (user.role === 'owner' && tenant.userId !== user.id) {
+      throw new ForbiddenException(
+        'You do not have permission to create products in this tenant',
+      );
+    }
+
     if (data.categoryId) {
-      const categoryExists = await this.db.query.categories.findFirst({
+      const category = await this.db.query.categories.findFirst({
         where: eq(categories.id, data.categoryId),
       });
 
-      if (!categoryExists) {
-        throw new NotFoundException(`Category with ID ${data.categoryId} not found`);
+      if (!category) {
+        throw new NotFoundException(
+          `Category with ID ${data.categoryId} not found`,
+        );
+      }
+
+      // Verify category belongs to same tenant
+      if (category.tenantId !== data.tenantId) {
+        throw new ForbiddenException('Category does not belong to this tenant');
       }
     }
 
@@ -110,7 +171,9 @@ export class ProductsService {
     });
 
     if (existingSku) {
-      throw new ConflictException(`Product with SKU ${data.sku} already exists`);
+      throw new ConflictException(
+        `Product with SKU ${data.sku} already exists`,
+      );
     }
 
     const [product] = await this.db
@@ -124,8 +187,8 @@ export class ProductsService {
     return product;
   }
 
-  async update(id: number, data: UpdateProductDto) {
-    const existingProduct = await this.findById(id);
+  async update(id: number, data: UpdateProductDto, user: CurrentUserType) {
+    const existingProduct = await this.findById(id, user);
 
     if (data.sku && data.sku !== existingProduct.sku) {
       const skuExists = await this.db.query.products.findFirst({
@@ -140,12 +203,19 @@ export class ProductsService {
     }
 
     if (data.categoryId && data.categoryId !== existingProduct.categoryId) {
-      const categoryExists = await this.db.query.categories.findFirst({
+      const category = await this.db.query.categories.findFirst({
         where: eq(categories.id, data.categoryId),
       });
 
-      if (!categoryExists) {
-        throw new NotFoundException(`Category with ID ${data.categoryId} not found`);
+      if (!category) {
+        throw new NotFoundException(
+          `Category with ID ${data.categoryId} not found`,
+        );
+      }
+
+      // Verify category belongs to same tenant
+      if (category.tenantId !== existingProduct.tenantId) {
+        throw new ForbiddenException('Category does not belong to this tenant');
       }
     }
 
@@ -161,8 +231,8 @@ export class ProductsService {
     return product;
   }
 
-  async remove(id: number) {
-    await this.findById(id);
+  async remove(id: number, user: CurrentUserType) {
+    await this.findById(id, user);
 
     const [product] = await this.db
       .delete(products)

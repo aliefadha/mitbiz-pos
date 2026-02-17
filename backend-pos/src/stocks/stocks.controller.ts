@@ -23,7 +23,11 @@ import {
   StockIdDto,
   StockQueryDto,
 } from './dto';
-import { AuthGuard } from '@thallesp/nestjs-better-auth';
+import { AuthGuard, Roles } from '@thallesp/nestjs-better-auth';
+import {
+  CurrentUser,
+  type CurrentUserType,
+} from '../common/decorators/current-user.decorator';
 
 @ApiTags('stocks')
 @Controller('stocks')
@@ -31,39 +35,48 @@ import { AuthGuard } from '@thallesp/nestjs-better-auth';
 export class StocksController {
   constructor(private readonly stocksService: StocksService) {}
 
+  @Roles(['admin', 'owner', 'cashier'])
   @Get()
   @ApiOperation({ summary: 'Get all stocks' })
   @UsePipes(new ZodValidationPipe(StockQuerySchema, 'query'))
-  findAll(@Query() query: StockQueryDto) {
-    return this.stocksService.findAll(query);
+  findAll(@Query() query: StockQueryDto, @CurrentUser() user: CurrentUserType) {
+    return this.stocksService.findAll(query, user);
   }
 
+  @Roles(['admin', 'owner', 'cashier'])
   @Get(':id')
   @ApiOperation({ summary: 'Get stock by ID' })
   @UsePipes(new ZodValidationPipe(StockIdSchema, 'params'))
-  findById(@Param() { id }: StockIdDto) {
-    return this.stocksService.findById(id);
+  findById(@Param() { id }: StockIdDto, @CurrentUser() user: CurrentUserType) {
+    return this.stocksService.findById(id, user);
   }
 
+  @Roles(['admin', 'owner'])
   @Post()
   @ApiOperation({ summary: 'Create a new stock' })
   @UsePipes(new ZodValidationPipe(CreateStockSchema))
-  create(@Body() data: CreateStockDto) {
-    return this.stocksService.create(data);
+  create(@Body() data: CreateStockDto, @CurrentUser() user: CurrentUserType) {
+    return this.stocksService.create(data, user);
   }
 
+  @Roles(['admin', 'owner'])
   @Put(':id')
   @ApiOperation({ summary: 'Update a stock' })
   @UsePipes(new ZodValidationPipe(StockIdSchema, 'params'))
   @UsePipes(new ZodValidationPipe(UpdateStockSchema))
-  update(@Param() { id }: StockIdDto, @Body() data: UpdateStockDto) {
-    return this.stocksService.update(id, data);
+  update(
+    @Param() { id }: StockIdDto,
+    @Body() data: UpdateStockDto,
+    @CurrentUser() user: CurrentUserType,
+  ) {
+    return this.stocksService.update(id, data, user);
   }
 
+  @Roles(['admin', 'owner'])
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a stock' })
   @UsePipes(new ZodValidationPipe(StockIdSchema, 'params'))
-  remove(@Param() { id }: StockIdDto) {
-    return this.stocksService.remove(id);
+  remove(@Param() { id }: StockIdDto, @CurrentUser() user: CurrentUserType) {
+    return this.stocksService.remove(id, user);
   }
 }

@@ -36,8 +36,16 @@ export class AllExceptionsFilter implements ExceptionFilter {
     // Handle Zod validation exceptions from nestjs-zod
     if (exception instanceof ZodValidationException) {
       status = HttpStatus.BAD_REQUEST;
-      const zodError = exception.getZodError() as { errors: Array<{ path: (string | number)[]; message: string; code: string }> };
-      const errorMessages = zodError.errors.map((err) => `${err.path.join('.')}: ${err.message}`);
+      const zodError = exception.getZodError() as {
+        errors: Array<{
+          path: (string | number)[];
+          message: string;
+          code: string;
+        }>;
+      };
+      const errorMessages = zodError.errors.map(
+        (err) => `${err.path.join('.')}: ${err.message}`,
+      );
       message = errorMessages.join(', ');
     } else if (exception instanceof BadRequestException) {
       // Handle BadRequestException (often from validation pipes)
@@ -45,10 +53,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       const exceptionResponse = exception.getResponse();
 
       let errors: unknown[] | undefined;
-      if (
-        typeof exceptionResponse === 'object' &&
-        exceptionResponse !== null
-      ) {
+      if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
         const responseObj = exceptionResponse as Record<string, unknown>;
         if (Array.isArray(responseObj.message)) {
           message = (responseObj.message as string[]).join(', ');

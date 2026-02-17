@@ -15,35 +15,19 @@ import { Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "../contexts/auth-context";
 import { useState } from "react";
 import { useLogout } from "@/hooks/use-auth";
+import { type Role } from "@/lib/rbac";
 
 const { Header, Sider, Content } = Layout;
 const { Text } = Typography;
 
-
-const menuItems = [
-  {
-    key: "/dashboard",
-    icon: <DashboardOutlined />,
-    label: "Dashboard",
-  },
-  {
-    key: "/tenants",
-    icon: <TeamOutlined />,
-    label: "Tenants",
-  },
-  {
-    key: "/account",
-    icon: <AccountBookOutlined />,
-    label: "Account",
-  },
+const menuConfig = [
+  { key: "/dashboard", icon: <DashboardOutlined />, label: "Dashboard", roles: ["admin", "owner", "cashier"] },
+  { key: "/tenants", icon: <TeamOutlined />, label: "Tenants", roles: ["admin", "owner"] },
+  { key: "/account", icon: <AccountBookOutlined />, label: "Account", roles: ["admin"] },
 ];
 
 const bottomItems = [
-  {
-    key: "/settings",
-    icon: <SettingOutlined />,
-    label: "Settings",
-  },
+  { key: "/settings", icon: <SettingOutlined />, label: "Settings", roles: ["admin", "owner"] },
 ];
 
 export function AppLayout() {
@@ -52,6 +36,10 @@ export function AppLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const { user } = useAuth();
   const logoutMutation = useLogout();
+  const role = (user?.role as Role) || "cashier";
+
+  const menuItems = menuConfig.filter(item => item.roles.includes(role));
+  const filteredBottomItems = bottomItems.filter(item => item.roles.includes(role));
 
   const handleMenuClick = ({ key }: { key: string }) => {
     navigate({ to: key });
@@ -127,7 +115,7 @@ export function AppLayout() {
           mode="inline"
           selectedKeys={location.pathname.startsWith("/settings") ? ["/settings"] : []}
           onClick={handleMenuClick}
-          items={bottomItems}
+          items={filteredBottomItems}
           style={{
             borderRight: 0,
             marginTop: "auto",

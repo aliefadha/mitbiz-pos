@@ -31,7 +31,8 @@ import {
   type UpdateProductDto,
   type AdjustStockDto,
 } from "@/lib/api/products";
-import { categoriesApi, type Category } from "@/lib/api/categories";
+import { categoriesApi } from "@/lib/api/categories";
+import type { Category } from "@/lib/api/categories";
 import { message } from "antd";
 
 const { Title, Text } = Typography;
@@ -67,7 +68,7 @@ function ProductPage() {
 
   const { data: products, isLoading } = useQuery({
     queryKey: ["products", { categoryId: categoryFilter }],
-    queryFn: () => productsApi.getAll({ categoryId: categoryFilter }),
+    queryFn: () => productsApi.getAll({ categoryId: categoryFilter, isActive: true }),
   });
 
   const { data: categories } = useQuery({
@@ -105,7 +106,7 @@ function ProductPage() {
 
   const toggleStatusMutation = useMutation({
     mutationFn: ({ id }: { id: number }) => {
-      const product = products?.find((p) => p.id === id);
+      const product = products?.data?.find((p) => p.id === id);
       return productsApi.update(id, { isActive: !product?.isActive });
     },
     onSuccess: () => {
@@ -151,6 +152,7 @@ function ProductPage() {
       minStockLevel: 0,
       unit: "pcs",
       isActive: true,
+      tipe: "barang",
     });
     setIsModalOpen(true);
   };
@@ -160,11 +162,12 @@ function ProductPage() {
     form.setFieldsValue({
       sku: product.sku,
       barcode: product.barcode,
-      name: product.name,
-      description: product.description,
+      nama: product.nama,
+      deskripsi: product.deskripsi,
       categoryId: product.categoryId,
-      purchasePrice: parseFloat(product.purchasePrice),
-      sellingPrice: parseFloat(product.sellingPrice),
+      tipe: product.tipe,
+      hargaBeli: product.hargaBeli ? parseFloat(product.hargaBeli) : 0,
+      hargaJual: product.hargaJual ? parseFloat(product.hargaJual) : 0,
       minStockLevel: product.minStockLevel,
       unit: product.unit,
       isActive: product.isActive,
@@ -210,12 +213,22 @@ function ProductPage() {
   const handleModalOk = () => {
     form.validateFields().then((values) => {
       if (editingProduct) {
+        const data: UpdateProductDto = {
+          ...values,
+          hargaBeli: values.hargaBeli ? String(values.hargaBeli) : '0',
+          hargaJual: values.hargaJual ? String(values.hargaJual) : '0',
+        };
         updateMutation.mutate({
           id: editingProduct.id,
-          data: values,
+          data,
         });
       } else {
-        createMutation.mutate(values as CreateProductDto);
+        const createData = {
+          ...values,
+          hargaBeli: values.hargaBeli ? String(values.hargaBeli) : '0',
+          hargaJual: values.hargaJual ? String(values.hargaJual) : '0',
+        };
+        createMutation.mutate(createData as CreateProductDto);
       }
     });
   };
@@ -231,15 +244,15 @@ function ProductPage() {
     });
   };
 
-  const filteredProducts = products?.filter(
+  const filteredProducts = products?.data?.filter(
     (prod) =>
-      prod.name.toLowerCase().includes(searchText.toLowerCase()) ||
+      prod.nama.toLowerCase().includes(searchText.toLowerCase()) ||
       prod.sku.toLowerCase().includes(searchText.toLowerCase()) ||
       prod.barcode?.toLowerCase().includes(searchText.toLowerCase()),
   );
 
-  const categoryOptions = categories?.map((cat) => ({
-    label: cat.name,
+  const categoryOptions = categories?.data?.map((cat) => ({
+    label: cat.nama,
     value: cat.id,
   }));
 
@@ -260,35 +273,49 @@ function ProductPage() {
       render: (value: string) => <Text code>{value}</Text>,
     },
     {
-      title: "Name",
-      dataIndex: "name",
-      key: "name",
+      title: "Nama",
+      dataIndex: "nama",
+      key: "nama",
       render: (value: string) => <Text strong>{value}</Text>,
     },
     {
-      title: "Category",
-      dataIndex: ["category", "name"],
+      title: "Kategori",
+      dataIndex: "category",
       key: "category",
       width: 120,
-      render: (value: string | null) =>
-        value || <Text type="secondary">-</Text>,
+      render: (category: Category | null) =>
+        category?.nama || <Text type="secondary">-</Text>,
     },
     {
-      title: "Purchase Price",
-      dataIndex: "purchasePrice",
-      key: "purchasePrice",
+      title: "Tipe",
+      dataIndex: "tipe",
+      key: "tipe",
+      width: 80,
+      render: (value: string) => {
+        const colorMap: Record<string, string> = {
+          barang: "blue",
+          jasa: "purple",
+          digital: "cyan",
+        };
+        return <Tag color={colorMap[value] || "default"}>{value}</Tag>;
+      },
+    },
+    {
+      title: "Harga Beli",
+      dataIndex: "hargaBeli",
+      key: "hargaBeli",
+      width: 130,
+      render: (value: string | null) => formatRupiah(value || "0"),
+    },
+    {
+      title: "Harga Jual",
+      dataIndex: "hargaJual",
+      key: "hargaJual",
       width: 130,
       render: (value: string) => formatRupiah(value),
     },
     {
-      title: "Selling Price",
-      dataIndex: "sellingPrice",
-      key: "sellingPrice",
-      width: 130,
-      render: (value: string) => formatRupiah(value),
-    },
-    {
-      title: "Stock",
+      title: "Stok",
       dataIndex: "stockQuantity",
       key: "stockQuantity",
       width: 90,
@@ -408,13 +435,17 @@ function ProductPage() {
         }}
       >
         <Text type="secondary">
-          Showing {filteredProducts?.length || 0} products
+          Showing {filteredProducts?.length || 0} of {products?.meta?.total || 0} products
         </Text>
         <Pagination
-          total={filteredProducts?.length || 0}
-          pageSize={10}
+          current={products?.meta?.page || 1}
+          total={products?.meta?.total || 0}
+          pageSize={products?.meta?.limit || 10}
           showSizeChanger={false}
           size="small"
+          onChange={(page) => {
+            queryClient.invalidateQueries({ queryKey: ["products"] });
+          }}
         />
       </div>
 
@@ -445,34 +476,44 @@ function ProductPage() {
             </Col>
           </Row>
           <Form.Item
-            name="name"
+            name="nama"
             label="Product Name"
             rules={[{ required: true, message: "Please enter product name" }]}
           >
             <Input placeholder="Product name" />
           </Form.Item>
-          <Form.Item name="description" label="Description">
+          <Form.Item name="deskripsi" label="Description">
             <Input.TextArea
               placeholder="Product description (optional)"
               rows={2}
             />
           </Form.Item>
-          <Form.Item name="categoryId" label="Category">
-            <Select
-              placeholder="Select category"
-              options={categoryOptions}
-              allowClear
-            />
-          </Form.Item>
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item
-                name="purchasePrice"
-                label="Purchase Price"
-                rules={[
-                  { required: true, message: "Please enter purchase price" },
-                ]}
-              >
+              <Form.Item name="categoryId" label="Category">
+                <Select
+                  placeholder="Select category"
+                  options={categoryOptions}
+                  allowClear
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="tipe" label="Type">
+                <Select
+                  placeholder="Select type"
+                  options={[
+                    { label: "Barang (Physical)", value: "barang" },
+                    { label: "Jasa (Service)", value: "jasa" },
+                    { label: "Digital", value: "digital" },
+                  ]}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="hargaBeli" label="Purchase Price (Harga Beli)">
                 <InputNumber
                   placeholder="0"
                   min={0}
@@ -485,13 +526,7 @@ function ProductPage() {
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item
-                name="sellingPrice"
-                label="Selling Price"
-                rules={[
-                  { required: true, message: "Please enter selling price" },
-                ]}
-              >
+              <Form.Item name="hargaJual" label="Selling Price (Harga Jual)">
                 <InputNumber
                   placeholder="0"
                   min={0}
@@ -528,7 +563,7 @@ function ProductPage() {
       </Modal>
 
       <Modal
-        title={`Adjust Stock - ${adjustingProduct?.name || ""}`}
+        title={`Adjust Stock - ${adjustingProduct?.nama || ""}`}
         open={isStockModalOpen}
         onOk={handleStockModalOk}
         onCancel={handleStockModalCancel}

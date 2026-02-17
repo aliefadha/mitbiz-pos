@@ -21,6 +21,8 @@ import { Route as ProtectedInventoryOrderRouteImport } from './routes/_protected
 import { Route as ProtectedInventoryNewOrderRouteImport } from './routes/_protected/inventory/new-order'
 import { Route as ProtectedInventoryCategoryRouteImport } from './routes/_protected/inventory/category'
 import { Route as ProtectedTenantsIdIndexRouteImport } from './routes/_protected/tenants/$id/index'
+import { Route as ProtectedTenantsIdProductsNewRouteImport } from './routes/_protected/tenants/$id/products/new'
+import { Route as ProtectedTenantsIdProductsProductIdRouteImport } from './routes/_protected/tenants/$id/products/$productId'
 import { Route as ProtectedTenantsIdOutletsOutletIdRouteImport } from './routes/_protected/tenants/$id/outlets/$outletId'
 
 const LoginRoute = LoginRouteImport.update({
@@ -85,6 +87,18 @@ const ProtectedTenantsIdIndexRoute = ProtectedTenantsIdIndexRouteImport.update({
   path: '/tenants/$id/',
   getParentRoute: () => ProtectedRoute,
 } as any)
+const ProtectedTenantsIdProductsNewRoute =
+  ProtectedTenantsIdProductsNewRouteImport.update({
+    id: '/tenants/$id/products/new',
+    path: '/tenants/$id/products/new',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
+const ProtectedTenantsIdProductsProductIdRoute =
+  ProtectedTenantsIdProductsProductIdRouteImport.update({
+    id: '/tenants/$id/products/$productId',
+    path: '/tenants/$id/products/$productId',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
 const ProtectedTenantsIdOutletsOutletIdRoute =
   ProtectedTenantsIdOutletsOutletIdRouteImport.update({
     id: '/tenants/$id/outlets/$outletId',
@@ -105,6 +119,8 @@ export interface FileRoutesByFullPath {
   '/tenants/': typeof ProtectedTenantsIndexRoute
   '/tenants/$id/': typeof ProtectedTenantsIdIndexRoute
   '/tenants/$id/outlets/$outletId': typeof ProtectedTenantsIdOutletsOutletIdRoute
+  '/tenants/$id/products/$productId': typeof ProtectedTenantsIdProductsProductIdRoute
+  '/tenants/$id/products/new': typeof ProtectedTenantsIdProductsNewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -119,6 +135,8 @@ export interface FileRoutesByTo {
   '/tenants': typeof ProtectedTenantsIndexRoute
   '/tenants/$id': typeof ProtectedTenantsIdIndexRoute
   '/tenants/$id/outlets/$outletId': typeof ProtectedTenantsIdOutletsOutletIdRoute
+  '/tenants/$id/products/$productId': typeof ProtectedTenantsIdProductsProductIdRoute
+  '/tenants/$id/products/new': typeof ProtectedTenantsIdProductsNewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -135,6 +153,8 @@ export interface FileRoutesById {
   '/_protected/tenants/': typeof ProtectedTenantsIndexRoute
   '/_protected/tenants/$id/': typeof ProtectedTenantsIdIndexRoute
   '/_protected/tenants/$id/outlets/$outletId': typeof ProtectedTenantsIdOutletsOutletIdRoute
+  '/_protected/tenants/$id/products/$productId': typeof ProtectedTenantsIdProductsProductIdRoute
+  '/_protected/tenants/$id/products/new': typeof ProtectedTenantsIdProductsNewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -151,6 +171,8 @@ export interface FileRouteTypes {
     | '/tenants/'
     | '/tenants/$id/'
     | '/tenants/$id/outlets/$outletId'
+    | '/tenants/$id/products/$productId'
+    | '/tenants/$id/products/new'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -165,6 +187,8 @@ export interface FileRouteTypes {
     | '/tenants'
     | '/tenants/$id'
     | '/tenants/$id/outlets/$outletId'
+    | '/tenants/$id/products/$productId'
+    | '/tenants/$id/products/new'
   id:
     | '__root__'
     | '/'
@@ -180,6 +204,8 @@ export interface FileRouteTypes {
     | '/_protected/tenants/'
     | '/_protected/tenants/$id/'
     | '/_protected/tenants/$id/outlets/$outletId'
+    | '/_protected/tenants/$id/products/$productId'
+    | '/_protected/tenants/$id/products/new'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -274,6 +300,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedTenantsIdIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
+    '/_protected/tenants/$id/products/new': {
+      id: '/_protected/tenants/$id/products/new'
+      path: '/tenants/$id/products/new'
+      fullPath: '/tenants/$id/products/new'
+      preLoaderRoute: typeof ProtectedTenantsIdProductsNewRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/tenants/$id/products/$productId': {
+      id: '/_protected/tenants/$id/products/$productId'
+      path: '/tenants/$id/products/$productId'
+      fullPath: '/tenants/$id/products/$productId'
+      preLoaderRoute: typeof ProtectedTenantsIdProductsProductIdRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
     '/_protected/tenants/$id/outlets/$outletId': {
       id: '/_protected/tenants/$id/outlets/$outletId'
       path: '/tenants/$id/outlets/$outletId'
@@ -295,6 +335,8 @@ interface ProtectedRouteChildren {
   ProtectedTenantsIndexRoute: typeof ProtectedTenantsIndexRoute
   ProtectedTenantsIdIndexRoute: typeof ProtectedTenantsIdIndexRoute
   ProtectedTenantsIdOutletsOutletIdRoute: typeof ProtectedTenantsIdOutletsOutletIdRoute
+  ProtectedTenantsIdProductsProductIdRoute: typeof ProtectedTenantsIdProductsProductIdRoute
+  ProtectedTenantsIdProductsNewRoute: typeof ProtectedTenantsIdProductsNewRoute
 }
 
 const ProtectedRouteChildren: ProtectedRouteChildren = {
@@ -309,6 +351,9 @@ const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedTenantsIdIndexRoute: ProtectedTenantsIdIndexRoute,
   ProtectedTenantsIdOutletsOutletIdRoute:
     ProtectedTenantsIdOutletsOutletIdRoute,
+  ProtectedTenantsIdProductsProductIdRoute:
+    ProtectedTenantsIdProductsProductIdRoute,
+  ProtectedTenantsIdProductsNewRoute: ProtectedTenantsIdProductsNewRoute,
 }
 
 const ProtectedRouteWithChildren = ProtectedRoute._addFileChildren(
