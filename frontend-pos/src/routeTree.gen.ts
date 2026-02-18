@@ -16,11 +16,11 @@ import { Route as ProtectedDashboardRouteImport } from './routes/_protected/dash
 import { Route as ProtectedTenantsIndexRouteImport } from './routes/_protected/tenants/index'
 import { Route as ProtectedSettingsIndexRouteImport } from './routes/_protected/settings/index'
 import { Route as ProtectedAccountIndexRouteImport } from './routes/_protected/account/index'
-import { Route as ProtectedInventoryProductRouteImport } from './routes/_protected/inventory/product'
-import { Route as ProtectedInventoryOrderRouteImport } from './routes/_protected/inventory/order'
-import { Route as ProtectedInventoryNewOrderRouteImport } from './routes/_protected/inventory/new-order'
-import { Route as ProtectedInventoryCategoryRouteImport } from './routes/_protected/inventory/category'
 import { Route as ProtectedTenantsIdIndexRouteImport } from './routes/_protected/tenants/$id/index'
+import { Route as ProtectedTenantsIdUsersIndexRouteImport } from './routes/_protected/tenants/$id/users/index'
+import { Route as ProtectedTenantsIdProductsIndexRouteImport } from './routes/_protected/tenants/$id/products/index'
+import { Route as ProtectedTenantsIdOutletsIndexRouteImport } from './routes/_protected/tenants/$id/outlets/index'
+import { Route as ProtectedTenantsIdCategoriesIndexRouteImport } from './routes/_protected/tenants/$id/categories/index'
 import { Route as ProtectedTenantsIdProductsNewRouteImport } from './routes/_protected/tenants/$id/products/new'
 import { Route as ProtectedTenantsIdProductsProductIdRouteImport } from './routes/_protected/tenants/$id/products/$productId'
 import { Route as ProtectedTenantsIdOutletsOutletIdRouteImport } from './routes/_protected/tenants/$id/outlets/$outletId'
@@ -59,34 +59,35 @@ const ProtectedAccountIndexRoute = ProtectedAccountIndexRouteImport.update({
   path: '/account/',
   getParentRoute: () => ProtectedRoute,
 } as any)
-const ProtectedInventoryProductRoute =
-  ProtectedInventoryProductRouteImport.update({
-    id: '/inventory/product',
-    path: '/inventory/product',
-    getParentRoute: () => ProtectedRoute,
-  } as any)
-const ProtectedInventoryOrderRoute = ProtectedInventoryOrderRouteImport.update({
-  id: '/inventory/order',
-  path: '/inventory/order',
-  getParentRoute: () => ProtectedRoute,
-} as any)
-const ProtectedInventoryNewOrderRoute =
-  ProtectedInventoryNewOrderRouteImport.update({
-    id: '/inventory/new-order',
-    path: '/inventory/new-order',
-    getParentRoute: () => ProtectedRoute,
-  } as any)
-const ProtectedInventoryCategoryRoute =
-  ProtectedInventoryCategoryRouteImport.update({
-    id: '/inventory/category',
-    path: '/inventory/category',
-    getParentRoute: () => ProtectedRoute,
-  } as any)
 const ProtectedTenantsIdIndexRoute = ProtectedTenantsIdIndexRouteImport.update({
   id: '/tenants/$id/',
   path: '/tenants/$id/',
   getParentRoute: () => ProtectedRoute,
 } as any)
+const ProtectedTenantsIdUsersIndexRoute =
+  ProtectedTenantsIdUsersIndexRouteImport.update({
+    id: '/tenants/$id/users/',
+    path: '/tenants/$id/users/',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
+const ProtectedTenantsIdProductsIndexRoute =
+  ProtectedTenantsIdProductsIndexRouteImport.update({
+    id: '/tenants/$id/products/',
+    path: '/tenants/$id/products/',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
+const ProtectedTenantsIdOutletsIndexRoute =
+  ProtectedTenantsIdOutletsIndexRouteImport.update({
+    id: '/tenants/$id/outlets/',
+    path: '/tenants/$id/outlets/',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
+const ProtectedTenantsIdCategoriesIndexRoute =
+  ProtectedTenantsIdCategoriesIndexRouteImport.update({
+    id: '/tenants/$id/categories/',
+    path: '/tenants/$id/categories/',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
 const ProtectedTenantsIdProductsNewRoute =
   ProtectedTenantsIdProductsNewRouteImport.update({
     id: '/tenants/$id/products/new',
@@ -110,10 +111,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/dashboard': typeof ProtectedDashboardRoute
-  '/inventory/category': typeof ProtectedInventoryCategoryRoute
-  '/inventory/new-order': typeof ProtectedInventoryNewOrderRoute
-  '/inventory/order': typeof ProtectedInventoryOrderRoute
-  '/inventory/product': typeof ProtectedInventoryProductRoute
   '/account/': typeof ProtectedAccountIndexRoute
   '/settings/': typeof ProtectedSettingsIndexRoute
   '/tenants/': typeof ProtectedTenantsIndexRoute
@@ -121,15 +118,15 @@ export interface FileRoutesByFullPath {
   '/tenants/$id/outlets/$outletId': typeof ProtectedTenantsIdOutletsOutletIdRoute
   '/tenants/$id/products/$productId': typeof ProtectedTenantsIdProductsProductIdRoute
   '/tenants/$id/products/new': typeof ProtectedTenantsIdProductsNewRoute
+  '/tenants/$id/categories/': typeof ProtectedTenantsIdCategoriesIndexRoute
+  '/tenants/$id/outlets/': typeof ProtectedTenantsIdOutletsIndexRoute
+  '/tenants/$id/products/': typeof ProtectedTenantsIdProductsIndexRoute
+  '/tenants/$id/users/': typeof ProtectedTenantsIdUsersIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/dashboard': typeof ProtectedDashboardRoute
-  '/inventory/category': typeof ProtectedInventoryCategoryRoute
-  '/inventory/new-order': typeof ProtectedInventoryNewOrderRoute
-  '/inventory/order': typeof ProtectedInventoryOrderRoute
-  '/inventory/product': typeof ProtectedInventoryProductRoute
   '/account': typeof ProtectedAccountIndexRoute
   '/settings': typeof ProtectedSettingsIndexRoute
   '/tenants': typeof ProtectedTenantsIndexRoute
@@ -137,6 +134,10 @@ export interface FileRoutesByTo {
   '/tenants/$id/outlets/$outletId': typeof ProtectedTenantsIdOutletsOutletIdRoute
   '/tenants/$id/products/$productId': typeof ProtectedTenantsIdProductsProductIdRoute
   '/tenants/$id/products/new': typeof ProtectedTenantsIdProductsNewRoute
+  '/tenants/$id/categories': typeof ProtectedTenantsIdCategoriesIndexRoute
+  '/tenants/$id/outlets': typeof ProtectedTenantsIdOutletsIndexRoute
+  '/tenants/$id/products': typeof ProtectedTenantsIdProductsIndexRoute
+  '/tenants/$id/users': typeof ProtectedTenantsIdUsersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -144,10 +145,6 @@ export interface FileRoutesById {
   '/_protected': typeof ProtectedRouteWithChildren
   '/login': typeof LoginRoute
   '/_protected/dashboard': typeof ProtectedDashboardRoute
-  '/_protected/inventory/category': typeof ProtectedInventoryCategoryRoute
-  '/_protected/inventory/new-order': typeof ProtectedInventoryNewOrderRoute
-  '/_protected/inventory/order': typeof ProtectedInventoryOrderRoute
-  '/_protected/inventory/product': typeof ProtectedInventoryProductRoute
   '/_protected/account/': typeof ProtectedAccountIndexRoute
   '/_protected/settings/': typeof ProtectedSettingsIndexRoute
   '/_protected/tenants/': typeof ProtectedTenantsIndexRoute
@@ -155,6 +152,10 @@ export interface FileRoutesById {
   '/_protected/tenants/$id/outlets/$outletId': typeof ProtectedTenantsIdOutletsOutletIdRoute
   '/_protected/tenants/$id/products/$productId': typeof ProtectedTenantsIdProductsProductIdRoute
   '/_protected/tenants/$id/products/new': typeof ProtectedTenantsIdProductsNewRoute
+  '/_protected/tenants/$id/categories/': typeof ProtectedTenantsIdCategoriesIndexRoute
+  '/_protected/tenants/$id/outlets/': typeof ProtectedTenantsIdOutletsIndexRoute
+  '/_protected/tenants/$id/products/': typeof ProtectedTenantsIdProductsIndexRoute
+  '/_protected/tenants/$id/users/': typeof ProtectedTenantsIdUsersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -162,10 +163,6 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/dashboard'
-    | '/inventory/category'
-    | '/inventory/new-order'
-    | '/inventory/order'
-    | '/inventory/product'
     | '/account/'
     | '/settings/'
     | '/tenants/'
@@ -173,15 +170,15 @@ export interface FileRouteTypes {
     | '/tenants/$id/outlets/$outletId'
     | '/tenants/$id/products/$productId'
     | '/tenants/$id/products/new'
+    | '/tenants/$id/categories/'
+    | '/tenants/$id/outlets/'
+    | '/tenants/$id/products/'
+    | '/tenants/$id/users/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/login'
     | '/dashboard'
-    | '/inventory/category'
-    | '/inventory/new-order'
-    | '/inventory/order'
-    | '/inventory/product'
     | '/account'
     | '/settings'
     | '/tenants'
@@ -189,16 +186,16 @@ export interface FileRouteTypes {
     | '/tenants/$id/outlets/$outletId'
     | '/tenants/$id/products/$productId'
     | '/tenants/$id/products/new'
+    | '/tenants/$id/categories'
+    | '/tenants/$id/outlets'
+    | '/tenants/$id/products'
+    | '/tenants/$id/users'
   id:
     | '__root__'
     | '/'
     | '/_protected'
     | '/login'
     | '/_protected/dashboard'
-    | '/_protected/inventory/category'
-    | '/_protected/inventory/new-order'
-    | '/_protected/inventory/order'
-    | '/_protected/inventory/product'
     | '/_protected/account/'
     | '/_protected/settings/'
     | '/_protected/tenants/'
@@ -206,6 +203,10 @@ export interface FileRouteTypes {
     | '/_protected/tenants/$id/outlets/$outletId'
     | '/_protected/tenants/$id/products/$productId'
     | '/_protected/tenants/$id/products/new'
+    | '/_protected/tenants/$id/categories/'
+    | '/_protected/tenants/$id/outlets/'
+    | '/_protected/tenants/$id/products/'
+    | '/_protected/tenants/$id/users/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -265,39 +266,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedAccountIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/inventory/product': {
-      id: '/_protected/inventory/product'
-      path: '/inventory/product'
-      fullPath: '/inventory/product'
-      preLoaderRoute: typeof ProtectedInventoryProductRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
-    '/_protected/inventory/order': {
-      id: '/_protected/inventory/order'
-      path: '/inventory/order'
-      fullPath: '/inventory/order'
-      preLoaderRoute: typeof ProtectedInventoryOrderRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
-    '/_protected/inventory/new-order': {
-      id: '/_protected/inventory/new-order'
-      path: '/inventory/new-order'
-      fullPath: '/inventory/new-order'
-      preLoaderRoute: typeof ProtectedInventoryNewOrderRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
-    '/_protected/inventory/category': {
-      id: '/_protected/inventory/category'
-      path: '/inventory/category'
-      fullPath: '/inventory/category'
-      preLoaderRoute: typeof ProtectedInventoryCategoryRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
     '/_protected/tenants/$id/': {
       id: '/_protected/tenants/$id/'
       path: '/tenants/$id'
       fullPath: '/tenants/$id/'
       preLoaderRoute: typeof ProtectedTenantsIdIndexRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/tenants/$id/users/': {
+      id: '/_protected/tenants/$id/users/'
+      path: '/tenants/$id/users'
+      fullPath: '/tenants/$id/users/'
+      preLoaderRoute: typeof ProtectedTenantsIdUsersIndexRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/tenants/$id/products/': {
+      id: '/_protected/tenants/$id/products/'
+      path: '/tenants/$id/products'
+      fullPath: '/tenants/$id/products/'
+      preLoaderRoute: typeof ProtectedTenantsIdProductsIndexRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/tenants/$id/outlets/': {
+      id: '/_protected/tenants/$id/outlets/'
+      path: '/tenants/$id/outlets'
+      fullPath: '/tenants/$id/outlets/'
+      preLoaderRoute: typeof ProtectedTenantsIdOutletsIndexRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/tenants/$id/categories/': {
+      id: '/_protected/tenants/$id/categories/'
+      path: '/tenants/$id/categories'
+      fullPath: '/tenants/$id/categories/'
+      preLoaderRoute: typeof ProtectedTenantsIdCategoriesIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
     '/_protected/tenants/$id/products/new': {
@@ -326,10 +327,6 @@ declare module '@tanstack/react-router' {
 
 interface ProtectedRouteChildren {
   ProtectedDashboardRoute: typeof ProtectedDashboardRoute
-  ProtectedInventoryCategoryRoute: typeof ProtectedInventoryCategoryRoute
-  ProtectedInventoryNewOrderRoute: typeof ProtectedInventoryNewOrderRoute
-  ProtectedInventoryOrderRoute: typeof ProtectedInventoryOrderRoute
-  ProtectedInventoryProductRoute: typeof ProtectedInventoryProductRoute
   ProtectedAccountIndexRoute: typeof ProtectedAccountIndexRoute
   ProtectedSettingsIndexRoute: typeof ProtectedSettingsIndexRoute
   ProtectedTenantsIndexRoute: typeof ProtectedTenantsIndexRoute
@@ -337,14 +334,14 @@ interface ProtectedRouteChildren {
   ProtectedTenantsIdOutletsOutletIdRoute: typeof ProtectedTenantsIdOutletsOutletIdRoute
   ProtectedTenantsIdProductsProductIdRoute: typeof ProtectedTenantsIdProductsProductIdRoute
   ProtectedTenantsIdProductsNewRoute: typeof ProtectedTenantsIdProductsNewRoute
+  ProtectedTenantsIdCategoriesIndexRoute: typeof ProtectedTenantsIdCategoriesIndexRoute
+  ProtectedTenantsIdOutletsIndexRoute: typeof ProtectedTenantsIdOutletsIndexRoute
+  ProtectedTenantsIdProductsIndexRoute: typeof ProtectedTenantsIdProductsIndexRoute
+  ProtectedTenantsIdUsersIndexRoute: typeof ProtectedTenantsIdUsersIndexRoute
 }
 
 const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedDashboardRoute: ProtectedDashboardRoute,
-  ProtectedInventoryCategoryRoute: ProtectedInventoryCategoryRoute,
-  ProtectedInventoryNewOrderRoute: ProtectedInventoryNewOrderRoute,
-  ProtectedInventoryOrderRoute: ProtectedInventoryOrderRoute,
-  ProtectedInventoryProductRoute: ProtectedInventoryProductRoute,
   ProtectedAccountIndexRoute: ProtectedAccountIndexRoute,
   ProtectedSettingsIndexRoute: ProtectedSettingsIndexRoute,
   ProtectedTenantsIndexRoute: ProtectedTenantsIndexRoute,
@@ -354,6 +351,11 @@ const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedTenantsIdProductsProductIdRoute:
     ProtectedTenantsIdProductsProductIdRoute,
   ProtectedTenantsIdProductsNewRoute: ProtectedTenantsIdProductsNewRoute,
+  ProtectedTenantsIdCategoriesIndexRoute:
+    ProtectedTenantsIdCategoriesIndexRoute,
+  ProtectedTenantsIdOutletsIndexRoute: ProtectedTenantsIdOutletsIndexRoute,
+  ProtectedTenantsIdProductsIndexRoute: ProtectedTenantsIdProductsIndexRoute,
+  ProtectedTenantsIdUsersIndexRoute: ProtectedTenantsIdUsersIndexRoute,
 }
 
 const ProtectedRouteWithChildren = ProtectedRoute._addFileChildren(

@@ -1,11 +1,12 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { UserOutlined, LockOutlined } from "@ant-design/icons";
-import { Form, Input, Button, Card, Typography } from "antd";
 import { useLogin } from "../hooks/use-auth";
 import { authClient } from "../lib/auth-client";
 import { useState } from "react";
-
-const { Title, Text } = Typography;
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -20,77 +21,174 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   const loginMutation = useLogin();
   const [error, setError] = useState<string | null>(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
-  const onFinish = async (values: { email: string; password: string }) => {
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setError(null);
     try {
-      await loginMutation.mutate(values);
+      await loginMutation.mutate({ email, password });
     } catch (err: any) {
-      setError(err?.message || "Invalid email or password");
+      setError(err?.message || "Email atau password salah");
     }
   };
 
   return (
-    <div className="h-screen flex items-center justify-center">
-      <div className="w-full max-w-[90%] sm:max-w-md">
-        <Card variant='outlined' style={{ boxShadow: "none" }}>
-          <Title level={2} style={{ marginBottom: 24, textAlign: "center" }}>
-            Login
-          </Title>
-          <Form
-            name="login"
-            initialValues={{ email: "", password: "" }}
-            onFinish={onFinish}
-            layout="vertical"
-            size="large"
-          >
-            <Form.Item
-              name="email"
-              rules={[
-                { required: true, message: "Please enter your email" },
-                { type: "email", message: "Please enter a valid email" },
-              ]}
-              label="Email"
-            >
-              <Input
-                prefix={<UserOutlined />}
-                placeholder="email@example.com"
-              />
-            </Form.Item>
+    <div className="flex h-screen w-full overflow-hidden bg-linear-to-br from-[#0a1e5c] via-[#0d2a6e] to-[#1a4fa0] ">
+      {/* Left Panel - Branding */}
+      <div className="relative hidden md:flex md:flex-col md:w-5/12 lg:w-1/2 pt-10">
+        {/* Logo */}
+        <div className="relative z-10 p-10">
+          <img src="/images/logo-login.png" className="w-40 h-auto" />
+        </div>
 
-            <Form.Item
-              name="password"
-              rules={[
-                { required: true, message: "Please enter your password" },
-                { min: 8, message: "Password must be at least 8 characters" },
-              ]}
-              label="Password"
-            >
-              <Input.Password
-                prefix={<LockOutlined />}
-                placeholder="Enter your password"
+        {/* Hero Text & Badges - vertically centered */}
+        <div className="flex flex-col justify-center px-10 mt-40">
+          <div className="relative z-10">
+            <h1 className="mb-6 text-[1.5rem] lg:text-[2.5rem] leading-[1.15] font-bold tracking-tight text-white font-sans">
+              Sistem Kasir Multi Cabang
+              <br />
+              yang Lebih Terkontrol
+            </h1>
+<div className="flex flex-wrap gap-2 md:gap-3 font-sans">
+              <Badge
+                  variant="outline"
+                  className="rounded-full border-[#0C73E0] px-3 md:px-4 py-1 md:py-1.5 text-xs lg:text-sm font-medium text-white backdrop-blur-sm"
+              >
+                Transaksi Real-time
+              </Badge>
+              <Badge
+                  variant="outline"
+                  className="rounded-full border-[#0C73E0] px-3 md:px-4 py-1 md:py-1.5 text-xs lg:text-sm font-medium text-white backdrop-blur-sm"
+              >
+                Manajemen Stok Otomatis
+              </Badge>
+              <Badge
+                  variant="outline"
+                  className="rounded-full border-[#0C73E0] px-3 md:px-4 py-1 md:py-1.5 text-xs lg:text-sm font-medium text-white backdrop-blur-sm"
+              >
+                Laporan Per Cabang
+              </Badge>
+            </div>
+          </div>
+        </div>
+        
+        <div className="pointer-events-none absolute -bottom-8 -left-8 z-0 h-[450px] w-[450px]">
+          <img
+              src="/images/login.png"
+              className="h-full w-full object-cover"
+          />
+        </div>
+
+        {/* Subtle background glow effects */}
+        <div className="pointer-events-none absolute -right-32 -top-32 h-[500px] w-[500px] rounded-full bg-blue-400/10 blur-[120px]" />
+        <div className="pointer-events-none absolute -bottom-24 left-1/4 h-[400px] w-[400px] rounded-full bg-blue-300/8 blur-[100px]" />
+      </div>
+
+      {/* Right Panel - Login Form */}
+      <div className="flex w-full items-center justify-center px-6 md:w-7/12 lg:w-1/2 font-sans">
+        <div className="w-full max-w-[700px] rounded-2xl bg-white p-10 lg:p-24 shadow-sm">
+          <div className="mb-8">
+            <h2 className="text-xl md:text-2xl lg:text-xl font-bold tracking-tight text-gray-900">
+              Masuk ke Mitbiz POS
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-gray-500">
+              Kelola transaksi, stok, dan laporan dalam satu
+              <br />
+              sistem terintegrasi.
+            </p>
+          </div>
+
+          <form onSubmit={onSubmit} className="space-y-5">
+            <div className="space-y-2">
+              <Label
+                htmlFor="email"
+                className="text-sm font-medium text-gray-700"
+              >
+                Email
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="Input your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="h-11 rounded-lg border-gray-200 bg-white px-4 text-sm placeholder:text-gray-400 focus-visible:ring-blue-500"
               />
-            </Form.Item>
+            </div>
+
+            <div className="space-y-2">
+              <Label
+                htmlFor="password"
+                className="text-sm font-medium text-gray-700"
+              >
+                Password
+              </Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Input your store password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={8}
+                  className="h-11 rounded-lg border-gray-200 bg-white px-4 pr-10 text-sm placeholder:text-gray-400 focus-visible:ring-blue-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  className="mt-1 text-sm font-medium text-blue-600 transition-colors hover:text-blue-700 hover:underline"
+                >
+                  Lupa password?
+                </button>
+              </div>
+            </div>
 
             {error && (
-              <div style={{ marginBottom: 24, textAlign: "center" }}>
-                <Text type="danger">{error}</Text>
+              <div className="rounded-lg bg-red-50 px-4 py-3 text-center text-sm text-red-600">
+                {error}
               </div>
             )}
 
-            <Form.Item style={{ marginBottom: 0 }}>
-              <Button
-                type="primary"
-                htmlType="submit"
-                block
-                loading={loginMutation.isPending}
-                style={{ height: 40, backgroundColor: "black" }}
-              >
-                {loginMutation.isPending ? "Signing in..." : "Sign In"}
-              </Button>
-            </Form.Item>
-          </Form>
-        </Card>
+            <Button
+              type="submit"
+              disabled={loginMutation.isPending}
+              className="h-12 w-full rounded-full bg-blue-600 text-base font-semibold text-white shadow-md transition-all hover:bg-blue-700 hover:shadow-lg active:scale-[0.98]"
+            >
+              {loginMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                "Next"
+              )}
+            </Button>
+
+            <p className="pt-2 text-center text-sm text-gray-500">
+              Butuh bantuan?{" "}
+              <span className="font-semibold text-gray-900">
+                Hubungi admin bisnis Anda.
+              </span>
+            </p>
+          </form>
+        </div>
       </div>
     </div>
   );

@@ -105,4 +105,15 @@ export class TenantsController {
   ) {
     return this.tenantsService.getSummary(slug, user);
   }
+
+  @Roles(['admin', 'owner'])
+  @Get(':slug/users')
+  @ApiOperation({ summary: 'Get all users for a tenant' })
+  @UsePipes(new ZodValidationPipe(TenantSlugSchema, 'params'))
+  findUsers(
+    @Param() { slug }: TenantSlugDto,
+    @CurrentUser() user: CurrentUserType,
+  ) {
+    return this.tenantsService.findUsers(slug, user);
+  }
 }

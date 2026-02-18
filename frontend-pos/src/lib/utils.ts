@@ -1,5 +1,8 @@
-export function cn(...inputs: string[]): string {
-  return inputs.filter(Boolean).join(" ");
+import { clsx, type ClassValue } from "clsx"
+import { twMerge } from "tailwind-merge"
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
 }
 
 export function formatRupiah(amount: string | number): string {
@@ -44,9 +47,9 @@ export function formatDateTime(dateString?: string): string | null {
 
 export function generateSlug(text: string): string {
   return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_-]+/g, '-')
+      .replace(/^-+|-+$/g, '');
 }

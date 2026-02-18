@@ -15,6 +15,20 @@ export interface User {
   image: string | null;
   createdAt: Date;
   updatedAt: Date;
+  role?: "admin" | "owner" | "cashier";
+  outletId?: number | null;
+}
+
+export interface Outlet {
+  id: number;
+  tenantId: number;
+  name: string;
+  kode: string;
+  alamat?: string;
+  noHp?: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt?: Date;
 }
 
 export interface Tenant {
@@ -23,6 +37,7 @@ export interface Tenant {
   slug: string;
   userId: string;
   user?: User;
+  users?: User[];
   settings?: TenantSettings;
   image?: string;
   alamat?: string;
@@ -30,6 +45,7 @@ export interface Tenant {
   isActive: boolean;
   createdAt: Date;
   updatedAt?: Date;
+  outlets?: Outlet[];
 }
 
 export interface TenantQueryParams {
@@ -122,5 +138,9 @@ export const tenantsApi = {
       method: "DELETE",
       userId,
     });
+  },
+
+  getUsers: async (slug: string): Promise<{ data: User[] }> => {
+    return fetchApi<{ data: User[] }>(`/tenants/${slug}/users`);
   },
 };

@@ -21,7 +21,6 @@ export class CategoriesService {
     const { page = 1, limit = 10, search, isActive, tenantId } = query;
     const offset = (page - 1) * limit;
 
-    // Get user's tenant ID if owner or cashier
     let effectiveTenantId = tenantId;
     if (user.role === 'owner' || user.role === 'cashier') {
       const userTenant = await this.db.query.tenants.findFirst({
@@ -48,10 +47,35 @@ export class CategoriesService {
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
+    const productCountSubquery = this.db
+      .select({
+        categoryId: products.categoryId,
+        count: count().as('count'),
+      })
+      .from(products)
+      .where(
+        and(
+          effectiveTenantId ? eq(products.tenantId, effectiveTenantId) : undefined,
+          eq(products.isActive, true),
+        ),
+      )
+      .groupBy(products.categoryId)
+      .as('product_counts');
+
     const [data, totalResult] = await Promise.all([
       this.db
-        .select()
+        .select({
+          id: categories.id,
+          tenantId: categories.tenantId,
+          nama: categories.nama,
+          deskripsi: categories.deskripsi,
+          isActive: categories.isActive,
+          createdAt: categories.createdAt,
+          updatedAt: categories.updatedAt,
+          productsCount: sql<number>`COALESCE(${productCountSubquery.count}, 0)`,
+        })
         .from(categories)
+        .leftJoin(productCountSubquery, eq(categories.id, productCountSubquery.categoryId))
         .where(whereClause)
         .limit(limit)
         .offset(offset)
@@ -64,41 +88,8 @@ export class CategoriesService {
 
     const total = Number(totalResult[0]?.count || 0);
 
-    const categoryIds = data.map((c) => c.id);
-    let productCounts: { categoryId: number; count: number }[] = [];
-
-    if (categoryIds.length > 0) {
-      const productCountResult = await this.db
-        .select({
-          categoryId: products.categoryId,
-          count: count(),
-        })
-        .from(products)
-        .where(
-          and(
-            eq(products.isActive, true),
-            sql`${products.categoryId} IN (${sql.join(
-              categoryIds.map((id) => sql`${id}`),
-              sql`, `,
-            )})`,
-          ),
-        )
-        .groupBy(products.categoryId);
-
-      productCounts = productCountResult.map((p) => ({
-        categoryId: p.categoryId!,
-        count: Number(p.count),
-      }));
-    }
-
-    const dataWithProductCount = data.map((category) => ({
-      ...category,
-      productsCount:
-        productCounts.find((p) => p.categoryId === category.id)?.count || 0,
-    }));
-
     return {
-      data: dataWithProductCount,
+      data: data,
       meta: {
         page,
         limit,

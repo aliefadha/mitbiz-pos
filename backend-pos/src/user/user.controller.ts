@@ -14,13 +14,17 @@ import type { Request as ExpressRequest } from 'express';
 import { fromNodeHeaders } from 'better-auth/node';
 import { CreateUserSchema, CreateUserDto } from './dto';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
+import { UserService } from './user.service';
 
 @Controller('users')
 @UseGuards(AuthGuard)
 export class UserController {
-  constructor(private authService: AuthService<typeof auth>) {}
+  constructor(
+    private authService: AuthService<typeof auth>,
+    private userService: UserService,
+  ) {}
 
-  @Roles(['admin'])
+  // @Roles(['admin'])
   @Get()
   async getUsers(@Request() req: ExpressRequest) {
     const users = await this.authService.api.listUsers({
@@ -37,11 +41,8 @@ export class UserController {
     @Body() body: CreateUserDto,
     @Request() req: ExpressRequest,
   ) {
-    const user = await this.authService.api.createUser({
-      body: body as any,
-      headers: fromNodeHeaders(req.headers),
-    });
-    return user;
+    const headers = fromNodeHeaders(req.headers);
+    return this.userService.createUser(body, headers as any);
   }
 
   @Get('me')

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { useParams, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Button,
@@ -9,13 +9,12 @@ import {
   Form,
   Typography,
   Space,
-  Pagination,
-  Switch,
+  Tag,
   Select,
   InputNumber,
   Row,
   Col,
-  Tag,
+  message,
 } from "antd";
 import {
   PlusOutlined,
@@ -23,6 +22,7 @@ import {
   DeleteOutlined,
   SearchOutlined,
   SwapOutlined,
+  ArrowLeftOutlined,
 } from "@ant-design/icons";
 import {
   productsApi,
@@ -33,13 +33,9 @@ import {
 } from "@/lib/api/products";
 import { categoriesApi } from "@/lib/api/categories";
 import type { Category } from "@/lib/api/categories";
-import { message } from "antd";
+import { tenantsApi } from "@/lib/api/tenants";
 
 const { Title, Text } = Typography;
-
-export const Route = createFileRoute("/_protected/inventory/product")({
-  component: ProductPage,
-});
 
 function formatRupiah(value: number | string): string {
   const num = typeof value === "string" ? parseFloat(value) : value;
@@ -51,35 +47,41 @@ function formatRupiah(value: number | string): string {
   }).format(num);
 }
 
-function ProductPage() {
+export function TenantProductsPage() {
+  const { id } = useParams({ from: "/_protected/tenants/$id/products/" });
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isStockModalOpen, setIsStockModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [adjustingProduct, setAdjustingProduct] = useState<Product | null>(
-    null,
-  );
+  const [adjustingProduct, setAdjustingProduct] = useState<Product | null>(null);
   const [searchText, setSearchText] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<number | undefined>(
-    undefined,
-  );
+  const [categoryFilter, setCategoryFilter] = useState<number | undefined>(undefined);
   const [form] = Form.useForm();
   const [stockForm] = Form.useForm();
 
+  const { data: tenant } = useQuery({
+    queryKey: ["tenant", id],
+    queryFn: () => tenantsApi.getBySlug(id),
+  });
+
   const { data: products, isLoading } = useQuery({
-    queryKey: ["products", { categoryId: categoryFilter }],
-    queryFn: () => productsApi.getAll({ categoryId: categoryFilter, isActive: true }),
+    queryKey: ["products", tenant?.id],
+    queryFn: () => productsApi.getAll({ tenantId: tenant!.id }),
+    enabled: !!tenant?.id,
   });
 
   const { data: categories } = useQuery({
-    queryKey: ["categories"],
-    queryFn: categoriesApi.getAll,
+    queryKey: ["categories", tenant?.id],
+    queryFn: () => categoriesApi.getAll({ tenantId: tenant!.id }),
+    enabled: !!tenant?.id,
   });
 
   const createMutation = useMutation({
-    mutationFn: productsApi.create,
+    mutationFn: (data: CreateProductDto) => productsApi.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["products", tenant?.id] });
       message.success("Product created successfully");
       setIsModalOpen(false);
       form.resetFields();
@@ -93,7 +95,7 @@ function ProductPage() {
     mutationFn: ({ id, data }: { id: number; data: UpdateProductDto }) =>
       productsApi.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["products", tenant?.id] });
       message.success("Product updated successfully");
       setIsModalOpen(false);
       setEditingProduct(null);
@@ -110,7 +112,7 @@ function ProductPage() {
       return productsApi.update(id, { isActive: !product?.isActive });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["products", tenant?.id] });
       message.success("Product status updated successfully");
     },
     onError: (error: Error) => {
@@ -122,7 +124,7 @@ function ProductPage() {
     mutationFn: ({ id, data }: { id: number; data: AdjustStockDto }) =>
       productsApi.adjustStock(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["products", tenant?.id] });
       message.success("Stock adjusted successfully");
       setIsStockModalOpen(false);
       setAdjustingProduct(null);
@@ -136,7 +138,7 @@ function ProductPage() {
   const deleteMutation = useMutation({
     mutationFn: productsApi.delete,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["products", tenant?.id] });
       message.success("Product deleted successfully");
     },
     onError: (error: Error) => {
@@ -188,8 +190,7 @@ function ProductPage() {
   const handleDelete = (id: number) => {
     Modal.confirm({
       title: "Delete Product",
-      content:
-        "Are you sure you want to delete this product? This action cannot be undone.",
+      content: "Are you sure you want to delete this product? This action cannot be undone.",
       okText: "Delete",
       okType: "danger",
       onOk: () => {
@@ -215,18 +216,16 @@ function ProductPage() {
       if (editingProduct) {
         const data: UpdateProductDto = {
           ...values,
-          hargaBeli: values.hargaBeli ? String(values.hargaBeli) : '0',
-          hargaJual: values.hargaJual ? String(values.hargaJual) : '0',
+          hargaBeli: values.hargaBeli ? String(values.hargaBeli) : "0",
+          hargaJual: values.hargaJual ? String(values.hargaJual) : "0",
         };
-        updateMutation.mutate({
-          id: editingProduct.id,
-          data,
-        });
+        updateMutation.mutate({ id: editingProduct.id, data });
       } else {
         const createData = {
           ...values,
-          hargaBeli: values.hargaBeli ? String(values.hargaBeli) : '0',
-          hargaJual: values.hargaJual ? String(values.hargaJual) : '0',
+          tenantId: tenant?.id,
+          hargaBeli: values.hargaBeli ? String(values.hargaBeli) : "0",
+          hargaJual: values.hargaJual ? String(values.hargaJual) : "0",
         };
         createMutation.mutate(createData as CreateProductDto);
       }
@@ -283,8 +282,7 @@ function ProductPage() {
       dataIndex: "category",
       key: "category",
       width: 120,
-      render: (category: Category | null) =>
-        category?.nama || <Text type="secondary">-</Text>,
+      render: (category: Category | null) => category?.nama || <Text type="secondary">-</Text>,
     },
     {
       title: "Tipe",
@@ -297,7 +295,7 @@ function ProductPage() {
           jasa: "purple",
           digital: "cyan",
         };
-        return <Tag color={colorMap[value] || "default"}>{value}</Tag>;
+        return <Tag color={colorMap[value] || "default"} className="capitalize">{value}</Tag>;
       },
     },
     {
@@ -321,11 +319,7 @@ function ProductPage() {
       width: 90,
       render: (value: number, record: Product) => {
         const isLow = value <= record.minStockLevel;
-        return (
-          <Tag color={isLow ? "red" : "green"}>
-            {value} {record.unit}
-          </Tag>
-        );
+        return <Tag color={isLow ? "red" : "green"}>{value} {record.unit}</Tag>;
       },
     },
     {
@@ -334,12 +328,14 @@ function ProductPage() {
       key: "isActive",
       width: 100,
       render: (value: boolean, record: Product) => (
-        <Switch
-          checked={value}
-          onChange={() => handleToggleStatus(record.id)}
-          checkedChildren="On"
-          unCheckedChildren="Off"
-        />
+        <Button
+          type="text"
+          size="small"
+          onClick={() => handleToggleStatus(record.id)}
+          style={{ color: value ? "#52c41a" : "#ff4d4f" }}
+        >
+          {value ? "Active" : "Inactive"}
+        </Button>
       ),
     },
     {
@@ -353,17 +349,20 @@ function ProductPage() {
             icon={<SwapOutlined />}
             onClick={() => handleAdjustStock(record)}
             title="Adjust Stock"
+            size="small"
           />
           <Button
             type="text"
             icon={<EditOutlined />}
             onClick={() => handleEdit(record)}
+            size="small"
           />
           <Button
             type="text"
             danger
             icon={<DeleteOutlined />}
             onClick={() => handleDelete(record.id)}
+            size="small"
           />
         </Space>
       ),
@@ -372,6 +371,15 @@ function ProductPage() {
 
   return (
     <div>
+      <Button
+        type="link"
+        icon={<ArrowLeftOutlined />}
+        onClick={() => navigate({ to: "/tenants/$id", params: { id } })}
+        style={{ marginBottom: 16, paddingLeft: 0 }}
+      >
+        Back to {tenant?.nama || "Tenant"}
+      </Button>
+
       <div
         style={{
           display: "flex",
@@ -382,9 +390,9 @@ function ProductPage() {
       >
         <div>
           <Title level={4} style={{ margin: 0 }}>
-            Master Produk
+            Products
           </Title>
-          <Text type="secondary">Manage product inventory</Text>
+          <Text type="secondary">Manage products for {tenant?.nama}</Text>
         </div>
         <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
           Add Product
@@ -419,35 +427,10 @@ function ProductPage() {
         columns={columns}
         rowKey="id"
         loading={isLoading}
-        pagination={false}
+        pagination={{ pageSize: 10 }}
         size="small"
-        locale={{
-          emptyText: "No products found.",
-        }}
+        locale={{ emptyText: "No products found." }}
       />
-
-      <div
-        style={{
-          marginTop: 16,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <Text type="secondary">
-          Showing {filteredProducts?.length || 0} of {products?.meta?.total || 0} products
-        </Text>
-        <Pagination
-          current={products?.meta?.page || 1}
-          total={products?.meta?.total || 0}
-          pageSize={products?.meta?.limit || 10}
-          showSizeChanger={false}
-          size="small"
-          onChange={(page) => {
-            queryClient.invalidateQueries({ queryKey: ["products"] });
-          }}
-        />
-      </div>
 
       <Modal
         title={editingProduct ? "Edit Product" : "Add Product"}
@@ -483,19 +466,12 @@ function ProductPage() {
             <Input placeholder="Product name" />
           </Form.Item>
           <Form.Item name="deskripsi" label="Description">
-            <Input.TextArea
-              placeholder="Product description (optional)"
-              rows={2}
-            />
+            <Input.TextArea placeholder="Product description (optional)" rows={2} />
           </Form.Item>
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item name="categoryId" label="Category">
-                <Select
-                  placeholder="Select category"
-                  options={categoryOptions}
-                  allowClear
-                />
+                <Select placeholder="Select category" options={categoryOptions} allowClear />
               </Form.Item>
             </Col>
             <Col span={12}>
@@ -519,9 +495,7 @@ function ProductPage() {
                   min={0}
                   style={{ width: "100%" }}
                   formatter={(value) => (value ? formatRupiah(value) : "")}
-                  parser={(value) =>
-                    value?.replace(/[^\d]/g, "") as unknown as number
-                  }
+                  parser={(value) => (value?.replace(/[^\d]/g, "") || 0) as unknown as number}
                 />
               </Form.Item>
             </Col>
@@ -532,9 +506,7 @@ function ProductPage() {
                   min={0}
                   style={{ width: "100%" }}
                   formatter={(value) => (value ? formatRupiah(value) : "")}
-                  parser={(value) =>
-                    value?.replace(/[^\d]/g, "") as unknown as number
-                  }
+                  parser={(value) => (value?.replace(/[^\d]/g, "") || 0) as unknown as number}
                 />
               </Form.Item>
             </Col>
@@ -557,7 +529,12 @@ function ProductPage() {
             </Col>
           </Row>
           <Form.Item name="isActive" label="Status" valuePropName="checked">
-            <Switch checkedChildren="Active" unCheckedChildren="Inactive" />
+            <Select
+              options={[
+                { label: "Active", value: true },
+                { label: "Inactive", value: false },
+              ]}
+            />
           </Form.Item>
         </Form>
       </Modal>
@@ -583,18 +560,12 @@ function ProductPage() {
             rules={[{ required: true, message: "Please enter quantity" }]}
             extra="Use positive numbers to add stock, negative to reduce"
           >
-            <InputNumber
-              placeholder="0"
-              style={{ width: "100%" }}
-              allowNegative
-            />
+            <InputNumber placeholder="0" style={{ width: "100%" }} />
           </Form.Item>
           <Form.Item
             name="reason"
             label="Reason"
-            rules={[
-              { required: true, message: "Please enter reason for adjustment" },
-            ]}
+            rules={[{ required: true, message: "Please enter reason for adjustment" }]}
           >
             <Input.TextArea
               placeholder="e.g., Stock count correction, Damaged goods, New shipment received"

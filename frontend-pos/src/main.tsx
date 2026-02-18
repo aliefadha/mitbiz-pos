@@ -6,6 +6,12 @@ import * as TanStackQueryProvider from "./integrations/tanstack-query/root-provi
 
 import { routeTree } from "./routeTree.gen";
 
+// Import Plus Jakarta Sans font
+import "@fontsource/plus-jakarta-sans/400.css";
+import "@fontsource/plus-jakarta-sans/500.css";
+import "@fontsource/plus-jakarta-sans/600.css";
+import "@fontsource/plus-jakarta-sans/700.css";
+
 import "./styles.css";
 import reportWebVitals from "./reportWebVitals.ts";
 import { ErrorBoundary } from "./components/error-boundary.tsx";

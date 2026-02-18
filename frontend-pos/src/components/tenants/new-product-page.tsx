@@ -41,7 +41,7 @@ export function NewProductPage() {
     }) => productsApi.create(data),
     onSuccess: () => {
       message.success("Produk berhasil dibuat");
-      navigate({ to: "/tenants/$id", params: { id } });
+      navigate({ to: "/tenants/$id/products" as any, params: { id } });
     },
     onError: (error: Error) => {
       message.error(error.message || "Gagal membuat produk");

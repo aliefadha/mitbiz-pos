@@ -3,13 +3,13 @@ import { useParams, useNavigate } from "@tanstack/react-router";
 import { ArrowLeftOutlined, PlusOutlined, EditOutlined, ShoppingCartOutlined, HistoryOutlined } from "@ant-design/icons";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { productsApi, type Product, type UpdateProductDto } from "@/lib/api/products";
+import { productsApi, type UpdateProductDto } from "@/lib/api/products";
 import { stocksApi } from "@/lib/api/stocks";
 import { stockAdjustmentsApi } from "@/lib/api/stock-adjustments";
 import { outletsApi } from "@/lib/api/outlets";
 import { categoriesApi } from "@/lib/api/categories";
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 
 function formatRupiah(value: number | string): string {
   const num = typeof value === "string" ? parseFloat(value) : value;

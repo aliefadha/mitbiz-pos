@@ -92,11 +92,8 @@ export function AppLayout() {
           }}
         >
           {!collapsed && (
-            <div style={{ display: "flex", alignItems: "center" }}>
-              <HomeOutlined style={{ fontSize: 20, color: "#1890ff" }} />
-              <Text strong style={{ marginLeft: 8, fontSize: 16 }}>
-                POS
-              </Text>
+            <div className="mx-auto">
+              <img src="/mitbiz-pos.png" className="w-32 mx-auto" />
             </div>
           )}
           {collapsed && (
@@ -176,7 +173,7 @@ export function AppLayout() {
                 <Avatar icon={<UserOutlined />} />
                 <div style={{ lineHeight: 1.2 }}>
                   <Text strong style={{ display: "block", fontSize: 14 }}>
-                    {user?.nama || "User"}
+                    {user?.name || "User"}
                   </Text>
                   <Text type="secondary" style={{ fontSize: 12 }}>
                     {user?.email || ""}

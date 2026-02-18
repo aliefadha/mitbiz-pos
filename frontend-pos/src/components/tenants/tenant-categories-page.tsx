@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { useParams, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Button,
@@ -9,40 +9,45 @@ import {
   Form,
   Typography,
   Space,
-  Pagination,
   Switch,
+  message,
 } from "antd";
 import {
   PlusOutlined,
   EditOutlined,
   DeleteOutlined,
   SearchOutlined,
+  ArrowLeftOutlined,
 } from "@ant-design/icons";
 import { categoriesApi, type Category, type CreateCategoryDto, type UpdateCategoryDto } from "@/lib/api/categories";
-import { message } from "antd";
+import { tenantsApi } from "@/lib/api/tenants";
 
 const { Title, Text } = Typography;
 
-export const Route = createFileRoute("/_protected/inventory/category")({
-  component: CategoryPage,
-});
-
-function CategoryPage() {
+export function TenantCategoriesPage() {
+  const { id } = useParams({ from: "/_protected/tenants/$id/categories/" });
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [searchText, setSearchText] = useState("");
   const [form] = Form.useForm();
 
+  const { data: tenant } = useQuery({
+    queryKey: ["tenant", id],
+    queryFn: () => tenantsApi.getBySlug(id),
+  });
+
   const { data: categories, isLoading } = useQuery({
-    queryKey: ["categories"],
-    queryFn: categoriesApi.getAll,
+    queryKey: ["categories", tenant?.id],
+    queryFn: () => categoriesApi.getAll({ tenantId: tenant!.id }),
+    enabled: !!tenant?.id,
   });
 
   const createMutation = useMutation({
-    mutationFn: categoriesApi.create,
+    mutationFn: (data: CreateCategoryDto) => categoriesApi.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      queryClient.invalidateQueries({ queryKey: ["categories", tenant?.id] });
       message.success("Category created successfully");
       setIsModalOpen(false);
       form.resetFields();
@@ -56,7 +61,7 @@ function CategoryPage() {
     mutationFn: ({ id, data }: { id: number; data: UpdateCategoryDto }) =>
       categoriesApi.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      queryClient.invalidateQueries({ queryKey: ["categories", tenant?.id] });
       message.success("Category updated successfully");
       setIsModalOpen(false);
       setEditingCategory(null);
@@ -70,7 +75,7 @@ function CategoryPage() {
   const toggleStatusMutation = useMutation({
     mutationFn: categoriesApi.toggleStatus,
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      queryClient.invalidateQueries({ queryKey: ["categories", tenant?.id] });
       message.success(
         data.isActive
           ? "Category activated successfully"
@@ -85,7 +90,7 @@ function CategoryPage() {
   const deleteMutation = useMutation({
     mutationFn: categoriesApi.delete,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      queryClient.invalidateQueries({ queryKey: ["categories", tenant?.id] });
       message.success("Category deleted successfully");
     },
     onError: (error: Error) => {
@@ -102,8 +107,8 @@ function CategoryPage() {
   const handleEdit = (category: Category) => {
     setEditingCategory(category);
     form.setFieldsValue({
-      name: category.nama,
-      description: category.deskripsi,
+      nama: category.nama,
+      deskripsi: category.deskripsi,
     });
     setIsModalOpen(true);
   };
@@ -138,12 +143,15 @@ function CategoryPage() {
           data: values,
         });
       } else {
-        createMutation.mutate(values as CreateCategoryDto);
+        createMutation.mutate({
+          ...values,
+          tenantId: tenant!.id,
+        } as CreateCategoryDto);
       }
     });
   };
 
-  const filteredCategories = categories?.filter(
+  const filteredCategories = categories?.data?.filter(
     (cat: Category) =>
       cat.nama.toLowerCase().includes(searchText.toLowerCase()) ||
       cat.deskripsi?.toLowerCase().includes(searchText.toLowerCase())
@@ -159,18 +167,24 @@ function CategoryPage() {
       ),
     },
     {
-      title: "Name",
-      dataIndex: "name",
-      key: "name",
+      title: "Nama",
+      dataIndex: "nama",
+      key: "nama",
       render: (value: string) => <Text strong>{value}</Text>,
     },
     {
-      title: "Description",
-      dataIndex: "description",
-      key: "description",
+      title: "Deskripsi",
+      dataIndex: "deskripsi",
+      key: "deskripsi",
       render: (value: string | null) => (
         <Text type="secondary">{value || "-"}</Text>
       ),
+    },
+    {
+      title: "Jumlah Produk",
+      dataIndex: "productsCount",
+      key: "productsCount",
+      render: (count: number) => count || 0,
     },
     {
       title: "Status",
@@ -210,6 +224,15 @@ function CategoryPage() {
 
   return (
     <div>
+      <Button
+        type="link"
+        icon={<ArrowLeftOutlined />}
+        onClick={() => navigate({ to: "/tenants/$id", params: { id } })}
+        style={{ marginBottom: 16, paddingLeft: 0 }}
+      >
+        Back to {tenant?.nama || "Tenant"}
+      </Button>
+
       <div
         style={{
           display: "flex",
@@ -220,9 +243,9 @@ function CategoryPage() {
       >
         <div>
           <Title level={4} style={{ margin: 0 }}>
-            Master Kategori
+            Categories
           </Title>
-          <Text type="secondary">Manage product categories</Text>
+          <Text type="secondary">Manage categories for {tenant?.nama}</Text>
         </div>
         <Button
           type="primary"
@@ -249,31 +272,12 @@ function CategoryPage() {
         columns={columns}
         rowKey="id"
         loading={isLoading}
-        pagination={false}
+        pagination={{ pageSize: 10 }}
         size="small"
         locale={{
           emptyText: "No categories found.",
         }}
       />
-
-      <div
-        style={{
-          marginTop: 16,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <Text type="secondary">
-          Showing {filteredCategories?.length || 0} categories
-        </Text>
-        <Pagination
-          total={filteredCategories?.length || 0}
-          pageSize={10}
-          showSizeChanger={false}
-          size="small"
-        />
-      </div>
 
       <Modal
         title={editingCategory ? "Edit Category" : "Add Category"}
@@ -284,15 +288,15 @@ function CategoryPage() {
       >
         <Form form={form} layout="vertical">
           <Form.Item
-            name="name"
-            label="Name"
+            name="nama"
+            label="Nama"
             rules={[
               { required: true, message: "Please enter the category name" },
             ]}
           >
             <Input placeholder="Category name" />
           </Form.Item>
-          <Form.Item name="description" label="Description">
+          <Form.Item name="deskripsi" label="Deskripsi">
             <Input.TextArea
               placeholder="Category description (optional)"
               rows={3}
