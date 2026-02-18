@@ -22,9 +22,9 @@ export class UserController {
   constructor(
     private authService: AuthService<typeof auth>,
     private userService: UserService,
-  ) {}
+  ) { }
 
-  // @Roles(['admin'])
+  @Roles(['admin', 'owner'])
   @Get()
   async getUsers(@Request() req: ExpressRequest) {
     const users = await this.authService.api.listUsers({

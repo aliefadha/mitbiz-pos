@@ -3,6 +3,7 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { admin, openAPI } from 'better-auth/plugins';
 import { db } from '../db';
 import { ac, adminRole, ownerRole, cashierRole } from './permissions';
+import { emailService } from './email.service';
 
 export const auth = betterAuth({
   url: process.env.BETTER_AUTH_URL,
@@ -10,7 +11,16 @@ export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: 'pg',
   }),
-  emailAndPassword: { enabled: true },
+  emailAndPassword: {
+    enabled: true,
+    requireEmailVerification: true,
+  },
+  emailVerification: {
+    sendVerificationEmail: async ({ user, token }) => {
+      await emailService.sendVerificationEmail(user.email, token);
+    },
+    expiresIn: 24 * 60 * 60,
+  },
   trustedOrigins: ['http://localhost:3000'],
   plugins: [
     openAPI(),

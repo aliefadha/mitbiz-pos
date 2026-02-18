@@ -18,5 +18,15 @@ services:
       timeout: 5s
       retries: 5
 
+  mailhog:
+    image: axllent/mailpit
+    container_name: pos-mailpit
+    ports:
+      - '1025:1025'
+      - '8025:8025'
+    environment:
+      MP_UI_PATH: /
+      MP_MAX_MESSAGES: 100
+
 volumes:
   postgres_data:
