@@ -12,7 +12,7 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     "/inventory",
     "/outlets",
   ],
-  owner: ["/tenants", "/settings", "/dashboard", "/inventory", "/outlets"],
+  owner: ["/tenants/new", "/settings", "/dashboard", "/inventory", "/outlets"],
   cashier: ["/dashboard", "/inventory", "/outlets"],
 };
 

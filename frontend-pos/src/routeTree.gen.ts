@@ -20,6 +20,7 @@ import { Route as ProtectedDashboardRouteImport } from './routes/_protected/dash
 import { Route as ProtectedTenantsIndexRouteImport } from './routes/_protected/tenants/index'
 import { Route as ProtectedSettingsIndexRouteImport } from './routes/_protected/settings/index'
 import { Route as ProtectedAccountIndexRouteImport } from './routes/_protected/account/index'
+import { Route as ProtectedTenantsNewRouteImport } from './routes/_protected/tenants/new'
 import { Route as ProtectedOutletsOutletIdRouteImport } from './routes/_protected/outlets/$outletId'
 import { Route as ProtectedTenantsSlugIndexRouteImport } from './routes/_protected/tenants/$slug/index'
 import { Route as ProtectedTenantsSlugUsersIndexRouteImport } from './routes/_protected/tenants/$slug/users/index'
@@ -82,6 +83,11 @@ const ProtectedSettingsIndexRoute = ProtectedSettingsIndexRouteImport.update({
 const ProtectedAccountIndexRoute = ProtectedAccountIndexRouteImport.update({
   id: '/account/',
   path: '/account/',
+  getParentRoute: () => ProtectedRoute,
+} as any)
+const ProtectedTenantsNewRoute = ProtectedTenantsNewRouteImport.update({
+  id: '/tenants/new',
+  path: '/tenants/new',
   getParentRoute: () => ProtectedRoute,
 } as any)
 const ProtectedOutletsOutletIdRoute =
@@ -148,6 +154,7 @@ export interface FileRoutesByFullPath {
   '/verify-email': typeof VerifyEmailRoute
   '/dashboard': typeof ProtectedDashboardRoute
   '/outlets/$outletId': typeof ProtectedOutletsOutletIdRoute
+  '/tenants/new': typeof ProtectedTenantsNewRoute
   '/account/': typeof ProtectedAccountIndexRoute
   '/settings/': typeof ProtectedSettingsIndexRoute
   '/tenants/': typeof ProtectedTenantsIndexRoute
@@ -169,6 +176,7 @@ export interface FileRoutesByTo {
   '/verify-email': typeof VerifyEmailRoute
   '/dashboard': typeof ProtectedDashboardRoute
   '/outlets/$outletId': typeof ProtectedOutletsOutletIdRoute
+  '/tenants/new': typeof ProtectedTenantsNewRoute
   '/account': typeof ProtectedAccountIndexRoute
   '/settings': typeof ProtectedSettingsIndexRoute
   '/tenants': typeof ProtectedTenantsIndexRoute
@@ -192,6 +200,7 @@ export interface FileRoutesById {
   '/verify-email': typeof VerifyEmailRoute
   '/_protected/dashboard': typeof ProtectedDashboardRoute
   '/_protected/outlets/$outletId': typeof ProtectedOutletsOutletIdRoute
+  '/_protected/tenants/new': typeof ProtectedTenantsNewRoute
   '/_protected/account/': typeof ProtectedAccountIndexRoute
   '/_protected/settings/': typeof ProtectedSettingsIndexRoute
   '/_protected/tenants/': typeof ProtectedTenantsIndexRoute
@@ -215,6 +224,7 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/dashboard'
     | '/outlets/$outletId'
+    | '/tenants/new'
     | '/account/'
     | '/settings/'
     | '/tenants/'
@@ -236,6 +246,7 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/dashboard'
     | '/outlets/$outletId'
+    | '/tenants/new'
     | '/account'
     | '/settings'
     | '/tenants'
@@ -258,6 +269,7 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/_protected/dashboard'
     | '/_protected/outlets/$outletId'
+    | '/_protected/tenants/new'
     | '/_protected/account/'
     | '/_protected/settings/'
     | '/_protected/tenants/'
@@ -360,6 +372,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedAccountIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
+    '/_protected/tenants/new': {
+      id: '/_protected/tenants/new'
+      path: '/tenants/new'
+      fullPath: '/tenants/new'
+      preLoaderRoute: typeof ProtectedTenantsNewRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
     '/_protected/outlets/$outletId': {
       id: '/_protected/outlets/$outletId'
       path: '/outlets/$outletId'
@@ -429,6 +448,7 @@ declare module '@tanstack/react-router' {
 interface ProtectedRouteChildren {
   ProtectedDashboardRoute: typeof ProtectedDashboardRoute
   ProtectedOutletsOutletIdRoute: typeof ProtectedOutletsOutletIdRoute
+  ProtectedTenantsNewRoute: typeof ProtectedTenantsNewRoute
   ProtectedAccountIndexRoute: typeof ProtectedAccountIndexRoute
   ProtectedSettingsIndexRoute: typeof ProtectedSettingsIndexRoute
   ProtectedTenantsIndexRoute: typeof ProtectedTenantsIndexRoute
@@ -445,6 +465,7 @@ interface ProtectedRouteChildren {
 const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedDashboardRoute: ProtectedDashboardRoute,
   ProtectedOutletsOutletIdRoute: ProtectedOutletsOutletIdRoute,
+  ProtectedTenantsNewRoute: ProtectedTenantsNewRoute,
   ProtectedAccountIndexRoute: ProtectedAccountIndexRoute,
   ProtectedSettingsIndexRoute: ProtectedSettingsIndexRoute,
   ProtectedTenantsIndexRoute: ProtectedTenantsIndexRoute,

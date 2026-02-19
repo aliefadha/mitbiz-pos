@@ -38,7 +38,7 @@ export const ownerRole = ac.newRole({
   outlets: ['create', 'read', 'update', 'delete'],
   report: ['read', 'export'],
   settings: ['read', 'update'],
-  tenants: ['read', 'update'],
+  tenants: ['create', 'read', 'update'],
   stocks: ['create', 'read', 'update', 'delete'],
   stockAdjustments: ['create', 'read', 'update', 'delete'],
 });

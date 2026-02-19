@@ -1,4 +1,13 @@
-import { Layout, Menu, Avatar, Dropdown, Typography } from "antd";
+import {
+  Layout,
+  Menu,
+  Avatar,
+  Dropdown,
+  Typography,
+  Select,
+  Divider,
+  Button,
+} from "antd";
 import {
   DashboardOutlined,
   SettingOutlined,
@@ -10,10 +19,13 @@ import {
   MenuUnfoldOutlined,
   TeamOutlined,
   AccountBookOutlined,
+  PlusOutlined,
 } from "@ant-design/icons";
 import { Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "../contexts/auth-context";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { tenantsApi, type Tenant } from "@/lib/api/tenants";
 import { useLogout } from "@/hooks/use-auth";
 import { type Role } from "@/lib/rbac";
 
@@ -31,7 +43,7 @@ const menuConfig = [
     key: "/tenants",
     icon: <TeamOutlined />,
     label: "Tenants",
-    roles: ["admin", "owner"],
+    roles: ["admin"],
   },
   {
     key: "/account",
@@ -54,14 +66,31 @@ export function AppLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
+  const [selectedTenant, setSelectedTenant] = useState<number | null>(null);
   const { user } = useAuth();
   const logoutMutation = useLogout();
   const role = (user?.role as Role) || "cashier";
+
+  const { data: tenantsData, isLoading: tenantsLoading } = useQuery({
+    queryKey: ["tenants"],
+    queryFn: () => tenantsApi.getAll({ isActive: true }, user?.id),
+    enabled: !!user?.id,
+  });
+
+  const tenants = tenantsData ?? [];
+
+  useEffect(() => {
+    if (tenants.length > 0 && selectedTenant === null) {
+      setSelectedTenant(tenants[0].id);
+    }
+  }, [tenants, selectedTenant]);
 
   const menuItems = menuConfig.filter((item) => item.roles.includes(role));
   const filteredBottomItems = bottomItems.filter((item) =>
     item.roles.includes(role),
   );
+
+  const firstSegment = "/" + location.pathname.split("/")[1];
 
   const handleMenuClick = ({ key }: { key: string }) => {
     navigate({ to: key });
@@ -124,7 +153,7 @@ export function AppLayout() {
         </div>
         <Menu
           mode="inline"
-          selectedKeys={[location.pathname]}
+          selectedKeys={[firstSegment]}
           onClick={handleMenuClick}
           items={menuItems}
           style={{ borderRight: 0, marginTop: 8 }}
@@ -133,7 +162,7 @@ export function AppLayout() {
         <Menu
           mode="inline"
           selectedKeys={
-            location.pathname.startsWith("/settings") ? ["/settings"] : []
+            firstSegment.startsWith("/settings") ? ["/settings"] : []
           }
           onClick={handleMenuClick}
           items={filteredBottomItems}
@@ -174,6 +203,33 @@ export function AppLayout() {
               <MenuFoldOutlined style={{ fontSize: 18 }} />
             )}
           </div>
+          <Select
+            placeholder="Pilih Tenant"
+            style={{ width: 200 }}
+            value={selectedTenant}
+            onChange={(value) => setSelectedTenant(value)}
+            disabled={role === "cashier"}
+            loading={tenantsLoading}
+            allowClear
+            options={tenants.map((tenant: Tenant) => ({
+              label: tenant.nama,
+              value: tenant.id,
+            }))}
+            popupRender={(menu) => (
+              <>
+                {menu}
+                <Divider style={{ margin: "8px 0" }} />
+                <Button
+                  type="text"
+                  icon={<PlusOutlined />}
+                  style={{ width: "100%", textAlign: "left" }}
+                  onClick={() => navigate({ to: "/tenants/new" })}
+                >
+                  Tambah Tenant
+                </Button>
+              </>
+            )}
+          />
           <div
             style={{
               marginLeft: "auto",

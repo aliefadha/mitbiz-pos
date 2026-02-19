@@ -36,7 +36,7 @@ export const auth = betterAuth({
         owner: ownerRole,
         cashier: cashierRole,
       },
-      defaultRole: 'cashier',
+      defaultRole: 'owner',
     }),
   ],
   user: {
@@ -44,7 +44,7 @@ export const auth = betterAuth({
       role: {
         type: ['admin', 'owner', 'cashier'],
         required: false,
-        defaultValue: 'cashier',
+        defaultValue: 'owner',
       },
       outletId: {
         type: 'number',
