@@ -48,7 +48,7 @@ function formatRupiah(value: number | string): string {
 }
 
 export function TenantProductsPage() {
-  const { id } = useParams({ from: "/_protected/tenants/$id/products/" });
+  const { slug } = useParams({ from: "/_protected/tenants/$slug/products/" });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -62,8 +62,8 @@ export function TenantProductsPage() {
   const [stockForm] = Form.useForm();
 
   const { data: tenant } = useQuery({
-    queryKey: ["tenant", id],
-    queryFn: () => tenantsApi.getBySlug(id),
+    queryKey: ["tenant", slug],
+    queryFn: () => tenantsApi.getBySlug(slug),
   });
 
   const { data: products, isLoading } = useQuery({
@@ -374,7 +374,7 @@ export function TenantProductsPage() {
       <Button
         type="link"
         icon={<ArrowLeftOutlined />}
-        onClick={() => navigate({ to: "/tenants/$id", params: { id } })}
+        onClick={() => navigate({ to: "/tenants/$slug", params: { slug } })}
         style={{ marginBottom: 16, paddingLeft: 0 }}
       >
         Back to {tenant?.nama || "Tenant"}

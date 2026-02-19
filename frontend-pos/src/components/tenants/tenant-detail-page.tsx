@@ -13,7 +13,7 @@ import { generateSlug } from "@/lib/utils";
 const { Title } = Typography;
 
 export function TenantDetailPage() {
-  const { id } = useParams({ from: "/_protected/tenants/$id/" });
+  const { slug } = useParams({ from: "/_protected/tenants/$slug/" });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: session } = useSession();
@@ -23,17 +23,17 @@ export function TenantDetailPage() {
   const [form] = Form.useForm();
 
   const { data: tenant, isLoading: tenantLoading } = useQuery({
-    queryKey: ["tenant", id],
-    queryFn: () => tenantsApi.getBySlug(id),
+    queryKey: ["tenant", slug],
+    queryFn: () => tenantsApi.getBySlug(slug),
   });
 
   const updateMutation = useMutation({
     mutationFn: (data: { nama: string; slug: string; noHp?: string; alamat?: string }) =>
-      tenantsApi.update(id, data, userId),
+      tenantsApi.update(slug, data, userId),
     onSuccess: () => {
       message.success("Tenant updated successfully");
       setEditModalOpen(false);
-      queryClient.invalidateQueries({ queryKey: ["tenant", id] });
+      queryClient.invalidateQueries({ queryKey: ["tenant", slug] });
     },
     onError: (error: Error) => {
       message.error(error.message || "Failed to update tenant");
@@ -41,7 +41,7 @@ export function TenantDetailPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: () => tenantsApi.delete(id, userId),
+    mutationFn: () => tenantsApi.delete(slug, userId),
     onSuccess: () => {
       message.success("Tenant deleted successfully");
       setDeleteModalOpen(false);
@@ -71,9 +71,9 @@ export function TenantDetailPage() {
   });
 
   const { data: usersData, isLoading: usersLoading } = useQuery({
-    queryKey: ["tenant-users", id],
-    queryFn: () => tenantsApi.getUsers(id),
-    enabled: !!id,
+    queryKey: ["tenant-users", slug],
+    queryFn: () => tenantsApi.getUsers(slug),
+    enabled: !!slug,
   });
 
   const isLoading = tenantLoading || categoriesLoading || productsLoading || outletsLoading || usersLoading;
@@ -146,7 +146,7 @@ export function TenantDetailPage() {
 
       <Row gutter={[16, 16]}>
         <Col xs={12} sm={6}>  
-          <Card  onClick={() => navigate({ to: "/tenants/$id/outlets" })}>
+          <Card  onClick={() => navigate({ to: "/tenants/$slug/outlets" })}>
             <Statistic 
               title="Outlets" 
               value={outlets.length} 
@@ -159,7 +159,7 @@ export function TenantDetailPage() {
           </Card>
         </Col>
         <Col xs={12} sm={6}>
-          <Card  onClick={() => navigate({ to: "/tenants/$id/categories" as any, params: { id } })}>
+          <Card  onClick={() => navigate({ to: "/tenants/$slug/categories" as any, params: { slug } })}>
             <Statistic 
               title="Categories" 
               value={categories.length} 
@@ -172,7 +172,7 @@ export function TenantDetailPage() {
           </Card>
         </Col>
         <Col xs={12} sm={6}>
-          <Card  onClick={() => navigate({ to: "/tenants/$id/products" as any, params: { id } })}>
+          <Card  onClick={() => navigate({ to: "/tenants/$slug/products" as any, params: { slug } })}>
             <Statistic 
               title="Products" 
               value={products.length} 
@@ -185,7 +185,7 @@ export function TenantDetailPage() {
           </Card>
         </Col>
         <Col xs={12} sm={6}>
-          <Card onClick={() => navigate({ to: "/tenants/$id/users" as any, params: { id } })}>
+          <Card onClick={() => navigate({ to: "/tenants/$slug/users" as any, params: { slug } })}>
             <Statistic 
               title="Pengguna" 
               value={users.length} 

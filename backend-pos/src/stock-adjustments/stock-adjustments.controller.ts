@@ -17,7 +17,8 @@ import {
   CreateStockAdjustmentDto,
   StockAdjustmentQueryDto,
 } from './dto';
-import { AuthGuard, Roles } from '@thallesp/nestjs-better-auth';
+import { AuthGuard } from '@thallesp/nestjs-better-auth';
+import { PermissionGuard } from '../common/guards/permission.guard';
 import {
   CurrentUser,
   type CurrentUserType,
@@ -25,13 +26,12 @@ import {
 
 @ApiTags('stock-adjustments')
 @Controller('stock-adjustments')
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, PermissionGuard)
 export class StockAdjustmentsController {
   constructor(
     private readonly stockAdjustmentsService: StockAdjustmentsService,
   ) {}
 
-  @Roles(['admin', 'owner'])
   @Get()
   @ApiOperation({ summary: 'Get all stock adjustments' })
   @UsePipes(new ZodValidationPipe(StockAdjustmentQuerySchema, 'query'))
@@ -42,14 +42,12 @@ export class StockAdjustmentsController {
     return this.stockAdjustmentsService.findAll(query, user);
   }
 
-  @Roles(['admin', 'owner'])
   @Get(':id')
   @ApiOperation({ summary: 'Get stock adjustment by ID' })
   findById(@Param('id') id: string, @CurrentUser() user: CurrentUserType) {
     return this.stockAdjustmentsService.findById(parseInt(id, 10), user);
   }
 
-  @Roles(['admin', 'owner'])
   @Post()
   @ApiOperation({ summary: 'Create a new stock adjustment' })
   @UsePipes(new ZodValidationPipe(CreateStockAdjustmentSchema))

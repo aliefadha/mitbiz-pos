@@ -23,7 +23,8 @@ import {
   ProductIdDto,
   ProductQueryDto,
 } from './dto';
-import { AuthGuard, Roles } from '@thallesp/nestjs-better-auth';
+import { AuthGuard } from '@thallesp/nestjs-better-auth';
+import { PermissionGuard } from '../common/guards/permission.guard';
 import {
   CurrentUser,
   type CurrentUserType,
@@ -31,11 +32,10 @@ import {
 
 @ApiTags('products')
 @Controller('products')
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, PermissionGuard)
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
-  @Roles(['admin', 'owner', 'cashier'])
   @Get()
   @ApiOperation({ summary: 'Get all products' })
   @UsePipes(new ZodValidationPipe(ProductQuerySchema, 'query'))
@@ -46,7 +46,6 @@ export class ProductsController {
     return this.productsService.findAll(query, user);
   }
 
-  @Roles(['admin', 'owner', 'cashier'])
   @Get(':id')
   @ApiOperation({ summary: 'Get product by ID' })
   @UsePipes(new ZodValidationPipe(ProductIdSchema, 'params'))
@@ -57,7 +56,6 @@ export class ProductsController {
     return this.productsService.findById(id, user);
   }
 
-  @Roles(['admin', 'owner'])
   @Post()
   @ApiOperation({ summary: 'Create a new product' })
   @UsePipes(new ZodValidationPipe(CreateProductSchema))
@@ -65,7 +63,6 @@ export class ProductsController {
     return this.productsService.create(data, user);
   }
 
-  @Roles(['admin', 'owner'])
   @Put(':id')
   @ApiOperation({ summary: 'Update a product' })
   @UsePipes(new ZodValidationPipe(ProductIdSchema, 'params'))
@@ -78,7 +75,6 @@ export class ProductsController {
     return this.productsService.update(id, data, user);
   }
 
-  @Roles(['admin', 'owner'])
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a product' })
   @UsePipes(new ZodValidationPipe(ProductIdSchema, 'params'))

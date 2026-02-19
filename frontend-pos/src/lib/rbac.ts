@@ -4,9 +4,16 @@ import { authClient } from "@/lib/auth-client";
 export type Role = "admin" | "owner" | "cashier";
 
 export const ROLE_PERMISSIONS: Record<Role, string[]> = {
-  admin: ["/tenants", "/settings", "/account", "/dashboard", "/inventory"],
-  owner: ["/tenants", "/settings", "/dashboard", "/inventory"],
-  cashier: [ "/dashboard", "/inventory"],
+  admin: [
+    "/tenants",
+    "/settings",
+    "/account",
+    "/dashboard",
+    "/inventory",
+    "/outlets",
+  ],
+  owner: ["/tenants", "/settings", "/dashboard", "/inventory", "/outlets"],
+  cashier: ["/dashboard", "/inventory", "/outlets"],
 };
 
 export async function checkAuth() {

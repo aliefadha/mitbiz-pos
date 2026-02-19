@@ -23,7 +23,8 @@ import {
   OutletIdDto,
   OutletQueryDto,
 } from './dto';
-import { AuthGuard, Roles } from '@thallesp/nestjs-better-auth';
+import { AuthGuard } from '@thallesp/nestjs-better-auth';
+import { PermissionGuard } from '../common/guards/permission.guard';
 import {
   CurrentUser,
   type CurrentUserType,
@@ -31,11 +32,10 @@ import {
 
 @ApiTags('outlets')
 @Controller('outlets')
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, PermissionGuard)
 export class OutletsController {
   constructor(private readonly outletsService: OutletsService) {}
 
-  @Roles(['admin', 'owner', 'cashier'])
   @Get()
   @ApiOperation({ summary: 'Get all outlets' })
   @UsePipes(new ZodValidationPipe(OutletQuerySchema, 'query'))
@@ -46,7 +46,6 @@ export class OutletsController {
     return this.outletsService.findAll(query, user);
   }
 
-  @Roles(['admin', 'owner', 'cashier'])
   @Get(':id')
   @ApiOperation({ summary: 'Get outlet by ID' })
   @UsePipes(new ZodValidationPipe(OutletIdSchema, 'params'))
@@ -54,7 +53,6 @@ export class OutletsController {
     return this.outletsService.findById(id, user);
   }
 
-  @Roles(['admin', 'owner'])
   @Post()
   @ApiOperation({ summary: 'Create a new outlet' })
   @UsePipes(new ZodValidationPipe(CreateOutletSchema))
@@ -62,7 +60,6 @@ export class OutletsController {
     return this.outletsService.create(data, user);
   }
 
-  @Roles(['admin', 'owner'])
   @Put(':id')
   @ApiOperation({ summary: 'Update an outlet' })
   @UsePipes(new ZodValidationPipe(OutletIdSchema, 'params'))
@@ -75,7 +72,6 @@ export class OutletsController {
     return this.outletsService.update(id, data, user);
   }
 
-  @Roles(['admin', 'owner'])
   @Delete(':id')
   @ApiOperation({ summary: 'Delete an outlet' })
   @UsePipes(new ZodValidationPipe(OutletIdSchema, 'params'))

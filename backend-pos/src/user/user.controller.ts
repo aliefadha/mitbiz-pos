@@ -8,23 +8,19 @@ import {
   UseGuards,
   UsePipes,
 } from '@nestjs/common';
-import { AuthService, AuthGuard, Roles } from '@thallesp/nestjs-better-auth';
+import { AuthService, AuthGuard } from '@thallesp/nestjs-better-auth';
 import { auth } from '../lib/auth';
 import type { Request as ExpressRequest } from 'express';
 import { fromNodeHeaders } from 'better-auth/node';
 import { CreateUserSchema, CreateUserDto } from './dto';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
-import { UserService } from './user.service';
+import { PermissionGuard } from '../common/guards/permission.guard';
 
 @Controller('users')
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, PermissionGuard)
 export class UserController {
-  constructor(
-    private authService: AuthService<typeof auth>,
-    private userService: UserService,
-  ) { }
+  constructor(private authService: AuthService<typeof auth>) {}
 
-  @Roles(['admin', 'owner'])
   @Get()
   async getUsers(@Request() req: ExpressRequest) {
     const users = await this.authService.api.listUsers({
@@ -34,7 +30,6 @@ export class UserController {
     return users;
   }
 
-  @Roles(['admin', 'owner'])
   @Post()
   @UsePipes(new ZodValidationPipe(CreateUserSchema))
   async createUser(
@@ -42,7 +37,19 @@ export class UserController {
     @Request() req: ExpressRequest,
   ) {
     const headers = fromNodeHeaders(req.headers);
-    return this.userService.createUser(body, headers as any);
+    const { role, outletId, isSubscribed, ...userData } = body;
+    return this.authService.api.createUser({
+      body: {
+        ...userData,
+        role,
+        data: {
+          outletId,
+          isSubscribed,
+          emailVerified: true,
+        },
+      } as any,
+      headers,
+    });
   }
 
   @Get('me')

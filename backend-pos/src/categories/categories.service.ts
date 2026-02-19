@@ -55,7 +55,9 @@ export class CategoriesService {
       .from(products)
       .where(
         and(
-          effectiveTenantId ? eq(products.tenantId, effectiveTenantId) : undefined,
+          effectiveTenantId
+            ? eq(products.tenantId, effectiveTenantId)
+            : undefined,
           eq(products.isActive, true),
         ),
       )
@@ -75,7 +77,10 @@ export class CategoriesService {
           productsCount: sql<number>`COALESCE(${productCountSubquery.count}, 0)`,
         })
         .from(categories)
-        .leftJoin(productCountSubquery, eq(categories.id, productCountSubquery.categoryId))
+        .leftJoin(
+          productCountSubquery,
+          eq(categories.id, productCountSubquery.categoryId),
+        )
         .where(whereClause)
         .limit(limit)
         .offset(offset)

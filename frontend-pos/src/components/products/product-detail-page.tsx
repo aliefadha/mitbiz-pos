@@ -1,6 +1,32 @@
-import { Typography, Spin, Card, Tag, Button, Space, Descriptions, Table, Modal, Form, Input, InputNumber, Select, message, Tabs, Row, Col, Statistic, Switch } from "antd";
+import {
+  Typography,
+  Spin,
+  Card,
+  Tag,
+  Button,
+  Space,
+  Descriptions,
+  Table,
+  Modal,
+  Form,
+  Input,
+  InputNumber,
+  Select,
+  message,
+  Tabs,
+  Row,
+  Col,
+  Statistic,
+  Switch,
+} from "antd";
 import { useParams, useNavigate } from "@tanstack/react-router";
-import { ArrowLeftOutlined, PlusOutlined, EditOutlined, ShoppingCartOutlined, HistoryOutlined } from "@ant-design/icons";
+import {
+  ArrowLeftOutlined,
+  PlusOutlined,
+  EditOutlined,
+  ShoppingCartOutlined,
+  HistoryOutlined,
+} from "@ant-design/icons";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { productsApi, type UpdateProductDto } from "@/lib/api/products";
@@ -22,7 +48,9 @@ function formatRupiah(value: number | string): string {
 }
 
 export function ProductDetailPage() {
-  const { id, productId } = useParams({ from: "/_protected/tenants/$id/products/$productId" });
+  const { slug, productId } = useParams({
+    from: "/_protected/tenants/$slug/products/$productId",
+  });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [adjustmentModalOpen, setAdjustmentModalOpen] = useState(false);
@@ -48,26 +76,32 @@ export function ProductDetailPage() {
   });
 
   const { data: outletsData } = useQuery({
-    queryKey: ["outlets", id],
-    queryFn: () => outletsApi.getAll({ tenantId: Number(id) }),
-    enabled: !!id,
+    queryKey: ["outlets", product?.tenantId],
+    queryFn: () => outletsApi.getAll({ tenantId: product!.tenantId }),
+    enabled: !!product?.tenantId,
   });
 
   const { data: categoriesData } = useQuery({
-    queryKey: ["categories", id],
-    queryFn: () => categoriesApi.getAll({ tenantId: Number(id) }),
-    enabled: !!id,
+    queryKey: ["categories", product?.tenantId],
+    queryFn: () => categoriesApi.getAll({ tenantId: product!.tenantId }),
+    enabled: !!product?.tenantId,
   });
 
   const createAdjustmentMutation = useMutation({
-    mutationFn: (data: { productId: number; outletId: number; quantity: number; alasan?: string }) =>
-      stockAdjustmentsApi.create(data),
+    mutationFn: (data: {
+      productId: number;
+      outletId: number;
+      quantity: number;
+      alasan?: string;
+    }) => stockAdjustmentsApi.create(data),
     onSuccess: () => {
       message.success("Stock adjustment created successfully");
       setAdjustmentModalOpen(false);
       adjustmentForm.resetFields();
       queryClient.invalidateQueries({ queryKey: ["stocks", productId] });
-      queryClient.invalidateQueries({ queryKey: ["stock-adjustments", productId] });
+      queryClient.invalidateQueries({
+        queryKey: ["stock-adjustments", productId],
+      });
       queryClient.invalidateQueries({ queryKey: ["product", productId] });
     },
     onError: (error: Error) => {
@@ -130,14 +164,23 @@ export function ProductDetailPage() {
       title: "Outlet",
       dataIndex: "outlet",
       key: "outlet",
-      render: (outlet: { name: string; kode: string } | undefined) => outlet ? `${outlet.name} (${outlet.kode})` : "-",
+      render: (outlet: { name: string; kode: string } | undefined) =>
+        outlet ? `${outlet.name} (${outlet.kode})` : "-",
     },
     {
       title: "Jumlah",
       dataIndex: "quantity",
       key: "quantity",
       render: (quantity: number) => (
-        <Tag color={quantity <= 0 ? "red" : quantity <= product.minStockLevel ? "orange" : "green"}>
+        <Tag
+          color={
+            quantity <= 0
+              ? "red"
+              : quantity <= product.minStockLevel
+                ? "orange"
+                : "green"
+          }
+        >
           {quantity}
         </Tag>
       ),
@@ -161,7 +204,8 @@ export function ProductDetailPage() {
       title: "Outlet",
       dataIndex: "outlet",
       key: "outlet",
-      render: (outlet: { name: string; kode: string } | undefined) => outlet ? `${outlet.name} (${outlet.kode})` : "-",
+      render: (outlet: { name: string; kode: string } | undefined) =>
+        outlet ? `${outlet.name} (${outlet.kode})` : "-",
     },
     {
       title: "Jumlah",
@@ -183,7 +227,8 @@ export function ProductDetailPage() {
       title: "Oleh",
       dataIndex: "user",
       key: "user",
-      render: (user: { name: string | null; email: string } | undefined) => user?.name || user?.email || "-",
+      render: (user: { name: string | null; email: string } | undefined) =>
+        user?.name || user?.email || "-",
     },
   ];
 
@@ -200,7 +245,7 @@ export function ProductDetailPage() {
       <Button
         type="link"
         icon={<ArrowLeftOutlined />}
-        onClick={() => navigate({ to: "/tenants/$id", params: { id } })}
+        onClick={() => navigate({ to: "/tenants/$slug", params: { slug } })}
         style={{ marginBottom: 16, paddingLeft: 0 }}
       >
         Kembali ke Tenant
@@ -208,7 +253,13 @@ export function ProductDetailPage() {
 
       <Card
         title={
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
             <Title level={4} style={{ margin: 0 }}>
               Detail Produk
             </Title>
@@ -216,15 +267,12 @@ export function ProductDetailPage() {
         }
         extra={
           <Space>
-            <Button 
-              icon={<EditOutlined />}
-              onClick={handleEdit}
-            >
+            <Button icon={<EditOutlined />} onClick={handleEdit}>
               Ubah
             </Button>
-            <Button 
-              type="primary" 
-              icon={<PlusOutlined />} 
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
               onClick={() => setAdjustmentModalOpen(true)}
             >
               Tambah Stok
@@ -235,22 +283,39 @@ export function ProductDetailPage() {
       >
         <Descriptions column={2}>
           <Descriptions.Item label="SKU">{product.sku}</Descriptions.Item>
-          <Descriptions.Item label="Barcode">{product.barcode || "-"}</Descriptions.Item>
+          <Descriptions.Item label="Barcode">
+            {product.barcode || "-"}
+          </Descriptions.Item>
           <Descriptions.Item label="Nama">{product.nama}</Descriptions.Item>
           <Descriptions.Item label="Tipe">
-            <Tag color={tipeColors[product.tipe] || "default"} className="capitalize">{product.tipe}</Tag>
+            <Tag
+              color={tipeColors[product.tipe] || "default"}
+              className="capitalize"
+            >
+              {product.tipe}
+            </Tag>
           </Descriptions.Item>
-          <Descriptions.Item label="Kategori">{product.category?.nama || "-"}</Descriptions.Item>
-          <Descriptions.Item label="Satuan">{product.unit || "-"}</Descriptions.Item>
+          <Descriptions.Item label="Kategori">
+            {product.category?.nama || "-"}
+          </Descriptions.Item>
+          <Descriptions.Item label="Satuan">
+            {product.unit || "-"}
+          </Descriptions.Item>
           <Descriptions.Item label="Harga Beli">
-            {product.hargaBeli ? `Rp ${parseInt(product.hargaBeli).toLocaleString("id-ID")}` : "-"}
+            {product.hargaBeli
+              ? `Rp ${parseInt(product.hargaBeli).toLocaleString("id-ID")}`
+              : "-"}
           </Descriptions.Item>
           <Descriptions.Item label="Harga Jual">
             Rp {parseInt(product.hargaJual).toLocaleString("id-ID")}
           </Descriptions.Item>
-          <Descriptions.Item label="Minimum Stok">{product.minStockLevel}</Descriptions.Item>
+          <Descriptions.Item label="Minimum Stok">
+            {product.minStockLevel}
+          </Descriptions.Item>
           <Descriptions.Item label="Status">
-            <Tag color={product.isActive ? "green" : "red"}>{product.isActive ? "Aktif" : "Nonaktif"}</Tag>
+            <Tag color={product.isActive ? "green" : "red"}>
+              {product.isActive ? "Aktif" : "Nonaktif"}
+            </Tag>
           </Descriptions.Item>
           <Descriptions.Item label="Deskripsi" span={2}>
             {product.deskripsi || "-"}
@@ -267,32 +332,35 @@ export function ProductDetailPage() {
       <Card style={{ marginBottom: 24 }}>
         <Row gutter={[16, 16]}>
           <Col xs={12} sm={6}>
-            <Statistic 
-              title="Total Stok" 
-              value={totalStock} 
-              prefix={<ShoppingCartOutlined />} 
-              valueStyle={{ color: totalStock <= product.minStockLevel ? "#faad14" : "#52c41a" }}
+            <Statistic
+              title="Total Stok"
+              value={totalStock}
+              prefix={<ShoppingCartOutlined />}
+              valueStyle={{
+                color:
+                  totalStock <= product.minStockLevel ? "#faad14" : "#52c41a",
+              }}
             />
           </Col>
           <Col xs={12} sm={6}>
-            <Statistic 
-              title="Minimum Stok" 
-              value={product.minStockLevel} 
+            <Statistic
+              title="Minimum Stok"
+              value={product.minStockLevel}
               valueStyle={{ color: "#1890ff" }}
             />
           </Col>
           <Col xs={12} sm={6}>
-            <Statistic 
-              title="Jumlah Outlet" 
-              value={stocks.length} 
+            <Statistic
+              title="Jumlah Outlet"
+              value={stocks.length}
               valueStyle={{ color: "#722ed1" }}
             />
           </Col>
           <Col xs={12} sm={6}>
-            <Statistic 
-              title="Jumlah Penyesuaian" 
-              value={adjustments.length} 
-              prefix={<HistoryOutlined />} 
+            <Statistic
+              title="Jumlah Penyesuaian"
+              value={adjustments.length}
+              prefix={<HistoryOutlined />}
               valueStyle={{ color: "#eb2f96" }}
             />
           </Col>
@@ -391,10 +459,7 @@ export function ProductDetailPage() {
               max={1000}
             />
           </Form.Item>
-          <Form.Item
-            name="alasan"
-            label="Alasan"
-          >
+          <Form.Item name="alasan" label="Alasan">
             <Input.TextArea rows={2} placeholder="Masukkan alasan (opsional)" />
           </Form.Item>
         </Form>
@@ -418,8 +483,8 @@ export function ProductDetailPage() {
           onFinish={(values) => {
             const data: UpdateProductDto = {
               ...values,
-              hargaBeli: values.hargaBeli ? String(values.hargaBeli) : '0',
-              hargaJual: values.hargaJual ? String(values.hargaJual) : '0',
+              hargaBeli: values.hargaBeli ? String(values.hargaBeli) : "0",
+              hargaJual: values.hargaJual ? String(values.hargaJual) : "0",
             };
             updateMutation.mutate({
               id: Number(productId),

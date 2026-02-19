@@ -80,13 +80,17 @@ export class StockAdjustmentsService {
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
     const [data, totalResult] = await Promise.all([
-      this.db
-        .select()
-        .from(stockAdjustments)
-        .where(whereClause)
-        .limit(limit)
-        .offset(offset)
-        .orderBy(desc(stockAdjustments.createdAt)),
+      this.db.query.stockAdjustments.findMany({
+        where: whereClause,
+        limit,
+        offset,
+        orderBy: desc(stockAdjustments.createdAt),
+        with: {
+          product: true,
+          outlet: true,
+          user: true,
+        },
+      }),
       this.db
         .select({ count: sql<number>`count(*)` })
         .from(stockAdjustments)

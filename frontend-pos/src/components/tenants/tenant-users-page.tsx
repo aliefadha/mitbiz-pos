@@ -28,7 +28,7 @@ import { usersApi, type CreateUserDto } from "@/lib/api/users";
 const { Title, Text } = Typography;
 
 export function TenantUsersPage() {
-  const { id } = useParams({ from: "/_protected/tenants/$id/users/" });
+  const { slug } = useParams({ from: "/_protected/tenants/$slug/users/" });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchText, setSearchText] = useState("");
@@ -36,13 +36,13 @@ export function TenantUsersPage() {
   const [form] = Form.useForm();
 
   const { data: tenantData } = useQuery({
-    queryKey: ["tenant", id],
-    queryFn: () => tenantsApi.getBySlug(id),
+    queryKey: ["tenant", slug],
+    queryFn: () => tenantsApi.getBySlug(slug),
   });
 
   const { data: usersData, isLoading } = useQuery({
-    queryKey: ["tenant-users", id],
-    queryFn: () => tenantsApi.getUsers(id),
+    queryKey: ["tenant-users", slug],
+    queryFn: () => tenantsApi.getUsers(slug),
     enabled: !!tenantData,
   });
 
@@ -71,7 +71,7 @@ export function TenantUsersPage() {
   const filteredUsers = users.filter(
     (user) =>
       user.name?.toLowerCase().includes(searchText.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchText.toLowerCase())
+      user.email.toLowerCase().includes(searchText.toLowerCase()),
   );
 
   const columns = [
@@ -89,11 +89,7 @@ export function TenantUsersPage() {
       key: "name",
       render: (value: string | null, record: User) => (
         <Space>
-          <Avatar
-            src={record.image}
-            icon={<UserOutlined />}
-            size="small"
-          />
+          <Avatar src={record.image} icon={<UserOutlined />} size="small" />
           <Text strong>{value || "-"}</Text>
         </Space>
       ),
@@ -109,7 +105,8 @@ export function TenantUsersPage() {
       dataIndex: "role",
       key: "role",
       render: (value: string) => {
-        const color = value === "owner" ? "blue" : value === "admin" ? "purple" : "default";
+        const color =
+          value === "owner" ? "blue" : value === "admin" ? "purple" : "default";
         return <Tag color={color}>{value || "cashier"}</Tag>;
       },
     },
@@ -160,7 +157,9 @@ export function TenantUsersPage() {
       <Button
         type="link"
         icon={<ArrowLeftOutlined />}
-        onClick={() => navigate({ to: "/tenants/$id" as any, params: { id } })}
+        onClick={() =>
+          navigate({ to: "/tenants/$slug" as any, params: { slug } })
+        }
         style={{ marginBottom: 16, paddingLeft: 0 }}
       >
         Back to {tenantData?.nama || "Tenant"}

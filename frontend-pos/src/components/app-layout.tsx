@@ -21,13 +21,33 @@ const { Header, Sider, Content } = Layout;
 const { Text } = Typography;
 
 const menuConfig = [
-  { key: "/dashboard", icon: <DashboardOutlined />, label: "Dashboard", roles: ["admin", "owner", "cashier"] },
-  { key: "/tenants", icon: <TeamOutlined />, label: "Tenants", roles: ["admin", "owner"] },
-  { key: "/account", icon: <AccountBookOutlined />, label: "Account", roles: ["admin"] },
+  {
+    key: "/dashboard",
+    icon: <DashboardOutlined />,
+    label: "Dashboard",
+    roles: ["admin", "owner", "cashier"],
+  },
+  {
+    key: "/tenants",
+    icon: <TeamOutlined />,
+    label: "Tenants",
+    roles: ["admin", "owner"],
+  },
+  {
+    key: "/account",
+    icon: <AccountBookOutlined />,
+    label: "Account",
+    roles: ["admin"],
+  },
 ];
 
 const bottomItems = [
-  { key: "/settings", icon: <SettingOutlined />, label: "Settings", roles: ["admin", "owner"] },
+  {
+    key: "/settings",
+    icon: <SettingOutlined />,
+    label: "Settings",
+    roles: ["admin", "owner"],
+  },
 ];
 
 export function AppLayout() {
@@ -38,8 +58,10 @@ export function AppLayout() {
   const logoutMutation = useLogout();
   const role = (user?.role as Role) || "cashier";
 
-  const menuItems = menuConfig.filter(item => item.roles.includes(role));
-  const filteredBottomItems = bottomItems.filter(item => item.roles.includes(role));
+  const menuItems = menuConfig.filter((item) => item.roles.includes(role));
+  const filteredBottomItems = bottomItems.filter((item) =>
+    item.roles.includes(role),
+  );
 
   const handleMenuClick = ({ key }: { key: string }) => {
     navigate({ to: key });
@@ -110,7 +132,9 @@ export function AppLayout() {
         />
         <Menu
           mode="inline"
-          selectedKeys={location.pathname.startsWith("/settings") ? ["/settings"] : []}
+          selectedKeys={
+            location.pathname.startsWith("/settings") ? ["/settings"] : []
+          }
           onClick={handleMenuClick}
           items={filteredBottomItems}
           style={{

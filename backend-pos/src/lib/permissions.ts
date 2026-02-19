@@ -3,11 +3,13 @@ import { defaultStatements as defaultAdminStatement } from 'better-auth/plugins/
 
 const statement = {
   users: ['create', 'read', 'update', 'delete'],
-  product: ['create', 'read', 'update', 'delete'],
-  category: ['create', 'read', 'update', 'delete'],
+  products: ['create', 'read', 'update', 'delete'],
+  categories: ['create', 'read', 'update', 'delete'],
   transaction: ['create', 'read', 'update', 'delete', 'refund'],
-  outlet: ['create', 'read', 'update', 'delete'],
-  tenant: ['create', 'read', 'update', 'delete'],
+  outlets: ['create', 'read', 'update', 'delete'],
+  tenants: ['create', 'read', 'update', 'delete'],
+  stocks: ['create', 'read', 'update', 'delete'],
+  stockAdjustments: ['create', 'read', 'update', 'delete'],
   report: ['read', 'export'],
   settings: ['read', 'update'],
 } as const;
@@ -17,32 +19,38 @@ export const ac = createAccessControl(statement);
 export const adminRole = ac.newRole({
   ...defaultAdminStatement,
   users: ['create', 'read', 'update', 'delete'],
-  product: ['create', 'read', 'update', 'delete'],
-  category: ['create', 'read', 'update', 'delete'],
+  products: ['create', 'read', 'update', 'delete'],
+  categories: ['create', 'read', 'update', 'delete'],
   transaction: ['create', 'read', 'update', 'delete', 'refund'],
-  outlet: ['create', 'read', 'update', 'delete'],
+  outlets: ['create', 'read', 'update', 'delete'],
   report: ['read', 'export'],
   settings: ['read', 'update'],
-  tenant: ['create', 'read', 'update', 'delete'],
+  tenants: ['create', 'read', 'update', 'delete'],
+  stocks: ['create', 'read', 'update', 'delete'],
+  stockAdjustments: ['create', 'read', 'update', 'delete'],
 });
 
 export const ownerRole = ac.newRole({
   users: ['create', 'read'],
-  product: ['create', 'read', 'update', 'delete'],
-  category: ['create', 'read', 'update', 'delete'],
+  products: ['create', 'read', 'update', 'delete'],
+  categories: ['create', 'read', 'update', 'delete'],
   transaction: ['create', 'read', 'update', 'delete', 'refund'],
-  outlet: ['create', 'read', 'update', 'delete'],
+  outlets: ['create', 'read', 'update', 'delete'],
   report: ['read', 'export'],
   settings: ['read', 'update'],
-  tenant: ['read', 'update'],
+  tenants: ['read', 'update'],
+  stocks: ['create', 'read', 'update', 'delete'],
+  stockAdjustments: ['create', 'read', 'update', 'delete'],
 });
 
 export const cashierRole = ac.newRole({
-  product: ['read'],
-  category: ['read'],
+  products: ['read'],
+  categories: ['read'],
   transaction: ['create', 'read', 'refund'],
-  outlet: ['read'],
+  outlets: ['read'],
   report: ['read'],
   settings: ['read'],
-  tenant: ['read'],
+  tenants: ['read'],
+  stocks: ['read'],
+  stockAdjustments: ['read'],
 });

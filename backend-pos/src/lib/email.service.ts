@@ -17,13 +17,11 @@ export class EmailService {
     });
   }
 
-  async sendVerificationEmail(email: string, verificationToken: string) {
-    const verifyUrl = `${process.env.BETTER_AUTH_URL}/verify-email?token=${verificationToken}`;
-
+  async sendVerificationEmail(email: string, verifyUrl: string) {
     await this.transporter.sendMail({
       from: process.env.SMTP_FROM || 'noreply@mitbiz.com',
       to: email,
-      subject: 'Verify your email address',
+      subject: 'Verifikasi Email Anda - Mitbiz POS',
       html: `
         <h1>Email Verification</h1>
         <p>Click the button below to verify your email address:</p>
@@ -36,13 +34,11 @@ export class EmailService {
     });
   }
 
-  async sendPasswordResetEmail(email: string, resetToken: string) {
-    const resetUrl = `${process.env.BETTER_AUTH_URL}/forgot-password/verify?token=${resetToken}`;
-
+  async sendPasswordResetEmail(email: string, resetUrl: string) {
     await this.transporter.sendMail({
       from: process.env.SMTP_FROM || 'noreply@mitbiz.com',
       to: email,
-      subject: 'Reset your password',
+      subject: 'Reset Password - Mitbiz POS',
       html: `
         <h1>Password Reset</h1>
         <p>Click the button below to reset your password:</p>

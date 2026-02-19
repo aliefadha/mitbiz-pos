@@ -21,7 +21,12 @@ export interface OutletQueryParams {
 }
 
 export const outletsApi = {
-  getAll: async (params?: OutletQueryParams): Promise<{ data: Outlet[]; meta: { page: number; limit: number; total: number; totalPages: number } }> => {
+  getAll: async (
+    params?: OutletQueryParams,
+  ): Promise<{
+    data: Outlet[];
+    meta: { page: number; limit: number; total: number; totalPages: number };
+  }> => {
     const queryString = params
       ? "?" +
         Object.entries(params)
@@ -29,7 +34,10 @@ export const outletsApi = {
           .map(([key, value]) => `${key}=${value}`)
           .join("&")
       : "";
-    const response = await fetchApi<{ data: Outlet[]; meta: { page: number; limit: number; total: number; totalPages: number } }>(`/outlets${queryString}`);
+    const response = await fetchApi<{
+      data: Outlet[];
+      meta: { page: number; limit: number; total: number; totalPages: number };
+    }>(`/outlets${queryString}`);
     return response;
   },
 
@@ -48,6 +56,12 @@ export const outletsApi = {
     return fetchApi<Outlet>("/outlets", {
       method: "POST",
       body: JSON.stringify(data),
+    });
+  },
+
+  delete: async (id: number): Promise<{ message: string }> => {
+    return fetchApi<{ message: string }>(`/outlets/${id}`, {
+      method: "DELETE",
     });
   },
 };

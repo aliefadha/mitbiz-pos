@@ -1,5 +1,10 @@
-import { createFileRoute, redirect, Link } from "@tanstack/react-router";
-import { useLogin } from "../hooks/use-auth";
+import {
+  createFileRoute,
+  redirect,
+  Link,
+  useNavigate,
+} from "@tanstack/react-router";
+import { useRegister } from "../hooks/use-auth";
 import { authClient } from "../lib/auth-client";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
@@ -8,8 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 
-export const Route = createFileRoute("/login")({
-  component: LoginPage,
+export const Route = createFileRoute("/register")({
+  component: RegisterPage,
   beforeLoad: async () => {
     const { data: session } = await authClient.getSession();
     if (session) {
@@ -18,24 +23,39 @@ export const Route = createFileRoute("/login")({
   },
 });
 
-function LoginPage() {
-  const loginMutation = useLogin();
+function RegisterPage() {
+  const registerMutation = useRegister();
+  const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSuccess(null);
+
+    if (password !== confirmPassword) {
+      setError("Password dan konfirmasi password tidak cocok");
+      return;
+    }
+
     try {
-      await loginMutation.mutate({ email, password });
+      await registerMutation.mutate({ name, email, password });
+      setSuccess(
+        "Registrasi berhasil! Silakan cek email Anda untuk verifikasi.",
+      );
+      navigate({ to: "/login" });
     } catch (err: any) {
-      const message = err?.message || "";
-      if (message === "Invalid email or password") {
-        setError("Email atau password salah");
+      if (err?.code === "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL") {
+        setError("Email sudah terdaftar");
       } else {
-        setError(message || "Terjadi kesalahan saat login");
+        setError(err?.message || "Gagal mendaftar. Silakan coba lagi.");
       }
     }
   };
@@ -89,21 +109,39 @@ function LoginPage() {
         <div className="pointer-events-none absolute -bottom-24 left-1/4 h-[400px] w-[400px] rounded-full bg-blue-300/8 blur-[100px]" />
       </div>
 
-      {/* Right Panel - Login Form */}
+      {/* Right Panel - Register Form */}
       <div className="flex w-full items-center justify-center px-6 md:w-7/12 lg:w-1/2 font-sans">
         <div className="w-full max-w-[700px] rounded-2xl bg-white p-10 lg:p-24 shadow-sm">
           <div className="mb-8">
             <h2 className="text-xl md:text-2xl lg:text-xl font-bold tracking-tight text-gray-900">
-              Masuk ke Mitbiz POS
+              Daftar ke Mitbiz POS
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-gray-500">
-              Kelola transaksi, stok, dan laporan dalam satu
+              Buat akun baru untuk mulai mengelola
               <br />
-              sistem terintegrasi.
+              bisnis Anda dengan mudah.
             </p>
           </div>
 
           <form onSubmit={onSubmit} className="space-y-5">
+            <div className="space-y-2">
+              <Label
+                htmlFor="name"
+                className="text-sm font-medium text-gray-700"
+              >
+                Nama Lengkap
+              </Label>
+              <Input
+                id="name"
+                type="text"
+                placeholder="Masukkan nama lengkap"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                className="h-11 rounded-lg border-gray-200 bg-white px-4 text-sm placeholder:text-gray-400 focus-visible:ring-blue-500"
+              />
+            </div>
+
             <div className="space-y-2">
               <Label
                 htmlFor="email"
@@ -114,7 +152,7 @@ function LoginPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="Input your email"
+                placeholder="Masukkan email Anda"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -133,7 +171,7 @@ function LoginPage() {
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Input your store password"
+                  placeholder="Buat password (min. 8 karakter)"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -152,13 +190,37 @@ function LoginPage() {
                   )}
                 </button>
               </div>
-              <div className="flex justify-end">
-                <Link
-                  to="/forgot-password"
-                  className="mt-1 text-sm font-medium text-blue-600 transition-colors hover:text-blue-700 hover:underline"
+            </div>
+
+            <div className="space-y-2">
+              <Label
+                htmlFor="confirmPassword"
+                className="text-sm font-medium text-gray-700"
+              >
+                Konfirmasi Password
+              </Label>
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="Ulangi password Anda"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  minLength={8}
+                  className="h-11 rounded-lg border-gray-200 bg-white px-4 pr-10 text-sm placeholder:text-gray-400 focus-visible:ring-blue-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  Lupa password?
-                </Link>
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
               </div>
             </div>
 
@@ -168,28 +230,34 @@ function LoginPage() {
               </div>
             )}
 
+            {success && (
+              <div className="rounded-lg bg-green-50 px-4 py-3 text-center text-sm text-green-600">
+                {success}
+              </div>
+            )}
+
             <Button
               type="submit"
-              disabled={loginMutation.isPending}
+              disabled={registerMutation.isPending}
               className="h-12 w-full rounded-full bg-blue-600 text-base font-semibold text-white shadow-md transition-all hover:bg-blue-700 hover:shadow-lg active:scale-[0.98]"
             >
-              {loginMutation.isPending ? (
+              {registerMutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Signing in...
+                  Mendaftar...
                 </>
               ) : (
-                "Next"
+                "Daftar"
               )}
             </Button>
 
             <p className="pt-2 text-center text-sm text-gray-500">
-              Belum punya akun?{" "}
+              Sudah punya akun?{" "}
               <Link
-                to="/register"
+                to="/login"
                 className="font-semibold text-blue-600 hover:text-blue-700 hover:underline"
               >
-                Daftar di sini
+                Masuk di sini
               </Link>
             </p>
           </form>

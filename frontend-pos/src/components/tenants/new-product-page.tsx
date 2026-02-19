@@ -9,13 +9,13 @@ import { productsApi } from "@/lib/api/products";
 const { Title } = Typography;
 
 export function NewProductPage() {
-  const { id } = useParams({ from: "/_protected/tenants/$id/products/new" });
+  const { slug } = useParams({ from: "/_protected/tenants/$slug/products/new" });
   const navigate = useNavigate();
   const [form] = Form.useForm();
 
   const { data: tenant, isLoading: tenantLoading } = useQuery({
-    queryKey: ["tenant", id],
-    queryFn: () => tenantsApi.getBySlug(id),
+    queryKey: ["tenant", slug],
+    queryFn: () => tenantsApi.getBySlug(slug),
   });
 
   const { data: categoriesData, isLoading: categoriesLoading } = useQuery({
@@ -41,7 +41,7 @@ export function NewProductPage() {
     }) => productsApi.create(data),
     onSuccess: () => {
       message.success("Produk berhasil dibuat");
-      navigate({ to: "/tenants/$id/products" as any, params: { id } });
+      navigate({ to: "/tenants/$slug/products" as any, params: { slug } });
     },
     onError: (error: Error) => {
       message.error(error.message || "Gagal membuat produk");
@@ -67,7 +67,7 @@ export function NewProductPage() {
       <Button
         type="link"
         icon={<ArrowLeftOutlined />}
-        onClick={() => navigate({ to: "/tenants/$id", params: { id } })}
+        onClick={() => navigate({ to: "/tenants/$slug", params: { slug } })}
         style={{ marginBottom: 16, paddingLeft: 0 }}
       >
         Back to Tenant
@@ -194,7 +194,7 @@ export function NewProductPage() {
               </Button>
               <Button 
                 icon={<ArrowLeftOutlined />}
-                onClick={() => navigate({ to: "/tenants/$id", params: { id } })}
+                onClick={() => navigate({ to: "/tenants/$slug", params: { slug } })}
               >
                 Kembali
               </Button>

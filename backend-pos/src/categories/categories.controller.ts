@@ -23,7 +23,8 @@ import {
   CategoryIdDto,
   CategoryQueryDto,
 } from './dto';
-import { AuthGuard, Roles } from '@thallesp/nestjs-better-auth';
+import { AuthGuard } from '@thallesp/nestjs-better-auth';
+import { PermissionGuard } from '../common/guards/permission.guard';
 import {
   CurrentUser,
   type CurrentUserType,
@@ -31,11 +32,10 @@ import {
 
 @ApiTags('categories')
 @Controller('categories')
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, PermissionGuard)
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
-  @Roles(['admin', 'owner', 'cashier'])
   @Get()
   @ApiOperation({ summary: 'Get all categories' })
   @UsePipes(new ZodValidationPipe(CategoryQuerySchema, 'query'))
@@ -46,7 +46,6 @@ export class CategoriesController {
     return this.categoriesService.findAll(query, user);
   }
 
-  @Roles(['admin', 'owner', 'cashier'])
   @Get(':id')
   @ApiOperation({ summary: 'Get category by ID' })
   @UsePipes(new ZodValidationPipe(CategoryIdSchema, 'params'))
@@ -57,7 +56,6 @@ export class CategoriesController {
     return this.categoriesService.findById(id, user);
   }
 
-  @Roles(['admin', 'owner'])
   @Post()
   @ApiOperation({ summary: 'Create a new category' })
   @UsePipes(new ZodValidationPipe(CreateCategorySchema))
@@ -68,7 +66,6 @@ export class CategoriesController {
     return this.categoriesService.create(data, user);
   }
 
-  @Roles(['admin', 'owner'])
   @Put(':id')
   @ApiOperation({ summary: 'Update a category' })
   @UsePipes(new ZodValidationPipe(CategoryIdSchema, 'params'))
@@ -81,7 +78,6 @@ export class CategoriesController {
     return this.categoriesService.update(id, data, user);
   }
 
-  @Roles(['admin', 'owner'])
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a category' })
   @UsePipes(new ZodValidationPipe(CategoryIdSchema, 'params'))

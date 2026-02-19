@@ -23,7 +23,8 @@ import {
   StockIdDto,
   StockQueryDto,
 } from './dto';
-import { AuthGuard, Roles } from '@thallesp/nestjs-better-auth';
+import { AuthGuard } from '@thallesp/nestjs-better-auth';
+import { PermissionGuard } from '../common/guards/permission.guard';
 import {
   CurrentUser,
   type CurrentUserType,
@@ -31,11 +32,10 @@ import {
 
 @ApiTags('stocks')
 @Controller('stocks')
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, PermissionGuard)
 export class StocksController {
   constructor(private readonly stocksService: StocksService) {}
 
-  @Roles(['admin', 'owner', 'cashier'])
   @Get()
   @ApiOperation({ summary: 'Get all stocks' })
   @UsePipes(new ZodValidationPipe(StockQuerySchema, 'query'))
@@ -43,7 +43,6 @@ export class StocksController {
     return this.stocksService.findAll(query, user);
   }
 
-  @Roles(['admin', 'owner', 'cashier'])
   @Get(':id')
   @ApiOperation({ summary: 'Get stock by ID' })
   @UsePipes(new ZodValidationPipe(StockIdSchema, 'params'))
@@ -51,7 +50,6 @@ export class StocksController {
     return this.stocksService.findById(id, user);
   }
 
-  @Roles(['admin', 'owner'])
   @Post()
   @ApiOperation({ summary: 'Create a new stock' })
   @UsePipes(new ZodValidationPipe(CreateStockSchema))
@@ -59,7 +57,6 @@ export class StocksController {
     return this.stocksService.create(data, user);
   }
 
-  @Roles(['admin', 'owner'])
   @Put(':id')
   @ApiOperation({ summary: 'Update a stock' })
   @UsePipes(new ZodValidationPipe(StockIdSchema, 'params'))
@@ -72,7 +69,6 @@ export class StocksController {
     return this.stocksService.update(id, data, user);
   }
 
-  @Roles(['admin', 'owner'])
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a stock' })
   @UsePipes(new ZodValidationPipe(StockIdSchema, 'params'))

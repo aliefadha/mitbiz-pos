@@ -14,12 +14,17 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
+    sendResetPassword: async ({ user, url }) => {
+      await emailService.sendPasswordResetEmail(user.email, url);
+    },
   },
   emailVerification: {
-    sendVerificationEmail: async ({ user, token }) => {
-      await emailService.sendVerificationEmail(user.email, token);
+    sendVerificationEmail: async ({ user, url }) => {
+      await emailService.sendVerificationEmail(user.email, url);
     },
+    sendOnSignUp: true,
     expiresIn: 24 * 60 * 60,
+    autoSignInAfterVerification: false,
   },
   trustedOrigins: ['http://localhost:3000'],
   plugins: [
@@ -31,6 +36,7 @@ export const auth = betterAuth({
         owner: ownerRole,
         cashier: cashierRole,
       },
+      defaultRole: 'cashier',
     }),
   ],
   user: {

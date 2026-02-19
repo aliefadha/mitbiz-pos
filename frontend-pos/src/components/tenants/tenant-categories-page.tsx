@@ -25,7 +25,7 @@ import { tenantsApi } from "@/lib/api/tenants";
 const { Title, Text } = Typography;
 
 export function TenantCategoriesPage() {
-  const { id } = useParams({ from: "/_protected/tenants/$id/categories/" });
+  const { slug } = useParams({ from: "/_protected/tenants/$slug/categories/" });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -34,8 +34,8 @@ export function TenantCategoriesPage() {
   const [form] = Form.useForm();
 
   const { data: tenant } = useQuery({
-    queryKey: ["tenant", id],
-    queryFn: () => tenantsApi.getBySlug(id),
+    queryKey: ["tenant", slug],
+    queryFn: () => tenantsApi.getBySlug(slug),
   });
 
   const { data: categories, isLoading } = useQuery({
@@ -227,7 +227,7 @@ export function TenantCategoriesPage() {
       <Button
         type="link"
         icon={<ArrowLeftOutlined />}
-        onClick={() => navigate({ to: "/tenants/$id", params: { id } })}
+        onClick={() => navigate({ to: "/tenants/$slug", params: { slug } })}
         style={{ marginBottom: 16, paddingLeft: 0 }}
       >
         Back to {tenant?.nama || "Tenant"}

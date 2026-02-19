@@ -25,7 +25,8 @@ import {
   TenantQueryDto,
   TenantSummaryDto,
 } from './dto';
-import { AuthGuard, Roles, OptionalAuth } from '@thallesp/nestjs-better-auth';
+import { AuthGuard, OptionalAuth } from '@thallesp/nestjs-better-auth';
+import { PermissionGuard } from '../common/guards/permission.guard';
 import {
   CurrentUser,
   type CurrentUserType,
@@ -33,11 +34,10 @@ import {
 
 @ApiTags('tenants')
 @Controller('tenants')
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, PermissionGuard)
 export class TenantsController {
   constructor(private readonly tenantsService: TenantsService) {}
 
-  @Roles(['admin', 'owner'])
   @Get()
   @ApiOperation({ summary: 'Get all tenants' })
   @UsePipes(new ZodValidationPipe(TenantQuerySchema, 'query'))
@@ -48,7 +48,6 @@ export class TenantsController {
     return this.tenantsService.findAll(query, user);
   }
 
-  @Roles(['admin', 'owner'])
   @Get(':slug')
   @ApiOperation({ summary: 'Get tenant by slug' })
   @UsePipes(new ZodValidationPipe(TenantSlugSchema, 'params'))
@@ -68,7 +67,6 @@ export class TenantsController {
     return this.tenantsService.create(data, user);
   }
 
-  @Roles(['admin', 'owner'])
   @Put(':slug')
   @ApiOperation({ summary: 'Update a tenant' })
   @UsePipes(new ZodValidationPipe(TenantSlugSchema, 'params'))
@@ -81,7 +79,6 @@ export class TenantsController {
     return this.tenantsService.update(slug, data, user);
   }
 
-  @Roles(['admin', 'owner'])
   @Delete(':slug')
   @ApiOperation({ summary: 'Delete a tenant' })
   @UsePipes(new ZodValidationPipe(TenantSlugSchema, 'params'))
@@ -92,7 +89,6 @@ export class TenantsController {
     return this.tenantsService.remove(slug, user);
   }
 
-  @Roles(['admin', 'owner'])
   @Get(':slug/summary')
   @ApiOperation({
     summary:
@@ -106,7 +102,6 @@ export class TenantsController {
     return this.tenantsService.getSummary(slug, user);
   }
 
-  @Roles(['admin', 'owner'])
   @Get(':slug/users')
   @ApiOperation({ summary: 'Get all users for a tenant' })
   @UsePipes(new ZodValidationPipe(TenantSlugSchema, 'params'))
@@ -115,5 +110,15 @@ export class TenantsController {
     @CurrentUser() user: CurrentUserType,
   ) {
     return this.tenantsService.findUsers(slug, user);
+  }
+
+  @Get(':slug/outlets')
+  @ApiOperation({ summary: 'Get all outlets for a tenant' })
+  @UsePipes(new ZodValidationPipe(TenantSlugSchema, 'params'))
+  findOutlets(
+    @Param() { slug }: TenantSlugDto,
+    @CurrentUser() user: CurrentUserType,
+  ) {
+    return this.tenantsService.findOutlets(slug, user);
   }
 }

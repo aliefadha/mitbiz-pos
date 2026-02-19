@@ -16,6 +16,7 @@ import {
   DeleteOutlined,
   SearchOutlined,
   ArrowLeftOutlined,
+  InboxOutlined,
 } from "@ant-design/icons";
 import { outletsApi, type Outlet } from "@/lib/api/outlets";
 import { tenantsApi } from "@/lib/api/tenants";
@@ -23,7 +24,7 @@ import { tenantsApi } from "@/lib/api/tenants";
 const { Title, Text } = Typography;
 
 export function TenantOutletsPage() {
-  const { id } = useParams({ from: "/_protected/tenants/$id/outlets/" });
+  const { slug } = useParams({ from: "/_protected/tenants/$slug/outlets/" });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -31,8 +32,8 @@ export function TenantOutletsPage() {
   const [form] = Form.useForm();
 
   const { data: tenant } = useQuery({
-    queryKey: ["tenant", id],
-    queryFn: () => tenantsApi.getBySlug(id),
+    queryKey: ["tenant", slug],
+    queryFn: () => tenantsApi.getBySlug(slug),
   });
 
   const { data: outlets, isLoading } = useQuery({
@@ -42,8 +43,13 @@ export function TenantOutletsPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: { tenantId: number; name: string; kode: string; alamat?: string; noHp?: string }) => 
-      outletsApi.create(data),
+    mutationFn: (data: {
+      tenantId: number;
+      name: string;
+      kode: string;
+      alamat?: string;
+      noHp?: string;
+    }) => outletsApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["outlets", tenant?.id] });
       message.success("Outlet created successfully");
@@ -56,8 +62,9 @@ export function TenantOutletsPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => Promise.resolve({} as Outlet),
+    mutationFn: (id: number) => outletsApi.delete(id),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["outlets", tenant?.id] });
       message.success("Outlet deleted successfully");
     },
     onError: (error: Error) => {
@@ -74,7 +81,8 @@ export function TenantOutletsPage() {
   const handleDelete = (id: number) => {
     Modal.confirm({
       title: "Delete Outlet",
-      content: "Are you sure you want to delete this outlet? This action cannot be undone.",
+      content:
+        "Are you sure you want to delete this outlet? This action cannot be undone.",
       okText: "Delete",
       okType: "danger",
       onOk: () => {
@@ -101,7 +109,7 @@ export function TenantOutletsPage() {
     (outlet: Outlet) =>
       outlet.name.toLowerCase().includes(searchText.toLowerCase()) ||
       outlet.kode.toLowerCase().includes(searchText.toLowerCase()) ||
-      outlet.alamat?.toLowerCase().includes(searchText.toLowerCase())
+      outlet.alamat?.toLowerCase().includes(searchText.toLowerCase()),
   );
 
   const columns = [
@@ -124,19 +132,33 @@ export function TenantOutletsPage() {
       title: "Nama",
       dataIndex: "name",
       key: "name",
-      render: (value: string) => <Text strong>{value}</Text>,
+      render: (value: string, record: Outlet) => (
+        <a
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate({ to: `/tenants/${slug}/outlets/${record.id}` });
+          }}
+          style={{ fontWeight: 600 }}
+        >
+          {value}
+        </a>
+      ),
     },
     {
       title: "Alamat",
       dataIndex: "alamat",
       key: "alamat",
-      render: (value: string | null) => <Text type="secondary">{value || "-"}</Text>,
+      render: (value: string | null) => (
+        <Text type="secondary">{value || "-"}</Text>
+      ),
     },
     {
       title: "No. HP",
       dataIndex: "noHp",
       key: "noHp",
-      render: (value: string | null) => <Text type="secondary">{value || "-"}</Text>,
+      render: (value: string | null) => (
+        <Text type="secondary">{value || "-"}</Text>
+      ),
     },
     {
       title: "Status",
@@ -152,14 +174,28 @@ export function TenantOutletsPage() {
     {
       title: "Actions",
       key: "actions",
-      width: 80,
+      width: 140,
       render: (_: unknown, record: Outlet) => (
         <Space size="small">
+          <Button
+            type="link"
+            size="small"
+            icon={<InboxOutlined />}
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate({ to: `/tenants/${slug}/outlets/${record.id}` });
+            }}
+          >
+            Stock
+          </Button>
           <Button
             type="text"
             danger
             icon={<DeleteOutlined />}
-            onClick={() => handleDelete(record.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDelete(record.id);
+            }}
           />
         </Space>
       ),
@@ -171,7 +207,7 @@ export function TenantOutletsPage() {
       <Button
         type="link"
         icon={<ArrowLeftOutlined />}
-        onClick={() => navigate({ to: "/tenants/$id" as any, params: { id } })}
+        onClick={() => navigate({ to: `/tenants/${slug}` })}
         style={{ marginBottom: 16, paddingLeft: 0 }}
       >
         Back to {tenant?.nama || "Tenant"}
@@ -191,11 +227,7 @@ export function TenantOutletsPage() {
           </Title>
           <Text type="secondary">Manage outlets for {tenant?.nama}</Text>
         </div>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={handleCreate}
-        >
+        <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
           Add Outlet
         </Button>
       </div>
@@ -221,6 +253,11 @@ export function TenantOutletsPage() {
         locale={{
           emptyText: "No outlets found.",
         }}
+        onRow={(record: Outlet) => ({
+          onClick: () =>
+            navigate({ to: `/tenants/${slug}/outlets/${record.id}` }),
+          style: { cursor: "pointer" },
+        })}
       />
 
       <Modal

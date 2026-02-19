@@ -47,13 +47,15 @@ export class TenantsService {
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
     const [data, totalResult] = await Promise.all([
-      this.db
-        .select()
-        .from(tenants)
-        .where(whereClause)
-        .limit(limit)
-        .offset(offset)
-        .orderBy(desc(tenants.createdAt)),
+      this.db.query.tenants.findMany({
+        where: whereClause,
+        limit,
+        offset,
+        orderBy: [desc(tenants.createdAt)],
+        with: {
+          outlets: true,
+        },
+      }),
       this.db
         .select({ count: sql<number>`count(*)` })
         .from(tenants)
@@ -95,8 +97,7 @@ export class TenantsService {
       throw new ForbiddenException('You do not have access to this tenant');
     }
 
-
-    return tenant
+    return tenant;
   }
 
   async create(data: CreateTenantDto, user: CurrentUserType) {
@@ -265,7 +266,7 @@ export class TenantsService {
       throw new ForbiddenException('You do not have access to this tenant');
     }
 
-    const allUsers: typeof tenant.user[] = [];
+    const allUsers: (typeof tenant.user)[] = [];
     if (tenant.user) {
       allUsers.push(tenant.user);
     }
@@ -280,5 +281,28 @@ export class TenantsService {
     }
 
     return { data: allUsers };
+  }
+
+  async findOutlets(slug: string, user: CurrentUserType) {
+    const tenant = await this.db.query.tenants.findFirst({
+      where: eq(tenants.slug, slug),
+      with: {
+        outlets: {
+          with: {
+            cashiers: true,
+          },
+        },
+      },
+    });
+
+    if (!tenant) {
+      throw new NotFoundException(`Tenant tidak ditemukan`);
+    }
+
+    if (user.role === 'owner' && tenant.userId !== user.id) {
+      throw new ForbiddenException('You do not have access to this tenant');
+    }
+
+    return { data: tenant.outlets };
   }
 }
