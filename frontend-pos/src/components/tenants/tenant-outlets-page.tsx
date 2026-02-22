@@ -1,27 +1,46 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  Button,
-  Input,
-  Table,
-  Modal,
-  Form,
-  Typography,
-  Space,
-  message,
-} from "antd";
-import {
-  PlusOutlined,
-  DeleteOutlined,
-  SearchOutlined,
-  ArrowLeftOutlined,
-  InboxOutlined,
-} from "@ant-design/icons";
 import { outletsApi, type Outlet } from "@/lib/api/outlets";
 import { tenantsApi } from "@/lib/api/tenants";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { ArrowLeft, Plus, Trash2, Search, Package } from "lucide-react";
 
-const { Title, Text } = Typography;
+const formSchema = z.object({
+  name: z.string().min(1, "Nama outlet wajib diisi"),
+  kode: z.string().min(1, "Kode outlet wajib diisi"),
+  alamat: z.string().optional(),
+  noHp: z.string().optional(),
+});
 
 export function TenantOutletsPage() {
   const { slug } = useParams({ from: "/_protected/tenants/$slug/outlets/" });
@@ -29,7 +48,15 @@ export function TenantOutletsPage() {
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchText, setSearchText] = useState("");
-  const [form] = Form.useForm();
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      kode: "",
+      alamat: "",
+      noHp: "",
+    },
+  });
 
   const { data: tenant } = useQuery({
     queryKey: ["tenant", slug],
@@ -52,244 +79,207 @@ export function TenantOutletsPage() {
     }) => outletsApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["outlets", tenant?.id] });
-      message.success("Outlet created successfully");
       setIsModalOpen(false);
-      form.resetFields();
+      form.reset();
     },
     onError: (error: Error) => {
-      message.error(error.message);
+      alert(error.message);
     },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => outletsApi.delete(id),
+    mutationFn: (id: string) => outletsApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["outlets", tenant?.id] });
-      message.success("Outlet deleted successfully");
     },
     onError: (error: Error) => {
-      message.error(error.message);
+      alert(error.message);
     },
   });
 
   const handleCreate = () => {
-    form.resetFields();
-    form.setFieldsValue({ isActive: true });
+    form.reset();
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id: number) => {
-    Modal.confirm({
-      title: "Delete Outlet",
-      content:
-        "Are you sure you want to delete this outlet? This action cannot be undone.",
-      okText: "Delete",
-      okType: "danger",
-      onOk: () => {
-        deleteMutation.mutate(id);
-      },
-    });
-  };
-
-  const handleModalCancel = () => {
-    setIsModalOpen(false);
-    form.resetFields();
-  };
-
-  const handleModalOk = () => {
-    form.validateFields().then((values) => {
-      createMutation.mutate({
-        ...values,
-        tenantId: tenant!.id,
-      });
-    });
+  const handleDelete = (id: string) => {
+    if (confirm("Are you sure you want to delete this outlet? This action cannot be undone.")) {
+      deleteMutation.mutate(id);
+    }
   };
 
   const filteredOutlets = outlets?.data?.filter(
     (outlet: Outlet) =>
       outlet.name.toLowerCase().includes(searchText.toLowerCase()) ||
       outlet.kode.toLowerCase().includes(searchText.toLowerCase()) ||
-      outlet.alamat?.toLowerCase().includes(searchText.toLowerCase()),
+      outlet.alamat?.toLowerCase().includes(searchText.toLowerCase())
   );
-
-  const columns = [
-    {
-      title: "No.",
-      key: "index",
-      width: 60,
-      render: (_: unknown, __: unknown, index: number) => (
-        <Text type="secondary">{index + 1}</Text>
-      ),
-    },
-    {
-      title: "Kode",
-      dataIndex: "kode",
-      key: "kode",
-      width: 100,
-      render: (value: string) => <Text code>{value}</Text>,
-    },
-    {
-      title: "Nama",
-      dataIndex: "name",
-      key: "name",
-      render: (value: string, record: Outlet) => (
-        <a
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate({ to: `/tenants/${slug}/outlets/${record.id}` });
-          }}
-          style={{ fontWeight: 600 }}
-        >
-          {value}
-        </a>
-      ),
-    },
-    {
-      title: "Alamat",
-      dataIndex: "alamat",
-      key: "alamat",
-      render: (value: string | null) => (
-        <Text type="secondary">{value || "-"}</Text>
-      ),
-    },
-    {
-      title: "No. HP",
-      dataIndex: "noHp",
-      key: "noHp",
-      render: (value: string | null) => (
-        <Text type="secondary">{value || "-"}</Text>
-      ),
-    },
-    {
-      title: "Status",
-      dataIndex: "isActive",
-      key: "isActive",
-      width: 100,
-      render: (value: boolean) => (
-        <Text style={{ color: value ? "#52c41a" : "#ff4d4f" }}>
-          {value ? "Active" : "Inactive"}
-        </Text>
-      ),
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      width: 140,
-      render: (_: unknown, record: Outlet) => (
-        <Space size="small">
-          <Button
-            type="link"
-            size="small"
-            icon={<InboxOutlined />}
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate({ to: `/tenants/${slug}/outlets/${record.id}` });
-            }}
-          >
-            Stock
-          </Button>
-          <Button
-            type="text"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDelete(record.id);
-            }}
-          />
-        </Space>
-      ),
-    },
-  ];
 
   return (
     <div>
       <Button
-        type="link"
-        icon={<ArrowLeftOutlined />}
+        variant="link"
         onClick={() => navigate({ to: `/tenants/${slug}` })}
-        style={{ marginBottom: 16, paddingLeft: 0 }}
+        className="mb-4 pl-0"
       >
+        <ArrowLeft className="mr-2 h-4 w-4" />
         Back to {tenant?.nama || "Tenant"}
       </Button>
 
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 24,
-        }}
-      >
+      <div className="flex justify-between items-center mb-6">
         <div>
-          <Title level={4} style={{ margin: 0 }}>
-            Outlets
-          </Title>
-          <Text type="secondary">Manage outlets for {tenant?.nama}</Text>
+          <h4 className="text-lg font-semibold m-0">Outlets</h4>
+          <p className="text-sm text-gray-500 m-0">Manage outlets for {tenant?.nama}</p>
         </div>
-        <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+        <Button onClick={handleCreate}>
+          <Plus className="mr-2 h-4 w-4" />
           Add Outlet
         </Button>
       </div>
 
-      <div style={{ marginBottom: 16 }}>
+      <div className="mb-4">
         <Input
           placeholder="Search outlets..."
-          prefix={<SearchOutlined />}
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
-          style={{ maxWidth: 300 }}
-          allowClear
+          className="max-w-[300px]"
         />
       </div>
 
-      <Table
-        dataSource={filteredOutlets}
-        columns={columns}
-        rowKey="id"
-        loading={isLoading}
-        pagination={{ pageSize: 10 }}
-        size="small"
-        locale={{
-          emptyText: "No outlets found.",
-        }}
-        onRow={(record: Outlet) => ({
-          onClick: () =>
-            navigate({ to: `/tenants/${slug}/outlets/${record.id}` }),
-          style: { cursor: "pointer" },
-        })}
-      />
+      {isLoading ? (
+        <div className="space-y-2">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[60px]">No.</TableHead>
+              <TableHead className="w-[100px]">Kode</TableHead>
+              <TableHead>Nama</TableHead>
+              <TableHead>Alamat</TableHead>
+              <TableHead>No. HP</TableHead>
+              <TableHead className="w-[100px]">Status</TableHead>
+              <TableHead className="w-[140px]">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredOutlets?.map((outlet, index) => (
+              <TableRow 
+                key={outlet.id} 
+                className="cursor-pointer"
+                onClick={() => navigate({ to: `/tenants/${slug}/outlets/${outlet.id}` })}
+              >
+                <TableCell>{index + 1}</TableCell>
+                <TableCell><code className="bg-gray-100 px-2 py-1 rounded text-sm">{outlet.kode}</code></TableCell>
+                <TableCell className="font-medium">{outlet.name}</TableCell>
+                <TableCell>{outlet.alamat || "-"}</TableCell>
+                <TableCell>{outlet.noHp || "-"}</TableCell>
+                <TableCell>
+                  <span className={outlet.isActive ? "text-green-600" : "text-red-500"}>
+                    {outlet.isActive ? "Active" : "Inactive"}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <div className="flex gap-1">
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate({ to: `/tenants/${slug}/outlets/${outlet.id}` });
+                      }}
+                    >
+                      <Package className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(outlet.id);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 text-red-500" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
 
-      <Modal
-        title="Add Outlet"
-        open={isModalOpen}
-        onOk={handleModalOk}
-        onCancel={handleModalCancel}
-        confirmLoading={createMutation.isPending}
-      >
-        <Form form={form} layout="vertical">
-          <Form.Item
-            name="kode"
-            label="Kode Outlet"
-            rules={[{ required: true, message: "Kode outlet wajib diisi" }]}
-          >
-            <Input placeholder="Contoh: OUT-001" />
-          </Form.Item>
-          <Form.Item
-            name="name"
-            label="Nama Outlet"
-            rules={[{ required: true, message: "Nama outlet wajib diisi" }]}
-          >
-            <Input placeholder="Contoh: Outlet Jakarta" />
-          </Form.Item>
-          <Form.Item name="alamat" label="Alamat">
-            <Input.TextArea placeholder="Masukkan alamat outlet" rows={2} />
-          </Form.Item>
-          <Form.Item name="noHp" label="No. HP">
-            <Input placeholder="Contoh: 081234567890" />
-          </Form.Item>
-        </Form>
-      </Modal>
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Outlet</DialogTitle>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={(e) => { e.preventDefault(); form.handleSubmit((v) => createMutation.mutate({ ...v, tenantId: tenant!.id }))(); }} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="kode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Kode Outlet</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Contoh: OUT-001" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nama Outlet</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Contoh: Outlet Jakarta" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="alamat"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Alamat</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="Masukkan alamat outlet" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="noHp"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>No. HP</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Contoh: 081234567890" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <Button type="submit" disabled={createMutation.isPending}>
+                  Create
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

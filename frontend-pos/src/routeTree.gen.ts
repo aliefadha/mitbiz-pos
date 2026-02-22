@@ -19,9 +19,14 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProtectedDashboardRouteImport } from './routes/_protected/dashboard'
 import { Route as ProtectedTenantsIndexRouteImport } from './routes/_protected/tenants/index'
 import { Route as ProtectedSettingsIndexRouteImport } from './routes/_protected/settings/index'
+import { Route as ProtectedProductsIndexRouteImport } from './routes/_protected/products/index'
+import { Route as ProtectedOutletsIndexRouteImport } from './routes/_protected/outlets/index'
+import { Route as ProtectedCategoriesIndexRouteImport } from './routes/_protected/categories/index'
 import { Route as ProtectedAccountIndexRouteImport } from './routes/_protected/account/index'
 import { Route as ProtectedTenantsNewRouteImport } from './routes/_protected/tenants/new'
+import { Route as ProtectedProductsProductIdRouteImport } from './routes/_protected/products/$productId'
 import { Route as ProtectedOutletsOutletIdRouteImport } from './routes/_protected/outlets/$outletId'
+import { Route as ProtectedCategoriesCategoryIdRouteImport } from './routes/_protected/categories/$categoryId'
 import { Route as ProtectedTenantsSlugIndexRouteImport } from './routes/_protected/tenants/$slug/index'
 import { Route as ProtectedTenantsSlugUsersIndexRouteImport } from './routes/_protected/tenants/$slug/users/index'
 import { Route as ProtectedTenantsSlugProductsIndexRouteImport } from './routes/_protected/tenants/$slug/products/index'
@@ -80,6 +85,22 @@ const ProtectedSettingsIndexRoute = ProtectedSettingsIndexRouteImport.update({
   path: '/settings/',
   getParentRoute: () => ProtectedRoute,
 } as any)
+const ProtectedProductsIndexRoute = ProtectedProductsIndexRouteImport.update({
+  id: '/products/',
+  path: '/products/',
+  getParentRoute: () => ProtectedRoute,
+} as any)
+const ProtectedOutletsIndexRoute = ProtectedOutletsIndexRouteImport.update({
+  id: '/outlets/',
+  path: '/outlets/',
+  getParentRoute: () => ProtectedRoute,
+} as any)
+const ProtectedCategoriesIndexRoute =
+  ProtectedCategoriesIndexRouteImport.update({
+    id: '/categories/',
+    path: '/categories/',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
 const ProtectedAccountIndexRoute = ProtectedAccountIndexRouteImport.update({
   id: '/account/',
   path: '/account/',
@@ -90,10 +111,22 @@ const ProtectedTenantsNewRoute = ProtectedTenantsNewRouteImport.update({
   path: '/tenants/new',
   getParentRoute: () => ProtectedRoute,
 } as any)
+const ProtectedProductsProductIdRoute =
+  ProtectedProductsProductIdRouteImport.update({
+    id: '/products/$productId',
+    path: '/products/$productId',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
 const ProtectedOutletsOutletIdRoute =
   ProtectedOutletsOutletIdRouteImport.update({
     id: '/outlets/$outletId',
     path: '/outlets/$outletId',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
+const ProtectedCategoriesCategoryIdRoute =
+  ProtectedCategoriesCategoryIdRouteImport.update({
+    id: '/categories/$categoryId',
+    path: '/categories/$categoryId',
     getParentRoute: () => ProtectedRoute,
   } as any)
 const ProtectedTenantsSlugIndexRoute =
@@ -153,9 +186,14 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/verify-email': typeof VerifyEmailRoute
   '/dashboard': typeof ProtectedDashboardRoute
+  '/categories/$categoryId': typeof ProtectedCategoriesCategoryIdRoute
   '/outlets/$outletId': typeof ProtectedOutletsOutletIdRoute
+  '/products/$productId': typeof ProtectedProductsProductIdRoute
   '/tenants/new': typeof ProtectedTenantsNewRoute
   '/account/': typeof ProtectedAccountIndexRoute
+  '/categories/': typeof ProtectedCategoriesIndexRoute
+  '/outlets/': typeof ProtectedOutletsIndexRoute
+  '/products/': typeof ProtectedProductsIndexRoute
   '/settings/': typeof ProtectedSettingsIndexRoute
   '/tenants/': typeof ProtectedTenantsIndexRoute
   '/tenants/$slug/': typeof ProtectedTenantsSlugIndexRoute
@@ -175,9 +213,14 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/verify-email': typeof VerifyEmailRoute
   '/dashboard': typeof ProtectedDashboardRoute
+  '/categories/$categoryId': typeof ProtectedCategoriesCategoryIdRoute
   '/outlets/$outletId': typeof ProtectedOutletsOutletIdRoute
+  '/products/$productId': typeof ProtectedProductsProductIdRoute
   '/tenants/new': typeof ProtectedTenantsNewRoute
   '/account': typeof ProtectedAccountIndexRoute
+  '/categories': typeof ProtectedCategoriesIndexRoute
+  '/outlets': typeof ProtectedOutletsIndexRoute
+  '/products': typeof ProtectedProductsIndexRoute
   '/settings': typeof ProtectedSettingsIndexRoute
   '/tenants': typeof ProtectedTenantsIndexRoute
   '/tenants/$slug': typeof ProtectedTenantsSlugIndexRoute
@@ -199,9 +242,14 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/verify-email': typeof VerifyEmailRoute
   '/_protected/dashboard': typeof ProtectedDashboardRoute
+  '/_protected/categories/$categoryId': typeof ProtectedCategoriesCategoryIdRoute
   '/_protected/outlets/$outletId': typeof ProtectedOutletsOutletIdRoute
+  '/_protected/products/$productId': typeof ProtectedProductsProductIdRoute
   '/_protected/tenants/new': typeof ProtectedTenantsNewRoute
   '/_protected/account/': typeof ProtectedAccountIndexRoute
+  '/_protected/categories/': typeof ProtectedCategoriesIndexRoute
+  '/_protected/outlets/': typeof ProtectedOutletsIndexRoute
+  '/_protected/products/': typeof ProtectedProductsIndexRoute
   '/_protected/settings/': typeof ProtectedSettingsIndexRoute
   '/_protected/tenants/': typeof ProtectedTenantsIndexRoute
   '/_protected/tenants/$slug/': typeof ProtectedTenantsSlugIndexRoute
@@ -223,9 +271,14 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/verify-email'
     | '/dashboard'
+    | '/categories/$categoryId'
     | '/outlets/$outletId'
+    | '/products/$productId'
     | '/tenants/new'
     | '/account/'
+    | '/categories/'
+    | '/outlets/'
+    | '/products/'
     | '/settings/'
     | '/tenants/'
     | '/tenants/$slug/'
@@ -245,9 +298,14 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/verify-email'
     | '/dashboard'
+    | '/categories/$categoryId'
     | '/outlets/$outletId'
+    | '/products/$productId'
     | '/tenants/new'
     | '/account'
+    | '/categories'
+    | '/outlets'
+    | '/products'
     | '/settings'
     | '/tenants'
     | '/tenants/$slug'
@@ -268,9 +326,14 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/verify-email'
     | '/_protected/dashboard'
+    | '/_protected/categories/$categoryId'
     | '/_protected/outlets/$outletId'
+    | '/_protected/products/$productId'
     | '/_protected/tenants/new'
     | '/_protected/account/'
+    | '/_protected/categories/'
+    | '/_protected/outlets/'
+    | '/_protected/products/'
     | '/_protected/settings/'
     | '/_protected/tenants/'
     | '/_protected/tenants/$slug/'
@@ -365,6 +428,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedSettingsIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
+    '/_protected/products/': {
+      id: '/_protected/products/'
+      path: '/products'
+      fullPath: '/products/'
+      preLoaderRoute: typeof ProtectedProductsIndexRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/outlets/': {
+      id: '/_protected/outlets/'
+      path: '/outlets'
+      fullPath: '/outlets/'
+      preLoaderRoute: typeof ProtectedOutletsIndexRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/categories/': {
+      id: '/_protected/categories/'
+      path: '/categories'
+      fullPath: '/categories/'
+      preLoaderRoute: typeof ProtectedCategoriesIndexRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
     '/_protected/account/': {
       id: '/_protected/account/'
       path: '/account'
@@ -379,11 +463,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedTenantsNewRouteImport
       parentRoute: typeof ProtectedRoute
     }
+    '/_protected/products/$productId': {
+      id: '/_protected/products/$productId'
+      path: '/products/$productId'
+      fullPath: '/products/$productId'
+      preLoaderRoute: typeof ProtectedProductsProductIdRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
     '/_protected/outlets/$outletId': {
       id: '/_protected/outlets/$outletId'
       path: '/outlets/$outletId'
       fullPath: '/outlets/$outletId'
       preLoaderRoute: typeof ProtectedOutletsOutletIdRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/categories/$categoryId': {
+      id: '/_protected/categories/$categoryId'
+      path: '/categories/$categoryId'
+      fullPath: '/categories/$categoryId'
+      preLoaderRoute: typeof ProtectedCategoriesCategoryIdRouteImport
       parentRoute: typeof ProtectedRoute
     }
     '/_protected/tenants/$slug/': {
@@ -447,9 +545,14 @@ declare module '@tanstack/react-router' {
 
 interface ProtectedRouteChildren {
   ProtectedDashboardRoute: typeof ProtectedDashboardRoute
+  ProtectedCategoriesCategoryIdRoute: typeof ProtectedCategoriesCategoryIdRoute
   ProtectedOutletsOutletIdRoute: typeof ProtectedOutletsOutletIdRoute
+  ProtectedProductsProductIdRoute: typeof ProtectedProductsProductIdRoute
   ProtectedTenantsNewRoute: typeof ProtectedTenantsNewRoute
   ProtectedAccountIndexRoute: typeof ProtectedAccountIndexRoute
+  ProtectedCategoriesIndexRoute: typeof ProtectedCategoriesIndexRoute
+  ProtectedOutletsIndexRoute: typeof ProtectedOutletsIndexRoute
+  ProtectedProductsIndexRoute: typeof ProtectedProductsIndexRoute
   ProtectedSettingsIndexRoute: typeof ProtectedSettingsIndexRoute
   ProtectedTenantsIndexRoute: typeof ProtectedTenantsIndexRoute
   ProtectedTenantsSlugIndexRoute: typeof ProtectedTenantsSlugIndexRoute
@@ -464,9 +567,14 @@ interface ProtectedRouteChildren {
 
 const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedDashboardRoute: ProtectedDashboardRoute,
+  ProtectedCategoriesCategoryIdRoute: ProtectedCategoriesCategoryIdRoute,
   ProtectedOutletsOutletIdRoute: ProtectedOutletsOutletIdRoute,
+  ProtectedProductsProductIdRoute: ProtectedProductsProductIdRoute,
   ProtectedTenantsNewRoute: ProtectedTenantsNewRoute,
   ProtectedAccountIndexRoute: ProtectedAccountIndexRoute,
+  ProtectedCategoriesIndexRoute: ProtectedCategoriesIndexRoute,
+  ProtectedOutletsIndexRoute: ProtectedOutletsIndexRoute,
+  ProtectedProductsIndexRoute: ProtectedProductsIndexRoute,
   ProtectedSettingsIndexRoute: ProtectedSettingsIndexRoute,
   ProtectedTenantsIndexRoute: ProtectedTenantsIndexRoute,
   ProtectedTenantsSlugIndexRoute: ProtectedTenantsSlugIndexRoute,

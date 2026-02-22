@@ -1,315 +1,256 @@
-import {
-  Layout,
-  Menu,
-  Avatar,
-  Dropdown,
-  Typography,
-  Select,
-  Divider,
-  Button,
-} from "antd";
-import {
-  DashboardOutlined,
-  SettingOutlined,
-  UserOutlined,
-  LogoutOutlined,
-  BellOutlined,
-  HomeOutlined,
-  MenuFoldOutlined,
-  MenuUnfoldOutlined,
-  TeamOutlined,
-  AccountBookOutlined,
-  PlusOutlined,
-} from "@ant-design/icons";
 import { Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "../contexts/auth-context";
-import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { tenantsApi, type Tenant } from "@/lib/api/tenants";
+import { TenantSwitcher } from "./tenant-switcher";
 import { useLogout } from "@/hooks/use-auth";
 import { type Role } from "@/lib/rbac";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
+import {
+  LayoutDashboard,
+  Settings,
+  User,
+  LogOut,
+  Bell,
+  Users,
+  ChevronsUpDown,
+  Folder,
+  Package,
+  Store,
+} from "lucide-react";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+  SidebarGroup,
+  SidebarInset,
+  useSidebar,
+} from "@/components/ui/sidebar";
 
-const { Header, Sider, Content } = Layout;
-const { Text } = Typography;
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 const menuConfig = [
   {
     key: "/dashboard",
-    icon: <DashboardOutlined />,
+    icon: LayoutDashboard,
     label: "Dashboard",
     roles: ["admin", "owner", "cashier"],
   },
   {
+    key: "/categories",
+    icon: Folder,
+    label: "Kategori",
+    roles: ["cashier", "owner"],
+  },
+  {
+    key: "/products",
+    icon: Package,
+    label: "Produk",
+    roles: ["cashier", "owner"],
+  },
+  {
+    key: "/outlets",
+    icon: Store,
+    label: "Outlet",
+    roles: ["owner", "cashier"],
+  },
+  {
     key: "/tenants",
-    icon: <TeamOutlined />,
-    label: "Tenants",
+    icon: Users,
+    label: "Tenant",
     roles: ["admin"],
   },
   {
     key: "/account",
-    icon: <AccountBookOutlined />,
-    label: "Account",
-    roles: ["admin"],
-  },
-];
-
-const bottomItems = [
-  {
-    key: "/settings",
-    icon: <SettingOutlined />,
-    label: "Settings",
+    icon: User,
+    label: "Akun",
     roles: ["admin", "owner"],
   },
 ];
 
-export function AppLayout() {
+function AppSidebar() {
+  const { state } = useSidebar();
   const location = useLocation();
   const navigate = useNavigate();
-  const [collapsed, setCollapsed] = useState(false);
-  const [selectedTenant, setSelectedTenant] = useState<number | null>(null);
   const { user } = useAuth();
   const logoutMutation = useLogout();
-  const role = (user?.role as Role) || "cashier";
 
-  const { data: tenantsData, isLoading: tenantsLoading } = useQuery({
-    queryKey: ["tenants"],
-    queryFn: () => tenantsApi.getAll({ isActive: true }, user?.id),
-    enabled: !!user?.id,
-  });
-
-  const tenants = tenantsData ?? [];
-
-  useEffect(() => {
-    if (tenants.length > 0 && selectedTenant === null) {
-      setSelectedTenant(tenants[0].id);
-    }
-  }, [tenants, selectedTenant]);
-
-  const menuItems = menuConfig.filter((item) => item.roles.includes(role));
-  const filteredBottomItems = bottomItems.filter((item) =>
-    item.roles.includes(role),
+  const menuItems = menuConfig.filter((item) =>
+    item.roles.includes((user?.role as Role) || "cashier"),
   );
 
-  const firstSegment = "/" + location.pathname.split("/")[1];
-
-  const handleMenuClick = ({ key }: { key: string }) => {
-    navigate({ to: key });
-  };
-
-  const userMenuItems = [
-    {
-      key: "account",
-      icon: <UserOutlined />,
-      label: "Account",
-    },
-    {
-      key: "billing",
-      icon: <BellOutlined />,
-      label: "Notifications",
-    },
-    {
-      type: "divider" as const,
-    },
-    {
-      key: "logout",
-      icon: <LogoutOutlined />,
-      label: "Log out",
-      danger: true,
-      onClick: () => logoutMutation.mutate(),
-    },
-  ];
-
   return (
-    <Layout style={{ minHeight: "100vh" }}>
-      <Sider
-        width={250}
-        collapsed={collapsed}
-        collapsedWidth={80}
-        trigger={null}
-        style={{
-          background: "#fff",
-          borderRight: "1px solid #f0f0f0",
-          transition: "all 0.2s",
-        }}
-      >
-        <div
-          style={{
-            height: 72,
-            display: "flex",
-            alignItems: "center",
-            padding: collapsed ? "0 12px" : "0 16px",
-            borderBottom: "1px solid #f0f0f0",
-            justifyContent: collapsed ? "center" : "space-between",
-          }}
-        >
-          {!collapsed && (
-            <div className="mx-auto">
-              <img src="/mitbiz-pos.png" className="w-32 mx-auto" />
-            </div>
-          )}
-          {collapsed && (
-            <HomeOutlined style={{ fontSize: 20, color: "#1890ff" }} />
-          )}
-        </div>
-        <Menu
-          mode="inline"
-          selectedKeys={[firstSegment]}
-          onClick={handleMenuClick}
-          items={menuItems}
-          style={{ borderRight: 0, marginTop: 8 }}
-          inlineCollapsed={collapsed}
-        />
-        <Menu
-          mode="inline"
-          selectedKeys={
-            firstSegment.startsWith("/settings") ? ["/settings"] : []
-          }
-          onClick={handleMenuClick}
-          items={filteredBottomItems}
-          style={{
-            borderRight: 0,
-            marginTop: "auto",
-            borderTop: "1px solid #f0f0f0",
-          }}
-          inlineCollapsed={collapsed}
-        />
-      </Sider>
-      <Layout>
-        <Header
-          style={{
-            background: "#fff",
-            padding: "0 24px",
-            display: "flex",
-            alignItems: "center",
-            borderBottom: "1px solid #f0f0f0",
-            height: 64,
-          }}
-        >
-          <div
-            onClick={() => setCollapsed(!collapsed)}
-            style={{
-              cursor: "pointer",
-              padding: 8,
-              borderRadius: 4,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              marginRight: 16,
-            }}
-          >
-            {collapsed ? (
-              <MenuUnfoldOutlined style={{ fontSize: 18 }} />
-            ) : (
-              <MenuFoldOutlined style={{ fontSize: 18 }} />
-            )}
+    <>
+      <SidebarHeader>
+        {state === "expanded" ? (
+          <div className="mx-auto py-2">
+            <img src="/mitbiz-pos.png" className="w-32" alt="Mitbiz POS" />
           </div>
-          <Select
-            placeholder="Pilih Tenant"
-            style={{ width: 200 }}
-            value={selectedTenant}
-            onChange={(value) => setSelectedTenant(value)}
-            disabled={role === "cashier"}
-            loading={tenantsLoading}
-            allowClear
-            options={tenants.map((tenant: Tenant) => ({
-              label: tenant.nama,
-              value: tenant.id,
-            }))}
-            popupRender={(menu) => (
-              <>
-                {menu}
-                <Divider style={{ margin: "8px 0" }} />
-                <Button
-                  type="text"
-                  icon={<PlusOutlined />}
-                  style={{ width: "100%", textAlign: "left" }}
-                  onClick={() => navigate({ to: "/tenants/new" })}
+        ) : (
+          <div className="flex justify-center py-2">
+            <img
+              src="/android-chrome-512x512.png"
+              className="h-8 w-8"
+              alt="Mitbiz POS"
+            />
+          </div>
+        )}
+      </SidebarHeader>
+
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarMenu>
+            {menuItems.map((item) => (
+              <SidebarMenuItem key={item.key}>
+                <SidebarMenuButton
+                  tooltip={item.label}
+                  onClick={() => navigate({ to: item.key })}
+                  isActive={
+                    location.pathname === item.key ||
+                    location.pathname.startsWith(item.key + "/")
+                  }
+                  className="cursor-pointer"
                 >
-                  Tambah Tenant
-                </Button>
-              </>
-            )}
-          />
-          <div
-            style={{
-              marginLeft: "auto",
-              display: "flex",
-              alignItems: "center",
-              gap: 16,
-            }}
-          >
-            <Badge count={0}>
-              <BellOutlined style={{ fontSize: 18, cursor: "pointer" }} />
-            </Badge>
-            <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  cursor: "pointer",
-                }}
+                  {item.icon && <item.icon className="h-4 w-4" />}
+                  <span>{item.label}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarGroup>
+      </SidebarContent>
+
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton
+                  size="lg"
+                  className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground cursor-pointer"
+                >
+                  <Avatar className="h-8 w-8 rounded-lg">
+                    <AvatarFallback className="rounded-lg">
+                      <User className="h-4 w-4" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    <span className="truncate font-semibold">
+                      {user?.name || "User"}
+                    </span>
+                    <span className="truncate text-xs">
+                      {user?.email || ""}
+                    </span>
+                  </div>
+                  <ChevronsUpDown className="ml-auto size-4" />
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+                side="bottom"
+                align="end"
+                sideOffset={4}
               >
-                <Avatar icon={<UserOutlined />} />
-                <div style={{ lineHeight: 1.2 }}>
-                  <Text strong style={{ display: "block", fontSize: 14 }}>
-                    {user?.name || "User"}
-                  </Text>
-                  <Text type="secondary" style={{ fontSize: 12 }}>
-                    {user?.email || ""}
-                  </Text>
-                </div>
-              </div>
-            </Dropdown>
-          </div>
-        </Header>
-        <Content
-          style={{
-            margin: 6,
-            background: "#fff",
-            padding: 12,
-            borderRadius: 8,
-            minHeight: 280,
-          }}
-        >
-          <Outlet />
-        </Content>
-      </Layout>
-    </Layout>
+                <DropdownMenuItem
+                  onClick={() => navigate({ to: "/account" })}
+                  className="cursor-pointer"
+                >
+                  <User className="mr-2 h-4 w-4" />
+                  Account
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer">
+                  <Bell className="mr-2 h-4 w-4" />
+                  Notifications
+                </DropdownMenuItem>
+                {["admin", "owner"].includes(
+                  (user?.role as Role) || "cashier",
+                ) && (
+                    <DropdownMenuItem
+                      onClick={() => navigate({ to: "/settings" as any })}
+                      className="cursor-pointer"
+                    >
+                      <Settings className="mr-2 h-4 w-4" />
+                      Settings
+                    </DropdownMenuItem>
+                  )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => logoutMutation.mutate()}
+                  className="text-red-600 focus:text-red-600 cursor-pointer"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    </>
   );
 }
 
-function Badge({
-  children,
-  count,
-}: {
-  children: React.ReactNode;
-  count: number;
-}) {
+export function AppLayout() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const pathnames = location.pathname.split("/").filter((x) => x);
+  const { user } = useAuth();
+
+  const getBreadcrumbLabel = () => {
+    if (pathnames.length === 0) return "Data Fetching";
+
+    const firstSegment = pathnames[0];
+    return firstSegment.charAt(0).toUpperCase() + firstSegment.slice(1);
+  };
+
   return (
-    <span style={{ position: "relative", display: "inline-block" }}>
-      {children}
-      {count > 0 && (
-        <span
-          style={{
-            position: "absolute",
-            top: -4,
-            right: -4,
-            background: "#ff4d4f",
-            color: "#fff",
-            borderRadius: "50%",
-            minWidth: 16,
-            height: 16,
-            fontSize: 10,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "0 4px",
-          }}
-        >
-          {count}
-        </span>
-      )}
-    </span>
+    <SidebarProvider defaultOpen={true}>
+      <Sidebar variant="inset" collapsible="icon">
+        <AppSidebar />
+      </Sidebar>
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center justify-between gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 border-b bg-white pr-4 rounded-t-xl">
+          <div className="flex items-center gap-2 px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Separator orientation="vertical" className="mr-2 h-4" />
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbSeparator className="hidden md:block" />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>
+                    {getBreadcrumbLabel()}
+                  </BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+          </div>
+          {(user?.role as Role) !== "admin" && <TenantSwitcher />}
+        </header>
+
+        <main className="flex flex-1 flex-col gap-4 p-4 bg-slate-50/50">
+          <div className="w-full h-full min-h-[calc(100vh-8rem)] rounded-xl border bg-white shadow-sm overflow-hidden p-6 text-slate-800">
+            <Outlet />
+          </div>
+        </main>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

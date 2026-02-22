@@ -34,6 +34,8 @@ function LoginPage() {
       const message = err?.message || "";
       if (message === "Invalid email or password") {
         setError("Email atau password salah");
+      } else if (message === "Email not verified") {
+        setError("Email belum diverifikasi");
       } else {
         setError(message || "Terjadi kesalahan saat login");
       }

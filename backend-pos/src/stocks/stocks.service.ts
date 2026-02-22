@@ -14,27 +14,15 @@ import { CreateStockDto, UpdateStockDto, StockQueryDto } from './dto';
 import { DB_CONNECTION } from '../db/db.module';
 import type { DrizzleDB } from '../db/type';
 import type { CurrentUserType } from '../common/decorators/current-user.decorator';
+import { getProductIdsByTenant } from '../common/utils/tenant-filter';
 
-@Injectable()
 export class StocksService {
-  constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) {}
+  constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) { }
 
   async findAll(query: StockQueryDto, user: CurrentUserType) {
-    const { page = 1, limit = 10, productId, outletId } = query;
+    const { page = 1, limit = 10, productId, outletId, tenantId } = query;
     const offset = (page - 1) * limit;
 
-    // Get user's tenant ID if owner or cashier
-    let effectiveTenantId: number | undefined;
-    if (user.role === 'owner' || user.role === 'cashier') {
-      const userTenant = await this.db.query.tenants.findFirst({
-        where: eq(tenants.userId, user.id),
-      });
-      if (userTenant) {
-        effectiveTenantId = userTenant.id;
-      }
-    }
-
-    // Build base conditions
     const conditions: SQL<unknown>[] = [];
 
     if (productId) {
@@ -45,15 +33,8 @@ export class StocksService {
       conditions.push(eq(productStocks.outletId, outletId));
     }
 
-    // If owner/cashier, filter by tenant via product or outlet
-    if (effectiveTenantId) {
-      // For owner/cashier, we need to join with products or outlets to filter by tenant
-      const productIdsInTenant = await this.db
-        .select({ id: products.id })
-        .from(products)
-        .where(eq(products.tenantId, effectiveTenantId));
-
-      const productIdList = productIdsInTenant.map((p) => p.id);
+    if (tenantId) {
+      const productIdList = await getProductIdsByTenant(this.db, tenantId);
 
       if (productIdList.length === 0) {
         return {
@@ -79,12 +60,15 @@ export class StocksService {
 
     const queryResult = await Promise.all([
       this.db
-        .select()
-        .from(productStocks)
-        .where(whereClause)
-        .limit(limit)
-        .offset(offset)
-        .orderBy(desc(productStocks.updatedAt)),
+        .query.productStocks.findMany({
+          where: whereClause,
+          limit,
+          offset,
+          orderBy: [desc(productStocks.updatedAt)],
+          with: {
+            outlet: true,
+          },
+        }),
       this.db
         .select({ count: sql<number>`count(*)` })
         .from(productStocks)
@@ -104,7 +88,7 @@ export class StocksService {
     };
   }
 
-  async findById(id: number, user: CurrentUserType) {
+  async findById(id: string, user: CurrentUserType) {
     const stock = await this.db.query.productStocks.findFirst({
       where: eq(productStocks.id, id),
       with: {
@@ -130,7 +114,7 @@ export class StocksService {
     return stock;
   }
 
-  async findByProductAndOutlet(productId: number, outletId: number) {
+  async findByProductAndOutlet(productId: string, outletId: string) {
     const stock = await this.db.query.productStocks.findFirst({
       where: and(
         eq(productStocks.productId, productId),
@@ -191,7 +175,7 @@ export class StocksService {
 
     if (existingStock) {
       throw new ConflictException(
-        `Stock for product ${data.productId} at outlet ${data.outletId} already exists`,
+        `Stock telah dibuat`,
       );
     }
 
@@ -203,7 +187,7 @@ export class StocksService {
     return stock;
   }
 
-  async update(id: number, data: UpdateStockDto, user: CurrentUserType) {
+  async update(id: string, data: UpdateStockDto, user: CurrentUserType) {
     const existingStock = await this.findById(id, user);
 
     // Verify ownership again
@@ -230,7 +214,7 @@ export class StocksService {
     return stock;
   }
 
-  async remove(id: number, user: CurrentUserType) {
+  async remove(id: string, user: CurrentUserType) {
     const stock = await this.findById(id, user);
 
     // Verify ownership
@@ -253,7 +237,7 @@ export class StocksService {
     return deletedStock;
   }
 
-  async adjustQuantity(id: number, adjustment: number, user: CurrentUserType) {
+  async adjustQuantity(id: string, adjustment: number, user: CurrentUserType) {
     const stock = await this.findById(id, user);
     const newQuantity = stock.quantity + adjustment;
 

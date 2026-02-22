@@ -5,7 +5,19 @@ import {
   ForbiddenException,
   Inject,
 } from '@nestjs/common';
-import { eq, and, like, desc, sql, or, ilike, count, SQL } from 'drizzle-orm';
+import {
+  eq,
+  and,
+  like,
+  asc,
+  desc,
+  sql,
+  or,
+  ilike,
+  count,
+  SQL,
+  inArray,
+} from 'drizzle-orm';
 import { tenants } from '../db/schema';
 import { user as userSchema } from '../db/schema';
 import { outlets } from '../db/schema/outlet-schema';
@@ -21,14 +33,8 @@ export class TenantsService {
   constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) {}
 
   async findAll(query: TenantQueryDto, user: CurrentUserType) {
-    const { page = 1, limit = 10, search, isActive, userId } = query;
+    const { page = 1, limit = 10, search, isActive } = query;
     const offset = (page - 1) * limit;
-
-    // If owner, only show their own tenant(s)
-    let effectiveUserId = userId;
-    if (user.role === 'owner') {
-      effectiveUserId = user.id;
-    }
 
     const conditions: SQL<unknown>[] = [];
 
@@ -36,13 +42,23 @@ export class TenantsService {
       conditions.push(eq(tenants.isActive, isActive));
     }
 
-    if (effectiveUserId) {
-      conditions.push(eq(tenants.userId, effectiveUserId));
-    }
-
     if (search) {
       conditions.push(like(tenants.nama, `%${search}%`));
     }
+
+    // Role-based filtering
+    if (user.role === 'owner') {
+      conditions.push(eq(tenants.userId, user.id));
+    } else if (user.role === 'cashier' && user.outletId) {
+      const userOutlets = await this.db.query.outlets.findMany({
+        where: eq(outlets.id, user.outletId),
+      });
+      const tenantIds = [...new Set(userOutlets.map((o) => o.tenantId))];
+      if (tenantIds.length > 0) {
+        conditions.push(inArray(tenants.id, tenantIds));
+      }
+    }
+    // Admin: no filter, sees all tenants
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
@@ -51,7 +67,7 @@ export class TenantsService {
         where: whereClause,
         limit,
         offset,
-        orderBy: [desc(tenants.createdAt)],
+        orderBy: [asc(tenants.createdAt)],
         with: {
           outlets: true,
         },
@@ -238,7 +254,7 @@ export class TenantsService {
   }
 
   // Helper method to get user's tenant ID
-  async getUserTenantId(userId: string): Promise<number | null> {
+  async getUserTenantId(userId: string): Promise<string | null> {
     const tenant = await this.db.query.tenants.findFirst({
       where: eq(tenants.userId, userId),
     });

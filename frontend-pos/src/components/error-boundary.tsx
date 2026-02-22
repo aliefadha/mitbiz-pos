@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
-import { Button, Result } from "antd";
+import { Button } from "@/components/ui/button";
+import { AlertCircle, RefreshCw } from "lucide-react";
 
 interface Props {
   children: ReactNode;
@@ -37,19 +38,24 @@ export class ErrorBoundary extends Component<Props, State> {
 
       return (
         <div className="flex min-h-[400px] items-center justify-center p-4">
-          <Result
-            status="error"
-            title="Something went wrong"
-            subTitle={this.state.error?.message || "An unexpected error occurred"}
-            extra={[
-              <Button type="primary" key="reload" onClick={() => window.location.reload()}>
+          <div className="text-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+              <AlertCircle className="h-6 w-6 text-red-600" />
+            </div>
+            <h2 className="mb-2 text-xl font-semibold">Something went wrong</h2>
+            <p className="mb-6 text-gray-500">
+              {this.state.error?.message || "An unexpected error occurred"}
+            </p>
+            <div className="flex gap-3 justify-center">
+              <Button onClick={() => window.location.reload()}>
+                <RefreshCw className="mr-2 h-4 w-4" />
                 Reload Page
-              </Button>,
-              <Button key="retry" onClick={this.handleReset}>
+              </Button>
+              <Button variant="outline" onClick={this.handleReset}>
                 Try Again
-              </Button>,
-            ]}
-          />
+              </Button>
+            </div>
+          </div>
         </div>
       );
     }

@@ -15,17 +15,30 @@ import { fromNodeHeaders } from 'better-auth/node';
 import { CreateUserSchema, CreateUserDto } from './dto';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { PermissionGuard } from '../common/guards/permission.guard';
+import { UserService } from './user.service';
 
 @Controller('users')
 @UseGuards(AuthGuard, PermissionGuard)
 export class UserController {
-  constructor(private authService: AuthService<typeof auth>) {}
+  constructor(
+    private authService: AuthService<typeof auth>,
+    private userService: UserService,
+  ) {}
 
   @Get()
   async getUsers(@Request() req: ExpressRequest) {
+    const headers = fromNodeHeaders(req.headers);
+    const session = await this.authService.api.getSession({ headers });
+    const role = session?.user?.role;
+
+    if (role === 'owner') {
+      const userId = session?.user?.id;
+      return this.userService.getUsersByOwner(userId!);
+    }
+
     const users = await this.authService.api.listUsers({
       query: {},
-      headers: fromNodeHeaders(req.headers),
+      headers,
     });
     return users;
   }
@@ -61,6 +74,17 @@ export class UserController {
       return { error: 'No session found' };
     }
     return session.user;
+  }
+
+  @Get('me/tenants')
+  async getMyTenants(@Request() req: ExpressRequest) {
+    const headers = fromNodeHeaders(req.headers);
+    const session = await this.authService.api.getSession({ headers });
+    if (!session) {
+      return { error: 'No session found' };
+    }
+    const tenants = await this.userService.getUserTenantsAndOutlets(session.user.id);
+    return { data: tenants };
   }
 
   @Patch('me')

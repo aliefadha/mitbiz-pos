@@ -5,8 +5,8 @@ export interface CurrentUserType {
   id: string;
   email: string;
   role: string;
-  tenantId?: number;
-  outletId?: number;
+  tenantId?: string;
+  outletId?: string;
 }
 
 interface RequestWithUser extends Request {

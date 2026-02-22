@@ -39,11 +39,8 @@ export class CategoriesController {
   @Get()
   @ApiOperation({ summary: 'Get all categories' })
   @UsePipes(new ZodValidationPipe(CategoryQuerySchema, 'query'))
-  findAll(
-    @Query() query: CategoryQueryDto,
-    @CurrentUser() user: CurrentUserType,
-  ) {
-    return this.categoriesService.findAll(query, user);
+  findAll(@Query() query: CategoryQueryDto) {
+    return this.categoriesService.findAll(query);
   }
 
   @Get(':id')

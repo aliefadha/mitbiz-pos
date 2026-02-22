@@ -18,7 +18,7 @@ import type { CurrentUserType } from '../common/decorators/current-user.decorato
 export class ProductsService {
   constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) {}
 
-  async findAll(query: ProductQueryDto, user: CurrentUserType) {
+  async findAll(query: ProductQueryDto) {
     const {
       page = 1,
       limit = 10,
@@ -30,25 +30,14 @@ export class ProductsService {
     } = query;
     const offset = (page - 1) * limit;
 
-    // Get user's tenant ID if owner
-    let effectiveTenantId = tenantId;
-    if (user.role === 'owner' || user.role === 'cashier') {
-      const userTenant = await this.db.query.tenants.findFirst({
-        where: eq(tenants.userId, user.id),
-      });
-      if (userTenant) {
-        effectiveTenantId = userTenant.id;
-      }
-    }
-
     const conditions: SQL<unknown>[] = [];
 
     if (isActive !== undefined) {
       conditions.push(eq(products.isActive, isActive));
     }
 
-    if (effectiveTenantId) {
-      conditions.push(eq(products.tenantId, effectiveTenantId));
+    if (tenantId) {
+      conditions.push(eq(products.tenantId, tenantId));
     }
 
     if (categoryId) {
@@ -106,7 +95,7 @@ export class ProductsService {
     };
   }
 
-  async findById(id: number, user: CurrentUserType) {
+  async findById(id: string, user: CurrentUserType) {
     const product = await this.db.query.products.findFirst({
       where: eq(products.id, id),
       with: {
@@ -121,10 +110,11 @@ export class ProductsService {
 
     // Check ownership for owner/cashier
     if (user.role === 'owner' || user.role === 'cashier') {
-      const userTenant = await this.db.query.tenants.findFirst({
+      const userTenants = await this.db.query.tenants.findMany({
         where: eq(tenants.userId, user.id),
       });
-      if (userTenant && product.tenantId !== userTenant.id) {
+      const userTenantIds = userTenants.map((t) => t.id);
+      if (userTenantIds.length > 0 && !userTenantIds.includes(product.tenantId)) {
         throw new ForbiddenException('You do not have access to this product');
       }
     }
@@ -187,7 +177,7 @@ export class ProductsService {
     return product;
   }
 
-  async update(id: number, data: UpdateProductDto, user: CurrentUserType) {
+  async update(id: string, data: UpdateProductDto, user: CurrentUserType) {
     const existingProduct = await this.findById(id, user);
 
     if (data.sku && data.sku !== existingProduct.sku) {
@@ -231,7 +221,7 @@ export class ProductsService {
     return product;
   }
 
-  async remove(id: number, user: CurrentUserType) {
+  async remove(id: string, user: CurrentUserType) {
     await this.findById(id, user);
 
     const [product] = await this.db

@@ -1,18 +1,11 @@
-import { relations } from 'drizzle-orm';
-import {
-  pgTable,
-  serial,
-  text,
-  timestamp,
-  boolean,
-  integer,
-} from 'drizzle-orm/pg-core';
+import { relations, sql } from 'drizzle-orm';
+import { pgTable, text, timestamp, boolean } from 'drizzle-orm/pg-core';
 import { tenants } from './tenant-schema';
 import { products } from './product-schema';
 
 export const categories = pgTable('categories', {
-  id: serial('id').primaryKey(),
-  tenantId: integer('tenant_id')
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: text('tenant_id')
     .references(() => tenants.id)
     .notNull(),
   nama: text('nama').notNull(),

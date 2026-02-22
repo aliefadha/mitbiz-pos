@@ -9,4 +9,7 @@
 *.local
 .env
 
+#opencode
+opencode.json
+
 .agents/

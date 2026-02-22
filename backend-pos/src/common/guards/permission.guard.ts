@@ -4,9 +4,14 @@ import {
   ExecutionContext,
   UnauthorizedException,
   ForbiddenException,
+  Inject,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { AuthService } from '@thallesp/nestjs-better-auth';
+import { auth } from '../../lib/auth';
+import { fromNodeHeaders } from 'better-auth/node';
 import { adminRole, ownerRole, cashierRole } from '../../lib/permissions';
+import type { Request as ExpressRequest } from 'express';
 
 const METHOD_TO_ACTION: Record<string, string> = {
   GET: 'read',
@@ -29,19 +34,17 @@ const CONTROLLER_TO_PERMISSION: Record<string, string> = {
   'stock-adjustments': 'stockAdjustments',
 };
 
-interface SessionWithUser {
-  user: {
-    role: string;
-  };
-}
-
 @Injectable()
 export class PermissionGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+  constructor(
+    private reflector: Reflector,
+    @Inject(AuthService) private authService: AuthService<typeof auth>,
+  ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const session = request.session as SessionWithUser | null;
+    const headers = fromNodeHeaders(request.headers);
+    const session = await this.authService.api.getSession({ headers });
 
     if (!session) {
       throw new UnauthorizedException('No session found');
@@ -56,7 +59,7 @@ export class PermissionGuard implements CanActivate {
 
     const controllerPath = this.getControllerPath(controller);
 
-    const action = this.getAction(request.method as string);
+    const action = this.getAction(request.method);
 
     if (!controllerPath || !action) {
       return true;

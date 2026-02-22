@@ -4,7 +4,7 @@ import {
   ForbiddenException,
   Inject,
 } from '@nestjs/common';
-import { eq, and, like, desc, sql, SQL, count } from 'drizzle-orm';
+import { eq, and, like, desc, sql, SQL, count, inArray } from 'drizzle-orm';
 import { categories } from '../db/schema/category-schema';
 import { tenants } from '../db/schema/tenant-schema';
 import { products } from '../db/schema/product-schema';
@@ -17,19 +17,9 @@ import type { CurrentUserType } from '../common/decorators/current-user.decorato
 export class CategoriesService {
   constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) {}
 
-  async findAll(query: CategoryQueryDto, user: CurrentUserType) {
+  async findAll(query: CategoryQueryDto) {
     const { page = 1, limit = 10, search, isActive, tenantId } = query;
     const offset = (page - 1) * limit;
-
-    let effectiveTenantId = tenantId;
-    if (user.role === 'owner' || user.role === 'cashier') {
-      const userTenant = await this.db.query.tenants.findFirst({
-        where: eq(tenants.userId, user.id),
-      });
-      if (userTenant) {
-        effectiveTenantId = userTenant.id;
-      }
-    }
 
     const conditions: SQL<unknown>[] = [];
 
@@ -37,8 +27,8 @@ export class CategoriesService {
       conditions.push(eq(categories.isActive, isActive));
     }
 
-    if (effectiveTenantId) {
-      conditions.push(eq(categories.tenantId, effectiveTenantId));
+    if (tenantId) {
+      conditions.push(eq(categories.tenantId, tenantId));
     }
 
     if (search) {
@@ -55,9 +45,7 @@ export class CategoriesService {
       .from(products)
       .where(
         and(
-          effectiveTenantId
-            ? eq(products.tenantId, effectiveTenantId)
-            : undefined,
+          tenantId ? eq(products.tenantId, tenantId) : undefined,
           eq(products.isActive, true),
         ),
       )
@@ -104,7 +92,7 @@ export class CategoriesService {
     };
   }
 
-  async findById(id: number, user: CurrentUserType) {
+  async findById(id: string, user: CurrentUserType) {
     const category = await this.db.query.categories.findFirst({
       where: eq(categories.id, id),
       with: {
@@ -118,10 +106,11 @@ export class CategoriesService {
 
     // Check ownership for owner/cashier
     if (user.role === 'owner' || user.role === 'cashier') {
-      const userTenant = await this.db.query.tenants.findFirst({
+      const userTenants = await this.db.query.tenants.findMany({
         where: eq(tenants.userId, user.id),
       });
-      if (userTenant && category.tenantId !== userTenant.id) {
+      const userTenantIds = userTenants.map((t) => t.id);
+      if (userTenantIds.length > 0 && !userTenantIds.includes(category.tenantId)) {
         throw new ForbiddenException('You do not have access to this category');
       }
     }
@@ -154,15 +143,16 @@ export class CategoriesService {
     return category;
   }
 
-  async update(id: number, data: UpdateCategoryDto, user: CurrentUserType) {
+  async update(id: string, data: UpdateCategoryDto, user: CurrentUserType) {
     const existingCategory = await this.findById(id, user);
 
     // Verify ownership again
     if (user.role === 'owner') {
-      const userTenant = await this.db.query.tenants.findFirst({
+      const userTenants = await this.db.query.tenants.findMany({
         where: eq(tenants.userId, user.id),
       });
-      if (userTenant && existingCategory.tenantId !== userTenant.id) {
+      const userTenantIds = userTenants.map((t) => t.id);
+      if (userTenantIds.length > 0 && !userTenantIds.includes(existingCategory.tenantId)) {
         throw new ForbiddenException(
           'You do not have permission to update this category',
         );
@@ -181,15 +171,16 @@ export class CategoriesService {
     return category;
   }
 
-  async remove(id: number, user: CurrentUserType) {
+  async remove(id: string, user: CurrentUserType) {
     const category = await this.findById(id, user);
 
     // Verify ownership
     if (user.role === 'owner') {
-      const userTenant = await this.db.query.tenants.findFirst({
+      const userTenants = await this.db.query.tenants.findMany({
         where: eq(tenants.userId, user.id),
       });
-      if (userTenant && category.tenantId !== userTenant.id) {
+      const userTenantIds = userTenants.map((t) => t.id);
+      if (userTenantIds.length > 0 && !userTenantIds.includes(category.tenantId)) {
         throw new ForbiddenException(
           'You do not have permission to delete this category',
         );

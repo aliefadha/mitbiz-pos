@@ -1,28 +1,45 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  Button,
-  Input,
-  Table,
-  Modal,
-  Form,
-  Typography,
-  Space,
-  Switch,
-  message,
-} from "antd";
-import {
-  PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  SearchOutlined,
-  ArrowLeftOutlined,
-} from "@ant-design/icons";
 import { categoriesApi, type Category, type CreateCategoryDto, type UpdateCategoryDto } from "@/lib/api/categories";
 import { tenantsApi } from "@/lib/api/tenants";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { ArrowLeft, Plus, Pencil, Trash2 } from "lucide-react";
 
-const { Title, Text } = Typography;
+const formSchema = z.object({
+  nama: z.string().min(1, "Nama kategori wajib diisi"),
+  deskripsi: z.string().optional(),
+});
 
 export function TenantCategoriesPage() {
   const { slug } = useParams({ from: "/_protected/tenants/$slug/categories/" });
@@ -31,7 +48,13 @@ export function TenantCategoriesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [searchText, setSearchText] = useState("");
-  const [form] = Form.useForm();
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      nama: "",
+      deskripsi: "",
+    },
+  });
 
   const { data: tenant } = useQuery({
     queryKey: ["tenant", slug],
@@ -48,42 +71,35 @@ export function TenantCategoriesPage() {
     mutationFn: (data: CreateCategoryDto) => categoriesApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories", tenant?.id] });
-      message.success("Category created successfully");
       setIsModalOpen(false);
-      form.resetFields();
+      form.reset();
     },
     onError: (error: Error) => {
-      message.error(error.message);
+      alert(error.message);
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: UpdateCategoryDto }) =>
+    mutationFn: ({ id, data }: { id: string; data: UpdateCategoryDto }) =>
       categoriesApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories", tenant?.id] });
-      message.success("Category updated successfully");
       setIsModalOpen(false);
       setEditingCategory(null);
-      form.resetFields();
+      form.reset();
     },
     onError: (error: Error) => {
-      message.error(error.message);
+      alert(error.message);
     },
   });
 
   const toggleStatusMutation = useMutation({
     mutationFn: categoriesApi.toggleStatus,
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories", tenant?.id] });
-      message.success(
-        data.isActive
-          ? "Category activated successfully"
-          : "Category deactivated successfully"
-      );
     },
     onError: (error: Error) => {
-      message.error(error.message);
+      alert(error.message);
     },
   });
 
@@ -91,24 +107,23 @@ export function TenantCategoriesPage() {
     mutationFn: categoriesApi.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories", tenant?.id] });
-      message.success("Category deleted successfully");
     },
     onError: (error: Error) => {
-      message.error(error.message);
+      alert(error.message);
     },
   });
 
   const handleCreate = () => {
     setEditingCategory(null);
-    form.resetFields();
+    form.reset();
     setIsModalOpen(true);
   };
 
   const handleEdit = (category: Category) => {
     setEditingCategory(category);
-    form.setFieldsValue({
+    form.reset({
       nama: category.nama,
-      deskripsi: category.deskripsi,
+      deskripsi: category.deskripsi || "",
     });
     setIsModalOpen(true);
   };
@@ -117,26 +132,14 @@ export function TenantCategoriesPage() {
     toggleStatusMutation.mutate(category.id);
   };
 
-  const handleDelete = (id: number) => {
-    Modal.confirm({
-      title: "Delete Category",
-      content: "Are you sure you want to delete this category? This action cannot be undone.",
-      okText: "Delete",
-      okType: "danger",
-      onOk: () => {
-        deleteMutation.mutate(id);
-      },
-    });
-  };
-
-  const handleModalCancel = () => {
-    setIsModalOpen(false);
-    setEditingCategory(null);
-    form.resetFields();
+  const handleDelete = (id: string) => {
+    if (confirm("Are you sure you want to delete this category? This action cannot be undone.")) {
+      deleteMutation.mutate(id);
+    }
   };
 
   const handleModalOk = () => {
-    form.validateFields().then((values) => {
+    form.handleSubmit((values) => {
       if (editingCategory) {
         updateMutation.mutate({
           id: editingCategory.id,
@@ -148,7 +151,7 @@ export function TenantCategoriesPage() {
           tenantId: tenant!.id,
         } as CreateCategoryDto);
       }
-    });
+    })();
   };
 
   const filteredCategories = categories?.data?.filter(
@@ -157,153 +160,126 @@ export function TenantCategoriesPage() {
       cat.deskripsi?.toLowerCase().includes(searchText.toLowerCase())
   );
 
-  const columns = [
-    {
-      title: "No.",
-      key: "index",
-      width: 60,
-      render: (_: unknown, __: unknown, index: number) => (
-        <Text type="secondary">{index + 1}</Text>
-      ),
-    },
-    {
-      title: "Nama",
-      dataIndex: "nama",
-      key: "nama",
-      render: (value: string) => <Text strong>{value}</Text>,
-    },
-    {
-      title: "Deskripsi",
-      dataIndex: "deskripsi",
-      key: "deskripsi",
-      render: (value: string | null) => (
-        <Text type="secondary">{value || "-"}</Text>
-      ),
-    },
-    {
-      title: "Jumlah Produk",
-      dataIndex: "productsCount",
-      key: "productsCount",
-      render: (count: number) => count || 0,
-    },
-    {
-      title: "Status",
-      dataIndex: "isActive",
-      key: "isActive",
-      width: 100,
-      render: (value: boolean, record: Category) => (
-        <Switch
-          checked={value}
-          onChange={() => handleToggleStatus(record)}
-          checkedChildren="On"
-          unCheckedChildren="Off"
-        />
-      ),
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      width: 120,
-      render: (_: unknown, record: Category) => (
-        <Space size="small">
-          <Button
-            type="text"
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
-          />
-          <Button
-            type="text"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => handleDelete(record.id)}
-          />
-        </Space>
-      ),
-    },
-  ];
-
   return (
     <div>
       <Button
-        type="link"
-        icon={<ArrowLeftOutlined />}
+        variant="link"
         onClick={() => navigate({ to: "/tenants/$slug", params: { slug } })}
-        style={{ marginBottom: 16, paddingLeft: 0 }}
+        className="mb-4 pl-0"
       >
+        <ArrowLeft className="mr-2 h-4 w-4" />
         Back to {tenant?.nama || "Tenant"}
       </Button>
 
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 24,
-        }}
-      >
+      <div className="flex justify-between items-center mb-6">
         <div>
-          <Title level={4} style={{ margin: 0 }}>
-            Categories
-          </Title>
-          <Text type="secondary">Manage categories for {tenant?.nama}</Text>
+          <h4 className="text-lg font-semibold m-0">Categories</h4>
+          <p className="text-sm text-gray-500 m-0">Manage categories for {tenant?.nama}</p>
         </div>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={handleCreate}
-        >
+        <Button onClick={handleCreate}>
+          <Plus className="mr-2 h-4 w-4" />
           Add Category
         </Button>
       </div>
 
-      <div style={{ marginBottom: 16 }}>
+      <div className="mb-4">
         <Input
           placeholder="Search categories..."
-          prefix={<SearchOutlined />}
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
-          style={{ maxWidth: 300 }}
-          allowClear
+          className="max-w-[300px]"
         />
       </div>
 
-      <Table
-        dataSource={filteredCategories}
-        columns={columns}
-        rowKey="id"
-        loading={isLoading}
-        pagination={{ pageSize: 10 }}
-        size="small"
-        locale={{
-          emptyText: "No categories found.",
-        }}
-      />
+      {isLoading ? (
+        <div className="space-y-2">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[60px]">No.</TableHead>
+              <TableHead>Nama</TableHead>
+              <TableHead>Deskripsi</TableHead>
+              <TableHead>Jumlah Produk</TableHead>
+              <TableHead className="w-[100px]">Status</TableHead>
+              <TableHead className="w-[120px]">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredCategories?.map((category, index) => (
+              <TableRow key={category.id}>
+                <TableCell>{index + 1}</TableCell>
+                <TableCell className="font-medium">{category.nama}</TableCell>
+                <TableCell>{category.deskripsi || "-"}</TableCell>
+                <TableCell>{category.productsCount || 0}</TableCell>
+                <TableCell>
+                  <Switch
+                    checked={category.isActive}
+                    onCheckedChange={() => handleToggleStatus(category)}
+                  />
+                </TableCell>
+                <TableCell>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" onClick={() => handleEdit(category)}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleDelete(category.id)}>
+                      <Trash2 className="h-4 w-4 text-red-500" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
 
-      <Modal
-        title={editingCategory ? "Edit Category" : "Add Category"}
-        open={isModalOpen}
-        onOk={handleModalOk}
-        onCancel={handleModalCancel}
-        confirmLoading={createMutation.isPending || updateMutation.isPending}
-      >
-        <Form form={form} layout="vertical">
-          <Form.Item
-            name="nama"
-            label="Nama"
-            rules={[
-              { required: true, message: "Please enter the category name" },
-            ]}
-          >
-            <Input placeholder="Category name" />
-          </Form.Item>
-          <Form.Item name="deskripsi" label="Deskripsi">
-            <Input.TextArea
-              placeholder="Category description (optional)"
-              rows={3}
-            />
-          </Form.Item>
-        </Form>
-      </Modal>
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingCategory ? "Edit Category" : "Add Category"}</DialogTitle>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={(e) => { e.preventDefault(); handleModalOk(); }} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="nama"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nama</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Category name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="deskripsi"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Deskripsi</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="Category description (optional)" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+                  {editingCategory ? "Save" : "Create"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

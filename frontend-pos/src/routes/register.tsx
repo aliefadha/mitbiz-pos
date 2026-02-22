@@ -50,7 +50,6 @@ function RegisterPage() {
       setSuccess(
         "Registrasi berhasil! Silakan cek email Anda untuk verifikasi.",
       );
-      navigate({ to: "/login" });
     } catch (err: any) {
       if (err?.code === "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL") {
         setError("Email sudah terdaftar");

@@ -1,15 +1,15 @@
-import { relations } from 'drizzle-orm';
-import { pgTable, serial, text, timestamp, integer } from 'drizzle-orm/pg-core';
+import { relations, sql } from 'drizzle-orm';
+import { pgTable, text, timestamp, integer } from 'drizzle-orm/pg-core';
 import { products } from './product-schema';
 import { user } from './auth-schema';
 import { outlets } from './outlet-schema';
 
 export const stockAdjustments = pgTable('stock_adjustments', {
-  id: serial('id').primaryKey(),
-  outletId: integer('outlet_id')
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  outletId: text('outlet_id')
     .references(() => outlets.id)
     .notNull(),
-  productId: integer('product_id')
+  productId: text('product_id')
     .references(() => products.id)
     .notNull(),
   quantity: integer('quantity').notNull(),

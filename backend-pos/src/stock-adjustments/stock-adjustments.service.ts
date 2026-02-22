@@ -24,7 +24,7 @@ export class StockAdjustmentsService {
     const offset = (page - 1) * limit;
 
     // Get user's tenant ID if owner or cashier
-    let effectiveTenantId: number | undefined;
+    let effectiveTenantId: string | undefined;
     if (user.role === 'owner' || user.role === 'cashier') {
       const userTenant = await this.db.query.tenants.findFirst({
         where: eq(tenants.userId, user.id),
@@ -110,7 +110,7 @@ export class StockAdjustmentsService {
     };
   }
 
-  async findById(id: number, user: CurrentUserType) {
+  async findById(id: string, user: CurrentUserType) {
     const adjustment = await this.db.query.stockAdjustments.findFirst({
       where: eq(stockAdjustments.id, id),
       with: {

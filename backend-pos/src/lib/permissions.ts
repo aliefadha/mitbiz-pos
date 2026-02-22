@@ -2,7 +2,8 @@ import { createAccessControl } from 'better-auth/plugins/access';
 import { defaultStatements as defaultAdminStatement } from 'better-auth/plugins/admin/access';
 
 const statement = {
-  users: ['create', 'read', 'update', 'delete'],
+  users: ['create', 'read', 'list', 'update', 'delete'],
+  user: ['create', 'read', 'update', 'delete', 'list'],
   products: ['create', 'read', 'update', 'delete'],
   categories: ['create', 'read', 'update', 'delete'],
   transaction: ['create', 'read', 'update', 'delete', 'refund'],
@@ -18,7 +19,8 @@ export const ac = createAccessControl(statement);
 
 export const adminRole = ac.newRole({
   ...defaultAdminStatement,
-  users: ['create', 'read', 'update', 'delete'],
+  users: ['create', 'read', 'list', 'update', 'delete'],
+  user: ['create', 'read', 'update', 'delete', 'list'],
   products: ['create', 'read', 'update', 'delete'],
   categories: ['create', 'read', 'update', 'delete'],
   transaction: ['create', 'read', 'update', 'delete', 'refund'],
@@ -31,7 +33,8 @@ export const adminRole = ac.newRole({
 });
 
 export const ownerRole = ac.newRole({
-  users: ['create', 'read'],
+  users: ['create', 'read', 'list'],
+  user: ['create', 'read', 'list'],
   products: ['create', 'read', 'update', 'delete'],
   categories: ['create', 'read', 'update', 'delete'],
   transaction: ['create', 'read', 'update', 'delete', 'refund'],

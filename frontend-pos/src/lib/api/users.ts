@@ -8,6 +8,8 @@ export type User = {
   image: string | null
   createdAt: Date
   updatedAt: Date
+  role?: "admin" | "owner" | "cashier"
+  outletId?: number | null
 }
 
 export type CreateUserDto = {

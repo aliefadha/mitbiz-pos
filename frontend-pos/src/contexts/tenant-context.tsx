@@ -1,0 +1,86 @@
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { tenantsApi, type Tenant, type Outlet as OutletType } from '@/lib/api/tenants';
+import { useAuth } from './auth-context';
+
+interface TenantContextType {
+  selectedTenant: Tenant | null;
+  selectedOutlet: OutletType | null;
+  setSelectedTenant: (tenant: Tenant | null) => void;
+  setSelectedOutlet: (outlet: OutletType | null) => void;
+  tenants: Tenant[];
+  isLoading: boolean;
+}
+
+const TenantContext = createContext<TenantContextType | undefined>(undefined);
+
+export function TenantProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
+  const [selectedTenant, setSelectedTenantState] = useState<Tenant | null>(null);
+  const [selectedOutlet, setSelectedOutletState] = useState<OutletType | null>(null);
+
+  const { data: tenantsData, isLoading: tenantsLoading } = useQuery({
+    queryKey: ["tenants"],
+    queryFn: () => tenantsApi.getMyTenants(),
+    enabled: !!user?.id,
+  });
+
+  const tenants = tenantsData ?? [];
+
+  useEffect(() => {
+    if (tenants.length > 0 && !selectedTenant) {
+      setSelectedTenantState(tenants[0]);
+    }
+  }, [tenants, selectedTenant]);
+
+  useEffect(() => {
+    if (selectedTenant && user?.outletId) {
+      const outlet = selectedTenant.outlets?.find((o) => o.id === user.outletId);
+      if (outlet) {
+        setSelectedOutletState(outlet);
+      }
+    }
+  }, [selectedTenant, user?.outletId]);
+
+  const setSelectedTenant = (tenant: Tenant | null) => {
+    setSelectedTenantState(tenant);
+    if (tenant?.outlets && tenant.outlets.length > 0) {
+      const defaultOutlet = tenant.outlets[0];
+      if (user?.outletId) {
+        const userOutlet = tenant.outlets.find((o) => o.id === user.outletId);
+        setSelectedOutletState(userOutlet || defaultOutlet);
+      } else {
+        setSelectedOutletState(defaultOutlet);
+      }
+    } else {
+      setSelectedOutletState(null);
+    }
+  };
+
+  const setSelectedOutlet = (outlet: OutletType | null) => {
+    setSelectedOutletState(outlet);
+  };
+
+  return (
+    <TenantContext.Provider
+      value={{
+        selectedTenant,
+        selectedOutlet,
+        setSelectedTenant,
+        setSelectedOutlet,
+        tenants,
+        isLoading: tenantsLoading,
+      }}
+    >
+      {children}
+    </TenantContext.Provider>
+  );
+}
+
+export function useTenant() {
+  const context = useContext(TenantContext);
+  if (context === undefined) {
+    throw new Error('useTenant must be used within a TenantProvider');
+  }
+  return context;
+}

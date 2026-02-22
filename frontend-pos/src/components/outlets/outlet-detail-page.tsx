@@ -1,48 +1,62 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  Button,
-  Input,
-  InputNumber,
-  Table,
-  Modal,
-  Form,
-  Typography,
-  Space,
-  Tag,
-  Tooltip,
-  Card,
-  Descriptions,
-  Spin,
-  Tabs,
-  message,
-} from "antd";
-import {
-  PlusOutlined,
-  DeleteOutlined,
-  EditOutlined,
-  SearchOutlined,
-  ArrowLeftOutlined,
-  InboxOutlined,
-  HistoryOutlined,
-  SwapOutlined,
-} from "@ant-design/icons";
 import { outletsApi } from "@/lib/api/outlets";
 import { stocksApi, type Stock } from "@/lib/api/stocks";
 import { productsApi, type Product } from "@/lib/api/products";
-import {
-  stockAdjustmentsApi,
-  type StockAdjustment,
-} from "@/lib/api/stock-adjustments";
+import { stockAdjustmentsApi, type StockAdjustment } from "@/lib/api/stock-adjustments";
 import { useSession } from "@/lib/auth-client";
-
-const { Text } = Typography;
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { ArrowLeft, Plus, Pencil, Trash2, Search, Package, History, Edit2, ArrowRightLeft } from "lucide-react";
 
 interface ProductStockRow {
   product: Product;
   stock: Stock | null;
 }
+
+const editFormSchema = z.object({
+  quantity: z.number(),
+});
+
+const adjustFormSchema = z.object({
+  quantity: z.number(),
+  alasan: z.string().optional(),
+});
 
 export function OutletDetailPage() {
   const { slug, outletId } = useParams({
@@ -57,35 +71,37 @@ export function OutletDetailPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
   const [editingRow, setEditingRow] = useState<ProductStockRow | null>(null);
-  const [adjustingRow, setAdjustingRow] = useState<ProductStockRow | null>(
-    null,
-  );
-  const [editForm] = Form.useForm();
-  const [adjustForm] = Form.useForm();
+  const [adjustingRow, setAdjustingRow] = useState<ProductStockRow | null>(null);
+
+  const editForm = useForm<z.infer<typeof editFormSchema>>({
+    resolver: zodResolver(editFormSchema),
+    defaultValues: { quantity: 0 },
+  });
+
+  const adjustForm = useForm<z.infer<typeof adjustFormSchema>>({
+    resolver: zodResolver(adjustFormSchema),
+    defaultValues: { quantity: 0, alasan: "" },
+  });
 
   const outletIdNum = Number(outletId);
 
-  // Fetch outlet info
   const { data: outlet, isLoading: outletLoading } = useQuery({
     queryKey: ["outlet", outletIdNum],
     queryFn: () => outletsApi.getById(outletIdNum),
   });
 
-  // Fetch stocks for this outlet
   const { data: stocksData, isLoading: stocksLoading } = useQuery({
     queryKey: ["stocks", { outletId: outletIdNum }],
     queryFn: () => stocksApi.getAll({ outletId: outletIdNum }),
     enabled: !!outletIdNum,
   });
 
-  // Fetch all products for this tenant (derived from outlet's tenantId)
   const { data: productsData, isLoading: productsLoading } = useQuery({
     queryKey: ["products", outlet?.tenantId],
     queryFn: () => productsApi.getAll({ tenantId: outlet!.tenantId }),
     enabled: !!outlet?.tenantId,
   });
 
-  // Fetch stock adjustments for this outlet
   const { data: adjustmentsData, isLoading: adjustmentsLoading } = useQuery({
     queryKey: ["stock-adjustments", { outletId: outletIdNum }],
     queryFn: () => stockAdjustmentsApi.getAll({ outletId: outletIdNum }),
@@ -93,82 +109,34 @@ export function OutletDetailPage() {
   });
 
   const invalidateAll = () => {
-    queryClient.invalidateQueries({
-      queryKey: ["stocks", { outletId: outletIdNum }],
-    });
-    queryClient.invalidateQueries({
-      queryKey: ["stock-adjustments", { outletId: outletIdNum }],
-    });
+    queryClient.invalidateQueries({ queryKey: ["stocks", { outletId: outletIdNum }] });
+    queryClient.invalidateQueries({ queryKey: ["stock-adjustments", { outletId: outletIdNum }] });
   };
 
-  // --- Mutations ---
   const createStockMutation = useMutation({
-    mutationFn: (data: {
-      productId: number;
-      outletId: number;
-      quantity: number;
-    }) => stocksApi.create(data),
-    onSuccess: () => {
-      invalidateAll();
-      message.success("Stock berhasil ditambahkan");
-    },
-    onError: (error: Error) => {
-      message.error(error.message || "Gagal menambahkan stock");
-    },
+    mutationFn: (data: { productId: number; outletId: number; quantity: number }) => stocksApi.create(data),
+    onSuccess: () => { invalidateAll(); },
+    onError: (error: Error) => { alert(error.message); },
   });
 
   const updateStockMutation = useMutation({
-    mutationFn: ({
-      stockId,
-      quantity,
-    }: {
-      stockId: number;
-      quantity: number;
-    }) => stocksApi.update(stockId, { quantity }),
-    onSuccess: () => {
-      invalidateAll();
-      message.success("Stock berhasil diperbarui");
-      setIsEditModalOpen(false);
-      setEditingRow(null);
-      editForm.resetFields();
-    },
-    onError: (error: Error) => {
-      message.error(error.message || "Gagal memperbarui stock");
-    },
+    mutationFn: ({ stockId, quantity }: { stockId: number; quantity: number }) => stocksApi.update(stockId, { quantity }),
+    onSuccess: () => { invalidateAll(); setIsEditModalOpen(false); setEditingRow(null); editForm.reset(); },
+    onError: (error: Error) => { alert(error.message); },
   });
 
   const deleteStockMutation = useMutation({
     mutationFn: (stockId: number) => stocksApi.delete(stockId),
-    onSuccess: () => {
-      invalidateAll();
-      message.success("Stock berhasil dihapus");
-    },
-    onError: (error: Error) => {
-      message.error(error.message || "Gagal menghapus stock");
-    },
+    onSuccess: () => { invalidateAll(); },
+    onError: (error: Error) => { alert(error.message); },
   });
 
   const createAdjustmentMutation = useMutation({
-    mutationFn: (data: {
-      productId: number;
-      outletId: number;
-      quantity: number;
-      alasan?: string;
-      adjustedBy: string;
-    }) => stockAdjustmentsApi.create(data),
-    onSuccess: () => {
-      invalidateAll();
-      message.success("Stock adjustment berhasil dibuat");
-      setIsAdjustModalOpen(false);
-      setAdjustingRow(null);
-      adjustForm.resetFields();
-    },
-    onError: (error: Error) => {
-      message.error(error.message || "Gagal membuat stock adjustment");
-    },
+    mutationFn: (data: { productId: number; outletId: number; quantity: number; alasan?: string; adjustedBy: string }) => stockAdjustmentsApi.create(data),
+    onSuccess: () => { invalidateAll(); setIsAdjustModalOpen(false); setAdjustingRow(null); adjustForm.reset(); },
+    onError: (error: Error) => { alert(error.message); },
   });
 
-  // --- Merge products with stocks ---
   const stocks = stocksData?.data || [];
   const products = productsData?.data || [];
   const adjustments = adjustmentsData?.data || [];
@@ -176,7 +144,6 @@ export function OutletDetailPage() {
   const stockByProductId = new Map<number, Stock>();
   stocks.forEach((s: Stock) => stockByProductId.set(s.productId, s));
 
-  // Build product name map for adjustments table
   const productMap = new Map<number, Product>();
   products.forEach((p: Product) => productMap.set(p.id, p));
 
@@ -185,270 +152,38 @@ export function OutletDetailPage() {
     stock: stockByProductId.get(product.id) || null,
   }));
 
-  // Search filter
   const filteredRows = rows.filter((row) => {
     if (!searchText) return true;
     const search = searchText.toLowerCase();
-    return (
-      row.product.nama.toLowerCase().includes(search) ||
-      row.product.sku.toLowerCase().includes(search)
-    );
+    return row.product.nama.toLowerCase().includes(search) || row.product.sku.toLowerCase().includes(search);
   });
 
-  // --- Handlers ---
   const handleAddStock = (productId: number) => {
-    createStockMutation.mutate({
-      productId,
-      outletId: outletIdNum,
-      quantity: 0,
-    });
+    createStockMutation.mutate({ productId, outletId: outletIdNum, quantity: 0 });
   };
 
   const handleEditStock = (row: ProductStockRow) => {
     setEditingRow(row);
-    editForm.setFieldsValue({ quantity: row.stock?.quantity || 0 });
+    editForm.reset({ quantity: row.stock?.quantity || 0 });
     setIsEditModalOpen(true);
   };
 
   const handleDeleteStock = (stockId: number) => {
-    Modal.confirm({
-      title: "Hapus Stock",
-      content:
-        "Apakah Anda yakin ingin menghapus stock ini? Tindakan ini tidak dapat dibatalkan.",
-      okText: "Hapus",
-      okType: "danger",
-      cancelText: "Batal",
-      onOk: () => deleteStockMutation.mutate(stockId),
-    });
+    if (confirm("Apakah Anda yakin ingin menghapus stock ini?")) {
+      deleteStockMutation.mutate(stockId);
+    }
   };
 
   const handleAdjustStock = (row: ProductStockRow) => {
     setAdjustingRow(row);
-    adjustForm.resetFields();
+    adjustForm.reset({ quantity: 0, alasan: "" });
     setIsAdjustModalOpen(true);
   };
 
-  // --- Stock Table Columns ---
-  const stockColumns = [
-    {
-      title: "No.",
-      key: "index",
-      width: 60,
-      render: (_: unknown, __: unknown, index: number) => (
-        <Text type="secondary">{index + 1}</Text>
-      ),
-    },
-    {
-      title: "SKU",
-      key: "sku",
-      width: 120,
-      render: (_: unknown, record: ProductStockRow) => (
-        <Text code>{record.product.sku}</Text>
-      ),
-    },
-    {
-      title: "Produk",
-      key: "product",
-      render: (_: unknown, record: ProductStockRow) => (
-        <div>
-          <Text strong>{record.product.nama}</Text>
-          {record.product.category && (
-            <div>
-              <Text type="secondary" style={{ fontSize: 12 }}>
-                {record.product.category.nama}
-              </Text>
-            </div>
-          )}
-        </div>
-      ),
-    },
-    {
-      title: "Harga Jual",
-      key: "hargaJual",
-      width: 140,
-      render: (_: unknown, record: ProductStockRow) => (
-        <Text>
-          {Number(record.product.hargaJual).toLocaleString("id-ID", {
-            style: "currency",
-            currency: "IDR",
-            minimumFractionDigits: 0,
-          })}
-        </Text>
-      ),
-    },
-    {
-      title: "Stock",
-      key: "stock",
-      width: 150,
-      sorter: (a: ProductStockRow, b: ProductStockRow) =>
-        (a.stock?.quantity ?? -1) - (b.stock?.quantity ?? -1),
-      render: (_: unknown, record: ProductStockRow) => {
-        if (!record.stock) {
-          return (
-            <Button
-              type="dashed"
-              size="small"
-              icon={<PlusOutlined />}
-              loading={
-                createStockMutation.isPending &&
-                (createStockMutation.variables as any)?.productId ===
-                  record.product.id
-              }
-              onClick={() => handleAddStock(record.product.id)}
-            >
-              Tambah
-            </Button>
-          );
-        }
-        const qty = record.stock.quantity;
-        return (
-          <Tag
-            color={qty > 0 ? "green" : "red"}
-            style={{ fontSize: 14, padding: "2px 12px" }}
-          >
-            {qty}
-          </Tag>
-        );
-      },
-    },
-    {
-      title: "Terakhir Diperbarui",
-      key: "updatedAt",
-      width: 180,
-      render: (_: unknown, record: ProductStockRow) => (
-        <Text type="secondary">
-          {record.stock?.updatedAt
-            ? new Date(record.stock.updatedAt).toLocaleString("id-ID")
-            : "-"}
-        </Text>
-      ),
-    },
-    {
-      title: "Aksi",
-      key: "actions",
-      width: 140,
-      render: (_: unknown, record: ProductStockRow) => {
-        if (!record.stock) return null;
-        return (
-          <Space size="small">
-            <Tooltip title="Adjust stock">
-              <Button
-                type="text"
-                icon={<SwapOutlined />}
-                onClick={() => handleAdjustStock(record)}
-              />
-            </Tooltip>
-            <Tooltip title="Edit quantity">
-              <Button
-                type="text"
-                icon={<EditOutlined />}
-                onClick={() => handleEditStock(record)}
-              />
-            </Tooltip>
-            <Tooltip title="Hapus stock">
-              <Button
-                type="text"
-                danger
-                icon={<DeleteOutlined />}
-                onClick={() => handleDeleteStock(record.stock!.id)}
-              />
-            </Tooltip>
-          </Space>
-        );
-      },
-    },
-  ];
-
-  // --- Adjustment History Columns ---
-  const adjustmentColumns = [
-    {
-      title: "No.",
-      key: "index",
-      width: 60,
-      render: (_: unknown, __: unknown, index: number) => (
-        <Text type="secondary">{index + 1}</Text>
-      ),
-    },
-    {
-      title: "Tanggal",
-      dataIndex: "createdAt",
-      key: "createdAt",
-      width: 180,
-      render: (value: string) => (
-        <Text type="secondary">{new Date(value).toLocaleString("id-ID")}</Text>
-      ),
-    },
-    {
-      title: "Produk",
-      dataIndex: "productId",
-      key: "product",
-      render: (productId: number, record: StockAdjustment) => {
-        const product = productMap.get(productId);
-        if (record.product) {
-          return (
-            <div>
-              <Text strong>{record.product.nama}</Text>
-              <div>
-                <Text type="secondary" code style={{ fontSize: 11 }}>
-                  {record.product.sku}
-                </Text>
-              </div>
-            </div>
-          );
-        }
-        if (product) {
-          return (
-            <div>
-              <Text strong>{product.nama}</Text>
-              <div>
-                <Text type="secondary" code style={{ fontSize: 11 }}>
-                  {product.sku}
-                </Text>
-              </div>
-            </div>
-          );
-        }
-        return <Text type="secondary">Product #{productId}</Text>;
-      },
-    },
-    {
-      title: "Quantity",
-      dataIndex: "quantity",
-      key: "quantity",
-      width: 120,
-      render: (value: number) => (
-        <Tag
-          color={value > 0 ? "green" : value < 0 ? "red" : "default"}
-          style={{ fontSize: 14, padding: "2px 12px" }}
-        >
-          {value > 0 ? `+${value}` : value}
-        </Tag>
-      ),
-    },
-    {
-      title: "Alasan",
-      dataIndex: "alasan",
-      key: "alasan",
-      render: (value: string | null) => (
-        <Text type="secondary">{value || "-"}</Text>
-      ),
-    },
-    {
-      title: "Oleh",
-      key: "adjustedBy",
-      width: 160,
-      render: (_: unknown, record: StockAdjustment) => (
-        <Text type="secondary">
-          {record.user?.name || record.user?.email || record.adjustedBy || "-"}
-        </Text>
-      ),
-    },
-  ];
-
   if (outletLoading) {
     return (
-      <div style={{ display: "flex", justifyContent: "center", padding: 100 }}>
-        <Spin size="large" />
+      <div className="flex justify-center py-24">
+        <Skeleton className="h-8 w-8 rounded-full" />
       </div>
     );
   }
@@ -461,217 +196,175 @@ export function OutletDetailPage() {
 
   return (
     <div>
-      {/* Back Navigation */}
-      <Button
-        type="link"
-        icon={<ArrowLeftOutlined />}
-        onClick={() => navigate({ to: `/tenants/${slug}/outlets` })}
-        style={{ marginBottom: 16, paddingLeft: 0 }}
-      >
+      <Button variant="link" onClick={() => navigate({ to: `/tenants/${slug}/outlets` })} className="mb-4 pl-0">
+        <ArrowLeft className="mr-2 h-4 w-4" />
         Back to Outlets
       </Button>
 
-      {/* Outlet Info Card */}
-      <Card style={{ marginBottom: 24 }}>
-        <Descriptions
-          title={
-            <Space>
-              <InboxOutlined />
-              <span>{outlet.name}</span>
-            </Space>
-          }
-          column={3}
-          size="small"
-        >
-          <Descriptions.Item label="Kode">{outlet.kode}</Descriptions.Item>
-          <Descriptions.Item label="Alamat">
-            {outlet.alamat || "-"}
-          </Descriptions.Item>
-          <Descriptions.Item label="No. HP">
-            {outlet.noHp || "-"}
-          </Descriptions.Item>
-          <Descriptions.Item label="Status">
-            <Tag color={outlet.isActive ? "success" : "error"}>
+      <Card className="mb-6">
+        <div className="p-4">
+          <div className="flex items-center gap-2 mb-4">
+            <Package className="h-5 w-5" />
+            <h3 className="text-lg font-semibold">{outlet.name}</h3>
+            <span className={`px-2 py-1 rounded-full text-xs ${outlet.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
               {outlet.isActive ? "Active" : "Inactive"}
-            </Tag>
-          </Descriptions.Item>
-        </Descriptions>
+            </span>
+          </div>
+          <div className="grid grid-cols-3 gap-4 text-sm">
+            <div><span className="text-gray-500">Kode:</span> <code className="bg-gray-100 px-2 py-1 rounded">{outlet.kode}</code></div>
+            <div><span className="text-gray-500">Alamat:</span> {outlet.alamat || "-"}</div>
+            <div><span className="text-gray-500">No. HP:</span> {outlet.noHp || "-"}</div>
+          </div>
+        </div>
       </Card>
 
-      {/* Tabs: Stock & Adjustments */}
-      <Tabs
-        defaultActiveKey="stock"
-        items={[
-          {
-            key: "stock",
-            label: (
-              <Space>
-                <InboxOutlined />
-                Daftar Produk & Stock
-              </Space>
-            ),
-            children: (
-              <>
-                {/* Stock Header */}
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginBottom: 16,
-                  }}
-                >
-                  <Text type="secondary">
-                    {totalWithStock} dari {products.length} produk memiliki
-                    stock di outlet ini
-                  </Text>
-                </div>
+      <Tabs defaultValue="stock">
+        <TabsList>
+          <TabsTrigger value="stock" className="flex items-center gap-2">
+            <Package className="h-4 w-4" />
+            Daftar Produk & Stock
+          </TabsTrigger>
+          <TabsTrigger value="adjustments" className="flex items-center gap-2">
+            <History className="h-4 w-4" />
+            Riwayat Adjustment
+          </TabsTrigger>
+        </TabsList>
 
-                {/* Search */}
-                <div style={{ marginBottom: 16 }}>
-                  <Input
-                    placeholder="Cari produk..."
-                    prefix={<SearchOutlined />}
-                    value={searchText}
-                    onChange={(e) => setSearchText(e.target.value)}
-                    style={{ maxWidth: 300 }}
-                    allowClear
-                  />
-                </div>
+        <TabsContent value="stock">
+          <div className="mb-4 text-sm text-gray-500">
+            {totalWithStock} dari {products.length} produk memiliki stock di outlet ini
+          </div>
+          <div className="mb-4">
+            <Input placeholder="Cari produk..." value={searchText} onChange={(e) => setSearchText(e.target.value)} className="max-w-[300px]" />
+          </div>
 
-                {/* Products + Stock Table */}
-                <Table
-                  dataSource={filteredRows}
-                  columns={stockColumns}
-                  rowKey={(record) => record.product.id}
-                  loading={stocksLoading || productsLoading}
-                  pagination={{ pageSize: 10 }}
-                  size="small"
-                  locale={{
-                    emptyText: "Belum ada produk untuk tenant ini.",
-                  }}
-                />
-              </>
-            ),
-          },
-          {
-            key: "adjustments",
-            label: (
-              <Space>
-                <HistoryOutlined />
-                Riwayat Adjustment
-              </Space>
-            ),
-            children: (
-              <>
-                <div style={{ marginBottom: 16 }}>
-                  <Text type="secondary">
-                    Riwayat perubahan stock di outlet ini
-                  </Text>
-                </div>
-                <Table
-                  dataSource={adjustments}
-                  columns={adjustmentColumns}
-                  rowKey="id"
-                  loading={adjustmentsLoading}
-                  pagination={{ pageSize: 10 }}
-                  size="small"
-                  locale={{
-                    emptyText: "Belum ada riwayat adjustment.",
-                  }}
-                />
-              </>
-            ),
-          },
-        ]}
-      />
+          {stocksLoading || productsLoading ? (
+            <div className="space-y-2"><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /></div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[60px]">No.</TableHead>
+                  <TableHead className="w-[120px]">SKU</TableHead>
+                  <TableHead>Produk</TableHead>
+                  <TableHead className="w-[140px]">Harga Jual</TableHead>
+                  <TableHead className="w-[150px]">Stock</TableHead>
+                  <TableHead className="w-[180px]">Terakhir Diperbarui</TableHead>
+                  <TableHead className="w-[140px]">Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredRows.map((row, index) => (
+                  <TableRow key={row.product.id}>
+                    <TableCell>{index + 1}</TableCell>
+                    <TableCell><code className="bg-gray-100 px-2 py-1 rounded text-sm">{row.product.sku}</code></TableCell>
+                    <TableCell>
+                      <div className="font-medium">{row.product.nama}</div>
+                      {row.product.category && <div className="text-xs text-gray-500">{row.product.category.nama}</div>}
+                    </TableCell>
+                    <TableCell>{Number(row.product.hargaJual).toLocaleString("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 })}</TableCell>
+                    <TableCell>
+                      {!row.stock ? (
+                        <Button variant="outline" size="sm" onClick={() => handleAddStock(row.product.id)}>
+                          <Plus className="mr-1 h-3 w-3" /> Tambah
+                        </Button>
+                      ) : (
+                        <span className={row.stock.quantity > 0 ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
+                          {row.stock.quantity}
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-gray-500">
+                      {row.stock?.updatedAt ? new Date(row.stock.updatedAt).toLocaleString("id-ID") : "-"}
+                    </TableCell>
+                    <TableCell>
+                      {!row.stock ? null : (
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="icon" onClick={() => handleAdjustStock(row)}>
+                            <ArrowRightLeft className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleEditStock(row)}>
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleDeleteStock(row.stock!.id)}>
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        </div>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </TabsContent>
 
-      {/* Edit Stock Modal */}
-      <Modal
-        title={`Edit Stock — ${editingRow?.product.nama || ""}`}
-        open={isEditModalOpen}
-        onOk={() => {
-          editForm.validateFields().then((values) => {
-            if (editingRow?.stock) {
-              updateStockMutation.mutate({
-                stockId: editingRow.stock.id,
-                quantity: values.quantity,
-              });
-            }
-          });
-        }}
-        onCancel={() => {
-          setIsEditModalOpen(false);
-          setEditingRow(null);
-          editForm.resetFields();
-        }}
-        confirmLoading={updateStockMutation.isPending}
-        okText="Simpan"
-        cancelText="Batal"
-      >
-        <Form form={editForm} layout="vertical">
-          <Form.Item
-            name="quantity"
-            label="Quantity"
-            rules={[{ required: true, message: "Masukkan quantity" }]}
-          >
-            <InputNumber min={0} style={{ width: "100%" }} />
-          </Form.Item>
-        </Form>
-      </Modal>
+        <TabsContent value="adjustments">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[60px]">No.</TableHead>
+                <TableHead className="w-[180px]">Tanggal</TableHead>
+                <TableHead>Produk</TableHead>
+                <TableHead className="w-[120px]">Quantity</TableHead>
+                <TableHead>Alasan</TableHead>
+                <TableHead className="w-[160px]">Oleh</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {adjustments.map((adj, index) => (
+                <TableRow key={adj.id}>
+                  <TableCell>{index + 1}</TableCell>
+                  <TableCell className="text-gray-500">{new Date(adj.createdAt).toLocaleString("id-ID")}</TableCell>
+                  <TableCell>
+                    <div className="font-medium">{adj.product?.nama || `Product #${adj.productId}`}</div>
+                    <div className="text-xs text-gray-500">{adj.product?.sku}</div>
+                  </TableCell>
+                  <TableCell>
+                    <span className={adj.quantity > 0 ? "text-green-600" : adj.quantity < 0 ? "text-red-600" : ""}>
+                      {adj.quantity > 0 ? `+${adj.quantity}` : adj.quantity}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-gray-500">{adj.alasan || "-"}</TableCell>
+                  <TableCell className="text-gray-500">{adj.user?.name || adj.user?.email || adj.adjustedBy || "-"}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TabsContent>
+      </Tabs>
 
-      {/* Stock Adjustment Modal */}
-      <Modal
-        title={`Adjust Stock — ${adjustingRow?.product.nama || ""}`}
-        open={isAdjustModalOpen}
-        onOk={() => {
-          adjustForm.validateFields().then((values) => {
-            if (adjustingRow) {
-              createAdjustmentMutation.mutate({
-                productId: adjustingRow.product.id,
-                outletId: outletIdNum,
-                quantity: values.quantity,
-                alasan: values.alasan || undefined,
-                adjustedBy: userId!,
-              });
-            }
-          });
-        }}
-        onCancel={() => {
-          setIsAdjustModalOpen(false);
-          setAdjustingRow(null);
-          adjustForm.resetFields();
-        }}
-        confirmLoading={createAdjustmentMutation.isPending}
-        okText="Simpan"
-        cancelText="Batal"
-      >
-        <div style={{ marginBottom: 16 }}>
-          <Text type="secondary">
-            Stock saat ini:{" "}
-            <Text strong>{adjustingRow?.stock?.quantity ?? 0}</Text>
-          </Text>
-        </div>
-        <Form form={adjustForm} layout="vertical">
-          <Form.Item
-            name="quantity"
-            label="Jumlah Adjustment"
-            rules={[{ required: true, message: "Masukkan jumlah adjustment" }]}
-            help="Gunakan angka positif untuk menambah, negatif untuk mengurangi"
-          >
-            <InputNumber
-              style={{ width: "100%" }}
-              placeholder="Contoh: 10 atau -5"
-            />
-          </Form.Item>
-          <Form.Item name="alasan" label="Alasan">
-            <Input.TextArea
-              rows={2}
-              placeholder="Contoh: Restock dari supplier, Barang rusak, dll."
-            />
-          </Form.Item>
-        </Form>
-      </Modal>
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Edit Stock — {editingRow?.product.nama || ""}</DialogTitle></DialogHeader>
+          <Form {...editForm}>
+            <form onSubmit={editForm.handleSubmit((v) => { if (editingRow?.stock) updateStockMutation.mutate({ stockId: editingRow.stock.id, quantity: v.quantity }); })} className="space-y-4">
+              <FormField control={editForm.control} name="quantity" render={({ field }) => (
+                <FormItem><FormLabel>Quantity</FormLabel><FormControl><Input type="number" {...field} onChange={(e) => field.onChange(Number(e.target.value))} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <DialogFooter><Button type="submit" disabled={updateStockMutation.isPending}>Simpan</Button></DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isAdjustModalOpen} onOpenChange={setIsAdjustModalOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Adjust Stock — {adjustingRow?.product.nama || ""}</DialogTitle></DialogHeader>
+          <div className="mb-4 text-sm text-gray-500">Stock saat ini: <strong>{adjustingRow?.stock?.quantity ?? 0}</strong></div>
+          <Form {...adjustForm}>
+            <form onSubmit={adjustForm.handleSubmit((v) => { if (adjustingRow) createAdjustmentMutation.mutate({ productId: adjustingRow.product.id, outletId: outletIdNum, quantity: v.quantity, alasan: v.alasan, adjustedBy: userId! }); })} className="space-y-4">
+              <FormField control={adjustForm.control} name="quantity" render={({ field }) => (
+                <FormItem><FormLabel>Jumlah Adjustment</FormLabel><FormControl><Input type="number" placeholder="Contoh: 10 atau -5" {...field} onChange={(e) => field.onChange(Number(e.target.value))} /></FormControl><p className="text-xs text-gray-500">Gunakan angka positif untuk menambah, negatif untuk mengurangi</p><FormMessage /></FormItem>
+              )} />
+              <FormField control={adjustForm.control} name="alasan" render={({ field }) => (
+                <FormItem><FormLabel>Alasan</FormLabel><FormControl><Input placeholder="Contoh: Restock dari supplier" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <DialogFooter><Button type="submit" disabled={createAdjustmentMutation.isPending}>Simpan</Button></DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

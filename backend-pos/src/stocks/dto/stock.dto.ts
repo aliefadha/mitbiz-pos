@@ -2,8 +2,8 @@ import { z } from 'zod';
 import { createZodDto } from 'nestjs-zod';
 
 export const CreateStockSchema = z.object({
-  productId: z.number().int().positive('Product ID is required'),
-  outletId: z.number().int().positive('Outlet ID is required'),
+  productId: z.string().min(1, 'Product ID is required'),
+  outletId: z.string().min(1, 'Outlet ID is required'),
   quantity: z.number().int().min(0).default(0),
 });
 
@@ -12,13 +12,7 @@ export const UpdateStockSchema = z.object({
 });
 
 export const StockIdSchema = z.object({
-  id: z.string().transform((val) => {
-    const parsed = parseInt(val, 10);
-    if (isNaN(parsed) || parsed < 1) {
-      throw new Error('Invalid stock ID format');
-    }
-    return parsed;
-  }),
+  id: z.string().min(1, 'Stock ID is required'),
 });
 
 export const StockQuerySchema = z.object({
@@ -36,14 +30,9 @@ export const StockQuerySchema = z.object({
       return isNaN(parsed) || parsed < 1 ? 10 : Math.min(parsed, 100);
     })
     .optional(),
-  productId: z
-    .string()
-    .transform((val) => parseInt(val, 10))
-    .optional(),
-  outletId: z
-    .string()
-    .transform((val) => parseInt(val, 10))
-    .optional(),
+  productId: z.string().min(1).optional(),
+  outletId: z.string().min(1).optional(),
+  tenantId: z.string().min(1).optional(),
 });
 
 export class CreateStockDto extends createZodDto(CreateStockSchema) {}

@@ -39,11 +39,8 @@ export class ProductsController {
   @Get()
   @ApiOperation({ summary: 'Get all products' })
   @UsePipes(new ZodValidationPipe(ProductQuerySchema, 'query'))
-  findAll(
-    @Query() query: ProductQueryDto,
-    @CurrentUser() user: CurrentUserType,
-  ) {
-    return this.productsService.findAll(query, user);
+  findAll(@Query() query: ProductQueryDto) {
+    return this.productsService.findAll(query);
   }
 
   @Get(':id')

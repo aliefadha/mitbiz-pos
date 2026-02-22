@@ -1,6 +1,4 @@
-import { Typography, Spin, Card, Button, Space, Descriptions, Modal, Form, Input, message, Row, Col, Statistic } from "antd";
 import { useParams, useNavigate } from "@tanstack/react-router";
-import { ArrowLeftOutlined, EditOutlined, DeleteOutlined, UserOutlined, ShopOutlined, AppstoreOutlined, ShoppingOutlined } from "@ant-design/icons";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { tenantsApi } from "@/lib/api/tenants";
@@ -9,8 +7,45 @@ import { productsApi } from "@/lib/api/products";
 import { outletsApi } from "@/lib/api/outlets";
 import { useSession } from "@/lib/auth-client";
 import { generateSlug } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import {
+  ArrowLeft,
+  Edit,
+  Trash2,
+  Users,
+  ShoppingBag,
+  AppWindow,
+  ShoppingCart,
+} from "lucide-react";
 
-const { Title } = Typography;
+const formSchema = z.object({
+  nama: z.string().min(1, "Nama tenant wajib diisi"),
+  slug: z.string(),
+  noHp: z.string().regex(/^(\+62|62|0)?[0-9]{9,14}$/, "Masukkan nomor HP yang valid").optional().or(z.literal("")),
+  alamat: z.string().optional(),
+});
 
 export function TenantDetailPage() {
   const { slug } = useParams({ from: "/_protected/tenants/$slug/" });
@@ -20,7 +55,15 @@ export function TenantDetailPage() {
   const userId = session?.user?.id;
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [form] = Form.useForm();
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      nama: "",
+      slug: "",
+      noHp: "",
+      alamat: "",
+    },
+  });
 
   const { data: tenant, isLoading: tenantLoading } = useQuery({
     queryKey: ["tenant", slug],
@@ -28,27 +71,25 @@ export function TenantDetailPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: { nama: string; slug: string; noHp?: string; alamat?: string }) =>
+    mutationFn: (data: z.infer<typeof formSchema>) =>
       tenantsApi.update(slug, data, userId),
     onSuccess: () => {
-      message.success("Tenant updated successfully");
       setEditModalOpen(false);
       queryClient.invalidateQueries({ queryKey: ["tenant", slug] });
     },
     onError: (error: Error) => {
-      message.error(error.message || "Failed to update tenant");
+      alert(error.message || "Failed to update tenant");
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: () => tenantsApi.delete(slug, userId),
     onSuccess: () => {
-      message.success("Tenant deleted successfully");
       setDeleteModalOpen(false);
       navigate({ to: "/tenants" });
     },
     onError: (error: Error) => {
-      message.error(error.message || "Failed to delete tenant");
+      alert(error.message || "Failed to delete tenant");
     },
   });
 
@@ -80,8 +121,8 @@ export function TenantDetailPage() {
 
   if (isLoading) {
     return (
-      <div style={{ display: "flex", justifyContent: "center", padding: 100 }}>
-        <Spin size="large" />
+      <div className="flex justify-center py-24">
+        <Skeleton className="h-8 w-8 rounded-full" />
       </div>
     );
   }
@@ -98,26 +139,20 @@ export function TenantDetailPage() {
   return (
     <div>
       <Button
-        type="link"
-        icon={<ArrowLeftOutlined />}
+        variant="link"
         onClick={() => navigate({ to: "/tenants" })}
-        style={{ marginBottom: 16, paddingLeft: 0 }}
+        className="mb-4 pl-0"
       >
+        <ArrowLeft className="mr-2 h-4 w-4" />
         Back to Tenants
       </Button>
 
-      <Card
-        title={
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <Title level={4} style={{ margin: 0 }}>
-              Tenant Details
-            </Title>
-          </div>
-        }
-        extra={
-          <Space>
-            <Button icon={<EditOutlined />} onClick={() => {
-              form.setFieldsValue({
+      <Card className="mb-6">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Tenant Details</CardTitle>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => {
+              form.reset({
                 nama: tenant.nama,
                 slug: tenant.slug,
                 noHp: tenant.noHp,
@@ -125,131 +160,169 @@ export function TenantDetailPage() {
               });
               setEditModalOpen(true);
             }}>
+              <Edit className="mr-2 h-4 w-4" />
               Edit
             </Button>
-            <Button danger icon={<DeleteOutlined />} onClick={() => setDeleteModalOpen(true)}>
+            <Button variant="destructive" onClick={() => setDeleteModalOpen(true)}>
+              <Trash2 className="mr-2 h-4 w-4" />
               Delete
             </Button>
-          </Space>
-        }
-        style={{ marginBottom: 24 }}
-      >
-        <Descriptions column={2}>
-          <Descriptions.Item label="Nama">{tenant.nama}</Descriptions.Item>
-          <Descriptions.Item label="No. HP">{tenant.noHp || "-"}</Descriptions.Item>
-          <Descriptions.Item label="Alamat">{tenant.alamat || "-"}</Descriptions.Item>
-          <Descriptions.Item label="Dibuat">
-            {new Date(tenant.createdAt).toLocaleString("id-ID")}
-          </Descriptions.Item>
-        </Descriptions>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <dl className="grid grid-cols-2 gap-4">
+            <div>
+              <dt className="text-sm font-medium text-gray-500">Nama</dt>
+              <dd>{tenant.nama}</dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-gray-500">No. HP</dt>
+              <dd>{tenant.noHp || "-"}</dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-gray-500">Alamat</dt>
+              <dd>{tenant.alamat || "-"}</dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-gray-500">Dibuat</dt>
+              <dd>{new Date(tenant.createdAt).toLocaleString("id-ID")}</dd>
+            </div>
+          </dl>
+        </CardContent>
       </Card>
 
-      <Row gutter={[16, 16]}>
-        <Col xs={12} sm={6}>  
-          <Card  onClick={() => navigate({ to: "/tenants/$slug/outlets" })}>
-            <Statistic 
-              title="Outlets" 
-              value={outlets.length} 
-              prefix={<ShopOutlined />} 
-              valueStyle={{ color: "#52c41a" }}
-            />
-            <Button type="link" style={{ padding: 0, marginTop: 8 }}>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="cursor-pointer hover:bg-gray-50" onClick={() => navigate({ to: "/tenants/$slug/outlets", params: { slug } })}>
+          <CardContent>
+            <div className="flex items-center gap-2 ">
+              <ShoppingBag className="h-5 w-5" />
+              <span className="text-sm font-medium">Outlets</span>
+            </div>
+            <p className="text-2xl font-bold mt-2">{outlets.length}</p>
+            <Button variant="link" className="p-0 h-auto mt-1">
               Outlet →
             </Button>
-          </Card>
-        </Col>
-        <Col xs={12} sm={6}>
-          <Card  onClick={() => navigate({ to: "/tenants/$slug/categories" as any, params: { slug } })}>
-            <Statistic 
-              title="Categories" 
-              value={categories.length} 
-              prefix={<AppstoreOutlined />} 
-              valueStyle={{ color: "#722ed1" }}
-            />
-            <Button type="link" style={{ padding: 0, marginTop: 8 }}>
+          </CardContent>
+        </Card>
+        <Card className="cursor-pointer hover:bg-gray-50" onClick={() => navigate({ to: "/tenants/$slug/categories", params: { slug } })}>
+          <CardContent>
+            <div className="flex items-center gap-2 ">
+              <AppWindow className="h-5 w-5" />
+              <span className="text-sm font-medium">Categories</span>
+            </div>
+            <p className="text-2xl font-bold mt-2">{categories.length}</p>
+            <Button variant="link" className="p-0 h-auto mt-1">
               Kategori →
             </Button>
-          </Card>
-        </Col>
-        <Col xs={12} sm={6}>
-          <Card  onClick={() => navigate({ to: "/tenants/$slug/products" as any, params: { slug } })}>
-            <Statistic 
-              title="Products" 
-              value={products.length} 
-              prefix={<ShoppingOutlined />} 
-              valueStyle={{ color: "#faad14" }}
-            />
-            <Button type="link" style={{ padding: 0, marginTop: 8 }}>
+          </CardContent>
+        </Card>
+        <Card className="cursor-pointer hover:bg-gray-50" onClick={() => navigate({ to: "/tenants/$slug/products", params: { slug } })}>
+          <CardContent>
+            <div className="flex items-center gap-2 ">
+              <ShoppingCart className="h-5 w-5" />
+              <span className="text-sm font-medium">Products</span>
+            </div>
+            <p className="text-2xl font-bold mt-2">{products.length}</p>
+            <Button variant="link" className="p-0 h-auto mt-1">
               Produk →
             </Button>
-          </Card>
-        </Col>
-        <Col xs={12} sm={6}>
-          <Card onClick={() => navigate({ to: "/tenants/$slug/users" as any, params: { slug } })}>
-            <Statistic 
-              title="Pengguna" 
-              value={users.length} 
-              prefix={<UserOutlined />} 
-              valueStyle={{ color: "#1890ff" }}
-            />
-            <Button type="link" style={{ padding: 0, marginTop: 8 }}>
+          </CardContent>
+        </Card>
+        <Card className="cursor-pointer hover:bg-gray-50" onClick={() => navigate({ to: "/tenants/$slug/users", params: { slug } })}>
+          <CardContent>
+            <div className="flex items-center gap-2 ">
+              <Users className="h-5 w-5" />
+              <span className="text-sm font-medium">Pengguna</span>
+            </div>
+            <p className="text-2xl font-bold mt-2">{users.length}</p>
+            <Button variant="link" className="p-0 h-auto mt-1">
               Pengguna →
             </Button>
-          </Card>
-        </Col>
-      </Row>
+          </CardContent>
+        </Card>
+      </div>
 
-      <Modal
-        title="Edit Tenant"
-        open={editModalOpen}
-        onCancel={() => setEditModalOpen(false)}
-        onOk={() => form.submit()}
-        confirmLoading={updateMutation.isPending}
-      >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={(values) => updateMutation.mutate(values)}
-        >
-          <Form.Item
-            name="nama"
-            label="Nama"
-            rules={[{ required: true, message: "Nama tenant wajib diisi" }]}
-          >
-            <Input 
-              placeholder="Masukkan nama tenant" 
-              onChange={(e) => {
-                const slug = generateSlug(e.target.value);
-                form.setFieldValue('slug', slug);
-              }}
-            />
-          </Form.Item>
-          <Form.Item name="slug" hidden />
-          <Form.Item name="noHp" label="No. HP" rules={[
-            {
-              pattern: /^(\+62|62|0)?[0-9]{9,14}$/,
-              message: "Masukkan nomor HP yang valid",
-            },
-          ]}>
-            <Input placeholder="contoh: 081234567890" />
-          </Form.Item>
-          <Form.Item name="alamat" label="Alamat">
-            <Input.TextArea rows={2} placeholder="Masukkan alamat tenant" />
-          </Form.Item>
-        </Form>
-      </Modal>
+      <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Tenant</DialogTitle>
+          </DialogHeader>
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit((values) => updateMutation.mutate(values))}
+              className="space-y-4"
+            >
+              <FormField
+                control={form.control}
+                name="nama"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nama</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Masukkan nama tenant"
+                        {...field}
+                        onChange={(e) => {
+                          field.onChange(e);
+                          const slug = generateSlug(e.target.value);
+                          form.setValue("slug", slug);
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <input type="hidden" {...form.register("slug")} />
+              <FormField
+                control={form.control}
+                name="noHp"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>No. HP</FormLabel>
+                    <FormControl>
+                      <Input placeholder="contoh: 081234567890" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="alamat"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Alamat</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="Masukkan alamat tenant" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <Button type="submit" disabled={updateMutation.isPending}>
+                  Save
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
 
-      <Modal
-        title="Hapus Tenant"
-        open={deleteModalOpen}
-        onCancel={() => setDeleteModalOpen(false)}
-        onOk={() => deleteMutation.mutate()}
-        okText="Hapus"
-        okButtonProps={{ danger: true }}
-        confirmLoading={deleteMutation.isPending}
-      >
-        <p>Apakah Anda yakin ingin menghapus tenant ini? Tindakan ini tidak dapat dibatalkan.</p>
-      </Modal>
+      <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Hapus Tenant</DialogTitle>
+          </DialogHeader>
+          <p>Apakah Anda yakin ingin menghapus tenant ini? Tindakan ini tidak dapat dibatalkan.</p>
+          <DialogFooter>
+            <Button variant="destructive" onClick={() => deleteMutation.mutate()} disabled={deleteMutation.isPending}>
+              Hapus
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

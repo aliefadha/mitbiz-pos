@@ -21,9 +21,11 @@ export class OutletsService {
     const { page = 1, limit = 10, search, isActive, tenantId } = query;
     const offset = (page - 1) * limit;
 
-    // Get user's tenant ID if owner or cashier
     let effectiveTenantId = tenantId;
-    if (user.role === 'owner' || user.role === 'cashier') {
+    if (
+      !effectiveTenantId &&
+      (user.role === 'owner' || user.role === 'cashier')
+    ) {
       const userTenant = await this.db.query.tenants.findFirst({
         where: eq(tenants.userId, user.id),
       });
@@ -43,7 +45,7 @@ export class OutletsService {
     }
 
     if (search) {
-      conditions.push(like(outlets.name, `%${search}%`));
+      conditions.push(like(outlets.nama, `%${search}%`));
     }
 
     const [data, totalResult] = await Promise.all([
@@ -73,7 +75,7 @@ export class OutletsService {
     };
   }
 
-  async findById(id: number, user: CurrentUserType) {
+  async findById(id: string, user: CurrentUserType) {
     const outlet = await this.db.query.outlets.findFirst({
       where: eq(outlets.id, id),
       with: {
@@ -130,7 +132,7 @@ export class OutletsService {
     return outlet;
   }
 
-  async update(id: number, data: UpdateOutletDto, user: CurrentUserType) {
+  async update(id: string, data: UpdateOutletDto, user: CurrentUserType) {
     const existingOutlet = await this.findById(id, user);
 
     // Verify ownership again
@@ -169,7 +171,7 @@ export class OutletsService {
     return outlet;
   }
 
-  async remove(id: number, user: CurrentUserType) {
+  async remove(id: string, user: CurrentUserType) {
     const outlet = await this.findById(id, user);
 
     // Verify ownership

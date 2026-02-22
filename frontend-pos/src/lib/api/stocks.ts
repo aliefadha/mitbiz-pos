@@ -1,26 +1,26 @@
 import { fetchApi } from "./client";
 
 export interface Stock {
-  id: number;
-  productId: number;
-  outletId: number;
+  id: string;
+  productId: string;
+  outletId: string;
   quantity: number;
   updatedAt: Date;
   product?: {
-    id: number;
+    id: string;
     nama: string;
     sku: string;
   };
   outlet?: {
-    id: number;
-    name: string;
+    id: string;
+    nama: string;
     kode: string;
   };
 }
 
 export interface CreateStockDto {
-  productId: number;
-  outletId: number;
+  productId: string;
+  outletId: string;
   quantity: number;
 }
 
@@ -29,7 +29,7 @@ export interface UpdateStockDto {
 }
 
 export const stocksApi = {
-  getAll: async (filters?: { productId?: number; outletId?: number }): Promise<{ data: Stock[]; meta: any }> => {
+  getAll: async (filters?: { productId?: string; outletId?: string }): Promise<{ data: Stock[]; meta: any }> => {
     const params = new URLSearchParams();
     if (filters?.productId) params.append("productId", filters.productId.toString());
     if (filters?.outletId) params.append("outletId", filters.outletId.toString());
@@ -37,7 +37,7 @@ export const stocksApi = {
     return fetchApi<{ data: Stock[]; meta: any }>(`/stocks${query ? `?${query}` : ""}`);
   },
 
-  getById: async (id: number): Promise<Stock> => {
+  getById: async (id: string): Promise<Stock> => {
     return fetchApi<Stock>(`/stocks/${id}`);
   },
 
@@ -48,14 +48,14 @@ export const stocksApi = {
     });
   },
 
-  update: async (id: number, data: UpdateStockDto): Promise<Stock> => {
+  update: async (id: string, data: UpdateStockDto): Promise<Stock> => {
     return fetchApi<Stock>(`/stocks/${id}`, {
       method: "PUT",
       data,
     });
   },
 
-  delete: async (id: number): Promise<{ message: string }> => {
+  delete: async (id: string): Promise<{ message: string }> => {
     return fetchApi<{ message: string }>(`/stocks/${id}`, {
       method: "DELETE",
     });

@@ -2,29 +2,6 @@ import { useState } from "react";
 import { useParams, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  Button,
-  Input,
-  Table,
-  Modal,
-  Form,
-  Typography,
-  Space,
-  Tag,
-  Select,
-  InputNumber,
-  Row,
-  Col,
-  message,
-} from "antd";
-import {
-  PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  SearchOutlined,
-  SwapOutlined,
-  ArrowLeftOutlined,
-} from "@ant-design/icons";
-import {
   productsApi,
   type Product,
   type CreateProductDto,
@@ -32,10 +9,45 @@ import {
   type AdjustStockDto,
 } from "@/lib/api/products";
 import { categoriesApi } from "@/lib/api/categories";
-import type { Category } from "@/lib/api/categories";
 import { tenantsApi } from "@/lib/api/tenants";
-
-const { Title, Text } = Typography;
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { ArrowLeft, Plus, Pencil, Trash2, ArrowRightLeft } from "lucide-react";
 
 function formatRupiah(value: number | string): string {
   const num = typeof value === "string" ? parseFloat(value) : value;
@@ -47,6 +59,21 @@ function formatRupiah(value: number | string): string {
   }).format(num);
 }
 
+const formSchema = z.object({
+  sku: z.string().min(1, "SKU wajib diisi"),
+  barcode: z.string().optional(),
+  nama: z.string().min(1, "Nama produk wajib diisi"),
+  deskripsi: z.string().optional(),
+  categoryId: z.string().optional(),
+  tipe: z.string().optional(),
+  hargaBeli: z.string().optional(),
+  hargaJual: z.string().optional(),
+  stockQuantity: z.string().optional(),
+  minStockLevel: z.string().optional(),
+  unit: z.string().optional(),
+  isActive: z.boolean().optional(),
+});
+
 export function TenantProductsPage() {
   const { slug } = useParams({ from: "/_protected/tenants/$slug/products/" });
   const navigate = useNavigate();
@@ -57,9 +84,32 @@ export function TenantProductsPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [adjustingProduct, setAdjustingProduct] = useState<Product | null>(null);
   const [searchText, setSearchText] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<number | undefined>(undefined);
-  const [form] = Form.useForm();
-  const [stockForm] = Form.useForm();
+  const [categoryFilter, setCategoryFilter] = useState<string | undefined>(undefined);
+  
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      sku: "",
+      barcode: "",
+      nama: "",
+      deskripsi: "",
+      categoryId: undefined,
+      tipe: "barang",
+      hargaBeli: "0",
+      hargaJual: "0",
+      stockQuantity: "0",
+      minStockLevel: "0",
+      unit: "pcs",
+      isActive: true,
+    },
+  });
+
+  const stockForm = useForm<{ quantity: number; reason: string }>({
+    defaultValues: {
+      quantity: 0,
+      reason: "",
+    },
+  });
 
   const { data: tenant } = useQuery({
     queryKey: ["tenant", slug],
@@ -82,56 +132,52 @@ export function TenantProductsPage() {
     mutationFn: (data: CreateProductDto) => productsApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products", tenant?.id] });
-      message.success("Product created successfully");
       setIsModalOpen(false);
-      form.resetFields();
+      form.reset();
     },
     onError: (error: Error) => {
-      message.error(error.message);
+      alert(error.message);
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: UpdateProductDto }) =>
+    mutationFn: ({ id, data }: { id: string; data: UpdateProductDto }) =>
       productsApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products", tenant?.id] });
-      message.success("Product updated successfully");
       setIsModalOpen(false);
       setEditingProduct(null);
-      form.resetFields();
+      form.reset();
     },
     onError: (error: Error) => {
-      message.error(error.message);
+      alert(error.message);
     },
   });
 
   const toggleStatusMutation = useMutation({
-    mutationFn: ({ id }: { id: number }) => {
+    mutationFn: ({ id }: { id: string }) => {
       const product = products?.data?.find((p) => p.id === id);
       return productsApi.update(id, { isActive: !product?.isActive });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products", tenant?.id] });
-      message.success("Product status updated successfully");
     },
     onError: (error: Error) => {
-      message.error(error.message);
+      alert(error.message);
     },
   });
 
   const adjustStockMutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: AdjustStockDto }) =>
+    mutationFn: ({ id, data }: { id: string; data: AdjustStockDto }) =>
       productsApi.adjustStock(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products", tenant?.id] });
-      message.success("Stock adjusted successfully");
       setIsStockModalOpen(false);
       setAdjustingProduct(null);
-      stockForm.resetFields();
+      stockForm.reset();
     },
     onError: (error: Error) => {
-      message.error(error.message);
+      alert(error.message);
     },
   });
 
@@ -139,38 +185,44 @@ export function TenantProductsPage() {
     mutationFn: productsApi.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products", tenant?.id] });
-      message.success("Product deleted successfully");
     },
     onError: (error: Error) => {
-      message.error(error.message);
+      alert(error.message);
     },
   });
 
   const handleCreate = () => {
     setEditingProduct(null);
-    form.resetFields();
-    form.setFieldsValue({
-      stockQuantity: 0,
-      minStockLevel: 0,
+    form.reset({
+      sku: "",
+      barcode: "",
+      nama: "",
+      deskripsi: "",
+      categoryId: undefined,
+      tipe: "barang",
+      hargaBeli: "0",
+      hargaJual: "0",
+      stockQuantity: "0",
+      minStockLevel: "0",
       unit: "pcs",
       isActive: true,
-      tipe: "barang",
     });
     setIsModalOpen(true);
   };
 
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
-    form.setFieldsValue({
+    form.reset({
       sku: product.sku,
-      barcode: product.barcode,
+      barcode: product.barcode || "",
       nama: product.nama,
-      deskripsi: product.deskripsi,
-      categoryId: product.categoryId,
+      deskripsi: product.deskripsi || "",
+      categoryId: product.categoryId?.toString() || undefined,
       tipe: product.tipe,
-      hargaBeli: product.hargaBeli ? parseFloat(product.hargaBeli) : 0,
-      hargaJual: product.hargaJual ? parseFloat(product.hargaJual) : 0,
-      minStockLevel: product.minStockLevel,
+      hargaBeli: product.hargaBeli || "0",
+      hargaJual: product.hargaJual || "0",
+      stockQuantity: product.stockQuantity?.toString() || "0",
+      minStockLevel: product.minStockLevel?.toString() || "0",
       unit: product.unit,
       isActive: product.isActive,
     });
@@ -179,68 +231,49 @@ export function TenantProductsPage() {
 
   const handleAdjustStock = (product: Product) => {
     setAdjustingProduct(product);
-    stockForm.setFieldsValue({ quantity: 0, reason: "" });
+    stockForm.reset({ quantity: 0, reason: "" });
     setIsStockModalOpen(true);
   };
 
-  const handleToggleStatus = (id: number) => {
+  const handleToggleStatus = (id: string) => {
     toggleStatusMutation.mutate({ id });
   };
 
-  const handleDelete = (id: number) => {
-    Modal.confirm({
-      title: "Delete Product",
-      content: "Are you sure you want to delete this product? This action cannot be undone.",
-      okText: "Delete",
-      okType: "danger",
-      onOk: () => {
-        deleteMutation.mutate(id);
-      },
-    });
-  };
-
-  const handleModalCancel = () => {
-    setIsModalOpen(false);
-    setEditingProduct(null);
-    form.resetFields();
-  };
-
-  const handleStockModalCancel = () => {
-    setIsStockModalOpen(false);
-    setAdjustingProduct(null);
-    stockForm.resetFields();
+  const handleDelete = (id: string) => {
+    if (confirm("Are you sure you want to delete this product? This action cannot be undone.")) {
+      deleteMutation.mutate(id);
+    }
   };
 
   const handleModalOk = () => {
-    form.validateFields().then((values) => {
+    form.handleSubmit((values) => {
+      const data = {
+        ...values,
+        hargaBeli: values.hargaBeli || "0",
+        hargaJual: values.hargaJual || "0",
+        categoryId: values.categoryId ? values.categoryId : undefined,
+        stockQuantity: values.stockQuantity ? Number(values.stockQuantity) : 0,
+        minStockLevel: values.minStockLevel ? Number(values.minStockLevel) : 0,
+        tenantId: tenant?.id,
+      };
+      
       if (editingProduct) {
-        const data: UpdateProductDto = {
-          ...values,
-          hargaBeli: values.hargaBeli ? String(values.hargaBeli) : "0",
-          hargaJual: values.hargaJual ? String(values.hargaJual) : "0",
-        };
-        updateMutation.mutate({ id: editingProduct.id, data });
+        updateMutation.mutate({ id: editingProduct.id, data: data as UpdateProductDto });
       } else {
-        const createData = {
-          ...values,
-          tenantId: tenant?.id,
-          hargaBeli: values.hargaBeli ? String(values.hargaBeli) : "0",
-          hargaJual: values.hargaJual ? String(values.hargaJual) : "0",
-        };
-        createMutation.mutate(createData as CreateProductDto);
+        createMutation.mutate(data as CreateProductDto);
       }
-    });
+    })();
   };
 
   const handleStockModalOk = () => {
-    stockForm.validateFields().then((values) => {
+    stockForm.handleSubmit((values) => {
       if (adjustingProduct) {
         adjustStockMutation.mutate({
           id: adjustingProduct.id,
           data: values,
         });
       }
-    });
+    })();
   };
 
   const filteredProducts = products?.data?.filter(
@@ -252,328 +285,357 @@ export function TenantProductsPage() {
 
   const categoryOptions = categories?.data?.map((cat) => ({
     label: cat.nama,
-    value: cat.id,
+    value: cat.id.toString(),
   }));
 
-  const columns = [
-    {
-      title: "No.",
-      key: "index",
-      width: 60,
-      render: (_: unknown, __: unknown, index: number) => (
-        <Text type="secondary">{index + 1}</Text>
-      ),
-    },
-    {
-      title: "SKU",
-      dataIndex: "sku",
-      key: "sku",
-      width: 100,
-      render: (value: string) => <Text code>{value}</Text>,
-    },
-    {
-      title: "Nama",
-      dataIndex: "nama",
-      key: "nama",
-      render: (value: string) => <Text strong>{value}</Text>,
-    },
-    {
-      title: "Kategori",
-      dataIndex: "category",
-      key: "category",
-      width: 120,
-      render: (category: Category | null) => category?.nama || <Text type="secondary">-</Text>,
-    },
-    {
-      title: "Tipe",
-      dataIndex: "tipe",
-      key: "tipe",
-      width: 80,
-      render: (value: string) => {
-        const colorMap: Record<string, string> = {
-          barang: "blue",
-          jasa: "purple",
-          digital: "cyan",
-        };
-        return <Tag color={colorMap[value] || "default"} className="capitalize">{value}</Tag>;
-      },
-    },
-    {
-      title: "Harga Beli",
-      dataIndex: "hargaBeli",
-      key: "hargaBeli",
-      width: 130,
-      render: (value: string | null) => formatRupiah(value || "0"),
-    },
-    {
-      title: "Harga Jual",
-      dataIndex: "hargaJual",
-      key: "hargaJual",
-      width: 130,
-      render: (value: string) => formatRupiah(value),
-    },
-    {
-      title: "Stok",
-      dataIndex: "stockQuantity",
-      key: "stockQuantity",
-      width: 90,
-      render: (value: number, record: Product) => {
-        const isLow = value <= record.minStockLevel;
-        return <Tag color={isLow ? "red" : "green"}>{value} {record.unit}</Tag>;
-      },
-    },
-    {
-      title: "Status",
-      dataIndex: "isActive",
-      key: "isActive",
-      width: 100,
-      render: (value: boolean, record: Product) => (
-        <Button
-          type="text"
-          size="small"
-          onClick={() => handleToggleStatus(record.id)}
-          style={{ color: value ? "#52c41a" : "#ff4d4f" }}
-        >
-          {value ? "Active" : "Inactive"}
-        </Button>
-      ),
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      width: 160,
-      render: (_: unknown, record: Product) => (
-        <Space size="small">
-          <Button
-            type="text"
-            icon={<SwapOutlined />}
-            onClick={() => handleAdjustStock(record)}
-            title="Adjust Stock"
-            size="small"
-          />
-          <Button
-            type="text"
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
-            size="small"
-          />
-          <Button
-            type="text"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => handleDelete(record.id)}
-            size="small"
-          />
-        </Space>
-      ),
-    },
-  ];
+  const getTypeColor = (tipe: string) => {
+    switch (tipe) {
+      case "barang": return "bg-blue-100 text-blue-700";
+      case "jasa": return "bg-purple-100 text-purple-700";
+      case "digital": return "bg-cyan-100 text-cyan-700";
+      default: return "bg-gray-100 text-gray-700";
+    }
+  };
 
   return (
     <div>
       <Button
-        type="link"
-        icon={<ArrowLeftOutlined />}
+        variant="link"
         onClick={() => navigate({ to: "/tenants/$slug", params: { slug } })}
-        style={{ marginBottom: 16, paddingLeft: 0 }}
+        className="mb-4 pl-0"
       >
+        <ArrowLeft className="mr-2 h-4 w-4" />
         Back to {tenant?.nama || "Tenant"}
       </Button>
 
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 24,
-        }}
-      >
+      <div className="flex justify-between items-center mb-6">
         <div>
-          <Title level={4} style={{ margin: 0 }}>
-            Products
-          </Title>
-          <Text type="secondary">Manage products for {tenant?.nama}</Text>
+          <h4 className="text-lg font-semibold m-0">Products</h4>
+          <p className="text-sm text-gray-500 m-0">Manage products for {tenant?.nama}</p>
         </div>
-        <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+        <Button onClick={handleCreate}>
+          <Plus className="mr-2 h-4 w-4" />
           Add Product
         </Button>
       </div>
 
-      <Row gutter={16} style={{ marginBottom: 16 }}>
-        <Col>
-          <Input
-            placeholder="Search by name, SKU, barcode..."
-            prefix={<SearchOutlined />}
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            style={{ width: 300 }}
-            allowClear
-          />
-        </Col>
-        <Col>
-          <Select
-            placeholder="Filter by category"
-            allowClear
-            style={{ width: 200 }}
-            options={categoryOptions}
-            value={categoryFilter}
-            onChange={(value) => setCategoryFilter(value)}
-          />
-        </Col>
-      </Row>
+      <div className="flex gap-4 mb-4">
+        <Input
+          placeholder="Search by name, SKU, barcode..."
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+          className="max-w-[300px]"
+        />
+        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Filter by category" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Categories</SelectItem>
+            {categoryOptions?.map((cat) => (
+              <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
-      <Table
-        dataSource={filteredProducts}
-        columns={columns}
-        rowKey="id"
-        loading={isLoading}
-        pagination={{ pageSize: 10 }}
-        size="small"
-        locale={{ emptyText: "No products found." }}
-      />
-
-      <Modal
-        title={editingProduct ? "Edit Product" : "Add Product"}
-        open={isModalOpen}
-        onOk={handleModalOk}
-        onCancel={handleModalCancel}
-        confirmLoading={createMutation.isPending || updateMutation.isPending}
-        width={600}
-        centered
-      >
-        <Form form={form} layout="vertical">
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="sku"
-                label="SKU"
-                rules={[{ required: true, message: "Please enter SKU" }]}
-              >
-                <Input placeholder="e.g., PRD-001" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item name="barcode" label="Barcode">
-                <Input placeholder="e.g., 1234567890123" />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Form.Item
-            name="nama"
-            label="Product Name"
-            rules={[{ required: true, message: "Please enter product name" }]}
-          >
-            <Input placeholder="Product name" />
-          </Form.Item>
-          <Form.Item name="deskripsi" label="Description">
-            <Input.TextArea placeholder="Product description (optional)" rows={2} />
-          </Form.Item>
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item name="categoryId" label="Category">
-                <Select placeholder="Select category" options={categoryOptions} allowClear />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item name="tipe" label="Type">
-                <Select
-                  placeholder="Select type"
-                  options={[
-                    { label: "Barang (Physical)", value: "barang" },
-                    { label: "Jasa (Service)", value: "jasa" },
-                    { label: "Digital", value: "digital" },
-                  ]}
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item name="hargaBeli" label="Purchase Price (Harga Beli)">
-                <InputNumber
-                  placeholder="0"
-                  min={0}
-                  style={{ width: "100%" }}
-                  formatter={(value) => (value ? formatRupiah(value) : "")}
-                  parser={(value) => (value?.replace(/[^\d]/g, "") || 0) as unknown as number}
-                />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item name="hargaJual" label="Selling Price (Harga Jual)">
-                <InputNumber
-                  placeholder="0"
-                  min={0}
-                  style={{ width: "100%" }}
-                  formatter={(value) => (value ? formatRupiah(value) : "")}
-                  parser={(value) => (value?.replace(/[^\d]/g, "") || 0) as unknown as number}
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col span={8}>
-              <Form.Item name="stockQuantity" label="Initial Stock">
-                <InputNumber min={0} style={{ width: "100%" }} />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item name="minStockLevel" label="Min Stock Level">
-                <InputNumber min={0} style={{ width: "100%" }} />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item name="unit" label="Unit">
-                <Input placeholder="pcs, kg, L" />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Form.Item name="isActive" label="Status" valuePropName="checked">
-            <Select
-              options={[
-                { label: "Active", value: true },
-                { label: "Inactive", value: false },
-              ]}
-            />
-          </Form.Item>
-        </Form>
-      </Modal>
-
-      <Modal
-        title={`Adjust Stock - ${adjustingProduct?.nama || ""}`}
-        open={isStockModalOpen}
-        onOk={handleStockModalOk}
-        onCancel={handleStockModalCancel}
-        confirmLoading={adjustStockMutation.isPending}
-        centered
-      >
-        <div style={{ marginBottom: 16 }}>
-          <Text type="secondary">Current Stock: </Text>
-          <Text strong>
-            {adjustingProduct?.stockQuantity} {adjustingProduct?.unit}
-          </Text>
+      {isLoading ? (
+        <div className="space-y-2">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
         </div>
-        <Form form={stockForm} layout="vertical">
-          <Form.Item
-            name="quantity"
-            label="Quantity Adjustment"
-            rules={[{ required: true, message: "Please enter quantity" }]}
-            extra="Use positive numbers to add stock, negative to reduce"
-          >
-            <InputNumber placeholder="0" style={{ width: "100%" }} />
-          </Form.Item>
-          <Form.Item
-            name="reason"
-            label="Reason"
-            rules={[{ required: true, message: "Please enter reason for adjustment" }]}
-          >
-            <Input.TextArea
-              placeholder="e.g., Stock count correction, Damaged goods, New shipment received"
-              rows={3}
-            />
-          </Form.Item>
-        </Form>
-      </Modal>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[60px]">No.</TableHead>
+              <TableHead className="w-[100px]">SKU</TableHead>
+              <TableHead>Nama</TableHead>
+              <TableHead className="w-[120px]">Kategori</TableHead>
+              <TableHead className="w-[80px]">Tipe</TableHead>
+              <TableHead className="w-[130px]">Harga Beli</TableHead>
+              <TableHead className="w-[130px]">Harga Jual</TableHead>
+              <TableHead className="w-[90px]">Stok</TableHead>
+              <TableHead className="w-[100px]">Status</TableHead>
+              <TableHead className="w-[160px]">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredProducts?.map((product, index) => {
+              const isLow = (product.stockQuantity || 0) <= (product.minStockLevel || 0);
+              return (
+                <TableRow key={product.id}>
+                  <TableCell>{index + 1}</TableCell>
+                  <TableCell><code className="bg-gray-100 px-2 py-1 rounded text-sm">{product.sku}</code></TableCell>
+                  <TableCell className="font-medium">{product.nama}</TableCell>
+                  <TableCell>{product.category?.nama || "-"}</TableCell>
+                  <TableCell>
+                    <span className={`px-2 py-1 rounded-full text-xs capitalize ${getTypeColor(product.tipe)}`}>
+                      {product.tipe}
+                    </span>
+                  </TableCell>
+                  <TableCell>{formatRupiah(product.hargaBeli || "0")}</TableCell>
+                  <TableCell>{formatRupiah(product.hargaJual)}</TableCell>
+                  <TableCell>
+                    <span className={isLow ? "text-red-600" : "text-green-600"}>
+                      {product.stockQuantity} {product.unit}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleToggleStatus(product.id)}
+                      className={product.isActive ? "text-green-600" : "text-red-500"}
+                    >
+                      {product.isActive ? "Active" : "Inactive"}
+                    </Button>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="icon" onClick={() => handleAdjustStock(product)}>
+                        <ArrowRightLeft className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => handleEdit(product)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => handleDelete(product.id)}>
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      )}
+
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>{editingProduct ? "Edit Product" : "Add Product"}</DialogTitle>
+          </DialogHeader>
+          <Form {...form}>
+            <div className="grid grid-cols-2 gap-4 py-4">
+              <FormField
+                control={form.control}
+                name="sku"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>SKU</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., PRD-001" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="barcode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Barcode</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., 1234567890123" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="nama"
+                render={({ field }) => (
+                  <FormItem className="col-span-2">
+                    <FormLabel>Product Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Product name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="deskripsi"
+                render={({ field }) => (
+                  <FormItem className="col-span-2">
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="Product description (optional)" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="categoryId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Category</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {categoryOptions?.map((cat) => (
+                          <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="tipe"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Type</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="barang">Barang (Physical)</SelectItem>
+                        <SelectItem value="jasa">Jasa (Service)</SelectItem>
+                        <SelectItem value="digital">Digital</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="hargaBeli"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Purchase Price (Harga Beli)</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="0" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="hargaJual"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Selling Price (Harga Jual)</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="0" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="stockQuantity"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Initial Stock</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="0" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="minStockLevel"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Min Stock Level</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="0" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="unit"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Unit</FormLabel>
+                    <FormControl>
+                      <Input placeholder="pcs, kg, L" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" onClick={handleModalOk} disabled={createMutation.isPending || updateMutation.isPending}>
+                {editingProduct ? "Save" : "Create"}
+              </Button>
+            </DialogFooter>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isStockModalOpen} onOpenChange={setIsStockModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Adjust Stock - {adjustingProduct?.nama || ""}</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-gray-500 mb-4">
+              Current Stock: <strong>{adjustingProduct?.stockQuantity} {adjustingProduct?.unit}</strong>
+            </p>
+            <Form {...stockForm}>
+              <FormField
+                control={stockForm.control}
+                name="quantity"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Quantity Adjustment</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="0" {...field} onChange={(e) => field.onChange(Number(e.target.value))} />
+                    </FormControl>
+                    <p className="text-xs text-gray-500 mt-1">Use positive numbers to add stock, negative to reduce</p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={stockForm.control}
+                name="reason"
+                render={({ field }) => (
+                  <FormItem className="mt-4">
+                    <FormLabel>Reason</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="e.g., Stock count correction, Damaged goods, New shipment received" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </Form>
+          </div>
+          <DialogFooter>
+            <Button type="button" onClick={handleStockModalOk} disabled={adjustStockMutation.isPending}>
+              Adjust
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

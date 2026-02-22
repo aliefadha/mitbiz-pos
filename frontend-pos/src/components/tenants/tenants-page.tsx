@@ -1,13 +1,52 @@
-import { Table, Typography, Space, Button, Spin, Modal, Form, Input, message } from "antd";
-import { ReloadOutlined, EyeOutlined, PlusOutlined } from "@ant-design/icons";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { tenantsApi, } from "@/lib/api/tenants";
+import { tenantsApi } from "@/lib/api/tenants";
 import { useSession } from "@/lib/auth-client";
 import { generateSlug } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Eye, Plus } from "lucide-react";
 
-const { Title, Text } = Typography;
+const formSchema = z.object({
+  nama: z.string().min(1, "Nama tenant wajib diisi"),
+  slug: z.string(),
+  noHp: z
+    .string()
+    .regex(/^(\+62|62|0)?[0-9]{9,14}$/, "Masukkan nomor HP yang valid")
+    .optional()
+    .or(z.literal("")),
+  alamat: z.string().optional(),
+});
 
 export function TenantsPage() {
   const navigate = useNavigate();
@@ -15,144 +54,176 @@ export function TenantsPage() {
   const { data: session } = useSession();
   const userId = session?.user?.id;
   const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [form] = Form.useForm();
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      nama: "",
+      slug: "",
+      noHp: "",
+      alamat: "",
+    },
+  });
 
-  const { data: tenants, isLoading, refetch } = useQuery({
+  const { data: tenants, isLoading } = useQuery({
     queryKey: ["tenants"],
-    queryFn: () => tenantsApi.getAll(undefined, userId),
+    queryFn: () => tenantsApi.getAll(),
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: { nama: string; slug: string; noHp?: string; alamat?: string }) =>
-      tenantsApi.create(data, userId),
+    mutationFn: (data: z.infer<typeof formSchema>) =>
+      tenantsApi.create({ ...data, userId: userId! }, userId),
     onSuccess: () => {
-      message.success("Tenant created successfully");
       setCreateModalOpen(false);
-      form.resetFields();
+      form.reset();
       queryClient.invalidateQueries({ queryKey: ["tenants"] });
     },
     onError: (error: Error) => {
-      message.error(error.message || "Failed to create tenant");
+      alert(error.message || "Failed to create tenant");
     },
   });
 
-  const columns = [
-    {
-      title: "No",
-      key: "id",
-      width: 80,
-      render: (_: unknown, _record: unknown, index: number) => index + 1,
-    },
-    {
-      title: "Name",
-      dataIndex: "nama",
-      key: "nama",
-    },
-    {
-      title: "Created At",
-      dataIndex: "createdAt",
-      key: "createdAt",
-      width: 180,
-      render: (date: Date) => new Date(date).toLocaleDateString("id-ID"),
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      width: 250,
-      render: (_: unknown, record: { slug: string }) => (
-        <Space>
-          <Button
-            type="link"
-            size="small"
-            icon={<EyeOutlined />}
-            onClick={() => navigate({ to: `/tenants/${record.slug}` })}
-          >
-            View
-          </Button>
-        </Space>
-      ),
-    },
-  ];
-
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+      <div className="flex justify-between items-center mb-4">
         <div>
-          <Title level={4} style={{ margin: 0 }}>
-            Tenant Management
-          </Title>
-          <Text type="secondary">Manage all tenants in the system</Text>
+          <h4 className="text-lg font-semibold m-0">Tenant Management</h4>
+          <p className="text-sm text-gray-500 m-0">
+            Manage all tenants in the system
+          </p>
         </div>
-        <Space>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => setCreateModalOpen(true)}
-          >
-            Create Tenant
-          </Button>
-          <Button
-            icon={<ReloadOutlined />}
-            onClick={() => refetch()}
-            loading={isLoading}
-          >
-            Refresh
-          </Button>
-        </Space>
+        <div className="flex gap-2">
+          <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Create Tenant
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create Tenant</DialogTitle>
+              </DialogHeader>
+              <Form {...form}>
+                <form
+                  onSubmit={form.handleSubmit((values) =>
+                    createMutation.mutate(values),
+                  )}
+                  className="space-y-4"
+                >
+                  <FormField
+                    control={form.control}
+                    name="nama"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nama</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Masukkan nama tenant"
+                            {...field}
+                            onChange={(e) => {
+                              field.onChange(e);
+                              const slug = generateSlug(e.target.value);
+                              form.setValue("slug", slug);
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <input type="hidden" {...form.register("slug")} />
+                  <FormField
+                    control={form.control}
+                    name="noHp"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>No. HP</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="contoh: 081234567890"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="alamat"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Alamat</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Masukkan alamat tenant"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <DialogFooter>
+                    <Button type="submit" disabled={createMutation.isPending}>
+                      Create
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
-      <Spin spinning={isLoading}>
-        <Table
-          dataSource={tenants}
-          columns={columns}
-          rowKey="id"
-          pagination={false}
-          loading={isLoading}
-        />
-      </Spin>
-
-      <Modal
-        title="Create Tenant"
-        open={createModalOpen}
-        onCancel={() => {
-          setCreateModalOpen(false);
-          form.resetFields();
-        }}
-        onOk={() => form.submit()}
-        confirmLoading={createMutation.isPending}
-      >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={(values) => createMutation.mutate(values)}
-        >
-          <Form.Item
-            name="nama"
-            label="Nama"
-            rules={[{ required: true, message: "Nama tenant wajib diisi" }]}
-          >
-            <Input 
-              placeholder="Masukkan nama tenant" 
-              onChange={(e) => {
-                const slug = generateSlug(e.target.value);
-                form.setFieldValue('slug', slug);
-              }}
-            />
-          </Form.Item>
-          <Form.Item name="slug" hidden />
-          <Form.Item name="noHp" label="No. HP" rules={[
-            {
-              pattern: /^(\+62|62|0)?[0-9]{9,14}$/,
-              message: "Masukkan nomor HP yang valid",
-            },
-          ]}>
-            <Input placeholder="contoh: 081234567890" />
-          </Form.Item>
-          <Form.Item name="alamat" label="Alamat">
-            <Input.TextArea rows={2} placeholder="Masukkan alamat tenant" />
-          </Form.Item>
-        </Form>
-      </Modal>
+      {isLoading ? (
+        <div className="space-y-2">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[80px]">No</TableHead>
+              <TableHead>Name</TableHead>
+              <TableHead className="w-[180px]">Created At</TableHead>
+              <TableHead className="w-[250px]">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {tenants?.map((tenant, index) => (
+              <TableRow key={tenant.id}>
+                <TableCell>{index + 1}</TableCell>
+                <TableCell>
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="p-0 h-auto font-normal"
+                    onClick={() => navigate({ to: "/tenants/$slug", params: { slug: tenant.slug } })}
+                  >
+                    {tenant.nama}
+                  </Button>
+                </TableCell>
+                <TableCell>
+                  {new Date(tenant.createdAt).toLocaleDateString("id-ID")}
+                </TableCell>
+                <TableCell>
+                  <Button
+                    variant="link"
+                    size="sm"
+                    onClick={() => navigate({ to: `/tenants/${tenant.slug}` })}
+                  >
+                    <Eye className="mr-1 h-4 w-4" />
+                    View
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
     </div>
   );
 }

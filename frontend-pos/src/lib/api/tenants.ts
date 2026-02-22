@@ -16,12 +16,12 @@ export interface User {
   createdAt: Date;
   updatedAt: Date;
   role?: "admin" | "owner" | "cashier";
-  outletId?: number | null;
+  outletId?: string | null;
 }
 
 export interface Outlet {
-  id: number;
-  tenantId: number;
+  id: string;
+  tenantId: string;
   name: string;
   kode: string;
   alamat?: string;
@@ -32,7 +32,7 @@ export interface Outlet {
 }
 
 export interface Tenant {
-  id: number;
+  id: string;
   nama: string;
   slug: string;
   userId: string;
@@ -78,14 +78,20 @@ async function fetchApiWithUserId<T>(
 
 export const tenantsApi = {
   getAll: async (params?: TenantQueryParams, userId?: string): Promise<Tenant[]> => {
-    const queryString = params
+    const allParams = { ...params, ...(userId ? { userId } : {}) };
+    const queryString = Object.keys(allParams).length > 0
       ? "?" +
-        Object.entries(params)
+        Object.entries(allParams)
           .filter(([_, value]) => value !== undefined)
           .map(([key, value]) => `${key}=${value}`)
           .join("&")
       : "";
-    const response = await fetchApiWithUserId<{ data: Tenant[] }>(`/tenants${queryString}`, { userId });
+    const response = await fetchApi<{ data: Tenant[] }>(`/tenants${queryString}`);
+    return response.data;
+  },
+
+  getMyTenants: async (): Promise<Tenant[]> => {
+    const response = await fetchApi<{ data: Tenant[] }>("/users/me/tenants");
     return response.data;
   },
 

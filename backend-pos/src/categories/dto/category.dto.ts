@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { createZodDto } from 'nestjs-zod';
 
 export const CreateCategorySchema = z.object({
-  tenantId: z.number().int().positive('Tenant ID is required'),
+  tenantId: z.string().min(1, 'Tenant ID is required'),
   nama: z.string().min(1, 'Category name is required').max(255),
   deskripsi: z.string().max(500).optional().nullable(),
   isActive: z.boolean().default(true),
@@ -15,13 +15,7 @@ export const UpdateCategorySchema = z.object({
 });
 
 export const CategoryIdSchema = z.object({
-  id: z.string().transform((val) => {
-    const parsed = parseInt(val, 10);
-    if (isNaN(parsed) || parsed < 1) {
-      throw new Error('Invalid category ID format');
-    }
-    return parsed;
-  }),
+  id: z.string().min(1, 'Category ID is required'),
 });
 
 export const CategoryQuerySchema = z.object({
@@ -44,10 +38,7 @@ export const CategoryQuerySchema = z.object({
     .string()
     .transform((val) => val === 'true')
     .optional(),
-  tenantId: z
-    .string()
-    .transform((val) => parseInt(val, 10))
-    .optional(),
+  tenantId: z.string().min(1).optional(),
 });
 
 export class CreateCategoryDto extends createZodDto(CreateCategorySchema) {}

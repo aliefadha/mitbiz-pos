@@ -1,7 +1,7 @@
 import { fetchApi } from "./client";
 
 export interface Category {
-  id: number;
+  id: string;
   nama: string;
   deskripsi: string | null;
   isActive: boolean;
@@ -10,13 +10,13 @@ export interface Category {
 }
 
 export interface Product {
-  id: number;
-  tenantId: number;
+  id: string;
+  tenantId: string;
   sku: string;
   barcode: string | null;
   nama: string;
   deskripsi: string | null;
-  categoryId: number | null;
+  categoryId: string | null;
   category: Category | null;
   tipe: 'barang' | 'jasa' | 'digital';
   hargaBeli: string | null;
@@ -30,12 +30,12 @@ export interface Product {
 }
 
 export interface CreateProductDto {
-  tenantId: number;
+  tenantId: string;
   sku: string;
   barcode?: string;
   nama: string;
   deskripsi?: string;
-  categoryId?: number;
+  categoryId?: string;
   tipe?: 'barang' | 'jasa' | 'digital';
   hargaBeli?: string;
   hargaJual: string;
@@ -50,7 +50,7 @@ export interface UpdateProductDto {
   barcode?: string;
   nama?: string;
   deskripsi?: string;
-  categoryId?: number;
+  categoryId?: string;
   tipe?: 'barang' | 'jasa' | 'digital';
   hargaBeli?: string;
   hargaJual?: string;
@@ -67,32 +67,29 @@ export interface AdjustStockDto {
 export interface StockAdjustmentResponse {
   message: string;
   adjustment: {
-    id: number;
-    productId: number;
+    id: string;
+    productId: string;
     adjustmentType: string;
     quantity: number;
     reason: string;
-    adjustedBy: number;
+    adjustedBy: string;
     createdAt: Date;
   };
   newQuantity: number;
 }
 
 export const productsApi = {
-  getAll: async (filters?: { tenantId?: number; categoryId?: number; isActive?: boolean }): Promise<{ data: Product[]; meta: any }> => {
+  getAll: async (filters?: { tenantId?: string; categoryId?: string; isActive?: boolean; search?: string }): Promise<{ data: Product[]; meta: any }> => {
     const params = new URLSearchParams();
     if (filters?.tenantId) params.append("tenantId", filters.tenantId.toString());
     if (filters?.categoryId) params.append("categoryId", filters.categoryId.toString());
     if (filters?.isActive !== undefined) params.append("isActive", filters.isActive.toString());
+    if (filters?.search) params.append("search", filters.search);
     const query = params.toString();
     return fetchApi<{ data: Product[]; meta: any }>(`/products${query ? `?${query}` : ""}`);
   },
 
-  getActive: async (): Promise<Product[]> => {
-    return fetchApi<Product[]>("/products?isActive=true");
-  },
-
-  getById: async (id: number): Promise<Product> => {
+  getById: async (id: string): Promise<Product> => {
     return fetchApi<Product>(`/products/${id}`);
   },
 
@@ -103,27 +100,23 @@ export const productsApi = {
     });
   },
 
-  update: async (id: number, data: UpdateProductDto): Promise<Product> => {
+  update: async (id: string, data: UpdateProductDto): Promise<Product> => {
     return fetchApi<Product>(`/products/${id}`, {
       method: "PUT",
       data,
     });
   },
 
-  adjustStock: async (id: number, data: AdjustStockDto): Promise<StockAdjustmentResponse> => {
-    return fetchApi<StockAdjustmentResponse>(`/products/${id}/stock`, {
-      method: "PUT",
-      data,
-    });
-  },
-
-  delete: async (id: number): Promise<{ message: string }> => {
-    return fetchApi<{ message: string }>(`/products/${id}`, {
+  delete: async (id: string): Promise<void> => {
+    return fetchApi<void>(`/products/${id}`, {
       method: "DELETE",
     });
   },
 
-  getLowStock: async (): Promise<Product[]> => {
-    return fetchApi<Product[]>("/products/low-stock");
+  adjustStock: async (id: string, data: AdjustStockDto): Promise<StockAdjustmentResponse> => {
+    return fetchApi<StockAdjustmentResponse>(`/products/${id}/adjust-stock`, {
+      method: "POST",
+      data,
+    });
   },
 };

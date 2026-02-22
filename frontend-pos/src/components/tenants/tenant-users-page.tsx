@@ -1,31 +1,53 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  Button,
-  Input,
-  Table,
-  Typography,
-  Space,
-  Tag,
-  Avatar,
-  Modal,
-  Form,
-  Select,
-  message,
-} from "antd";
-import {
-  SearchOutlined,
-  ArrowLeftOutlined,
-  UserOutlined,
-  ShopOutlined,
-  PlusOutlined,
-} from "@ant-design/icons";
 import { tenantsApi, type User } from "@/lib/api/tenants";
 import { outletsApi, type Outlet } from "@/lib/api/outlets";
 import { usersApi, type CreateUserDto } from "@/lib/api/users";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { ArrowLeft, Plus, User as UserIcon, Building } from "lucide-react";
 
-const { Title, Text } = Typography;
+const formSchema = z.object({
+  name: z.string().min(1, "Nama wajib diisi"),
+  email: z.string().email("Email tidak valid"),
+  password: z.string().min(8, "Password minimal 8 karakter"),
+  outletId: z.string().optional(),
+});
 
 export function TenantUsersPage() {
   const { slug } = useParams({ from: "/_protected/tenants/$slug/users/" });
@@ -33,7 +55,15 @@ export function TenantUsersPage() {
   const queryClient = useQueryClient();
   const [searchText, setSearchText] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [form] = Form.useForm();
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      outletId: undefined,
+    },
+  });
 
   const { data: tenantData } = useQuery({
     queryKey: ["tenant", slug],
@@ -55,13 +85,12 @@ export function TenantUsersPage() {
   const createUserMutation = useMutation({
     mutationFn: (data: CreateUserDto) => usersApi.createUser(data),
     onSuccess: () => {
-      message.success("User created successfully");
       setIsModalOpen(false);
-      form.resetFields();
-      queryClient.invalidateQueries({ queryKey: ["tenant-users", id] });
+      form.reset();
+      queryClient.invalidateQueries({ queryKey: ["tenant-users", slug] });
     },
     onError: (error: Error) => {
-      message.error(error.message || "Failed to create user");
+      alert(error.message);
     },
   });
 
@@ -74,193 +103,189 @@ export function TenantUsersPage() {
       user.email.toLowerCase().includes(searchText.toLowerCase()),
   );
 
-  const columns = [
-    {
-      title: "No.",
-      key: "index",
-      width: 60,
-      render: (_: unknown, __: unknown, index: number) => (
-        <Text type="secondary">{index + 1}</Text>
-      ),
-    },
-    {
-      title: "Nama",
-      dataIndex: "name",
-      key: "name",
-      render: (value: string | null, record: User) => (
-        <Space>
-          <Avatar src={record.image} icon={<UserOutlined />} size="small" />
-          <Text strong>{value || "-"}</Text>
-        </Space>
-      ),
-    },
-    {
-      title: "Email",
-      dataIndex: "email",
-      key: "email",
-      render: (value: string) => <Text type="secondary">{value}</Text>,
-    },
-    {
-      title: "Role",
-      dataIndex: "role",
-      key: "role",
-      render: (value: string) => {
-        const color =
-          value === "owner" ? "blue" : value === "admin" ? "purple" : "default";
-        return <Tag color={color}>{value || "cashier"}</Tag>;
-      },
-    },
-    {
-      title: "Outlet",
-      dataIndex: "outletId",
-      key: "outletId",
-      render: (value: number | null) => {
-        const outlet = outlets.find((o) => o.id === value);
-        return outlet ? (
-          <Space>
-            <ShopOutlined />
-            <Text type="secondary">{outlet.name}</Text>
-          </Space>
-        ) : (
-          <Text type="secondary">Owner</Text>
-        );
-      },
-    },
-    {
-      title: "Dibuat",
-      dataIndex: "createdAt",
-      key: "createdAt",
-      render: (value: Date) => (
-        <Text type="secondary">
-          {new Date(value).toLocaleDateString("id-ID")}
-        </Text>
-      ),
-    },
-  ];
-
-  const handleModalOk = () => {
-    form.validateFields().then((values) => {
-      createUserMutation.mutate({
-        ...values,
-        role: "cashier",
-      });
-    });
-  };
-
-  const handleModalCancel = () => {
-    setIsModalOpen(false);
-    form.resetFields();
+  const getRoleColor = (role: string) => {
+    switch (role) {
+      case "owner": return "bg-blue-100 text-blue-700";
+      case "admin": return "bg-purple-100 text-purple-700";
+      default: return "bg-gray-100 text-gray-700";
+    }
   };
 
   return (
     <div>
       <Button
-        type="link"
-        icon={<ArrowLeftOutlined />}
-        onClick={() =>
-          navigate({ to: "/tenants/$slug" as any, params: { slug } })
-        }
-        style={{ marginBottom: 16, paddingLeft: 0 }}
+        variant="link"
+        onClick={() => navigate({ to: "/tenants/$slug", params: { slug } })}
+        className="mb-4 pl-0"
       >
+        <ArrowLeft className="mr-2 h-4 w-4" />
         Back to {tenantData?.nama || "Tenant"}
       </Button>
 
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 24,
-        }}
-      >
+      <div className="flex justify-between items-center mb-6">
         <div>
-          <Title level={4} style={{ margin: 0 }}>
-            Pengguna
-          </Title>
-          <Text type="secondary">Manage users for {tenantData?.nama}</Text>
+          <h4 className="text-lg font-semibold m-0">Pengguna</h4>
+          <p className="text-sm text-gray-500 m-0">Manage users for {tenantData?.nama}</p>
         </div>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => setIsModalOpen(true)}
-        >
+        <Button onClick={() => setIsModalOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" />
           Tambah Kasir
         </Button>
       </div>
 
-      <div style={{ marginBottom: 16 }}>
+      <div className="mb-4">
         <Input
           placeholder="Search users..."
-          prefix={<SearchOutlined />}
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
-          style={{ maxWidth: 300 }}
-          allowClear
+          className="max-w-[300px]"
         />
       </div>
 
-      <Table
-        dataSource={filteredUsers}
-        columns={columns}
-        rowKey="id"
-        loading={isLoading}
-        pagination={{ pageSize: 10 }}
-        size="small"
-        locale={{
-          emptyText: "No users found.",
-        }}
-      />
+      {isLoading ? (
+        <div className="space-y-2">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[60px]">No.</TableHead>
+              <TableHead>Nama</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Role</TableHead>
+              <TableHead>Outlet</TableHead>
+              <TableHead>Dibuat</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredUsers.map((user, index) => {
+              const outlet = outlets.find((o) => o.id === user.outletId);
+              return (
+                <TableRow key={user.id}>
+                  <TableCell>{index + 1}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
+                        <UserIcon className="h-4 w-4" />
+                      </div>
+                      <span className="font-medium">{user.name || "-"}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-gray-500">{user.email}</TableCell>
+                  <TableCell>
+                    <span className={`px-2 py-1 rounded-full text-xs ${getRoleColor(user.role || "")}`}>
+                      {user.role || "cashier"}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-gray-500">
+                    {outlet ? (
+                      <div className="flex items-center gap-1">
+                        <Building className="h-3 w-3" />
+                        {outlet.name}
+                      </div>
+                    ) : "Owner"}
+                  </TableCell>
+                  <TableCell className="text-gray-500">
+                    {new Date(user.createdAt).toLocaleDateString("id-ID")}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      )}
 
-      <Modal
-        title="Tambah Kasir"
-        open={isModalOpen}
-        onOk={handleModalOk}
-        onCancel={handleModalCancel}
-        confirmLoading={createUserMutation.isPending}
-      >
-        <Form form={form} layout="vertical">
-          <Form.Item
-            name="name"
-            label="Nama"
-            rules={[{ required: true, message: "Nama wajib diisi" }]}
-          >
-            <Input placeholder="Masukkan nama kasir" />
-          </Form.Item>
-          <Form.Item
-            name="email"
-            label="Email"
-            rules={[
-              { required: true, message: "Email wajib diisi" },
-              { type: "email", message: "Email tidak valid" },
-            ]}
-          >
-            <Input placeholder="contoh: kasir@email.com" />
-          </Form.Item>
-          <Form.Item
-            name="password"
-            label="Password"
-            rules={[
-              { required: true, message: "Password wajib diisi" },
-              { min: 8, message: "Password minimal 8 karakter" },
-            ]}
-          >
-            <Input.Password placeholder="Minimal 8 karakter" />
-          </Form.Item>
-          <Form.Item
-            name="outletId"
-            label="Outlet"
-            rules={[{ required: true, message: "Pilih outlet" }]}
-          >
-            <Select
-              placeholder="Pilih outlet"
-              options={outlets.map((outlet) => ({
-                value: outlet.id,
-                label: outlet.name,
-              }))}
-            />
-          </Form.Item>
-        </Form>
-      </Modal>
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Tambah Kasir</DialogTitle>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={(e) => { 
+              e.preventDefault(); 
+              form.handleSubmit((values) => {
+                createUserMutation.mutate({
+                  ...values,
+                  role: "cashier",
+                  outletId: values.outletId ? Number(values.outletId) : undefined,
+                } as CreateUserDto);
+              })();
+            }} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nama</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Masukkan nama kasir" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input placeholder="contoh: kasir@email.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input type="password" placeholder="Minimal 8 karakter" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="outletId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Outlet</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Pilih outlet" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {outlets.map((outlet) => (
+                          <SelectItem key={outlet.id} value={outlet.id.toString()}>
+                            {outlet.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <Button type="submit" disabled={createUserMutation.isPending}>
+                  Create
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

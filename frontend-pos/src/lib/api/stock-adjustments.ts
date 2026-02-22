@@ -1,20 +1,20 @@
 import { fetchApi } from "./client";
 
 export interface StockAdjustment {
-  id: number;
-  outletId: number;
-  productId: number;
+  id: string;
+  outletId: string;
+  productId: string;
   quantity: number;
   alasan: string | null;
   adjustedBy: string;
   createdAt: Date;
   product?: {
-    id: number;
+    id: string;
     nama: string;
     sku: string;
   };
   outlet?: {
-    id: number;
+    id: string;
     name: string;
     kode: string;
   };
@@ -26,17 +26,17 @@ export interface StockAdjustment {
 }
 
 export interface CreateStockAdjustmentDto {
-  productId: number;
-  outletId: number;
+  productId: string;
+  outletId: string;
   quantity: number;
   alasan?: string;
-  adjustedBy: string;
+  adjustedBy?: string;
 }
 
 export const stockAdjustmentsApi = {
   getAll: async (filters?: {
-    productId?: number;
-    outletId?: number;
+    productId?: string;
+    outletId?: string;
   }): Promise<{ data: StockAdjustment[]; meta: any }> => {
     const params = new URLSearchParams();
     if (filters?.productId)
@@ -49,7 +49,7 @@ export const stockAdjustmentsApi = {
     );
   },
 
-  getById: async (id: number): Promise<StockAdjustment> => {
+  getById: async (id: string): Promise<StockAdjustment> => {
     return fetchApi<StockAdjustment>(`/stock-adjustments/${id}`);
   },
 

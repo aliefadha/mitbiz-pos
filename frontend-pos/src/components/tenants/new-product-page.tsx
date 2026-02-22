@@ -1,17 +1,26 @@
-import { Typography, Spin, Card, Form, Input, InputNumber, message, Button, Space, Select } from "antd";
+import { toast } from "sonner";
 import { useParams, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { ArrowLeftOutlined, SaveOutlined } from "@ant-design/icons";
+import { ArrowLeft, Save } from "lucide-react";
 import { tenantsApi } from "@/lib/api/tenants";
 import { categoriesApi } from "@/lib/api/categories";
 import { productsApi } from "@/lib/api/products";
-
-const { Title } = Typography;
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function NewProductPage() {
   const { slug } = useParams({ from: "/_protected/tenants/$slug/products/new" });
   const navigate = useNavigate();
-  const [form] = Form.useForm();
 
   const { data: tenant, isLoading: tenantLoading } = useQuery({
     queryKey: ["tenant", slug],
@@ -26,12 +35,12 @@ export function NewProductPage() {
 
   const createProductMutation = useMutation({
     mutationFn: (data: {
-      tenantId: number;
+      tenantId: string;
       sku: string;
       barcode?: string;
       nama: string;
       deskripsi?: string;
-      categoryId?: number;
+      categoryId?: string;
       tipe?: 'barang' | 'jasa' | 'digital';
       hargaBeli?: string;
       hargaJual: string;
@@ -40,11 +49,11 @@ export function NewProductPage() {
       isActive?: boolean;
     }) => productsApi.create(data),
     onSuccess: () => {
-      message.success("Produk berhasil dibuat");
+      toast.success("Produk berhasil dibuat");
       navigate({ to: "/tenants/$slug/products" as any, params: { slug } });
     },
     onError: (error: Error) => {
-      message.error(error.message || "Gagal membuat produk");
+      toast.error(error.message || "Gagal membuat produk");
     },
   });
 
@@ -52,8 +61,8 @@ export function NewProductPage() {
 
   if (tenantLoading || categoriesLoading) {
     return (
-      <div style={{ display: "flex", justifyContent: "center", padding: 100 }}>
-        <Spin size="large" />
+      <div className="flex justify-center p-10">
+        <Skeleton className="h-10 w-full max-w-md" />
       </div>
     );
   }
@@ -65,142 +74,135 @@ export function NewProductPage() {
   return (
     <div>
       <Button
-        type="link"
-        icon={<ArrowLeftOutlined />}
+        variant="link"
         onClick={() => navigate({ to: "/tenants/$slug", params: { slug } })}
-        style={{ marginBottom: 16, paddingLeft: 0 }}
+        className="mb-4 pl-0"
       >
+        <ArrowLeft className="mr-2 h-4 w-4" />
         Back to Tenant
       </Button>
 
-      <Card
-        title={
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <Title level={4} style={{ margin: 0 }}>
-              Tambah Produk Baru
-            </Title>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-xl">Tambah Produk Baru</CardTitle>
           </div>
-        }
-      >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={(values) => {
-            createProductMutation.mutate({
-              ...values,
-              tenantId: tenant.id,
-              hargaJual: values.hargaJual ? String(values.hargaJual) : undefined,
-              hargaBeli: values.hargaBeli ? String(values.hargaBeli) : undefined,
-            });
-          }}
-          initialValues={{
-            tipe: "barang",
-            unit: "pcs",
-            minStockLevel: 0,
-            isActive: true,
-          }}
-        >
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-            <Form.Item
-              name="sku"
-              label="SKU"
-              rules={[{ required: true, message: "SKU wajib diisi" }]}
-            >
-              <Input placeholder="Contoh: PROD-001" />
-            </Form.Item>
+        </CardHeader>
+        <CardContent>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              createProductMutation.mutate({
+                tenantId: tenant.id,
+                sku: formData.get("sku") as string,
+                nama: formData.get("nama") as string,
+                barcode: formData.get("barcode") as string || undefined,
+                deskripsi: formData.get("deskripsi") as string || undefined,
+                categoryId: formData.get("categoryId") ? Number(formData.get("categoryId")) : undefined,
+                tipe: formData.get("tipe") as 'barang' | 'jasa' | 'digital',
+                unit: formData.get("unit") as string || undefined,
+                hargaJual: formData.get("hargaJual") as string,
+                hargaBeli: formData.get("hargaBeli") as string || undefined,
+                minStockLevel: formData.get("minStockLevel") ? Number(formData.get("minStockLevel")) : 0,
+                isActive: true,
+              });
+            }}
+          >
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="sku">SKU *</Label>
+                <Input id="sku" name="sku" placeholder="Contoh: PROD-001" required />
+              </div>
 
-            <Form.Item
-              name="nama"
-              label="Nama Produk"
-              rules={[{ required: true, message: "Nama produk wajib diisi" }]}
-            >
-              <Input placeholder="Contoh: Produk A" />
-            </Form.Item>
+              <div className="space-y-2">
+                <Label htmlFor="nama">Nama Produk *</Label>
+                <Input id="nama" name="nama" placeholder="Contoh: Produk A" required />
+              </div>
 
-            <Form.Item name="barcode" label="Barcode">
-              <Input placeholder="Contoh: 1234567890123" />
-            </Form.Item>
+              <div className="space-y-2">
+                <Label htmlFor="barcode">Barcode</Label>
+                <Input id="barcode" name="barcode" placeholder="Contoh: 1234567890123" />
+              </div>
 
-            <Form.Item name="categoryId" label="Kategori">
-              <Select placeholder="Pilih kategori" allowClear>
-                {categories.map((cat) => (
-                  <Select.Option key={cat.id} value={cat.id}>
-                    {cat.nama}
-                  </Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
+              <div className="space-y-2">
+                <Label htmlFor="categoryId">Kategori</Label>
+                <Select name="categoryId">
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih kategori" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={String(cat.id)}>
+                        {cat.nama}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <Form.Item
-              name="tipe"
-              label="Tipe Produk"
-              rules={[{ required: true, message: "Tipe produk wajib dipilih" }]}
-            >
-              <Select placeholder="Pilih tipe produk">
-                <Select.Option value="barang">Barang</Select.Option>
-                <Select.Option value="jasa">Jasa</Select.Option>
-                <Select.Option value="digital">Digital</Select.Option>
-              </Select>
-            </Form.Item>
+              <div className="space-y-2">
+                <Label htmlFor="tipe">Tipe Produk *</Label>
+                <Select name="tipe" defaultValue="barang">
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih tipe produk" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="barang">Barang</SelectItem>
+                    <SelectItem value="jasa">Jasa</SelectItem>
+                    <SelectItem value="digital">Digital</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <Form.Item name="unit" label="Satuan">
-              <Input placeholder="Contoh: pcs, kg, liter" />
-            </Form.Item>
+              <div className="space-y-2">
+                <Label htmlFor="unit">Satuan</Label>
+                <Input id="unit" name="unit" placeholder="Contoh: pcs, kg, liter" defaultValue="pcs" />
+              </div>
 
-            <Form.Item
-              name="hargaJual"
-              label="Harga Jual"
-              rules={[{ required: true, message: "Harga jual wajib diisi" }]}
-            >
-              <InputNumber
-                style={{ width: "100%" }}
-                placeholder="Contoh: 100000"
-                formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-                parser={(value) => value?.replace(/,/g, "") as unknown as number}
+              <div className="space-y-2">
+                <Label htmlFor="hargaJual">Harga Jual *</Label>
+                <Input id="hargaJual" name="hargaJual" type="number" placeholder="Contoh: 100000" required />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="hargaBeli">Harga Beli</Label>
+                <Input id="hargaBeli" name="hargaBeli" type="number" placeholder="Contoh: 50000" />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="minStockLevel">Minimum Stok</Label>
+                <Input id="minStockLevel" name="minStockLevel" type="number" min="0" defaultValue="0" />
+              </div>
+            </div>
+
+            <div className="space-y-2 mt-4">
+              <Label htmlFor="deskripsi">Deskripsi</Label>
+              <textarea
+                id="deskripsi"
+                name="deskripsi"
+                className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                rows={3}
+                placeholder="Masukkan deskripsi produk"
               />
-            </Form.Item>
+            </div>
 
-            <Form.Item
-              name="hargaBeli"
-              label="Harga Beli"
-              tooltip="Wajib diisi untuk tipe barang"
-            >
-              <InputNumber
-                style={{ width: "100%" }}
-                placeholder="Contoh: 50000"
-                formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-                parser={(value) => value?.replace(/,/g, "") as unknown as number}
-              />
-            </Form.Item>
-
-            <Form.Item name="minStockLevel" label="Minimum Stok">
-              <InputNumber style={{ width: "100%" }} min={0} />
-            </Form.Item>
-          </div>
-
-          <Form.Item name="deskripsi" label="Deskripsi" style={{ marginTop: 16 }}>
-            <Input.TextArea rows={3} placeholder="Masukkan deskripsi produk" />
-          </Form.Item>
-
-          <Form.Item style={{ marginTop: 24 }}>
-            <Space>
-              <Button 
-                type="primary" 
-                htmlType="submit" 
-                icon={<SaveOutlined />}
-                loading={createProductMutation.isPending}
-              >
-                Simpan Produk
+            <div className="mt-6 flex gap-4">
+              <Button type="submit" disabled={createProductMutation.isPending}>
+                <Save className="mr-2 h-4 w-4" />
+                {createProductMutation.isPending ? "Menyimpan..." : "Simpan Produk"}
               </Button>
-              <Button 
-                icon={<ArrowLeftOutlined />}
+              <Button
+                variant="outline"
+                type="button"
                 onClick={() => navigate({ to: "/tenants/$slug", params: { slug } })}
               >
+                <ArrowLeft className="mr-2 h-4 w-4" />
                 Kembali
               </Button>
-            </Space>
-          </Form.Item>
-        </Form>
+            </div>
+          </form>
+        </CardContent>
       </Card>
     </div>
   );

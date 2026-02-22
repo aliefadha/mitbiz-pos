@@ -1,14 +1,5 @@
-import { relations } from 'drizzle-orm';
-import {
-  pgTable,
-  serial,
-  text,
-  timestamp,
-  boolean,
-  integer,
-  decimal,
-  pgEnum,
-} from 'drizzle-orm/pg-core';
+import { relations, sql } from 'drizzle-orm';
+import { pgTable, text, timestamp, boolean, integer, decimal, pgEnum } from 'drizzle-orm/pg-core';
 import { categories } from './category-schema';
 import { tenants } from './tenant-schema';
 import { productStocks } from './stock-schema';
@@ -21,15 +12,15 @@ export const productTypeEnum = pgEnum('product_type', [
 ]);
 
 export const products = pgTable('products', {
-  id: serial('id').primaryKey(),
-  tenantId: integer('tenant_id')
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  tenantId: text('tenant_id')
     .references(() => tenants.id)
     .notNull(),
   sku: text('sku').notNull(),
   barcode: text('barcode'),
   nama: text('nama').notNull(),
   deskripsi: text('deskripsi'),
-  categoryId: integer('category_id').references(() => categories.id),
+  categoryId: text('category_id').references(() => categories.id),
   tipe: productTypeEnum('tipe').default('barang').notNull(),
   hargaBeli: decimal('harga_beli', {
     precision: 12,

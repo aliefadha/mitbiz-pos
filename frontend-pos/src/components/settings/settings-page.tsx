@@ -1,14 +1,43 @@
-import { Typography, Card, Form, Input, Button, Avatar, Space, Spin, message } from "antd";
-import { UserOutlined, UploadOutlined } from "@ant-design/icons";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { usersApi } from "@/lib/api/users";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Upload, User } from "lucide-react";
 
-const { Title, Text } = Typography;
+const formSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email(),
+});
 
 export function SettingsPage() {
-  const [form] = Form.useForm();
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+    },
+  });
 
-  const { data: profile, isLoading, refetch } = useQuery({
+  const {
+    data: profile,
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ["profile"],
     queryFn: () => usersApi.getProfile(),
   });
@@ -17,84 +46,113 @@ export function SettingsPage() {
     mutationFn: (data: { name?: string; image?: string }) =>
       usersApi.updateProfile(data),
     onSuccess: () => {
-      message.success("Profile updated successfully");
       refetch();
     },
     onError: (error: Error) => {
-      message.error(error.message || "Failed to update profile");
+      alert(error.message || "Failed to update profile");
     },
   });
 
-  if (profile) {
-    form.setFieldsValue({
-      name: profile.name,
-      email: profile.email,
-    });
+  useEffect(() => {
+    if (profile) {
+      form.reset({
+        name: profile.name,
+        email: profile.email,
+      });
+    }
+  }, [profile, form]);
+
+  if (isLoading) {
+    return (
+      <div className="max-w-[600px]">
+        <div className="mb-6">
+          <h4 className="text-lg font-semibold m-0">Settings</h4>
+          <p className="text-sm text-gray-500 m-0">
+            Manage your account settings
+          </p>
+        </div>
+        <div className="space-y-2">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div style={{ maxWidth: 600 }}>
-      <div style={{ marginBottom: 24 }}>
-        <Title level={4} style={{ margin: 0 }}>
-          Settings
-        </Title>
-        <Text type="secondary">Manage your account settings</Text>
+    <div className="w-full">
+      <div className="mb-6">
+        <h4 className="text-lg font-semibold m-0">Settings</h4>
+        <p className="text-sm text-gray-500 m-0">
+          Manage your account settings
+        </p>
       </div>
 
-      <Spin spinning={isLoading}>
-        <Card>
-          <div style={{ textAlign: "center", marginBottom: 24 }}>
-            <Avatar
-              size={80}
-              src={profile?.image}
-              icon={<UserOutlined />}
-              style={{ marginBottom: 12 }}
-            />
-            <div>
-              <Button icon={<UploadOutlined />} size="small">
-                Change Photo
-              </Button>
-            </div>
+      <Card>
+        <CardContent className="flex flex-col md:flex-row gap-8 pt-6">
+          <div className="flex flex-col items-center shrink-0 md:w-48">
+            <Avatar className="h-24 w-24 mb-4">
+              <AvatarFallback>
+                <User className="h-10 w-10" />
+              </AvatarFallback>
+            </Avatar>
+            <Button variant="outline" size="sm">
+              <Upload className="mr-2 h-4 w-4" />
+              Change Photo
+            </Button>
           </div>
 
-          <Form
-            form={form}
-            layout="vertical"
-            onFinish={(values) => {
-              const { email, ...updateData } = values;
-              updateMutation.mutate(updateData);
-            }}
-          >
-            <Form.Item
-              name="name"
-              label="Name"
-              rules={[{ required: true, message: "Name is required" }]}
-            >
-              <Input placeholder="Enter your name" />
-            </Form.Item>
-
-            <Form.Item
-              name="email"
-              label="Email"
-            >
-              <Input disabled />
-            </Form.Item>
-
-            <Form.Item>
-              <Space>
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  loading={updateMutation.isPending}
-                >
-                  Save Changes
-                </Button>
-                <Button onClick={() => form.resetFields()}>Cancel</Button>
-              </Space>
-            </Form.Item>
-          </Form>
-        </Card>
-      </Spin>
+          <div className="flex-1 w-full max-w-xl">
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit((values) => {
+                  updateMutation.mutate({ name: values.name });
+                })}
+                className="space-y-4"
+              >
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter your name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input disabled {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="flex gap-3 pt-2">
+                  <Button type="submit" disabled={updateMutation.isPending}>
+                    Save Changes
+                  </Button>
+                  <Button
+                    variant="outline"
+                    type="button"
+                    onClick={() => form.reset()}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

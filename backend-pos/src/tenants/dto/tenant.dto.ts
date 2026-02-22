@@ -77,13 +77,7 @@ export const UpdateTenantSchema = z.object({
 
 // Tenant ID parameter schema
 export const TenantIdSchema = z.object({
-  id: z.string().transform((val) => {
-    const parsed = parseInt(val, 10);
-    if (isNaN(parsed) || parsed < 1) {
-      throw new Error('Invalid tenant ID format');
-    }
-    return parsed;
-  }),
+  id: z.string().min(1, 'Tenant ID is required'),
 });
 
 // Tenant slug parameter schema

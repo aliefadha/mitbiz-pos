@@ -45,7 +45,7 @@ export class StockAdjustmentsController {
   @Get(':id')
   @ApiOperation({ summary: 'Get stock adjustment by ID' })
   findById(@Param('id') id: string, @CurrentUser() user: CurrentUserType) {
-    return this.stockAdjustmentsService.findById(parseInt(id, 10), user);
+    return this.stockAdjustmentsService.findById(id, user);
   }
 
   @Post()

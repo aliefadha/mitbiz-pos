@@ -1,247 +1,422 @@
-import { Typography, Card, Table, Button, Space, Tag, Spin, Avatar, Modal, Form, Input, Select, message } from "antd";
-import { UserOutlined, ReloadOutlined, PlusOutlined } from "@ant-design/icons";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import { usersApi, type User, type CreateUserDto } from "@/lib/api/users";
+import { useState, useEffect } from "react";
+import { usersApi, type CreateUserDto } from "@/lib/api/users";
 import { outletsApi, type Outlet } from "@/lib/api/outlets";
 import { tenantsApi, type Tenant } from "@/lib/api/tenants";
 import { useSession } from "@/lib/auth-client";
+import { useTenant } from "@/contexts/tenant-context";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Plus, User as UserIcon } from "lucide-react";
 
-const { Title, Text } = Typography;
+const formSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  role: z.string(),
+  tenantId: z.string().optional(),
+  outletId: z.string().optional(),
+});
 
 export function AccountPage() {
   const queryClient = useQueryClient();
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState<string>("cashier");
-  const [selectedTenant, setSelectedTenant] = useState<number | null>(null);
-  const [form] = Form.useForm();
+  const [selectedTenant, setSelectedTenant] = useState<string | null>(null);
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      role: "cashier",
+      tenantId: undefined,
+      outletId: undefined,
+    },
+  });
   const { data: session } = useSession();
-  const userId = session?.user?.id;
+  // @ts-ignore - role is added by custom session client
+  const userRole = (session?.user?.role as string) || "cashier";
+  const {
+    selectedTenant: contextSelectedTenant,
+    selectedOutlet: contextSelectedOutlet,
+  } = useTenant();
 
-  const { data, isLoading, refetch } = useQuery({
+  const isOwner = userRole === "owner";
+  const isAdmin = userRole === "admin";
+
+  useEffect(() => {
+    if (createModalOpen && isOwner) {
+      form.setValue("role", "cashier");
+      setSelectedRole("cashier");
+
+      if (contextSelectedTenant) {
+        const tenantId = contextSelectedTenant.id.toString();
+        setSelectedTenant(tenantId);
+        form.setValue("tenantId", tenantId);
+      }
+
+      if (contextSelectedOutlet) {
+        form.setValue("outletId", contextSelectedOutlet.id.toString());
+      }
+    }
+  }, [
+    createModalOpen,
+    isOwner,
+    contextSelectedTenant,
+    contextSelectedOutlet,
+    form,
+  ]);
+
+  const { data, isLoading } = useQuery({
     queryKey: ["users"],
     queryFn: () => usersApi.getUsers(),
+    enabled: !isOwner,
   });
 
   const { data: tenantsData } = useQuery({
     queryKey: ["tenants"],
-    queryFn: () => tenantsApi.getAll({ isActive: true }, userId),
-    enabled: !!userId,
+    queryFn: () => tenantsApi.getAll({ isActive: true }),
   });
 
   const { data: outletsData } = useQuery({
     queryKey: ["outlets", selectedTenant],
-    queryFn: () => outletsApi.getAll({ isActive: true, tenantId: selectedTenant! }),
+    queryFn: () =>
+      outletsApi.getAll({ isActive: true, tenantId: Number(selectedTenant) }),
     enabled: !!selectedTenant,
   });
 
-  const tenants = tenantsData ?? [];
+  const filteredUsersQuery = useQuery({
+    queryKey: ["users", "filtered", contextSelectedTenant?.id],
+    queryFn: async () => {
+      const allUsers = await usersApi.getUsers();
+      if (!contextSelectedTenant?.outlets) return allUsers;
+
+      const allowedOutletIds = contextSelectedTenant.outlets.map((o) => o.id);
+      return {
+        ...allUsers,
+        users: allUsers.users.filter(
+          (user) => user.outletId && allowedOutletIds.includes(user.outletId),
+        ),
+      };
+    },
+    enabled: isOwner && !!contextSelectedTenant,
+  });
+
+  const displayedUsers = isOwner
+    ? (filteredUsersQuery.data?.users ?? [])
+    : (data?.users ?? []);
+
+  const tenantsList =
+    isOwner && contextSelectedTenant
+      ? [contextSelectedTenant]
+      : (tenantsData ?? []);
   const outlets = outletsData?.data ?? [];
 
   const createMutation = useMutation({
     mutationFn: (data: CreateUserDto) => usersApi.createUser(data),
     onSuccess: () => {
-      message.success("User created successfully");
       setCreateModalOpen(false);
-      form.resetFields();
+      form.reset();
+      setSelectedTenant(null);
       queryClient.invalidateQueries({ queryKey: ["users"] });
+      if (isOwner) {
+        queryClient.invalidateQueries({ queryKey: ["users", "filtered"] });
+      }
     },
     onError: (error: Error) => {
-      message.error(error.message || "Failed to create user");
+      alert(error.message || "Failed to create user");
     },
   });
 
-  const users = data?.users ?? [];
-  const total = data?.total ?? 0;
+  const isOutletRequired = selectedRole === "cashier" && (!isOwner || !contextSelectedOutlet);
+  const outletId = form.watch("outletId");
+  const isSubmitDisabled = isOutletRequired && !outletId;
 
-  const columns = [
-    {
-      title: "No",
-      key: "index",
-      width: 80,
-      render: (_: unknown, __: unknown, index: number) => index + 1,
-    },
-    {
-      title: "Name",
-      dataIndex: "name",
-      key: "name",
-      render: (name: string, record: User) => (
-        <Space>
-          <Avatar src={record.image} icon={<UserOutlined />} />
-          {name}
-        </Space>
-      ),
-    },
-    {
-      title: "Email",
-      dataIndex: "email",
-      key: "email",
-    },
-    {
-      title: "Verified",
-      dataIndex: "emailVerified",
-      key: "emailVerified",
-      render: (verified: boolean) => (
-        <Tag color={verified ? "green" : "red"}>
-          {verified ? "Verified" : "Unverified"}
-        </Tag>
-      ),
-    },
-    {
-      title: "Created At",
-      dataIndex: "createdAt",
-      key: "createdAt",
-      width: 180,
-      render: (date: Date) => new Date(date).toLocaleDateString("id-ID"),
-    },
-  ];
+  const getVerifiedColor = (verified: boolean) => {
+    return verified ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700";
+  };
 
   return (
-    <div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 16,
-        }}
-      >
-        <div>
-          <Title level={4} style={{ margin: 0 }}>
-            Account Management
-          </Title>
-          <Text type="secondary">Manage all users in the system</Text>
+    <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
+      <div>
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h4 className="text-lg font-semibold m-0">Account Management</h4>
+            <p className="text-sm text-gray-500 m-0">
+              Manage all users in the system
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Create User
+              </Button>
+            </DialogTrigger>
+          </div>
         </div>
-        <Space>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => setCreateModalOpen(true)}
-          >
-            Create User
-          </Button>
-          <Button
-            icon={<ReloadOutlined />}
-            onClick={() => refetch()}
-            loading={isLoading}
-          >
-            Refresh
-          </Button>
-        </Space>
+
+        {isLoading || (isOwner && filteredUsersQuery.isLoading) ? (
+          <div className="p-6 space-y-2">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[80px]">No</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Verified</TableHead>
+                <TableHead className="w-[180px]">Created At</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {displayedUsers.map((user, index) => (
+                <TableRow key={user.id}>
+                  <TableCell>{index + 1}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
+                        <UserIcon className="h-4 w-4" />
+                      </div>
+                      {user.name}
+                    </div>
+                  </TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs ${getVerifiedColor(!!user.emailVerified)}`}
+                    >
+                      {user.emailVerified ? "Verified" : "Unverified"}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    {new Date(user.createdAt).toLocaleDateString("id-ID")}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create User</DialogTitle>
+          </DialogHeader>
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit((values) => {
+                createMutation.mutate({
+                  ...values,
+                  tenantId: values.tenantId
+                    ? Number(values.tenantId)
+                    : undefined,
+                  outletId: values.outletId
+                    ? Number(values.outletId)
+                    : undefined,
+                } as CreateUserDto);
+              })}
+              className="space-y-4"
+            >
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter user name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter user email" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="Enter password"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              {!isOwner && (
+                <FormField
+                  control={form.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Role</FormLabel>
+                      <Select
+                        onValueChange={(v) => {
+                          field.onChange(v);
+                          setSelectedRole(v);
+                        }}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select role" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {isAdmin && (
+                            <SelectItem value="admin">Admin</SelectItem>
+                          )}
+                          {isAdmin && (
+                            <SelectItem value="owner">Owner</SelectItem>
+                          )}
+                          <SelectItem value="cashier">Cashier</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+              {selectedRole === "cashier" && (
+                <>
+                  {!isOwner && (
+                    <FormField
+                      control={form.control}
+                      name="tenantId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tenant</FormLabel>
+                          <Select
+                            onValueChange={(v) => {
+                              field.onChange(v);
+                              setSelectedTenant(v);
+                              form.setValue("outletId", undefined);
+                            }}
+                            value={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select tenant" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {tenantsList.map((tenant: Tenant) => (
+                                <SelectItem
+                                  key={tenant.id}
+                                  value={tenant.id.toString()}
+                                >
+                                  {tenant.nama}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                  {(!isOwner || !contextSelectedOutlet) && (
+                    <FormField
+                      control={form.control}
+                      name="outletId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Outlet</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                            disabled={!selectedTenant || outlets.length === 0}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select outlet" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {outlets.map((outlet: Outlet) => (
+                                <SelectItem
+                                  key={outlet.id}
+                                  value={outlet.id.toString()}
+                                >
+                                  {outlet.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                </>
+              )}
+              <DialogFooter>
+                <Button type="submit" disabled={createMutation.isPending || isSubmitDisabled}>
+                  Create
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
       </div>
-
-      <Card>
-        <Spin spinning={isLoading}>
-          <Table
-            dataSource={users}
-            columns={columns}
-            rowKey="id"
-            pagination={{
-              total,
-              pageSize: 10,
-              showTotal: (total) => `Total ${total} users`,
-            }}
-            loading={isLoading}
-          />
-        </Spin>
-      </Card>
-
-      <Modal
-        title="Create User"
-        open={createModalOpen}
-        onCancel={() => {
-          setCreateModalOpen(false);
-          form.resetFields();
-          setSelectedTenant(null);
-        }}
-        onOk={() => form.submit()}
-        confirmLoading={createMutation.isPending}
-      >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={(values) => createMutation.mutate(values)}
-        >
-          <Form.Item
-            name="name"
-            label="Name"
-            rules={[{ required: true, message: "Name is required" }]}
-          >
-            <Input placeholder="Enter user name" />
-          </Form.Item>
-          <Form.Item
-            name="email"
-            label="Email"
-            rules={[
-              { required: true, message: "Email is required" },
-              { type: "email", message: "Invalid email address" },
-            ]}
-          >
-            <Input placeholder="Enter user email" />
-          </Form.Item>
-          <Form.Item
-            name="password"
-            label="Password"
-            rules={[
-              { required: true, message: "Password is required" },
-              { min: 8, message: "Password must be at least 8 characters" },
-            ]}
-          >
-            <Input.Password placeholder="Enter password" />
-          </Form.Item>
-          <Form.Item
-            name="role"
-            label="Role"
-            initialValue="cashier"
-            rules={[{ required: true, message: "Role is required" }]}
-          >
-            <Select
-              placeholder="Select role"
-              onChange={(value) => setSelectedRole(value)}
-              options={[
-                { label: "Admin", value: "admin" },
-                { label: "Owner", value: "owner" },
-                { label: "Cashier", value: "cashier" },
-              ]}
-            />
-          </Form.Item>
-          {selectedRole === "cashier" && (
-            <>
-              <Form.Item
-                name="tenantId"
-                label="Tenant"
-                rules={[{ required: true, message: "Tenant is required for cashier" }]}
-              >
-                <Select
-                  placeholder="Select tenant"
-                  onChange={(value) => {
-                    setSelectedTenant(value);
-                    form.setFieldValue("outletId", undefined);
-                  }}
-                  options={tenants.map((tenant: Tenant) => ({
-                    label: tenant.nama,
-                    value: tenant.id,
-                  }))}
-                />
-              </Form.Item>
-              <Form.Item
-                name="outletId"
-                label="Outlet"
-                rules={[{ required: true, message: "Outlet is required for cashier" }]}
-              >
-                <Select
-                  placeholder="Select outlet"
-                  disabled={!selectedTenant}
-                  options={outlets.map((outlet: Outlet) => ({
-                    label: outlet.name,
-                    value: outlet.id,
-                  }))}
-                />
-              </Form.Item>
-            </>
-          )}
-        </Form>
-      </Modal>
-    </div>
+    </Dialog>
   );
 }

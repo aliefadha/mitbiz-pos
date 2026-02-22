@@ -4,12 +4,12 @@ import { createZodDto } from 'nestjs-zod';
 export const ProductTypeSchema = z.enum(['barang', 'jasa', 'digital']);
 
 export const CreateProductSchema = z.object({
-  tenantId: z.number().int().positive('Tenant ID is required'),
+  tenantId: z.string().min(1, 'Tenant ID is required'),
   sku: z.string().min(1, 'SKU is required').max(50),
   barcode: z.string().max(50).optional().nullable(),
   nama: z.string().min(1, 'Product name is required').max(255),
   deskripsi: z.string().max(1000).optional().nullable(),
-  categoryId: z.number().int().positive().optional().nullable(),
+  categoryId: z.string().min(1).optional().nullable(),
   tipe: ProductTypeSchema.default('barang'),
   hargaBeli: z.string().optional().nullable().default('0'),
   hargaJual: z.string().optional().default('0'),
@@ -23,7 +23,7 @@ export const UpdateProductSchema = z.object({
   barcode: z.string().max(50).optional().nullable(),
   nama: z.string().min(1).max(255).optional(),
   deskripsi: z.string().max(1000).optional().nullable(),
-  categoryId: z.number().int().positive().optional().nullable(),
+  categoryId: z.string().min(1).optional().nullable(),
   tipe: ProductTypeSchema.optional(),
   hargaBeli: z.string().optional().nullable(),
   hargaJual: z.string().min(1).optional(),
@@ -33,13 +33,7 @@ export const UpdateProductSchema = z.object({
 });
 
 export const ProductIdSchema = z.object({
-  id: z.string().transform((val) => {
-    const parsed = parseInt(val, 10);
-    if (isNaN(parsed) || parsed < 1) {
-      throw new Error('Invalid product ID format');
-    }
-    return parsed;
-  }),
+  id: z.string().min(1, 'Product ID is required'),
 });
 
 export const ProductQuerySchema = z.object({
@@ -62,14 +56,8 @@ export const ProductQuerySchema = z.object({
     .string()
     .transform((val) => val === 'true')
     .optional(),
-  tenantId: z
-    .string()
-    .transform((val) => parseInt(val, 10))
-    .optional(),
-  categoryId: z
-    .string()
-    .transform((val) => parseInt(val, 10))
-    .optional(),
+  tenantId: z.string().min(1).optional(),
+  categoryId: z.string().min(1).optional(),
   tipe: ProductTypeSchema.optional(),
 });
 

@@ -11,25 +11,25 @@ import {
 
 export const userRoleEnum = pgEnum('user_role', ['admin', 'owner', 'cashier']);
 
-export const user = pgTable("user", {
-  id: text("id").primaryKey(),
-  name: text("name").notNull(),
-  email: text("email").notNull().unique(),
-  emailVerified: boolean("email_verified").default(false).notNull(),
-  image: text("image"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at")
+export const user = pgTable('user', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  email: text('email').notNull().unique(),
+  emailVerified: boolean('email_verified').default(false).notNull(),
+  image: text('image'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at')
     .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
-  role: text("role", { enum: ["admin", "owner", "cashier"] }).default(
-    "cashier",
+  role: text('role', { enum: ['admin', 'owner', 'cashier'] }).default(
+    'cashier',
   ),
-  banned: boolean("banned").default(false),
-  banReason: text("ban_reason"),
-  banExpires: timestamp("ban_expires"),
-  outletId: integer("outlet_id"),
-  isSubscribed: boolean("is_subscribed").default(false),
+  banned: boolean('banned').default(false),
+  banReason: text('ban_reason'),
+  banExpires: timestamp('ban_expires'),
+  outletId: text('outlet_id'),
+  isSubscribed: boolean('is_subscribed').default(false),
 });
 
 export const session = pgTable(

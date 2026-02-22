@@ -9,11 +9,13 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     "/settings",
     "/account",
     "/dashboard",
+    "product",
     "/inventory",
     "/outlets",
+    "/categories",
   ],
-  owner: ["/tenants/new", "/settings", "/dashboard", "/inventory", "/outlets"],
-  cashier: ["/dashboard", "/inventory", "/outlets"],
+  owner: ["/tenants/new", "/account", "/categories", "/products", "/settings", "/dashboard", "/inventory", "/outlets"],
+  cashier: ["/dashboard", "/inventory", "/outlets", "/categories", "/products"],
 };
 
 export async function checkAuth() {
