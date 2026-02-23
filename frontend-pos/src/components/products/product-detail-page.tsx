@@ -269,16 +269,18 @@ export function ProductDetailPage() {
       <Card className="mb-6">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Ringkasan Stok</CardTitle>
-          {stocks.length > 0 ? (
-            <Button size="sm" onClick={() => setCreateStockModalOpen(true)}>
-              <Package className="h-4 w-4 mr-2" />
-              Sesuaikan Stok
-            </Button>
-          ) : (
-            <Button size="sm" onClick={() => setCreateStockModalOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Tambah Stok
-            </Button>
+          {selectedOutlet && (
+            stocks.length > 0 ? (
+              <Button size="sm" onClick={() => setCreateStockModalOpen(true)}>
+                <Package className="h-4 w-4 mr-2" />
+                Sesuaikan Stok
+              </Button>
+            ) : (
+              <Button size="sm" onClick={() => setCreateStockModalOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Tambah Stok
+              </Button>
+            )
           )}
         </CardHeader>
         <CardContent>
