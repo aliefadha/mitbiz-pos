@@ -50,7 +50,7 @@ export function NewProductPage() {
     }) => productsApi.create(data),
     onSuccess: () => {
       toast.success("Produk berhasil dibuat");
-      navigate({ to: "/tenants/$slug/products" as any, params: { slug } });
+      navigate({ to: "/tenants/$slug/products", params: { slug } });
     },
     onError: (error: Error) => {
       toast.error(error.message || "Gagal membuat produk");
@@ -99,7 +99,7 @@ export function NewProductPage() {
                 nama: formData.get("nama") as string,
                 barcode: formData.get("barcode") as string || undefined,
                 deskripsi: formData.get("deskripsi") as string || undefined,
-                categoryId: formData.get("categoryId") ? Number(formData.get("categoryId")) : undefined,
+                categoryId: formData.get("categoryId") as string || undefined,
                 tipe: formData.get("tipe") as 'barang' | 'jasa' | 'digital',
                 unit: formData.get("unit") as string || undefined,
                 hargaJual: formData.get("hargaJual") as string,

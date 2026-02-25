@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams, Link } from "@tanstack/react-router";
-import { ArrowLeft, Package, Tag, } from "lucide-react";
+import { ArrowLeft, Package, } from "lucide-react";
 import { categoriesApi } from "@/lib/api/categories";
-import { productsApi, type Product } from "@/lib/api/products";
+import { productsApi, } from "@/lib/api/products";
 import { useTenant } from "@/contexts/tenant-context";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";

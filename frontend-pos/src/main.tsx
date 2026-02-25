@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ErrorPage } from "@/components/error-page";
 
 import * as TanStackQueryProvider from "./integrations/tanstack-query/root-provider.tsx";
 
@@ -15,7 +16,7 @@ import "@fontsource/plus-jakarta-sans/700.css";
 
 import "./styles.css";
 import reportWebVitals from "./reportWebVitals.ts";
-import { ErrorBoundary } from "./components/error-boundary.tsx";
+import { NotFoundPage } from "./components/not-found-page.tsx";
 
 // Create a new router instance
 
@@ -29,6 +30,12 @@ const router = createRouter({
   scrollRestoration: true,
   defaultStructuralSharing: true,
   defaultPreloadStaleTime: 0,
+  defaultNotFoundComponent: () => (
+    <NotFoundPage />
+  ),
+  defaultErrorComponent: ({ reset }) => (
+    <ErrorPage reset={reset} />
+  ),
 });
 
 // Register the router instance for type safety
@@ -44,13 +51,11 @@ if (rootElement && !rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement);
   root.render(
     <StrictMode>
-      <ErrorBoundary>
-        <TanStackQueryProvider.Provider {...TanStackQueryProviderContext}>
-          <TooltipProvider>
-            <RouterProvider router={router} />
-          </TooltipProvider>
-        </TanStackQueryProvider.Provider>
-      </ErrorBoundary>
+      <TanStackQueryProvider.Provider {...TanStackQueryProviderContext}>
+        <TooltipProvider>
+          <RouterProvider router={router} />
+        </TooltipProvider>
+      </TanStackQueryProvider.Provider>
     </StrictMode>,
   );
 }

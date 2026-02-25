@@ -8,7 +8,6 @@ import { useTenant } from "@/contexts/tenant-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -104,9 +103,11 @@ export function AccountPage() {
     form,
   ]);
 
+  const effectiveTenantId = contextSelectedTenant?.id;
+
   const { data, isLoading } = useQuery({
-    queryKey: ["users"],
-    queryFn: () => usersApi.getUsers(),
+    queryKey: ["users", effectiveTenantId],
+    queryFn: () => usersApi.getUsers({ tenantId: effectiveTenantId }),
     enabled: !isOwner,
   });
 
@@ -118,24 +119,13 @@ export function AccountPage() {
   const { data: outletsData } = useQuery({
     queryKey: ["outlets", selectedTenant],
     queryFn: () =>
-      outletsApi.getAll({ isActive: true, tenantId: Number(selectedTenant) }),
+      outletsApi.getAll({ isActive: true, tenantId: selectedTenant || undefined }),
     enabled: !!selectedTenant,
   });
 
   const filteredUsersQuery = useQuery({
     queryKey: ["users", "filtered", contextSelectedTenant?.id],
-    queryFn: async () => {
-      const allUsers = await usersApi.getUsers();
-      if (!contextSelectedTenant?.outlets) return allUsers;
-
-      const allowedOutletIds = contextSelectedTenant.outlets.map((o) => o.id);
-      return {
-        ...allUsers,
-        users: allUsers.users.filter(
-          (user) => user.outletId && allowedOutletIds.includes(user.outletId),
-        ),
-      };
-    },
+    queryFn: () => usersApi.getUsers({ tenantId: contextSelectedTenant?.id }),
     enabled: isOwner && !!contextSelectedTenant,
   });
 
@@ -249,10 +239,10 @@ export function AccountPage() {
                 createMutation.mutate({
                   ...values,
                   tenantId: values.tenantId
-                    ? Number(values.tenantId)
-                    : undefined,
+                    ? values.tenantId
+                    : (isOwner && effectiveTenantId ? effectiveTenantId : undefined),
                   outletId: values.outletId
-                    ? Number(values.outletId)
+                    ? values.outletId
                     : undefined,
                 } as CreateUserDto);
               })}
@@ -396,7 +386,7 @@ export function AccountPage() {
                                   key={outlet.id}
                                   value={outlet.id.toString()}
                                 >
-                                  {outlet.name}
+                                  {outlet.nama}
                                 </SelectItem>
                               ))}
                             </SelectContent>

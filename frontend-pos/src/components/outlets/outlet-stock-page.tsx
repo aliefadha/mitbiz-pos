@@ -62,11 +62,10 @@ export function OutletStockPage() {
     defaultValues: { quantity: 0 },
   });
 
-  const outletIdNum = Number(outletId);
 
   const { data: outlet, isLoading: outletLoading } = useQuery({
-    queryKey: ["outlet", outletIdNum],
-    queryFn: () => outletsApi.getById(outletIdNum),
+    queryKey: ["outlet", outletId],
+    queryFn: () => outletsApi.getById(outletId),
   });
 
   const { data: tenantData } = useQuery({
@@ -77,9 +76,9 @@ export function OutletStockPage() {
   });
 
   const { data: stocksData, isLoading: stocksLoading } = useQuery({
-    queryKey: ["stocks", { outletId: outletIdNum }],
-    queryFn: () => stocksApi.getAll({ outletId: outletIdNum }),
-    enabled: !!outletIdNum,
+    queryKey: ["stocks", { outletId: outletId }],
+    queryFn: () => stocksApi.getAll({ outletId: outletId }),
+    enabled: !!outletId,
   });
 
   const { data: productsData, isLoading: productsLoading } = useQuery({
@@ -89,23 +88,23 @@ export function OutletStockPage() {
   });
 
   const invalidateStocks = () => {
-    queryClient.invalidateQueries({ queryKey: ["stocks", { outletId: outletIdNum }] });
+    queryClient.invalidateQueries({ queryKey: ["stocks", { outletId: outletId }] });
   };
 
   const createStockMutation = useMutation({
-    mutationFn: (data: { productId: number; outletId: number; quantity: number }) => stocksApi.create(data),
+    mutationFn: (data: { productId: string; outletId: string; quantity: number }) => stocksApi.create(data),
     onSuccess: () => { invalidateStocks(); },
     onError: (error: Error) => { alert(error.message); },
   });
 
   const updateStockMutation = useMutation({
-    mutationFn: ({ stockId, quantity }: { stockId: number; quantity: number }) => stocksApi.update(stockId, { quantity }),
+    mutationFn: ({ stockId, quantity }: { stockId: string; quantity: number }) => stocksApi.update(stockId, { quantity }),
     onSuccess: () => { invalidateStocks(); setIsEditModalOpen(false); setEditingRow(null); editForm.reset(); },
     onError: (error: Error) => { alert(error.message); },
   });
 
   const deleteStockMutation = useMutation({
-    mutationFn: (stockId: number) => stocksApi.delete(stockId),
+    mutationFn: (stockId: string) => stocksApi.delete(stockId),
     onSuccess: () => { invalidateStocks(); },
     onError: (error: Error) => { alert(error.message); },
   });
@@ -113,7 +112,7 @@ export function OutletStockPage() {
   const stocks = stocksData?.data || [];
   const products = productsData?.data || [];
 
-  const stockByProductId = new Map<number, Stock>();
+  const stockByProductId = new Map<string, Stock>();
   stocks.forEach((s: Stock) => stockByProductId.set(s.productId, s));
 
   const rows: ProductStockRow[] = products.map((product: Product) => ({
@@ -127,8 +126,8 @@ export function OutletStockPage() {
     return row.product.nama.toLowerCase().includes(search) || row.product.sku.toLowerCase().includes(search);
   });
 
-  const handleAddStock = (productId: number) => {
-    createStockMutation.mutate({ productId, outletId: outletIdNum, quantity: 0 });
+  const handleAddStock = (productId: string) => {
+    createStockMutation.mutate({ productId, outletId: outletId, quantity: 0 });
   };
 
   const handleEditStock = (row: ProductStockRow) => {
@@ -137,7 +136,7 @@ export function OutletStockPage() {
     setIsEditModalOpen(true);
   };
 
-  const handleDeleteStock = (stockId: number) => {
+  const handleDeleteStock = (stockId: string) => {
     if (confirm("Apakah Anda yakin ingin menghapus stock ini?")) {
       deleteStockMutation.mutate(stockId);
     }
@@ -164,11 +163,11 @@ export function OutletStockPage() {
         <div className="p-4">
           <div className="flex items-center gap-2 mb-4">
             <Package className="h-5 w-5" />
-            <h3 className="text-lg font-semibold">Stock — {outlet?.name || "Outlet"}</h3>
+            <h3 className="text-lg font-semibold">Stock — {outlet?.nama || "Outlet"}</h3>
           </div>
           <div className="grid grid-cols-3 gap-4 text-sm">
             <div><span className="text-gray-500">Kode:</span> <code className="bg-gray-100 px-2 py-1 rounded">{outlet?.kode || "-"}</code></div>
-            <div><span className="text-gray-500">Nama:</span> {outlet?.name || "-"}</div>
+            <div><span className="text-gray-500">Nama:</span> {outlet?.nama || "-"}</div>
             <div><span className="text-gray-500">Alamat:</span> {outlet?.alamat || "-"}</div>
           </div>
         </div>

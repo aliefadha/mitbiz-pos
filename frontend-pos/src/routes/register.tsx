@@ -2,7 +2,6 @@ import {
   createFileRoute,
   redirect,
   Link,
-  useNavigate,
 } from "@tanstack/react-router";
 import { useRegister } from "../hooks/use-auth";
 import { authClient } from "../lib/auth-client";
@@ -25,7 +24,6 @@ export const Route = createFileRoute("/register")({
 
 function RegisterPage() {
   const registerMutation = useRegister();
-  const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [name, setName] = useState("");

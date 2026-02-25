@@ -18,14 +18,20 @@ import { Route as ProtectedRouteImport } from './routes/_protected'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProtectedDashboardRouteImport } from './routes/_protected/dashboard'
 import { Route as ProtectedTenantsIndexRouteImport } from './routes/_protected/tenants/index'
+import { Route as ProtectedTaxesIndexRouteImport } from './routes/_protected/taxes/index'
 import { Route as ProtectedSettingsIndexRouteImport } from './routes/_protected/settings/index'
 import { Route as ProtectedProductsIndexRouteImport } from './routes/_protected/products/index'
+import { Route as ProtectedPosIndexRouteImport } from './routes/_protected/pos/index'
+import { Route as ProtectedPaymentMethodsIndexRouteImport } from './routes/_protected/payment-methods/index'
 import { Route as ProtectedOutletsIndexRouteImport } from './routes/_protected/outlets/index'
+import { Route as ProtectedOrdersIndexRouteImport } from './routes/_protected/orders/index'
+import { Route as ProtectedDiscountsIndexRouteImport } from './routes/_protected/discounts/index'
 import { Route as ProtectedCategoriesIndexRouteImport } from './routes/_protected/categories/index'
 import { Route as ProtectedAccountIndexRouteImport } from './routes/_protected/account/index'
 import { Route as ProtectedTenantsNewRouteImport } from './routes/_protected/tenants/new'
 import { Route as ProtectedProductsProductIdRouteImport } from './routes/_protected/products/$productId'
 import { Route as ProtectedOutletsOutletIdRouteImport } from './routes/_protected/outlets/$outletId'
+import { Route as ProtectedOrdersOrderIdRouteImport } from './routes/_protected/orders/$orderId'
 import { Route as ProtectedCategoriesCategoryIdRouteImport } from './routes/_protected/categories/$categoryId'
 import { Route as ProtectedTenantsSlugIndexRouteImport } from './routes/_protected/tenants/$slug/index'
 import { Route as ProtectedTenantsSlugUsersIndexRouteImport } from './routes/_protected/tenants/$slug/users/index'
@@ -80,6 +86,11 @@ const ProtectedTenantsIndexRoute = ProtectedTenantsIndexRouteImport.update({
   path: '/tenants/',
   getParentRoute: () => ProtectedRoute,
 } as any)
+const ProtectedTaxesIndexRoute = ProtectedTaxesIndexRouteImport.update({
+  id: '/taxes/',
+  path: '/taxes/',
+  getParentRoute: () => ProtectedRoute,
+} as any)
 const ProtectedSettingsIndexRoute = ProtectedSettingsIndexRouteImport.update({
   id: '/settings/',
   path: '/settings/',
@@ -90,9 +101,30 @@ const ProtectedProductsIndexRoute = ProtectedProductsIndexRouteImport.update({
   path: '/products/',
   getParentRoute: () => ProtectedRoute,
 } as any)
+const ProtectedPosIndexRoute = ProtectedPosIndexRouteImport.update({
+  id: '/pos/',
+  path: '/pos/',
+  getParentRoute: () => ProtectedRoute,
+} as any)
+const ProtectedPaymentMethodsIndexRoute =
+  ProtectedPaymentMethodsIndexRouteImport.update({
+    id: '/payment-methods/',
+    path: '/payment-methods/',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
 const ProtectedOutletsIndexRoute = ProtectedOutletsIndexRouteImport.update({
   id: '/outlets/',
   path: '/outlets/',
+  getParentRoute: () => ProtectedRoute,
+} as any)
+const ProtectedOrdersIndexRoute = ProtectedOrdersIndexRouteImport.update({
+  id: '/orders/',
+  path: '/orders/',
+  getParentRoute: () => ProtectedRoute,
+} as any)
+const ProtectedDiscountsIndexRoute = ProtectedDiscountsIndexRouteImport.update({
+  id: '/discounts/',
+  path: '/discounts/',
   getParentRoute: () => ProtectedRoute,
 } as any)
 const ProtectedCategoriesIndexRoute =
@@ -123,6 +155,11 @@ const ProtectedOutletsOutletIdRoute =
     path: '/outlets/$outletId',
     getParentRoute: () => ProtectedRoute,
   } as any)
+const ProtectedOrdersOrderIdRoute = ProtectedOrdersOrderIdRouteImport.update({
+  id: '/orders/$orderId',
+  path: '/orders/$orderId',
+  getParentRoute: () => ProtectedRoute,
+} as any)
 const ProtectedCategoriesCategoryIdRoute =
   ProtectedCategoriesCategoryIdRouteImport.update({
     id: '/categories/$categoryId',
@@ -187,14 +224,20 @@ export interface FileRoutesByFullPath {
   '/verify-email': typeof VerifyEmailRoute
   '/dashboard': typeof ProtectedDashboardRoute
   '/categories/$categoryId': typeof ProtectedCategoriesCategoryIdRoute
+  '/orders/$orderId': typeof ProtectedOrdersOrderIdRoute
   '/outlets/$outletId': typeof ProtectedOutletsOutletIdRoute
   '/products/$productId': typeof ProtectedProductsProductIdRoute
   '/tenants/new': typeof ProtectedTenantsNewRoute
   '/account/': typeof ProtectedAccountIndexRoute
   '/categories/': typeof ProtectedCategoriesIndexRoute
+  '/discounts/': typeof ProtectedDiscountsIndexRoute
+  '/orders/': typeof ProtectedOrdersIndexRoute
   '/outlets/': typeof ProtectedOutletsIndexRoute
+  '/payment-methods/': typeof ProtectedPaymentMethodsIndexRoute
+  '/pos/': typeof ProtectedPosIndexRoute
   '/products/': typeof ProtectedProductsIndexRoute
   '/settings/': typeof ProtectedSettingsIndexRoute
+  '/taxes/': typeof ProtectedTaxesIndexRoute
   '/tenants/': typeof ProtectedTenantsIndexRoute
   '/tenants/$slug/': typeof ProtectedTenantsSlugIndexRoute
   '/tenants/$slug/outlets/$outletId': typeof ProtectedTenantsSlugOutletsOutletIdRoute
@@ -214,14 +257,20 @@ export interface FileRoutesByTo {
   '/verify-email': typeof VerifyEmailRoute
   '/dashboard': typeof ProtectedDashboardRoute
   '/categories/$categoryId': typeof ProtectedCategoriesCategoryIdRoute
+  '/orders/$orderId': typeof ProtectedOrdersOrderIdRoute
   '/outlets/$outletId': typeof ProtectedOutletsOutletIdRoute
   '/products/$productId': typeof ProtectedProductsProductIdRoute
   '/tenants/new': typeof ProtectedTenantsNewRoute
   '/account': typeof ProtectedAccountIndexRoute
   '/categories': typeof ProtectedCategoriesIndexRoute
+  '/discounts': typeof ProtectedDiscountsIndexRoute
+  '/orders': typeof ProtectedOrdersIndexRoute
   '/outlets': typeof ProtectedOutletsIndexRoute
+  '/payment-methods': typeof ProtectedPaymentMethodsIndexRoute
+  '/pos': typeof ProtectedPosIndexRoute
   '/products': typeof ProtectedProductsIndexRoute
   '/settings': typeof ProtectedSettingsIndexRoute
+  '/taxes': typeof ProtectedTaxesIndexRoute
   '/tenants': typeof ProtectedTenantsIndexRoute
   '/tenants/$slug': typeof ProtectedTenantsSlugIndexRoute
   '/tenants/$slug/outlets/$outletId': typeof ProtectedTenantsSlugOutletsOutletIdRoute
@@ -243,14 +292,20 @@ export interface FileRoutesById {
   '/verify-email': typeof VerifyEmailRoute
   '/_protected/dashboard': typeof ProtectedDashboardRoute
   '/_protected/categories/$categoryId': typeof ProtectedCategoriesCategoryIdRoute
+  '/_protected/orders/$orderId': typeof ProtectedOrdersOrderIdRoute
   '/_protected/outlets/$outletId': typeof ProtectedOutletsOutletIdRoute
   '/_protected/products/$productId': typeof ProtectedProductsProductIdRoute
   '/_protected/tenants/new': typeof ProtectedTenantsNewRoute
   '/_protected/account/': typeof ProtectedAccountIndexRoute
   '/_protected/categories/': typeof ProtectedCategoriesIndexRoute
+  '/_protected/discounts/': typeof ProtectedDiscountsIndexRoute
+  '/_protected/orders/': typeof ProtectedOrdersIndexRoute
   '/_protected/outlets/': typeof ProtectedOutletsIndexRoute
+  '/_protected/payment-methods/': typeof ProtectedPaymentMethodsIndexRoute
+  '/_protected/pos/': typeof ProtectedPosIndexRoute
   '/_protected/products/': typeof ProtectedProductsIndexRoute
   '/_protected/settings/': typeof ProtectedSettingsIndexRoute
+  '/_protected/taxes/': typeof ProtectedTaxesIndexRoute
   '/_protected/tenants/': typeof ProtectedTenantsIndexRoute
   '/_protected/tenants/$slug/': typeof ProtectedTenantsSlugIndexRoute
   '/_protected/tenants/$slug/outlets/$outletId': typeof ProtectedTenantsSlugOutletsOutletIdRoute
@@ -272,14 +327,20 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/dashboard'
     | '/categories/$categoryId'
+    | '/orders/$orderId'
     | '/outlets/$outletId'
     | '/products/$productId'
     | '/tenants/new'
     | '/account/'
     | '/categories/'
+    | '/discounts/'
+    | '/orders/'
     | '/outlets/'
+    | '/payment-methods/'
+    | '/pos/'
     | '/products/'
     | '/settings/'
+    | '/taxes/'
     | '/tenants/'
     | '/tenants/$slug/'
     | '/tenants/$slug/outlets/$outletId'
@@ -299,14 +360,20 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/dashboard'
     | '/categories/$categoryId'
+    | '/orders/$orderId'
     | '/outlets/$outletId'
     | '/products/$productId'
     | '/tenants/new'
     | '/account'
     | '/categories'
+    | '/discounts'
+    | '/orders'
     | '/outlets'
+    | '/payment-methods'
+    | '/pos'
     | '/products'
     | '/settings'
+    | '/taxes'
     | '/tenants'
     | '/tenants/$slug'
     | '/tenants/$slug/outlets/$outletId'
@@ -327,14 +394,20 @@ export interface FileRouteTypes {
     | '/verify-email'
     | '/_protected/dashboard'
     | '/_protected/categories/$categoryId'
+    | '/_protected/orders/$orderId'
     | '/_protected/outlets/$outletId'
     | '/_protected/products/$productId'
     | '/_protected/tenants/new'
     | '/_protected/account/'
     | '/_protected/categories/'
+    | '/_protected/discounts/'
+    | '/_protected/orders/'
     | '/_protected/outlets/'
+    | '/_protected/payment-methods/'
+    | '/_protected/pos/'
     | '/_protected/products/'
     | '/_protected/settings/'
+    | '/_protected/taxes/'
     | '/_protected/tenants/'
     | '/_protected/tenants/$slug/'
     | '/_protected/tenants/$slug/outlets/$outletId'
@@ -421,6 +494,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedTenantsIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
+    '/_protected/taxes/': {
+      id: '/_protected/taxes/'
+      path: '/taxes'
+      fullPath: '/taxes/'
+      preLoaderRoute: typeof ProtectedTaxesIndexRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
     '/_protected/settings/': {
       id: '/_protected/settings/'
       path: '/settings'
@@ -435,11 +515,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedProductsIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
+    '/_protected/pos/': {
+      id: '/_protected/pos/'
+      path: '/pos'
+      fullPath: '/pos/'
+      preLoaderRoute: typeof ProtectedPosIndexRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/payment-methods/': {
+      id: '/_protected/payment-methods/'
+      path: '/payment-methods'
+      fullPath: '/payment-methods/'
+      preLoaderRoute: typeof ProtectedPaymentMethodsIndexRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
     '/_protected/outlets/': {
       id: '/_protected/outlets/'
       path: '/outlets'
       fullPath: '/outlets/'
       preLoaderRoute: typeof ProtectedOutletsIndexRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/orders/': {
+      id: '/_protected/orders/'
+      path: '/orders'
+      fullPath: '/orders/'
+      preLoaderRoute: typeof ProtectedOrdersIndexRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/discounts/': {
+      id: '/_protected/discounts/'
+      path: '/discounts'
+      fullPath: '/discounts/'
+      preLoaderRoute: typeof ProtectedDiscountsIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
     '/_protected/categories/': {
@@ -475,6 +583,13 @@ declare module '@tanstack/react-router' {
       path: '/outlets/$outletId'
       fullPath: '/outlets/$outletId'
       preLoaderRoute: typeof ProtectedOutletsOutletIdRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/orders/$orderId': {
+      id: '/_protected/orders/$orderId'
+      path: '/orders/$orderId'
+      fullPath: '/orders/$orderId'
+      preLoaderRoute: typeof ProtectedOrdersOrderIdRouteImport
       parentRoute: typeof ProtectedRoute
     }
     '/_protected/categories/$categoryId': {
@@ -546,14 +661,20 @@ declare module '@tanstack/react-router' {
 interface ProtectedRouteChildren {
   ProtectedDashboardRoute: typeof ProtectedDashboardRoute
   ProtectedCategoriesCategoryIdRoute: typeof ProtectedCategoriesCategoryIdRoute
+  ProtectedOrdersOrderIdRoute: typeof ProtectedOrdersOrderIdRoute
   ProtectedOutletsOutletIdRoute: typeof ProtectedOutletsOutletIdRoute
   ProtectedProductsProductIdRoute: typeof ProtectedProductsProductIdRoute
   ProtectedTenantsNewRoute: typeof ProtectedTenantsNewRoute
   ProtectedAccountIndexRoute: typeof ProtectedAccountIndexRoute
   ProtectedCategoriesIndexRoute: typeof ProtectedCategoriesIndexRoute
+  ProtectedDiscountsIndexRoute: typeof ProtectedDiscountsIndexRoute
+  ProtectedOrdersIndexRoute: typeof ProtectedOrdersIndexRoute
   ProtectedOutletsIndexRoute: typeof ProtectedOutletsIndexRoute
+  ProtectedPaymentMethodsIndexRoute: typeof ProtectedPaymentMethodsIndexRoute
+  ProtectedPosIndexRoute: typeof ProtectedPosIndexRoute
   ProtectedProductsIndexRoute: typeof ProtectedProductsIndexRoute
   ProtectedSettingsIndexRoute: typeof ProtectedSettingsIndexRoute
+  ProtectedTaxesIndexRoute: typeof ProtectedTaxesIndexRoute
   ProtectedTenantsIndexRoute: typeof ProtectedTenantsIndexRoute
   ProtectedTenantsSlugIndexRoute: typeof ProtectedTenantsSlugIndexRoute
   ProtectedTenantsSlugOutletsOutletIdRoute: typeof ProtectedTenantsSlugOutletsOutletIdRoute
@@ -568,14 +689,20 @@ interface ProtectedRouteChildren {
 const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedDashboardRoute: ProtectedDashboardRoute,
   ProtectedCategoriesCategoryIdRoute: ProtectedCategoriesCategoryIdRoute,
+  ProtectedOrdersOrderIdRoute: ProtectedOrdersOrderIdRoute,
   ProtectedOutletsOutletIdRoute: ProtectedOutletsOutletIdRoute,
   ProtectedProductsProductIdRoute: ProtectedProductsProductIdRoute,
   ProtectedTenantsNewRoute: ProtectedTenantsNewRoute,
   ProtectedAccountIndexRoute: ProtectedAccountIndexRoute,
   ProtectedCategoriesIndexRoute: ProtectedCategoriesIndexRoute,
+  ProtectedDiscountsIndexRoute: ProtectedDiscountsIndexRoute,
+  ProtectedOrdersIndexRoute: ProtectedOrdersIndexRoute,
   ProtectedOutletsIndexRoute: ProtectedOutletsIndexRoute,
+  ProtectedPaymentMethodsIndexRoute: ProtectedPaymentMethodsIndexRoute,
+  ProtectedPosIndexRoute: ProtectedPosIndexRoute,
   ProtectedProductsIndexRoute: ProtectedProductsIndexRoute,
   ProtectedSettingsIndexRoute: ProtectedSettingsIndexRoute,
+  ProtectedTaxesIndexRoute: ProtectedTaxesIndexRoute,
   ProtectedTenantsIndexRoute: ProtectedTenantsIndexRoute,
   ProtectedTenantsSlugIndexRoute: ProtectedTenantsSlugIndexRoute,
   ProtectedTenantsSlugOutletsOutletIdRoute:

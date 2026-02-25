@@ -35,7 +35,7 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Pencil, Trash2, Folder } from "lucide-react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 
 const formSchema = z.object({

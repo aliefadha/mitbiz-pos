@@ -13,9 +13,14 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     "/inventory",
     "/outlets",
     "/categories",
+    "/orders",
+    "/taxes",
+    "/discounts",
+    "/pos",
+    "/payment-methods"
   ],
-  owner: ["/tenants/new", "/account", "/categories", "/products", "/settings", "/dashboard", "/inventory", "/outlets"],
-  cashier: ["/dashboard", "/inventory", "/outlets", "/categories", "/products"],
+  owner: ["/tenants/new", "/account", "/categories", "/products", "/settings", "/dashboard", "/inventory", "/outlets", "/orders", "/pos", "/taxes", "/discounts", "/payment-methods"],
+  cashier: ["/dashboard", "/inventory", "/outlets", "/categories", "/products", "/orders", "/pos", "/payment-methods", "/discounts", "/taxes", "/settings"],
 };
 
 export async function checkAuth() {
@@ -26,9 +31,13 @@ export async function checkAuth() {
   return session;
 }
 
+export async function getSession() {
+  const { data: session } = await authClient.getSession();
+  return session;
+}
+
 export async function checkRoleAccess(pathname: string) {
   const session = await checkAuth();
-  // @ts-ignore
   const role = (session.user.role as Role) || "cashier";
   const allowedRoutes = ROLE_PERMISSIONS[role];
 

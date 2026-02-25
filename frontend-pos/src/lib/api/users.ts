@@ -9,7 +9,7 @@ export type User = {
   createdAt: Date
   updatedAt: Date
   role?: "admin" | "owner" | "cashier"
-  outletId?: number | null
+  outletId?: string | null
 }
 
 export type CreateUserDto = {
@@ -17,12 +17,17 @@ export type CreateUserDto = {
   email: string
   password: string
   role?: "admin" | "owner" | "cashier"
-  outletId?: number
+  outletId?: string
+  tenantId?: string
   isSubscribed?: boolean
 }
 
-async function getUsers(): Promise<{ users: User[]; total: number }> {
-  return fetchApi('/users')
+async function getUsers(filters?: { tenantId?: string; outletId?: string }): Promise<{ users: User[]; total: number }> {
+  const params = new URLSearchParams();
+  if (filters?.tenantId) params.append("tenantId", filters.tenantId);
+  if (filters?.outletId) params.append("outletId", filters.outletId);
+  const query = params.toString();
+  return fetchApi(`/users${query ? `?${query}` : ""}`)
 }
 
 async function getProfile(): Promise<User> {

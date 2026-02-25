@@ -313,7 +313,7 @@ export function TenantProductDetailPage() {
               <TableBody>
                 {stocks.map((stock) => (
                   <TableRow key={stock.id}>
-                    <TableCell>{stock.outlet ? `${stock.outlet.name} (${stock.outlet.kode})` : "-"}</TableCell>
+                    <TableCell>{stock.outlet ? `${stock.outlet.nama} (${stock.outlet.kode})` : "-"}</TableCell>
                     <TableCell><span className={`px-2 py-1 rounded ${getStockColor(stock.quantity)}`}>{stock.quantity}</span></TableCell>
                     <TableCell>{new Date(stock.updatedAt).toLocaleString("id-ID")}</TableCell>
                   </TableRow>
@@ -337,7 +337,7 @@ export function TenantProductDetailPage() {
                 {adjustments.map((adj) => (
                   <TableRow key={adj.id}>
                     <TableCell>{new Date(adj.createdAt).toLocaleString("id-ID")}</TableCell>
-                    <TableCell>{adj.outlet ? `${adj.outlet.name} (${adj.outlet.kode})` : "-"}</TableCell>
+                    <TableCell>{adj.outlet ? `${adj.outlet.nama} (${adj.outlet.kode})` : "-"}</TableCell>
                     <TableCell><span className={adj.quantity >= 0 ? "text-green-600" : "text-red-600"}>{adj.quantity > 0 ? `+${adj.quantity}` : adj.quantity}</span></TableCell>
                     <TableCell>{adj.alasan || "-"}</TableCell>
                     <TableCell>{adj.user?.name || adj.user?.email || "-"}</TableCell>
@@ -359,7 +359,7 @@ export function TenantProductDetailPage() {
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Pilih outlet" /></SelectTrigger></FormControl>
                     <SelectContent>
-                      {outlets.map((outlet) => <SelectItem key={outlet.id} value={outlet.id.toString()}>{outlet.name} ({outlet.kode})</SelectItem>)}
+                      {outlets.map((outlet) => <SelectItem key={outlet.id} value={outlet.id.toString()}>{outlet.nama} ({outlet.kode})</SelectItem>)}
                     </SelectContent>
                   </Select>
                   <FormMessage /></FormItem>

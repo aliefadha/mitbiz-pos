@@ -15,7 +15,7 @@ interface TenantContextType {
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
 
 export function TenantProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const [selectedTenant, setSelectedTenantState] = useState<Tenant | null>(null);
   const [selectedOutlet, setSelectedOutletState] = useState<OutletType | null>(null);
 
@@ -29,9 +29,22 @@ export function TenantProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (tenants.length > 0 && !selectedTenant) {
-      setSelectedTenantState(tenants[0]);
+      if (role === 'cashier' && user?.outletId) {
+        const tenantWithOutlet = tenants.find((t) =>
+          t.outlets?.some((o) => o.id === user.outletId)
+        );
+        if (tenantWithOutlet) {
+          setSelectedTenantState(tenantWithOutlet);
+          const outlet = tenantWithOutlet.outlets?.find((o) => o.id === user.outletId);
+          if (outlet) {
+            setSelectedOutletState(outlet);
+          }
+        }
+      } else {
+        setSelectedTenantState(tenants[0]);
+      }
     }
-  }, [tenants, selectedTenant]);
+  }, [tenants, selectedTenant, role, user?.outletId]);
 
   useEffect(() => {
     if (selectedTenant && user?.outletId) {
@@ -43,6 +56,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   }, [selectedTenant, user?.outletId]);
 
   const setSelectedTenant = (tenant: Tenant | null) => {
+    if (role === 'cashier') return;
     setSelectedTenantState(tenant);
     if (tenant?.outlets && tenant.outlets.length > 0) {
       const defaultOutlet = tenant.outlets[0];
@@ -58,6 +72,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   };
 
   const setSelectedOutlet = (outlet: OutletType | null) => {
+    if (role === 'cashier') return;
     setSelectedOutletState(outlet);
   };
 

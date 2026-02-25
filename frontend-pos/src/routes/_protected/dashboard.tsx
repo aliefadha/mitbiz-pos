@@ -1,20 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { authClient } from "@/lib/auth-client";
+import { useAuth } from "@/contexts/auth-context";
 
 export const Route = createFileRoute("/_protected/dashboard")({
   component: DashboardPage,
-  loader: async () => {
-    const { data: session } = await authClient.getSession();
-    if (!session) {
-      return { role: "cashier" };
-    }
-    const role = (session.user.role as string) || "cashier";
-    return { role };
-  },
 });
 
 function DashboardPage() {
-  const { role } = Route.useLoaderData();
+  const { role } = useAuth();
 
   if (role === "admin") {
     return <AdminDashboard />;

@@ -11,8 +11,13 @@ const statement = {
   tenants: ['create', 'read', 'update', 'delete'],
   stocks: ['create', 'read', 'update', 'delete'],
   stockAdjustments: ['create', 'read', 'update', 'delete'],
+  orders: ['create', 'read', 'update', 'delete'],
+  orderItems: ['create', 'read', 'update', 'delete'],
   report: ['read', 'export'],
   settings: ['read', 'update'],
+  taxes: ['create', 'read', 'update', 'delete'],
+  discounts: ['create', 'read', 'update', 'delete'],
+  paymentMethods: ['create', 'read', 'update', 'delete'],
 } as const;
 
 export const ac = createAccessControl(statement);
@@ -30,6 +35,11 @@ export const adminRole = ac.newRole({
   tenants: ['create', 'read', 'update', 'delete'],
   stocks: ['create', 'read', 'update', 'delete'],
   stockAdjustments: ['create', 'read', 'update', 'delete'],
+  orders: ['create', 'read', 'update', 'delete'],
+  orderItems: ['create', 'read', 'update', 'delete'],
+  taxes: ['create', 'read', 'update', 'delete'],
+  discounts: ['create', 'read', 'update', 'delete'],
+  paymentMethods: ['create', 'read', 'update', 'delete'],
 });
 
 export const ownerRole = ac.newRole({
@@ -44,9 +54,16 @@ export const ownerRole = ac.newRole({
   tenants: ['create', 'read', 'update'],
   stocks: ['create', 'read', 'update', 'delete'],
   stockAdjustments: ['create', 'read', 'update', 'delete'],
+  orders: ['create', 'read', 'update', 'delete'],
+  orderItems: ['create', 'read', 'update', 'delete'],
+  taxes: ['create', 'read', 'update', 'delete'],
+  discounts: ['create', 'read', 'update', 'delete'],
+  paymentMethods: ['create', 'read', 'update', 'delete'],
 });
 
 export const cashierRole = ac.newRole({
+  users: ['read'],
+  user: ['read'],
   products: ['read'],
   categories: ['read'],
   transaction: ['create', 'read', 'refund'],
@@ -56,4 +73,9 @@ export const cashierRole = ac.newRole({
   tenants: ['read'],
   stocks: ['read'],
   stockAdjustments: ['read'],
+  orders: ['create', 'read'],
+  orderItems: ['create', 'read'],
+  taxes: ['read', 'update'],
+  discounts: ['read', 'update'],
+  paymentMethods: ['read'],
 });

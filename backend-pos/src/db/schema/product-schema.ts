@@ -4,6 +4,7 @@ import { categories } from './category-schema';
 import { tenants } from './tenant-schema';
 import { productStocks } from './stock-schema';
 import { stockAdjustments } from './stock-adjustment-schema';
+import { orderItems } from './order-item-schema';
 
 export const productTypeEnum = pgEnum('product_type', [
   'barang',
@@ -45,4 +46,5 @@ export const productsRelations = relations(products, ({ one, many }) => ({
   }),
   stocks: many(productStocks),
   adjustments: many(stockAdjustments),
+  orderItems: many(orderItems),
 }));

@@ -23,6 +23,10 @@ import {
   Folder,
   Package,
   Store,
+  Receipt,
+  ShoppingCart,
+  CreditCard,
+  Percent,
 } from "lucide-react";
 import {
   Sidebar,
@@ -35,6 +39,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
   SidebarGroup,
+  SidebarGroupLabel,
   SidebarInset,
   useSidebar,
 } from "@/components/ui/sidebar";
@@ -49,40 +54,85 @@ import {
 
 const menuConfig = [
   {
-    key: "/dashboard",
-    icon: LayoutDashboard,
-    label: "Dashboard",
-    roles: ["admin", "owner", "cashier"],
+    group: "Dashboard",
+    items: [
+      {
+        key: "/dashboard",
+        icon: LayoutDashboard,
+        label: "Dashboard",
+        roles: ["admin", "owner", "cashier"],
+      },
+    ],
   },
   {
-    key: "/categories",
-    icon: Folder,
-    label: "Kategori",
-    roles: ["cashier", "owner"],
+    group: "Transaksi",
+    items: [
+      {
+        key: "/pos",
+        icon: ShoppingCart,
+        label: "Kasir",
+        roles: ["cashier", "owner"],
+      },
+      {
+        key: "/orders",
+        icon: Receipt,
+        label: "Pesanan",
+        roles: ["cashier", "owner"],
+      },
+    ],
   },
   {
-    key: "/products",
-    icon: Package,
-    label: "Produk",
-    roles: ["cashier", "owner"],
-  },
-  {
-    key: "/outlets",
-    icon: Store,
-    label: "Outlet",
-    roles: ["owner", "cashier"],
-  },
-  {
-    key: "/tenants",
-    icon: Users,
-    label: "Tenant",
-    roles: ["admin"],
-  },
-  {
-    key: "/account",
-    icon: User,
-    label: "Akun",
-    roles: ["admin", "owner"],
+    group: "Master Data",
+    items: [
+      {
+        key: "/tenants",
+        icon: Users,
+        label: "Tenant",
+        roles: ["admin", "owner"],
+      },
+      {
+        key: "/outlets",
+        icon: Store,
+        label: "Outlet",
+        roles: ["owner", "cashier"],
+      },
+      {
+        key: "/account",
+        icon: User,
+        label: "Akun",
+        roles: ["admin", "owner"],
+      },
+      {
+        key: "/categories",
+        icon: Folder,
+        label: "Kategori",
+        roles: ["cashier", "owner"],
+      },
+      {
+        key: "/products",
+        icon: Package,
+        label: "Produk",
+        roles: ["cashier", "owner"],
+      },
+      {
+        key: "/taxes",
+        icon: Receipt,
+        label: "Pajak",
+        roles: ["cashier", "owner"],
+      },
+      {
+        key: "/discounts",
+        icon: Percent,
+        label: "Diskon",
+        roles: ["cashier", "owner"],
+      },
+      {
+        key: "/payment-methods",
+        icon: CreditCard,
+        label: "Metode Pembayaran",
+        roles: ["cashier", "owner"],
+      },
+    ],
   },
 ];
 
@@ -93,9 +143,14 @@ function AppSidebar() {
   const { user } = useAuth();
   const logoutMutation = useLogout();
 
-  const menuItems = menuConfig.filter((item) =>
-    item.roles.includes((user?.role as Role) || "cashier"),
-  );
+  const filteredMenuConfig = menuConfig
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) =>
+        item.roles.includes((user?.role as Role) || "cashier"),
+      ),
+    }))
+    .filter((group) => group.items.length > 0);
 
   return (
     <>
@@ -116,26 +171,29 @@ function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarMenu>
-            {menuItems.map((item) => (
-              <SidebarMenuItem key={item.key}>
-                <SidebarMenuButton
-                  tooltip={item.label}
-                  onClick={() => navigate({ to: item.key })}
-                  isActive={
-                    location.pathname === item.key ||
-                    location.pathname.startsWith(item.key + "/")
-                  }
-                  className="cursor-pointer"
-                >
-                  {item.icon && <item.icon className="h-4 w-4" />}
-                  <span>{item.label}</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarGroup>
+        {filteredMenuConfig.map((group) => (
+          <SidebarGroup key={group.group}>
+            <SidebarGroupLabel>{group.group}</SidebarGroupLabel>
+            <SidebarMenu>
+              {group.items.map((item) => (
+                <SidebarMenuItem key={item.key}>
+                  <SidebarMenuButton
+                    tooltip={item.label}
+                    onClick={() => navigate({ to: item.key })}
+                    isActive={
+                      location.pathname === item.key ||
+                      location.pathname.startsWith(item.key + "/")
+                    }
+                    className="cursor-pointer"
+                  >
+                    {item.icon && <item.icon className="h-4 w-4" />}
+                    <span>{item.label}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
 
       <SidebarFooter>
@@ -169,28 +227,17 @@ function AppSidebar() {
                 align="end"
                 sideOffset={4}
               >
-                <DropdownMenuItem
-                  onClick={() => navigate({ to: "/account" })}
-                  className="cursor-pointer"
-                >
-                  <User className="mr-2 h-4 w-4" />
-                  Account
-                </DropdownMenuItem>
                 <DropdownMenuItem className="cursor-pointer">
                   <Bell className="mr-2 h-4 w-4" />
                   Notifications
                 </DropdownMenuItem>
-                {["admin", "owner"].includes(
-                  (user?.role as Role) || "cashier",
-                ) && (
-                    <DropdownMenuItem
-                      onClick={() => navigate({ to: "/settings" as any })}
-                      className="cursor-pointer"
-                    >
-                      <Settings className="mr-2 h-4 w-4" />
-                      Settings
-                    </DropdownMenuItem>
-                  )}
+                <DropdownMenuItem
+                  onClick={() => navigate({ to: "/settings" as any })}
+                  className="cursor-pointer"
+                >
+                  <Settings className="mr-2 h-4 w-4" />
+                  Settings
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => logoutMutation.mutate()}
@@ -210,7 +257,6 @@ function AppSidebar() {
 
 export function AppLayout() {
   const location = useLocation();
-  const navigate = useNavigate();
   const pathnames = location.pathname.split("/").filter((x) => x);
   const { user } = useAuth();
 

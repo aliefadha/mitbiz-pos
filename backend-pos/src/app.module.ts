@@ -17,6 +17,11 @@ import { StockAdjustmentsModule } from './stock-adjustments/stock-adjustments.mo
 import { ConfigModule } from '@nestjs/config';
 import { DbModule } from './db/db.module';
 import { UserModule } from './user/user.module';
+import { OrdersModule } from './orders/orders.module';
+import { OrderItemsModule } from './order-items/order-items.module';
+import { TaxesModule } from './taxes/taxes.module';
+import { DiscountsModule } from './discounts/discounts.module';
+import { PaymentMethodsModule } from './payment-methods/payment-methods.module';
 
 @Module({
   imports: [
@@ -37,6 +42,11 @@ import { UserModule } from './user/user.module';
     StocksModule,
     StockAdjustmentsModule,
     UserModule,
+    OrdersModule,
+    OrderItemsModule,
+    TaxesModule,
+    DiscountsModule,
+    PaymentMethodsModule,
   ],
   controllers: [AppController],
   providers: [

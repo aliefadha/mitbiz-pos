@@ -33,10 +33,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ArrowLeft, Plus, Trash2, Search, Package } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Package } from "lucide-react";
 
 const formSchema = z.object({
-  name: z.string().min(1, "Nama outlet wajib diisi"),
+  nama: z.string().min(1, "Nama outlet wajib diisi"),
   kode: z.string().min(1, "Kode outlet wajib diisi"),
   alamat: z.string().optional(),
   noHp: z.string().optional(),
@@ -51,7 +51,7 @@ export function TenantOutletsPage() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
+      nama: "",
       kode: "",
       alamat: "",
       noHp: "",
@@ -71,8 +71,8 @@ export function TenantOutletsPage() {
 
   const createMutation = useMutation({
     mutationFn: (data: {
-      tenantId: number;
-      name: string;
+      tenantId: string;
+      nama: string;
       kode: string;
       alamat?: string;
       noHp?: string;
@@ -110,7 +110,7 @@ export function TenantOutletsPage() {
 
   const filteredOutlets = outlets?.data?.filter(
     (outlet: Outlet) =>
-      outlet.name.toLowerCase().includes(searchText.toLowerCase()) ||
+      outlet.nama.toLowerCase().includes(searchText.toLowerCase()) ||
       outlet.kode.toLowerCase().includes(searchText.toLowerCase()) ||
       outlet.alamat?.toLowerCase().includes(searchText.toLowerCase())
   );
@@ -167,14 +167,14 @@ export function TenantOutletsPage() {
           </TableHeader>
           <TableBody>
             {filteredOutlets?.map((outlet, index) => (
-              <TableRow 
-                key={outlet.id} 
+              <TableRow
+                key={outlet.id}
                 className="cursor-pointer"
                 onClick={() => navigate({ to: `/tenants/${slug}/outlets/${outlet.id}` })}
               >
                 <TableCell>{index + 1}</TableCell>
                 <TableCell><code className="bg-gray-100 px-2 py-1 rounded text-sm">{outlet.kode}</code></TableCell>
-                <TableCell className="font-medium">{outlet.name}</TableCell>
+                <TableCell className="font-medium">{outlet.nama}</TableCell>
                 <TableCell>{outlet.alamat || "-"}</TableCell>
                 <TableCell>{outlet.noHp || "-"}</TableCell>
                 <TableCell>
@@ -184,8 +184,8 @@ export function TenantOutletsPage() {
                 </TableCell>
                 <TableCell>
                   <div className="flex gap-1">
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       size="icon"
                       onClick={(e) => {
                         e.stopPropagation();
@@ -194,8 +194,8 @@ export function TenantOutletsPage() {
                     >
                       <Package className="h-4 w-4" />
                     </Button>
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       size="icon"
                       onClick={(e) => {
                         e.stopPropagation();
@@ -234,7 +234,7 @@ export function TenantOutletsPage() {
               />
               <FormField
                 control={form.control}
-                name="name"
+                name="nama"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Nama Outlet</FormLabel>

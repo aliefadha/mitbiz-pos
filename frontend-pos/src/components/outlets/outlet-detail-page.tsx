@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { outletsApi } from "@/lib/api/outlets";
 import { stocksApi, type Stock } from "@/lib/api/stocks";
 import { productsApi, type Product } from "@/lib/api/products";
-import { stockAdjustmentsApi, type StockAdjustment } from "@/lib/api/stock-adjustments";
+import { stockAdjustmentsApi } from "@/lib/api/stock-adjustments";
 import { useSession } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,7 +42,7 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ArrowLeft, Plus, Pencil, Trash2, Search, Package, History, Edit2, ArrowRightLeft } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Package, History, Edit2, ArrowRightLeft } from "lucide-react";
 
 interface ProductStockRow {
   product: Product;
@@ -83,17 +83,16 @@ export function OutletDetailPage() {
     defaultValues: { quantity: 0, alasan: "" },
   });
 
-  const outletIdNum = Number(outletId);
 
   const { data: outlet, isLoading: outletLoading } = useQuery({
-    queryKey: ["outlet", outletIdNum],
-    queryFn: () => outletsApi.getById(outletIdNum),
+    queryKey: ["outlet", outletId],
+    queryFn: () => outletsApi.getById(outletId),
   });
 
   const { data: stocksData, isLoading: stocksLoading } = useQuery({
-    queryKey: ["stocks", { outletId: outletIdNum }],
-    queryFn: () => stocksApi.getAll({ outletId: outletIdNum }),
-    enabled: !!outletIdNum,
+    queryKey: ["stocks", { outletId: outletId }],
+    queryFn: () => stocksApi.getAll({ outletId: outletId }),
+    enabled: !!outletId,
   });
 
   const { data: productsData, isLoading: productsLoading } = useQuery({
@@ -102,37 +101,37 @@ export function OutletDetailPage() {
     enabled: !!outlet?.tenantId,
   });
 
-  const { data: adjustmentsData, isLoading: adjustmentsLoading } = useQuery({
-    queryKey: ["stock-adjustments", { outletId: outletIdNum }],
-    queryFn: () => stockAdjustmentsApi.getAll({ outletId: outletIdNum }),
-    enabled: !!outletIdNum,
+  const { data: adjustmentsData } = useQuery({
+    queryKey: ["stock-adjustments", { outletId: outletId }],
+    queryFn: () => stockAdjustmentsApi.getAll({ outletId: outletId }),
+    enabled: !!outletId,
   });
 
   const invalidateAll = () => {
-    queryClient.invalidateQueries({ queryKey: ["stocks", { outletId: outletIdNum }] });
-    queryClient.invalidateQueries({ queryKey: ["stock-adjustments", { outletId: outletIdNum }] });
+    queryClient.invalidateQueries({ queryKey: ["stocks", { outletId: outletId }] });
+    queryClient.invalidateQueries({ queryKey: ["stock-adjustments", { outletId: outletId }] });
   };
 
   const createStockMutation = useMutation({
-    mutationFn: (data: { productId: number; outletId: number; quantity: number }) => stocksApi.create(data),
+    mutationFn: (data: { productId: string; outletId: string; quantity: number }) => stocksApi.create(data),
     onSuccess: () => { invalidateAll(); },
     onError: (error: Error) => { alert(error.message); },
   });
 
   const updateStockMutation = useMutation({
-    mutationFn: ({ stockId, quantity }: { stockId: number; quantity: number }) => stocksApi.update(stockId, { quantity }),
+    mutationFn: ({ stockId, quantity }: { stockId: string; quantity: number }) => stocksApi.update(stockId, { quantity }),
     onSuccess: () => { invalidateAll(); setIsEditModalOpen(false); setEditingRow(null); editForm.reset(); },
     onError: (error: Error) => { alert(error.message); },
   });
 
   const deleteStockMutation = useMutation({
-    mutationFn: (stockId: number) => stocksApi.delete(stockId),
+    mutationFn: (stockId: string) => stocksApi.delete(stockId),
     onSuccess: () => { invalidateAll(); },
     onError: (error: Error) => { alert(error.message); },
   });
 
   const createAdjustmentMutation = useMutation({
-    mutationFn: (data: { productId: number; outletId: number; quantity: number; alasan?: string; adjustedBy: string }) => stockAdjustmentsApi.create(data),
+    mutationFn: (data: { productId: string; outletId: string; quantity: number; alasan?: string; adjustedBy: string }) => stockAdjustmentsApi.create(data),
     onSuccess: () => { invalidateAll(); setIsAdjustModalOpen(false); setAdjustingRow(null); adjustForm.reset(); },
     onError: (error: Error) => { alert(error.message); },
   });
@@ -141,10 +140,10 @@ export function OutletDetailPage() {
   const products = productsData?.data || [];
   const adjustments = adjustmentsData?.data || [];
 
-  const stockByProductId = new Map<number, Stock>();
+  const stockByProductId = new Map<string, Stock>();
   stocks.forEach((s: Stock) => stockByProductId.set(s.productId, s));
 
-  const productMap = new Map<number, Product>();
+  const productMap = new Map<string, Product>();
   products.forEach((p: Product) => productMap.set(p.id, p));
 
   const rows: ProductStockRow[] = products.map((product: Product) => ({
@@ -158,8 +157,8 @@ export function OutletDetailPage() {
     return row.product.nama.toLowerCase().includes(search) || row.product.sku.toLowerCase().includes(search);
   });
 
-  const handleAddStock = (productId: number) => {
-    createStockMutation.mutate({ productId, outletId: outletIdNum, quantity: 0 });
+  const handleAddStock = (productId: string) => {
+    createStockMutation.mutate({ productId, outletId: outletId, quantity: 0 });
   };
 
   const handleEditStock = (row: ProductStockRow) => {
@@ -168,7 +167,7 @@ export function OutletDetailPage() {
     setIsEditModalOpen(true);
   };
 
-  const handleDeleteStock = (stockId: number) => {
+  const handleDeleteStock = (stockId: string) => {
     if (confirm("Apakah Anda yakin ingin menghapus stock ini?")) {
       deleteStockMutation.mutate(stockId);
     }
@@ -205,7 +204,7 @@ export function OutletDetailPage() {
         <div className="p-4">
           <div className="flex items-center gap-2 mb-4">
             <Package className="h-5 w-5" />
-            <h3 className="text-lg font-semibold">{outlet.name}</h3>
+            <h3 className="text-lg font-semibold">{outlet.nama}</h3>
             <span className={`px-2 py-1 rounded-full text-xs ${outlet.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
               {outlet.isActive ? "Active" : "Inactive"}
             </span>
@@ -353,7 +352,7 @@ export function OutletDetailPage() {
           <DialogHeader><DialogTitle>Adjust Stock — {adjustingRow?.product.nama || ""}</DialogTitle></DialogHeader>
           <div className="mb-4 text-sm text-gray-500">Stock saat ini: <strong>{adjustingRow?.stock?.quantity ?? 0}</strong></div>
           <Form {...adjustForm}>
-            <form onSubmit={adjustForm.handleSubmit((v) => { if (adjustingRow) createAdjustmentMutation.mutate({ productId: adjustingRow.product.id, outletId: outletIdNum, quantity: v.quantity, alasan: v.alasan, adjustedBy: userId! }); })} className="space-y-4">
+            <form onSubmit={adjustForm.handleSubmit((v) => { if (adjustingRow) createAdjustmentMutation.mutate({ productId: adjustingRow.product.id, outletId: outletId, quantity: v.quantity, alasan: v.alasan, adjustedBy: userId! }); })} className="space-y-4">
               <FormField control={adjustForm.control} name="quantity" render={({ field }) => (
                 <FormItem><FormLabel>Jumlah Adjustment</FormLabel><FormControl><Input type="number" placeholder="Contoh: 10 atau -5" {...field} onChange={(e) => field.onChange(Number(e.target.value))} /></FormControl><p className="text-xs text-gray-500">Gunakan angka positif untuk menambah, negatif untuk mengurangi</p><FormMessage /></FormItem>
               )} />

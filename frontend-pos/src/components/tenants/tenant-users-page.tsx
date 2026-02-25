@@ -184,7 +184,7 @@ export function TenantUsersPage() {
                     {outlet ? (
                       <div className="flex items-center gap-1">
                         <Building className="h-3 w-3" />
-                        {outlet.name}
+                        {outlet.nama}
                       </div>
                     ) : "Owner"}
                   </TableCell>
@@ -204,8 +204,8 @@ export function TenantUsersPage() {
             <DialogTitle>Tambah Kasir</DialogTitle>
           </DialogHeader>
           <Form {...form}>
-            <form onSubmit={(e) => { 
-              e.preventDefault(); 
+            <form onSubmit={(e) => {
+              e.preventDefault();
               form.handleSubmit((values) => {
                 createUserMutation.mutate({
                   ...values,
@@ -268,7 +268,7 @@ export function TenantUsersPage() {
                       <SelectContent>
                         {outlets.map((outlet) => (
                           <SelectItem key={outlet.id} value={outlet.id.toString()}>
-                            {outlet.name}
+                            {outlet.nama}
                           </SelectItem>
                         ))}
                       </SelectContent>

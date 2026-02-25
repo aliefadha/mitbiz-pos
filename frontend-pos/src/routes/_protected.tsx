@@ -1,17 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppLayout } from "@/components/app-layout";
 import { checkRoleAccess } from "@/lib/rbac";
-import { ErrorBoundary } from "@/components/error-boundary.tsx";
 
 export const Route = createFileRoute("/_protected")({
   component: ProtectedLayout,
   beforeLoad: async ({ location }) => {
     await checkRoleAccess(location.pathname);
   },
-  errorComponent: ({ error }) => (
-    <ErrorBoundary fallback={<div>Something went wrong: {error.message}</div>}>
-      <div />
-    </ErrorBoundary>
+  errorComponent: ({ error, reset }) => (
+    <div className="flex min-h-[400px] items-center justify-center p-4">
+      <div className="text-center">
+        <h2 className="text-xl font-semibold">Something went wrong</h2>
+        <p className="text-gray-500">{error.message}</p>
+        <button onClick={reset}>Retry</button>
+      </div>
+    </div>
   ),
 });
 

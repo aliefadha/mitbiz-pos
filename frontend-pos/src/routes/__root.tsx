@@ -20,6 +20,15 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       </TenantProvider>
     </AuthProvider>
   ),
+  errorComponent: ({ error, reset }) => (
+    <div className="flex min-h-[400px] items-center justify-center p-4">
+      <div className="text-center">
+        <h2 className="text-xl font-semibold">Router Error</h2>
+        <p className="text-gray-500">{error.message}</p>
+        <button onClick={reset}>Retry</button>
+      </div>
+    </div>
+  ),
 });
 
 function Layout() {

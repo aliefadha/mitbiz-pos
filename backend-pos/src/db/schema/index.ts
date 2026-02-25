@@ -5,3 +5,8 @@ export * from './category-schema';
 export * from './product-schema';
 export * from './stock-schema';
 export * from './stock-adjustment-schema';
+export * from './order-schema';
+export * from './order-item-schema';
+export * from './tax-schema';
+export * from './discount-schema';
+export * from './payment-method-schema';

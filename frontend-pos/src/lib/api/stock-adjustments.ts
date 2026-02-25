@@ -15,7 +15,7 @@ export interface StockAdjustment {
   };
   outlet?: {
     id: string;
-    name: string;
+    nama: string;
     kode: string;
   };
   user?: {

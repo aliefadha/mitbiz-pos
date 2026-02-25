@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { getSession } from "@/lib/rbac";
 import {
   Zap,
   Server,
@@ -8,7 +9,15 @@ import {
   Sparkles,
 } from "lucide-react";
 
-export const Route = createFileRoute("/")({ component: App });
+export const Route = createFileRoute("/")({
+  component: App,
+  beforeLoad: async () => {
+    const session = await getSession();
+    if (session) {
+      throw redirect({ to: "/dashboard" });
+    }
+  },
+});
 
 function App() {
   const features = [
