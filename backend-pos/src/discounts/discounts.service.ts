@@ -99,7 +99,10 @@ export class DiscountsService {
         where: eq(tenants.userId, user.id),
       });
       const userTenantIds = userTenants.map((t) => t.id);
-      if (userTenantIds.length > 0 && !userTenantIds.includes(discount.tenantId)) {
+      if (
+        userTenantIds.length > 0 &&
+        !userTenantIds.includes(discount.tenantId)
+      ) {
         throw new ForbiddenException('You do not have access to this discount');
       }
     }
@@ -122,10 +125,7 @@ export class DiscountsService {
       );
     }
 
-    const [discount] = await this.db
-      .insert(discounts)
-      .values(data)
-      .returning();
+    const [discount] = await this.db.insert(discounts).values(data).returning();
 
     return discount;
   }
@@ -138,7 +138,10 @@ export class DiscountsService {
         where: eq(tenants.userId, user.id),
       });
       const userTenantIds = userTenants.map((t) => t.id);
-      if (userTenantIds.length > 0 && !userTenantIds.includes(existingDiscount.tenantId)) {
+      if (
+        userTenantIds.length > 0 &&
+        !userTenantIds.includes(existingDiscount.tenantId)
+      ) {
         throw new ForbiddenException(
           'You do not have permission to update this discount',
         );
@@ -165,7 +168,10 @@ export class DiscountsService {
         where: eq(tenants.userId, user.id),
       });
       const userTenantIds = userTenants.map((t) => t.id);
-      if (userTenantIds.length > 0 && !userTenantIds.includes(discount.tenantId)) {
+      if (
+        userTenantIds.length > 0 &&
+        !userTenantIds.includes(discount.tenantId)
+      ) {
         throw new ForbiddenException(
           'You do not have permission to delete this discount',
         );

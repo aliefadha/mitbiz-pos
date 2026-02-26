@@ -110,7 +110,10 @@ export class CategoriesService {
         where: eq(tenants.userId, user.id),
       });
       const userTenantIds = userTenants.map((t) => t.id);
-      if (userTenantIds.length > 0 && !userTenantIds.includes(category.tenantId)) {
+      if (
+        userTenantIds.length > 0 &&
+        !userTenantIds.includes(category.tenantId)
+      ) {
         throw new ForbiddenException('You do not have access to this category');
       }
     }
@@ -152,7 +155,10 @@ export class CategoriesService {
         where: eq(tenants.userId, user.id),
       });
       const userTenantIds = userTenants.map((t) => t.id);
-      if (userTenantIds.length > 0 && !userTenantIds.includes(existingCategory.tenantId)) {
+      if (
+        userTenantIds.length > 0 &&
+        !userTenantIds.includes(existingCategory.tenantId)
+      ) {
         throw new ForbiddenException(
           'You do not have permission to update this category',
         );
@@ -180,7 +186,10 @@ export class CategoriesService {
         where: eq(tenants.userId, user.id),
       });
       const userTenantIds = userTenants.map((t) => t.id);
-      if (userTenantIds.length > 0 && !userTenantIds.includes(category.tenantId)) {
+      if (
+        userTenantIds.length > 0 &&
+        !userTenantIds.includes(category.tenantId)
+      ) {
         throw new ForbiddenException(
           'You do not have permission to delete this category',
         );

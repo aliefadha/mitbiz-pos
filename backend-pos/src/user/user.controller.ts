@@ -83,7 +83,9 @@ export class UserController {
     if (!session) {
       return { error: 'No session found' };
     }
-    const tenants = await this.userService.getUserTenantsAndOutlets(session.user.id);
+    const tenants = await this.userService.getUserTenantsAndOutlets(
+      session.user.id,
+    );
     return { data: tenants };
   }
 

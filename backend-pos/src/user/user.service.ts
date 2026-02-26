@@ -8,7 +8,7 @@ import type { DrizzleDB } from '../db/type';
 
 @Injectable()
 export class UserService {
-  constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) { }
+  constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) {}
 
   async getUserTenantsAndOutlets(userId: string) {
     const [userWithOutlet, ownedTenants] = await Promise.all([
@@ -54,16 +54,18 @@ export class UserService {
         nama: tenant.nama,
         slug: tenant.slug,
         userId: tenant.userId,
-        outlets: [{
-          id: userWithOutlet.outlet.id,
-          tenantId: userWithOutlet.outlet.tenantId,
-          name: userWithOutlet.outlet.nama,
-          kode: userWithOutlet.outlet.kode,
-          alamat: userWithOutlet.outlet.alamat,
-          noHp: userWithOutlet.outlet.noHp,
-          isActive: userWithOutlet.outlet.isActive,
-          createdAt: userWithOutlet.outlet.createdAt,
-        }],
+        outlets: [
+          {
+            id: userWithOutlet.outlet.id,
+            tenantId: userWithOutlet.outlet.tenantId,
+            name: userWithOutlet.outlet.nama,
+            kode: userWithOutlet.outlet.kode,
+            alamat: userWithOutlet.outlet.alamat,
+            noHp: userWithOutlet.outlet.noHp,
+            isActive: userWithOutlet.outlet.isActive,
+            createdAt: userWithOutlet.outlet.createdAt,
+          },
+        ],
       });
     }
 

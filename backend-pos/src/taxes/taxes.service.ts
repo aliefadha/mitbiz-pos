@@ -121,10 +121,7 @@ export class TaxesService {
       );
     }
 
-    const [tax] = await this.db
-      .insert(taxes)
-      .values(data)
-      .returning();
+    const [tax] = await this.db.insert(taxes).values(data).returning();
 
     return tax;
   }
@@ -137,7 +134,10 @@ export class TaxesService {
         where: eq(tenants.userId, user.id),
       });
       const userTenantIds = userTenants.map((t) => t.id);
-      if (userTenantIds.length > 0 && !userTenantIds.includes(existingTax.tenantId)) {
+      if (
+        userTenantIds.length > 0 &&
+        !userTenantIds.includes(existingTax.tenantId)
+      ) {
         throw new ForbiddenException(
           'You do not have permission to update this tax',
         );

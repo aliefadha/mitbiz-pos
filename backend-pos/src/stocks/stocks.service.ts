@@ -16,6 +16,7 @@ import type { DrizzleDB } from '../db/type';
 import type { CurrentUserType } from '../common/decorators/current-user.decorator';
 import { getProductIdsByTenant } from '../common/utils/tenant-filter';
 
+@Injectable()
 export class StocksService {
   constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) { }
 
@@ -59,16 +60,15 @@ export class StocksService {
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
     const queryResult = await Promise.all([
-      this.db
-        .query.productStocks.findMany({
-          where: whereClause,
-          limit,
-          offset,
-          orderBy: [desc(productStocks.updatedAt)],
-          with: {
-            outlet: true,
-          },
-        }),
+      this.db.query.productStocks.findMany({
+        where: whereClause,
+        limit,
+        offset,
+        orderBy: [desc(productStocks.updatedAt)],
+        with: {
+          outlet: true,
+        },
+      }),
       this.db
         .select({ count: sql<number>`count(*)` })
         .from(productStocks)
@@ -174,9 +174,7 @@ export class StocksService {
     );
 
     if (existingStock) {
-      throw new ConflictException(
-        `Stock telah dibuat`,
-      );
+      throw new ConflictException(`Stock telah dibuat`);
     }
 
     const [stock] = await this.db

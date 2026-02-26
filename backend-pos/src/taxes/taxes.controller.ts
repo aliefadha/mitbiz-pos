@@ -57,20 +57,14 @@ export class TaxesController {
   @Get(':id')
   @ApiOperation({ summary: 'Get tax by ID' })
   @UsePipes(new ZodValidationPipe(TaxIdSchema, 'params'))
-  findById(
-    @Param() { id }: TaxIdDto,
-    @CurrentUser() user: CurrentUserType,
-  ) {
+  findById(@Param() { id }: TaxIdDto, @CurrentUser() user: CurrentUserType) {
     return this.taxesService.findById(id, user);
   }
 
   @Post()
   @ApiOperation({ summary: 'Create a new tax' })
   @UsePipes(new ZodValidationPipe(CreateTaxSchema))
-  create(
-    @Body() data: CreateTaxDto,
-    @CurrentUser() user: CurrentUserType,
-  ) {
+  create(@Body() data: CreateTaxDto, @CurrentUser() user: CurrentUserType) {
     return this.taxesService.create(data, user);
   }
 

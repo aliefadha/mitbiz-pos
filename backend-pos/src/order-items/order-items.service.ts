@@ -103,7 +103,9 @@ export class OrderItemsService {
         userTenantIds.length > 0 &&
         !userTenantIds.includes(orderItem.outlet.tenantId)
       ) {
-        throw new ForbiddenException('You do not have access to this order item');
+        throw new ForbiddenException(
+          'You do not have access to this order item',
+        );
       }
     }
 
@@ -147,7 +149,9 @@ export class OrderItemsService {
     });
 
     if (!product) {
-      throw new NotFoundException(`Product with ID ${data.productId} not found`);
+      throw new NotFoundException(
+        `Product with ID ${data.productId} not found`,
+      );
     }
 
     if (product.tenantId !== outlet.tenantId) {
@@ -179,7 +183,9 @@ export class OrderItemsService {
       });
 
       if (!product) {
-        throw new NotFoundException(`Product with ID ${data.productId} not found`);
+        throw new NotFoundException(
+          `Product with ID ${data.productId} not found`,
+        );
       }
 
       if (product.tenantId !== existingOrderItem.outlet.tenantId) {

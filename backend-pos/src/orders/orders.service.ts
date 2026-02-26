@@ -9,6 +9,7 @@ import { orders } from '../db/schema/order-schema';
 import { tenants } from '../db/schema/tenant-schema';
 import { outlets } from '../db/schema/outlet-schema';
 import { orderItems } from '../db/schema/order-item-schema';
+import { productStocks } from '../db/schema/stock-schema';
 import { CreateOrderDto, UpdateOrderDto, OrderQueryDto } from './dto';
 import { DB_CONNECTION } from '../db/db.module';
 import type { DrizzleDB } from '../db/type';
@@ -16,7 +17,7 @@ import type { CurrentUserType } from '../common/decorators/current-user.decorato
 
 @Injectable()
 export class OrdersService {
-  constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) { }
+  constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) {}
 
   async findAll(query: OrderQueryDto) {
     const { page = 1, limit = 10, search, status, tenantId, outletId } = query;
@@ -59,13 +60,13 @@ export class OrdersService {
       ...row.orders,
       outlet: row.outlets
         ? {
-          id: row.outlets.id,
-          nama: row.outlets.nama,
-          alamat: row.outlets.alamat,
-          isActive: row.outlets.isActive,
-          createdAt: row.outlets.createdAt,
-          updatedAt: row.outlets.updatedAt,
-        }
+            id: row.outlets.id,
+            nama: row.outlets.nama,
+            alamat: row.outlets.alamat,
+            isActive: row.outlets.isActive,
+            createdAt: row.outlets.createdAt,
+            updatedAt: row.outlets.updatedAt,
+          }
         : null,
     }));
 
@@ -114,10 +115,11 @@ export class OrdersService {
 
   async create(data: CreateOrderDto, user: CurrentUserType) {
     if (user.role === 'owner') {
-      const tenant = await this.db.query.tenants.findFirst({
-        where: eq(tenants.id, data.tenantId),
+      const userTenants = await this.db.query.tenants.findMany({
+        where: eq(tenants.userId, user.id),
       });
-      if (!tenant || tenant.userId !== user.id) {
+      const userTenantIds = userTenants.map((t) => t.id);
+      if (!userTenantIds.includes(data.tenantId)) {
         throw new ForbiddenException(
           'You do not have permission to create orders in this tenant',
         );
@@ -141,7 +143,9 @@ export class OrdersService {
         .values({
           ...data,
           cashierId: user.id,
-          completedAt: data.completedAt ? new Date(data.completedAt) : undefined,
+          completedAt: data.completedAt
+            ? new Date(data.completedAt)
+            : undefined,
         })
         .returning();
 
@@ -157,6 +161,38 @@ export class OrdersService {
         }));
 
         await tx.insert(orderItems).values(orderItemsData);
+
+        const stocks = await tx
+          .select()
+          .from(productStocks)
+          .where(and(eq(productStocks.outletId, data.outletId)));
+
+        const stockMap = new Map(stocks.map((s) => [s.productId, s]));
+
+        const insufficientStock = data.items.find((item) => {
+          const existingStock = stockMap.get(item.productId);
+          if (!existingStock) return true;
+          return existingStock.quantity < item.quantity;
+        });
+
+        if (insufficientStock) {
+          const product = stockMap.get(insufficientStock.productId);
+          throw new ForbiddenException(
+            `Insufficient stock for product ${product?.productId || insufficientStock.productId}. Available: ${product?.quantity || 0}, Requested: ${insufficientStock.quantity}`,
+          );
+        }
+
+        await Promise.all(
+          data.items.map(async (item) => {
+            const existingStock = stockMap.get(item.productId);
+            if (existingStock) {
+              await tx
+                .update(productStocks)
+                .set({ quantity: existingStock.quantity - item.quantity })
+                .where(eq(productStocks.id, existingStock.id));
+            }
+          }),
+        );
       }
 
       return order;
@@ -172,7 +208,9 @@ export class OrdersService {
       });
 
       if (!outlet) {
-        throw new NotFoundException(`Outlet with ID ${data.outletId} not found`);
+        throw new NotFoundException(
+          `Outlet with ID ${data.outletId} not found`,
+        );
       }
 
       if (outlet.tenantId !== existingOrder.tenantId) {

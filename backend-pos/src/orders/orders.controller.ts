@@ -46,10 +46,7 @@ export class OrdersController {
   @Get(':id')
   @ApiOperation({ summary: 'Get order by ID' })
   @UsePipes(new ZodValidationPipe(OrderIdSchema, 'params'))
-  findById(
-    @Param() { id }: OrderIdDto,
-    @CurrentUser() user: CurrentUserType,
-  ) {
+  findById(@Param() { id }: OrderIdDto, @CurrentUser() user: CurrentUserType) {
     return this.ordersService.findById(id, user);
   }
 

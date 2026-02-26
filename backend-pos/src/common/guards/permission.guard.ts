@@ -32,7 +32,7 @@ const ROLE_MAP: Record<
 const CONTROLLER_TO_PERMISSION: Record<string, string> = {
   'stock-adjustments': 'stockAdjustments',
   'order-items': 'orderItems',
-  'payment-methods': 'paymentMethods'
+  'payment-methods': 'paymentMethods',
 };
 
 @Injectable()
@@ -40,7 +40,7 @@ export class PermissionGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
     @Inject(AuthService) private authService: AuthService<typeof auth>,
-  ) { }
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();

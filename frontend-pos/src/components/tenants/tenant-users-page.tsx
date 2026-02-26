@@ -40,7 +40,7 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ArrowLeft, Plus, User as UserIcon, Building } from "lucide-react";
+import { ArrowLeft, Plus, User as UserIcon } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(1, "Nama wajib diisi"),
@@ -183,7 +183,6 @@ export function TenantUsersPage() {
                   <TableCell className="text-gray-500">
                     {outlet ? (
                       <div className="flex items-center gap-1">
-                        <Building className="h-3 w-3" />
                         {outlet.nama}
                       </div>
                     ) : "Owner"}

@@ -89,10 +89,7 @@ export class DiscountsController {
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a discount' })
   @UsePipes(new ZodValidationPipe(DiscountIdSchema, 'params'))
-  remove(
-    @Param() { id }: DiscountIdDto,
-    @CurrentUser() user: CurrentUserType,
-  ) {
+  remove(@Param() { id }: DiscountIdDto, @CurrentUser() user: CurrentUserType) {
     return this.discountsService.remove(id, user);
   }
 }

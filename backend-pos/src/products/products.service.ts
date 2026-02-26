@@ -8,6 +8,7 @@ import {
 import { eq, and, like, desc, sql, SQL } from 'drizzle-orm';
 import { products } from '../db/schema/product-schema';
 import { tenants } from '../db/schema/tenant-schema';
+import { outlets } from '../db/schema/outlet-schema';
 import { categories } from '../db/schema/category-schema';
 import { CreateProductDto, UpdateProductDto, ProductQueryDto } from './dto';
 import { DB_CONNECTION } from '../db/db.module';
@@ -114,7 +115,10 @@ export class ProductsService {
         where: eq(tenants.userId, user.id),
       });
       const userTenantIds = userTenants.map((t) => t.id);
-      if (userTenantIds.length > 0 && !userTenantIds.includes(product.tenantId)) {
+      if (
+        userTenantIds.length > 0 &&
+        !userTenantIds.includes(product.tenantId)
+      ) {
         throw new ForbiddenException('You do not have access to this product');
       }
     }
@@ -137,6 +141,18 @@ export class ProductsService {
       throw new ForbiddenException(
         'You do not have permission to create products in this tenant',
       );
+    }
+
+    // Check access for cashier
+    if (user.role === 'cashier') {
+      const userOutlet = await this.db.query.outlets.findFirst({
+        where: eq(outlets.id, user.outletId!),
+      });
+      if (!userOutlet || userOutlet.tenantId !== data.tenantId) {
+        throw new ForbiddenException(
+          'You do not have permission to create products in this tenant',
+        );
+      }
     }
 
     if (data.categoryId) {
