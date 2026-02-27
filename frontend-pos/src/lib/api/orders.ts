@@ -20,6 +20,7 @@ export interface Order {
   outletId: string;
   orderNumber: string;
   cashierId: string;
+  cashShiftId: string | null;
   status: 'complete' | 'cancel' | 'refunded';
   subtotal: string;
   jumlahPajak: string;
@@ -118,6 +119,7 @@ export interface OrderQueryParams {
   status?: 'complete' | 'cancel' | 'refunded';
   tenantId?: string;
   outletId?: string;
+  cashShiftId?: string;
 }
 
 export const ordersApi = {
@@ -129,6 +131,7 @@ export const ordersApi = {
     if (params?.status) queryParams.append('status', params.status);
     if (params?.tenantId) queryParams.append('tenantId', params.tenantId);
     if (params?.outletId) queryParams.append('outletId', params.outletId);
+    if (params?.cashShiftId) queryParams.append('cashShiftId', params.cashShiftId);
     const query = queryParams.toString();
     return fetchApi<OrderListResponse>(`/orders${query ? `?${query}` : ''}`);
   },

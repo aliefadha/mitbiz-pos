@@ -10,3 +10,4 @@ export * from './order-item-schema';
 export * from './tax-schema';
 export * from './discount-schema';
 export * from './payment-method-schema';
+export * from './cash-shift-schema';

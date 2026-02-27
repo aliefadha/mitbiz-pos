@@ -6,6 +6,7 @@ import { tenants } from '@/db/schema/tenant-schema';
 import { outlets } from '@/db/schema/outlet-schema';
 import { orderItems } from '@/db/schema/order-item-schema';
 import { productStocks } from '@/db/schema/stock-schema';
+import { cashShifts } from '@/db/schema/cash-shift-schema';
 import { CreateOrderDto, UpdateOrderDto, OrderQueryDto } from './dto';
 import { DB_CONNECTION } from '@/db/db.module';
 import type { DrizzleDB } from '@/db/type';
@@ -16,7 +17,7 @@ export class OrdersService {
   constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) {}
 
   async findAll(query: OrderQueryDto) {
-    const { page = 1, limit = 10, search, status, tenantId, outletId } = query;
+    const { page = 1, limit = 10, search, status, tenantId, outletId, cashShiftId } = query;
     const offset = (page - 1) * limit;
 
     const conditions: SQL<unknown>[] = [];
@@ -31,6 +32,10 @@ export class OrdersService {
 
     if (outletId) {
       conditions.push(eq(orders.outletId, outletId));
+    }
+
+    if (cashShiftId) {
+      conditions.push(eq(orders.cashShiftId, cashShiftId));
     }
 
     if (search) {
@@ -144,6 +149,16 @@ export class OrdersService {
       throw new NotFoundException('Tenant or Outlet not found');
     }
 
+    const openShift = await this.db.query.cashShifts.findFirst({
+      where: and(eq(cashShifts.outletId, data.outletId), eq(cashShifts.status, 'buka')),
+    });
+
+    if (!openShift) {
+      throw new ForbiddenException(
+        'Tidak ada shift kasir yang terbuka. Silakan buka shift terlebih dahulu.',
+      );
+    }
+
     const today = new Date();
     const yyyy = today.getFullYear();
     const mm = String(today.getMonth() + 1).padStart(2, '0');
@@ -159,6 +174,7 @@ export class OrdersService {
           ...data,
           orderNumber,
           cashierId: user.id,
+          cashShiftId: openShift.id,
           completedAt: data.completedAt ? new Date(data.completedAt) : undefined,
         })
         .returning();

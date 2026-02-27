@@ -27,12 +27,14 @@ import { Route as ProtectedOutletsIndexRouteImport } from './routes/_protected/o
 import { Route as ProtectedOrdersIndexRouteImport } from './routes/_protected/orders/index'
 import { Route as ProtectedDiscountsIndexRouteImport } from './routes/_protected/discounts/index'
 import { Route as ProtectedCategoriesIndexRouteImport } from './routes/_protected/categories/index'
+import { Route as ProtectedCashShiftsIndexRouteImport } from './routes/_protected/cash-shifts/index'
 import { Route as ProtectedAccountIndexRouteImport } from './routes/_protected/account/index'
 import { Route as ProtectedTenantsNewRouteImport } from './routes/_protected/tenants/new'
 import { Route as ProtectedProductsProductIdRouteImport } from './routes/_protected/products/$productId'
 import { Route as ProtectedOutletsOutletIdRouteImport } from './routes/_protected/outlets/$outletId'
 import { Route as ProtectedOrdersOrderIdRouteImport } from './routes/_protected/orders/$orderId'
 import { Route as ProtectedCategoriesCategoryIdRouteImport } from './routes/_protected/categories/$categoryId'
+import { Route as ProtectedCashShiftsCashShiftIdRouteImport } from './routes/_protected/cash-shifts/$cashShiftId'
 import { Route as ProtectedTenantsSlugIndexRouteImport } from './routes/_protected/tenants/$slug/index'
 import { Route as ProtectedTenantsSlugUsersIndexRouteImport } from './routes/_protected/tenants/$slug/users/index'
 import { Route as ProtectedTenantsSlugProductsIndexRouteImport } from './routes/_protected/tenants/$slug/products/index'
@@ -133,6 +135,12 @@ const ProtectedCategoriesIndexRoute =
     path: '/categories/',
     getParentRoute: () => ProtectedRoute,
   } as any)
+const ProtectedCashShiftsIndexRoute =
+  ProtectedCashShiftsIndexRouteImport.update({
+    id: '/cash-shifts/',
+    path: '/cash-shifts/',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
 const ProtectedAccountIndexRoute = ProtectedAccountIndexRouteImport.update({
   id: '/account/',
   path: '/account/',
@@ -164,6 +172,12 @@ const ProtectedCategoriesCategoryIdRoute =
   ProtectedCategoriesCategoryIdRouteImport.update({
     id: '/categories/$categoryId',
     path: '/categories/$categoryId',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
+const ProtectedCashShiftsCashShiftIdRoute =
+  ProtectedCashShiftsCashShiftIdRouteImport.update({
+    id: '/cash-shifts/$cashShiftId',
+    path: '/cash-shifts/$cashShiftId',
     getParentRoute: () => ProtectedRoute,
   } as any)
 const ProtectedTenantsSlugIndexRoute =
@@ -223,12 +237,14 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/verify-email': typeof VerifyEmailRoute
   '/dashboard': typeof ProtectedDashboardRoute
+  '/cash-shifts/$cashShiftId': typeof ProtectedCashShiftsCashShiftIdRoute
   '/categories/$categoryId': typeof ProtectedCategoriesCategoryIdRoute
   '/orders/$orderId': typeof ProtectedOrdersOrderIdRoute
   '/outlets/$outletId': typeof ProtectedOutletsOutletIdRoute
   '/products/$productId': typeof ProtectedProductsProductIdRoute
   '/tenants/new': typeof ProtectedTenantsNewRoute
   '/account/': typeof ProtectedAccountIndexRoute
+  '/cash-shifts/': typeof ProtectedCashShiftsIndexRoute
   '/categories/': typeof ProtectedCategoriesIndexRoute
   '/discounts/': typeof ProtectedDiscountsIndexRoute
   '/orders/': typeof ProtectedOrdersIndexRoute
@@ -256,12 +272,14 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/verify-email': typeof VerifyEmailRoute
   '/dashboard': typeof ProtectedDashboardRoute
+  '/cash-shifts/$cashShiftId': typeof ProtectedCashShiftsCashShiftIdRoute
   '/categories/$categoryId': typeof ProtectedCategoriesCategoryIdRoute
   '/orders/$orderId': typeof ProtectedOrdersOrderIdRoute
   '/outlets/$outletId': typeof ProtectedOutletsOutletIdRoute
   '/products/$productId': typeof ProtectedProductsProductIdRoute
   '/tenants/new': typeof ProtectedTenantsNewRoute
   '/account': typeof ProtectedAccountIndexRoute
+  '/cash-shifts': typeof ProtectedCashShiftsIndexRoute
   '/categories': typeof ProtectedCategoriesIndexRoute
   '/discounts': typeof ProtectedDiscountsIndexRoute
   '/orders': typeof ProtectedOrdersIndexRoute
@@ -291,12 +309,14 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/verify-email': typeof VerifyEmailRoute
   '/_protected/dashboard': typeof ProtectedDashboardRoute
+  '/_protected/cash-shifts/$cashShiftId': typeof ProtectedCashShiftsCashShiftIdRoute
   '/_protected/categories/$categoryId': typeof ProtectedCategoriesCategoryIdRoute
   '/_protected/orders/$orderId': typeof ProtectedOrdersOrderIdRoute
   '/_protected/outlets/$outletId': typeof ProtectedOutletsOutletIdRoute
   '/_protected/products/$productId': typeof ProtectedProductsProductIdRoute
   '/_protected/tenants/new': typeof ProtectedTenantsNewRoute
   '/_protected/account/': typeof ProtectedAccountIndexRoute
+  '/_protected/cash-shifts/': typeof ProtectedCashShiftsIndexRoute
   '/_protected/categories/': typeof ProtectedCategoriesIndexRoute
   '/_protected/discounts/': typeof ProtectedDiscountsIndexRoute
   '/_protected/orders/': typeof ProtectedOrdersIndexRoute
@@ -326,12 +346,14 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/verify-email'
     | '/dashboard'
+    | '/cash-shifts/$cashShiftId'
     | '/categories/$categoryId'
     | '/orders/$orderId'
     | '/outlets/$outletId'
     | '/products/$productId'
     | '/tenants/new'
     | '/account/'
+    | '/cash-shifts/'
     | '/categories/'
     | '/discounts/'
     | '/orders/'
@@ -359,12 +381,14 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/verify-email'
     | '/dashboard'
+    | '/cash-shifts/$cashShiftId'
     | '/categories/$categoryId'
     | '/orders/$orderId'
     | '/outlets/$outletId'
     | '/products/$productId'
     | '/tenants/new'
     | '/account'
+    | '/cash-shifts'
     | '/categories'
     | '/discounts'
     | '/orders'
@@ -393,12 +417,14 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/verify-email'
     | '/_protected/dashboard'
+    | '/_protected/cash-shifts/$cashShiftId'
     | '/_protected/categories/$categoryId'
     | '/_protected/orders/$orderId'
     | '/_protected/outlets/$outletId'
     | '/_protected/products/$productId'
     | '/_protected/tenants/new'
     | '/_protected/account/'
+    | '/_protected/cash-shifts/'
     | '/_protected/categories/'
     | '/_protected/discounts/'
     | '/_protected/orders/'
@@ -557,6 +583,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedCategoriesIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
+    '/_protected/cash-shifts/': {
+      id: '/_protected/cash-shifts/'
+      path: '/cash-shifts'
+      fullPath: '/cash-shifts/'
+      preLoaderRoute: typeof ProtectedCashShiftsIndexRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
     '/_protected/account/': {
       id: '/_protected/account/'
       path: '/account'
@@ -597,6 +630,13 @@ declare module '@tanstack/react-router' {
       path: '/categories/$categoryId'
       fullPath: '/categories/$categoryId'
       preLoaderRoute: typeof ProtectedCategoriesCategoryIdRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/cash-shifts/$cashShiftId': {
+      id: '/_protected/cash-shifts/$cashShiftId'
+      path: '/cash-shifts/$cashShiftId'
+      fullPath: '/cash-shifts/$cashShiftId'
+      preLoaderRoute: typeof ProtectedCashShiftsCashShiftIdRouteImport
       parentRoute: typeof ProtectedRoute
     }
     '/_protected/tenants/$slug/': {
@@ -660,12 +700,14 @@ declare module '@tanstack/react-router' {
 
 interface ProtectedRouteChildren {
   ProtectedDashboardRoute: typeof ProtectedDashboardRoute
+  ProtectedCashShiftsCashShiftIdRoute: typeof ProtectedCashShiftsCashShiftIdRoute
   ProtectedCategoriesCategoryIdRoute: typeof ProtectedCategoriesCategoryIdRoute
   ProtectedOrdersOrderIdRoute: typeof ProtectedOrdersOrderIdRoute
   ProtectedOutletsOutletIdRoute: typeof ProtectedOutletsOutletIdRoute
   ProtectedProductsProductIdRoute: typeof ProtectedProductsProductIdRoute
   ProtectedTenantsNewRoute: typeof ProtectedTenantsNewRoute
   ProtectedAccountIndexRoute: typeof ProtectedAccountIndexRoute
+  ProtectedCashShiftsIndexRoute: typeof ProtectedCashShiftsIndexRoute
   ProtectedCategoriesIndexRoute: typeof ProtectedCategoriesIndexRoute
   ProtectedDiscountsIndexRoute: typeof ProtectedDiscountsIndexRoute
   ProtectedOrdersIndexRoute: typeof ProtectedOrdersIndexRoute
@@ -688,12 +730,14 @@ interface ProtectedRouteChildren {
 
 const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedDashboardRoute: ProtectedDashboardRoute,
+  ProtectedCashShiftsCashShiftIdRoute: ProtectedCashShiftsCashShiftIdRoute,
   ProtectedCategoriesCategoryIdRoute: ProtectedCategoriesCategoryIdRoute,
   ProtectedOrdersOrderIdRoute: ProtectedOrdersOrderIdRoute,
   ProtectedOutletsOutletIdRoute: ProtectedOutletsOutletIdRoute,
   ProtectedProductsProductIdRoute: ProtectedProductsProductIdRoute,
   ProtectedTenantsNewRoute: ProtectedTenantsNewRoute,
   ProtectedAccountIndexRoute: ProtectedAccountIndexRoute,
+  ProtectedCashShiftsIndexRoute: ProtectedCashShiftsIndexRoute,
   ProtectedCategoriesIndexRoute: ProtectedCategoriesIndexRoute,
   ProtectedDiscountsIndexRoute: ProtectedDiscountsIndexRoute,
   ProtectedOrdersIndexRoute: ProtectedOrdersIndexRoute,

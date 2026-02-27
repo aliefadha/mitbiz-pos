@@ -8,6 +8,7 @@ import {
   Search,
   ShoppingCart,
   Store,
+  Wallet,
   X,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -30,6 +31,7 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTenant } from '@/contexts/tenant-context';
+import { cashShiftsApi } from '@/lib/api/cash-shifts';
 import { discountsApi } from '@/lib/api/discounts';
 import {
   type CreateOrderDto,
@@ -115,6 +117,12 @@ export function PosPage() {
     enabled: !!effectiveTenantId && !!effectiveOutletId,
   });
 
+  const { data: openShiftData, isLoading: openShiftLoading } = useQuery({
+    queryKey: ['cash-shifts', 'open', effectiveOutletId],
+    queryFn: () => cashShiftsApi.getOpen(effectiveOutletId),
+    enabled: !!effectiveOutletId,
+  });
+
   const taxes = taxesData?.data ?? [];
   const discounts = discountsData?.data ?? [];
 
@@ -139,7 +147,7 @@ export function PosPage() {
       setCheckoutOpen(false);
       setPaymentMethod('cash');
       setAmountPaid('');
-              setNotes('');
+      setNotes('');
       setNomorAntrian('');
       setSelectedTaxIds([]);
       setSelectedDiscountIds([]);
@@ -380,6 +388,20 @@ export function PosPage() {
               <p className="text-sm text-gray-400">Pilih outlet dari dropdown di header</p>
             </div>
           </div>
+        ) : openShiftLoading ? (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-gray-500">Memuat data...</p>
+          </div>
+        ) : !openShiftData ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <Wallet className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+              <p className="text-gray-500">Shift kasir belum dibuka</p>
+              <p className="text-sm text-gray-400">
+                Silakan buka shift kasir terlebih dahulu di halaman Shift Kasir
+              </p>
+            </div>
+          </div>
         ) : productsLoading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {Array.from({ length: 8 }).map((_, i) => (
@@ -387,39 +409,53 @@ export function PosPage() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto flex-1 py-4">
-            {filteredProducts.map((product) => (
-              <div
-                key={product.id}
-                onClick={() => (product.stock ?? 0) > 0 && addToCart(product)}
-                className={`relative border rounded-lg p-4 cursor-pointer hover:shadow-md transition-all h-48 flex flex-col ${
-                  (product.stock ?? 0) < product.minStockLevel ? 'bg-red-50 border-red-200' : ''
-                } ${(product.stock ?? 0) === 0 ? 'bg-gray-100 border-gray-200 opacity-60 cursor-not-allowed' : 'hover:border-primary'}`}
-              >
-                <div
-                  className={`absolute -top-3 -right-3 flex items-center justify-center h-8 min-w-8 px-2 rounded-full text-xs font-bold shadow-sm border-2 border-white ${
-                    (product.stock ?? 0) === 0
-                      ? 'bg-gray-400 text-white'
-                      : (product.stock ?? 0) < product.minStockLevel
-                        ? 'bg-red-500 text-white'
-                        : 'bg-primary text-primary-foreground'
-                  }`}
-                >
-                  {product.stock ?? 0}
-                </div>
-                <div className="h-20 bg-gray-100 rounded-md mb-3 flex items-center justify-center">
-                  <Receipt className="h-8 w-8 text-gray-400" />
-                </div>
-                <h5 className="font-medium text-sm truncate">{product.nama}</h5>
-                <p className="text-xs text-gray-500">{product.sku}</p>
-                <div className="flex justify-between items-end mt-auto">
-                  <p className="font-bold text-primary">{formatRupiah(product.hargaJual)}</p>
-                  {(product.stock ?? 0) === 0 && (
-                    <p className="text-xs font-medium text-gray-500">Habis</p>
-                  )}
+          <div className="relative">
+            {openShiftData && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Wallet className="h-4 w-4 text-green-600" />
+                  <span className="text-sm text-green-800">
+                    Shift Aktif • Buka: {formatRupiah(openShiftData.jumlahBuka)}
+                  </span>
                 </div>
               </div>
-            ))}
+            )}
+            <div
+              className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto flex-1 py-4 ${!openShiftData ? 'blur-sm pointer-events-none select-none' : ''}`}
+            >
+              {filteredProducts.map((product) => (
+                <div
+                  key={product.id}
+                  onClick={() => (product.stock ?? 0) > 0 && addToCart(product)}
+                  className={`relative border rounded-lg p-4 cursor-pointer hover:shadow-md transition-all h-48 flex flex-col ${
+                    (product.stock ?? 0) < product.minStockLevel ? 'bg-red-50 border-red-200' : ''
+                  } ${(product.stock ?? 0) === 0 ? 'bg-gray-100 border-gray-200 opacity-60 cursor-not-allowed' : 'hover:border-primary'}`}
+                >
+                  <div
+                    className={`absolute -top-3 -right-3 flex items-center justify-center h-8 min-w-8 px-2 rounded-full text-xs font-bold shadow-sm border-2 border-white ${
+                      (product.stock ?? 0) === 0
+                        ? 'bg-gray-400 text-white'
+                        : (product.stock ?? 0) < product.minStockLevel
+                          ? 'bg-red-500 text-white'
+                          : 'bg-primary text-primary-foreground'
+                    }`}
+                  >
+                    {product.stock ?? 0}
+                  </div>
+                  <div className="h-20 bg-gray-100 rounded-md mb-3 flex items-center justify-center">
+                    <Receipt className="h-8 w-8 text-gray-400" />
+                  </div>
+                  <h5 className="font-medium text-sm truncate">{product.nama}</h5>
+                  <p className="text-xs text-gray-500">{product.sku}</p>
+                  <div className="flex justify-between items-end mt-auto">
+                    <p className="font-bold text-primary">{formatRupiah(product.hargaJual)}</p>
+                    {(product.stock ?? 0) === 0 && (
+                      <p className="text-xs font-medium text-gray-500">Habis</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -733,7 +769,7 @@ export function PosPage() {
                 No. Pesanan: <span className="font-mono font-bold">{lastOrder.orderNumber}</span>
               </p>
             )}
-            {lastOrder && lastOrder.nomorAntrian && (
+            {lastOrder?.nomorAntrian && (
               <p className="text-sm text-gray-500">
                 No. Antrian: <span className="font-mono font-bold">{lastOrder.nomorAntrian}</span>
               </p>
@@ -765,7 +801,9 @@ export function PosPage() {
             <h2 className="font-bold text-lg">{selectedTenant?.nama || 'Toko'}</h2>
             <p className="text-xs">{selectedOutlet?.nama || ''}</p>
             <p className="text-xs">No. {lastOrder.orderNumber}</p>
-            {lastOrder.nomorAntrian && <p className="text-xs">No. Antrian: {lastOrder.nomorAntrian}</p>}
+            {lastOrder.nomorAntrian && (
+              <p className="text-xs">No. Antrian: {lastOrder.nomorAntrian}</p>
+            )}
             <p className="text-xs">{new Date().toLocaleString('id-ID')}</p>
           </div>
           <div className="border-t border-b border-dashed py-2 mb-2">

@@ -85,6 +85,7 @@ export const verification = pgTable(
 import { tenants } from './tenant-schema';
 import { outlets } from './outlet-schema';
 import { stockAdjustments } from './stock-adjustment-schema';
+import { cashShifts } from './cash-shift-schema';
 
 export const userRelations = relations(user, ({ one, many }) => ({
   sessions: many(session),
@@ -95,6 +96,7 @@ export const userRelations = relations(user, ({ one, many }) => ({
     references: [outlets.id],
   }),
   stockAdjustments: many(stockAdjustments),
+  cashShifts: many(cashShifts),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({

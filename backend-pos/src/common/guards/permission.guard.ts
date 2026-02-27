@@ -30,6 +30,7 @@ const CONTROLLER_TO_PERMISSION: Record<string, string> = {
   'stock-adjustments': 'stockAdjustments',
   'order-items': 'orderItems',
   'payment-methods': 'paymentMethods',
+  'cash-shifts': 'cashShifts',
 };
 
 @Injectable()

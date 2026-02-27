@@ -81,6 +81,7 @@ export const OrderQuerySchema = z.object({
   status: OrderStatusSchema.optional(),
   tenantId: z.string().min(1).optional(),
   outletId: z.string().min(1).optional(),
+  cashShiftId: z.string().min(1).optional(),
 });
 
 export class CreateOrderDto extends createZodDto(CreateOrderSchema) {}

@@ -14,6 +14,7 @@ import {
   Store,
   User,
   Users,
+  Wallet,
 } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -76,6 +77,12 @@ const menuConfig = [
         key: '/orders',
         icon: Receipt,
         label: 'Pesanan',
+        roles: ['cashier', 'owner'],
+      },
+      {
+        key: '/cash-shifts',
+        icon: Wallet,
+        label: 'Shift Kasir',
         roles: ['cashier', 'owner'],
       },
     ],

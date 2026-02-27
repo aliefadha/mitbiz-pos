@@ -6,6 +6,7 @@ import { user } from './auth-schema';
 import { pgEnum } from 'drizzle-orm/pg-core';
 import { orderItems } from './order-item-schema';
 import { paymentMethods } from './payment-method-schema';
+import { cashShifts } from './cash-shift-schema';
 
 export const orderStatusEnum = pgEnum('order_status', ['complete', 'cancel', 'refunded']);
 
@@ -21,6 +22,7 @@ export const orders = pgTable('orders', {
   cashierId: text('cashier_id')
     .references(() => user.id)
     .notNull(),
+  cashShiftId: text('cash_shift_id').references(() => cashShifts.id),
   status: orderStatusEnum('status').default('complete').notNull(),
   subtotal: decimal('subtotal', { precision: 12, scale: 2 }).default('0').notNull(),
   jumlahPajak: decimal('jumlah_pajak', { precision: 12, scale: 2 }).default('0').notNull(),
@@ -64,6 +66,10 @@ export const ordersRelations = relations(orders, ({ one, many }) => ({
   paymentMethod: one(paymentMethods, {
     fields: [orders.paymentMethodId],
     references: [paymentMethods.id],
+  }),
+  cashShift: one(cashShifts, {
+    fields: [orders.cashShiftId],
+    references: [cashShifts.id],
   }),
   orderItems: many(orderItems),
 }));
