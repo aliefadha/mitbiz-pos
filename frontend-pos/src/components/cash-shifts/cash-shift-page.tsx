@@ -39,7 +39,12 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useTenant } from '@/contexts/tenant-context';
-import { cashShiftsApi, type CashShift, type CreateCashShiftDto, type UpdateCashShiftDto } from '@/lib/api/cash-shifts';
+import {
+  type CashShift,
+  type CreateCashShiftDto,
+  cashShiftsApi,
+  type UpdateCashShiftDto,
+} from '@/lib/api/cash-shifts';
 
 const formSchema = z.object({
   jumlahBuka: z.string().optional(),
@@ -89,8 +94,7 @@ export function CashShiftPage() {
         tenantId: effectiveTenantId,
         outletId: effectiveOutletId,
         search: searchQuery || undefined,
-        status:
-          statusFilter !== 'all' ? (statusFilter as 'buka' | 'tutup') : undefined,
+        status: statusFilter !== 'all' ? (statusFilter as 'buka' | 'tutup') : undefined,
       }),
     enabled: !!effectiveTenantId,
   });
@@ -224,7 +228,8 @@ export function CashShiftPage() {
               <div>
                 <p className="font-medium text-green-800">Shift Sedang Aktif</p>
                 <p className="text-sm text-green-600">
-                  Dibuka: {formatDate(openShift.openedAt)} • Jumlah Buka: {formatRupiah(openShift.jumlahBuka)}
+                  Dibuka: {formatDate(openShift.openedAt)} • Jumlah Buka:{' '}
+                  {formatRupiah(openShift.jumlahBuka)}
                 </p>
               </div>
             </div>
@@ -326,7 +331,12 @@ export function CashShiftPage() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => navigate({ to: '/cash-shifts/$cashShiftId', params: { cashShiftId: shift.id } })}
+                    onClick={() =>
+                      navigate({
+                        to: '/cash-shifts/$cashShiftId',
+                        params: { cashShiftId: shift.id },
+                      })
+                    }
                   >
                     <Eye className="h-4 w-4" />
                   </Button>
@@ -447,10 +457,7 @@ export function CashShiftPage() {
                     )}
                   />
                   <DialogFooter>
-                    <Button
-                      type="submit"
-                      disabled={closeMutation.isPending}
-                    >
+                    <Button type="submit" disabled={closeMutation.isPending}>
                       {closeMutation.isPending ? 'Menutup...' : 'Tutup Shift'}
                     </Button>
                   </DialogFooter>

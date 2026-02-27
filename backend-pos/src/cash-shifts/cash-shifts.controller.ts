@@ -42,10 +42,7 @@ export class CashShiftsController {
 
   @Get('open')
   @ApiOperation({ summary: 'Get open cash shift for current user outlet' })
-  findOpen(
-    @CurrentUser() user: CurrentUserType,
-    @Query('outletId') outletId?: string,
-  ) {
+  findOpen(@CurrentUser() user: CurrentUserType, @Query('outletId') outletId?: string) {
     const targetOutletId = outletId || user.outletId;
     if (!targetOutletId) {
       return null;

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useParams, useNavigate } from '@tanstack/react-router';
+import { useNavigate, useParams } from '@tanstack/react-router';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -11,8 +11,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { cashShiftsApi, type CashShift } from '@/lib/api/cash-shifts';
-import { ordersApi, type Order } from '@/lib/api/orders';
+import { type CashShift, cashShiftsApi } from '@/lib/api/cash-shifts';
+import { type Order, ordersApi } from '@/lib/api/orders';
 
 interface CashShiftDetail extends CashShift {
   orders?: Order[];
@@ -210,10 +210,18 @@ export function CashShiftDetailPage() {
               </TableHeader>
               <TableBody>
                 {orders.map((order, index) => (
-                  <TableRow key={order.id} className="cursor-pointer" onClick={() => navigate({ to: '/orders/$orderId', params: { orderId: order.id } })}>
+                  <TableRow
+                    key={order.id}
+                    className="cursor-pointer"
+                    onClick={() =>
+                      navigate({ to: '/orders/$orderId', params: { orderId: order.id } })
+                    }
+                  >
                     <TableCell>{index + 1}</TableCell>
                     <TableCell>
-                      <code className="bg-gray-100 px-2 py-1 rounded text-xs hover:bg-gray-200">{order.orderNumber}</code>
+                      <code className="bg-gray-100 px-2 py-1 rounded text-xs hover:bg-gray-200">
+                        {order.orderNumber}
+                      </code>
                     </TableCell>
                     <TableCell>{formatDate(order.createdAt)}</TableCell>
                     <TableCell>
@@ -233,7 +241,9 @@ export function CashShiftDetailPage() {
                             : 'Dikembalikan'}
                       </span>
                     </TableCell>
-                    <TableCell className="text-right font-medium">{formatRupiah(order.total)}</TableCell>
+                    <TableCell className="text-right font-medium">
+                      {formatRupiah(order.total)}
+                    </TableCell>
                     <TableCell></TableCell>
                   </TableRow>
                 ))}
