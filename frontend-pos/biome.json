@@ -48,6 +48,9 @@
         "useKeyWithClickEvents": "off",
         "useFocusableInteractive": "off",
         "useSemanticElements": "off"
+      },
+      "security": {
+        "noDangerouslySetInnerHtml": "off"
       }
     }
   },

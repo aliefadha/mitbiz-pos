@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { OwnerDashboard } from '@/components/dashboard/owner-dashboard';
 import { useAuth } from '@/contexts/auth-context';
 
 export const Route = createFileRoute('/_protected/dashboard')({
@@ -23,14 +24,6 @@ function AdminDashboard() {
   return (
     <div className="flex flex-col gap-6">
       <h1>Admin Dashboard</h1>
-    </div>
-  );
-}
-
-function OwnerDashboard() {
-  return (
-    <div className="flex flex-col gap-6">
-      <h1>Owner Dashboard</h1>
     </div>
   );
 }

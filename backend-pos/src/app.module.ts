@@ -23,6 +23,7 @@ import { TaxesModule } from './taxes/taxes.module';
 import { DiscountsModule } from './discounts/discounts.module';
 import { PaymentMethodsModule } from './payment-methods/payment-methods.module';
 import { CashShiftsModule } from './cash-shifts/cash-shifts.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { CashShiftsModule } from './cash-shifts/cash-shifts.module';
     DiscountsModule,
     PaymentMethodsModule,
     CashShiftsModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [
