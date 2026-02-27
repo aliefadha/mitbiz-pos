@@ -63,7 +63,6 @@ export interface OrderItem {
 export interface CreateOrderDto {
   tenantId: string;
   outletId: string;
-  orderNumber: string;
   status?: 'complete' | 'cancel' | 'refunded';
   subtotal?: string;
   jumlahPajak?: string;

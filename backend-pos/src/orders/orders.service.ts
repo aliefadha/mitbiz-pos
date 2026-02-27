@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException, Inject } from '@nestjs/common';
 import { eq, and, like, desc, sql, SQL } from 'drizzle-orm';
+import { randomUUID } from 'node:crypto';
 import { orders } from '@/db/schema/order-schema';
 import { tenants } from '@/db/schema/tenant-schema';
 import { outlets } from '@/db/schema/outlet-schema';
@@ -128,11 +129,32 @@ export class OrdersService {
       }
     }
 
+    const tenant = await this.db.query.tenants.findFirst({
+      where: eq(tenants.id, data.tenantId),
+    });
+
+    const outlet = await this.db.query.outlets.findFirst({
+      where: eq(outlets.id, data.outletId),
+    });
+
+    if (!tenant || !outlet) {
+      throw new NotFoundException('Tenant or Outlet not found');
+    }
+
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const dateStr = `${yyyy}${mm}${dd}`;
+    const uuid = randomUUID().split('-')[0].toUpperCase();
+    const orderNumber = `ORD-${tenant.slug}-${outlet.kode}-${dateStr}-${uuid}`;
+
     return await this.db.transaction(async (tx) => {
       const [order] = await tx
         .insert(orders)
         .values({
           ...data,
+          orderNumber,
           cashierId: user.id,
           completedAt: data.completedAt ? new Date(data.completedAt) : undefined,
         })

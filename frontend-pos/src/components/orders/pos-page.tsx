@@ -50,12 +50,6 @@ interface CartItem {
   total: string;
 }
 
-const generateOrderNumber = (tenantSlug: string, outletKode: string) => {
-  const timestamp = Date.now().toString(36).toUpperCase();
-  const random = Math.random().toString(36).substring(2, 6).toUpperCase();
-  return `ORD-${tenantSlug}-${outletKode}-${timestamp}-${random}`;
-};
-
 export function PosPage() {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
@@ -124,8 +118,8 @@ export function PosPage() {
 
   const createOrderMutation = useMutation({
     mutationFn: (data: CreateOrderDto) => ordersApi.create(data),
-    onSuccess: (_, variables) => {
-      const orderNumber = variables.orderNumber;
+    onSuccess: (response, _) => {
+      const orderNumber = response.orderNumber;
       setLastOrder({
         orderNumber,
         items: [...cart],
@@ -311,10 +305,6 @@ export function PosPage() {
     createOrderMutation.mutate({
       tenantId: effectiveTenantId,
       outletId: effectiveOutletId,
-      orderNumber: generateOrderNumber(
-        selectedTenant?.slug || 'UNKNOWN',
-        selectedOutlet?.kode || 'OUT'
-      ),
       status: 'complete',
       subtotal: String(subtotal),
       jumlahPajak: String(taxAmount),

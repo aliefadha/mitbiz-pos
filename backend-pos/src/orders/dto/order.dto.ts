@@ -28,7 +28,6 @@ export const DiscountBreakdownSchema = z.object({
 export const CreateOrderSchema = z.object({
   tenantId: z.string().min(1, 'Tenant ID is required'),
   outletId: z.string().min(1, 'Outlet ID is required'),
-  orderNumber: z.string().min(1, 'Order number is required'),
   status: OrderStatusSchema.default('complete'),
   subtotal: z.string().optional().default('0'),
   jumlahPajak: z.string().optional().default('0'),
@@ -82,7 +81,7 @@ export const OrderQuerySchema = z.object({
   outletId: z.string().min(1).optional(),
 });
 
-export class CreateOrderDto extends createZodDto(CreateOrderSchema) {}
-export class UpdateOrderDto extends createZodDto(UpdateOrderSchema) {}
-export class OrderIdDto extends createZodDto(OrderIdSchema) {}
-export class OrderQueryDto extends createZodDto(OrderQuerySchema) {}
+export class CreateOrderDto extends createZodDto(CreateOrderSchema) { }
+export class UpdateOrderDto extends createZodDto(UpdateOrderSchema) { }
+export class OrderIdDto extends createZodDto(OrderIdSchema) { }
+export class OrderQueryDto extends createZodDto(OrderQuerySchema) { }
