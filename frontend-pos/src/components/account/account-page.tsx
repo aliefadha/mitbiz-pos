@@ -108,7 +108,7 @@ export function AccountPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["users", effectiveTenantId],
     queryFn: () => usersApi.getUsers({ tenantId: effectiveTenantId }),
-    enabled: !isOwner,
+    enabled: !isOwner && !!effectiveTenantId,
   });
 
   const { data: tenantsData } = useQuery({
@@ -157,7 +157,7 @@ export function AccountPage() {
 
   const isOutletRequired = selectedRole === "cashier" && (!isOwner || !contextSelectedOutlet);
   const outletId = form.watch("outletId");
-  const isSubmitDisabled = isOutletRequired && !outletId;
+  const isSubmitDisabled = isOutletRequired && !outletId || !effectiveTenantId;
 
   const getVerifiedColor = (verified: boolean) => {
     return verified ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700";
@@ -168,16 +168,16 @@ export function AccountPage() {
       <div>
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h4 className="text-lg font-semibold m-0">Account Management</h4>
+            <h4 className="text-lg font-semibold m-0">Akun</h4>
             <p className="text-sm text-gray-500 m-0">
-              Manage all users in the system
+              Kelola semua akun dalam sistem
             </p>
           </div>
           <div className="flex gap-2">
             <DialogTrigger asChild>
               <Button>
                 <Plus className="mr-2 h-4 w-4" />
-                Create User
+                Tambah Akun
               </Button>
             </DialogTrigger>
           </div>
@@ -194,10 +194,10 @@ export function AccountPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[80px]">No</TableHead>
-                <TableHead>Name</TableHead>
+                <TableHead>Nama</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Verified</TableHead>
-                <TableHead className="w-[180px]">Created At</TableHead>
+                <TableHead className="w-[180px]">Dibuat</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -253,9 +253,9 @@ export function AccountPage() {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Name</FormLabel>
+                    <FormLabel>Nama</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter user name" {...field} />
+                      <Input placeholder="Masukkan nama akun" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -268,7 +268,7 @@ export function AccountPage() {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter user email" {...field} />
+                      <Input placeholder="Masukkan email akun" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -283,7 +283,7 @@ export function AccountPage() {
                     <FormControl>
                       <Input
                         type="password"
-                        placeholder="Enter password"
+                        placeholder="Masukkan password"
                         {...field}
                       />
                     </FormControl>

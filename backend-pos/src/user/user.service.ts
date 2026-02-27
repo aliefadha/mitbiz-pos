@@ -1,14 +1,13 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import { tenants } from '../db/schema/tenant-schema';
-import { outlets } from '../db/schema/outlet-schema';
 import { user } from '../db/schema/auth-schema';
 import { DB_CONNECTION } from '../db/db.module';
 import type { DrizzleDB } from '../db/type';
 
 @Injectable()
 export class UserService {
-  constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) {}
+  constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) { }
 
   async getUserTenantsAndOutlets(userId: string) {
     const [userWithOutlet, ownedTenants] = await Promise.all([
@@ -38,7 +37,7 @@ export class UserService {
       outlets: tenant.outlets.map((outlet) => ({
         id: outlet.id,
         tenantId: outlet.tenantId,
-        name: outlet.nama,
+        nama: outlet.nama,
         kode: outlet.kode,
         alamat: outlet.alamat,
         noHp: outlet.noHp,
@@ -58,7 +57,7 @@ export class UserService {
           {
             id: userWithOutlet.outlet.id,
             tenantId: userWithOutlet.outlet.tenantId,
-            name: userWithOutlet.outlet.nama,
+            nama: userWithOutlet.outlet.nama,
             kode: userWithOutlet.outlet.kode,
             alamat: userWithOutlet.outlet.alamat,
             noHp: userWithOutlet.outlet.noHp,
@@ -72,13 +71,17 @@ export class UserService {
     return results;
   }
 
-  async getUsersByOwner(userId: string) {
-    const userTenants = await this.db.query.tenants.findMany({
+  async getUsersByOwner(userId: string, tenantId?: string) {
+    let userTenants = await this.db.query.tenants.findMany({
       where: eq(tenants.userId, userId),
       with: {
         outlets: true,
       },
     });
+
+    if (tenantId) {
+      userTenants = userTenants.filter((t) => t.id === tenantId);
+    }
 
     const outletIds = userTenants.flatMap((t) => t.outlets.map((o) => o.id));
 

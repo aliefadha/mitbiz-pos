@@ -5,7 +5,9 @@ import { products } from './product-schema';
 import { outlets } from './outlet-schema';
 
 export const productStocks = pgTable('product_stocks', {
-  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  id: text('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   productId: text('product_id')
     .references(() => products.id)
     .notNull(),

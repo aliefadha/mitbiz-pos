@@ -6,7 +6,6 @@ import { categoriesApi } from "@/lib/api/categories";
 import { stocksApi } from "@/lib/api/stocks";
 import { stockAdjustmentsApi } from "@/lib/api/stock-adjustments";
 import { useSession } from "@/lib/auth-client";
-import { outletsApi } from "@/lib/api/outlets";
 import { useTenant } from "@/contexts/tenant-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -87,7 +86,6 @@ export function ProductDetailPage() {
   const { data: session } = useSession();
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [createStockModalOpen, setCreateStockModalOpen] = useState(false);
-  const [createStockOutletId, setCreateStockOutletId] = useState("");
   const [createStockQuantity, setCreateStockQuantity] = useState(0);
   const [adjustmentReason, setAdjustmentReason] = useState("");
 
@@ -132,12 +130,6 @@ export function ProductDetailPage() {
     enabled: !!product?.tenantId,
   });
 
-  const { data: outletsData } = useQuery({
-    queryKey: ["outlets", product?.tenantId],
-    queryFn: () => outletsApi.getAll({ tenantId: product!.tenantId }),
-    enabled: !!product?.tenantId,
-  });
-
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateProductDto }) => productsApi.update(id, data),
     onSuccess: () => {
@@ -152,7 +144,6 @@ export function ProductDetailPage() {
     mutationFn: (data: { productId: string; outletId: string; quantity: number }) => stocksApi.create(data),
     onSuccess: () => {
       setCreateStockModalOpen(false);
-      setCreateStockOutletId("");
       setCreateStockQuantity(0);
       queryClient.invalidateQueries({ queryKey: ["stocks", productId, selectedOutlet?.id] });
     },
@@ -197,7 +188,6 @@ export function ProductDetailPage() {
   const stocks = stocksData?.data || [];
   const adjustments = adjustmentsData?.data || [];
   const categories = categoriesData?.data || [];
-  const outlets = outletsData?.data || [];
 
   const handleEdit = () => {
     editForm.reset({
@@ -266,7 +256,16 @@ export function ProductDetailPage() {
         </CardContent>
       </Card>
 
-      <Card className="mb-6">
+      <Card className="mb-6 relative">
+        {stocks.length === 0 && selectedOutlet && (
+          <div className="absolute inset-0 bg-white/60 backdrop-blur-sm z-10 flex flex-col items-center justify-center rounded-lg">
+            <p className="text-gray-500 mb-4">Stok belum ada untuk outlet ini</p>
+            <Button onClick={() => setCreateStockModalOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Tambah Stok
+            </Button>
+          </div>
+        )}
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Ringkasan Stok</CardTitle>
           {selectedOutlet && (
@@ -303,34 +302,36 @@ export function ProductDetailPage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="relative">
         <CardContent>
           {selectedOutlet ? (
-            <>
-              <h3 className="text-lg font-semibold mb-4">Riwayat Stok</h3>
-              <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Tanggal</TableHead>
-                  <TableHead>Outlet</TableHead>
-                  <TableHead>Jumlah</TableHead>
-                  <TableHead>Alasan</TableHead>
-                  <TableHead>Oleh</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {adjustments.map((adj) => (
-                  <TableRow key={adj.id}>
-                    <TableCell>{new Date(adj.createdAt).toLocaleString("id-ID")}</TableCell>
-                    <TableCell>{adj.outlet ? `${adj.outlet.nama} (${adj.outlet.kode})` : "-"}</TableCell>
-                    <TableCell><span className={adj.quantity >= 0 ? "text-green-600" : "text-red-600"}>{adj.quantity > 0 ? `+${adj.quantity}` : adj.quantity}</span></TableCell>
-                    <TableCell>{adj.alasan || "-"}</TableCell>
-                    <TableCell>{adj.user?.name || adj.user?.email || "-"}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-              </Table>
-            </>
+            stocks.length > 0 ? (
+              <>
+                <h3 className="text-lg font-semibold mb-4">Riwayat Stok</h3>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Tanggal</TableHead>
+                      <TableHead>Outlet</TableHead>
+                      <TableHead>Jumlah</TableHead>
+                      <TableHead>Alasan</TableHead>
+                      <TableHead>Oleh</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {adjustments.map((adj) => (
+                      <TableRow key={adj.id}>
+                        <TableCell>{new Date(adj.createdAt).toLocaleString("id-ID")}</TableCell>
+                        <TableCell>{adj.outlet ? `${adj.outlet.nama} (${adj.outlet.kode})` : "-"}</TableCell>
+                        <TableCell><span className={adj.quantity >= 0 ? "text-green-600" : "text-red-600"}>{adj.quantity > 0 ? `+${adj.quantity}` : adj.quantity}</span></TableCell>
+                        <TableCell>{adj.alasan || "-"}</TableCell>
+                        <TableCell>{adj.user?.name || adj.user?.email || "-"}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </>
+            ) : null
           ) : (
             <Tabs defaultValue="stocks">
               <TabsList>
@@ -452,21 +453,9 @@ export function ProductDetailPage() {
         <DialogContent className="max-[400px]">
           <DialogHeader><DialogTitle>{stocks.length > 0 ? "Sesuaikan Stok" : "Tambah Stok"}</DialogTitle></DialogHeader>
           <div className="grid gap-4 py-4">
-            {stocks.length === 0 && (
-              <div>
-                <label className="text-sm font-medium">Outlet</label>
-                <Select value={createStockOutletId} onValueChange={setCreateStockOutletId}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Pilih outlet" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {outlets.map((outlet) => (
-                      <SelectItem key={outlet.id} value={outlet.id.toString()}>
-                        {outlet.nama} ({outlet.kode})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            {stocks.length === 0 && selectedOutlet && (
+              <div className="text-sm text-gray-500">
+                Outlet: <span className="font-medium text-gray-900">{selectedOutlet.nama} ({selectedOutlet.kode})</span>
               </div>
             )}
             <div>
@@ -503,7 +492,7 @@ export function ProductDetailPage() {
                   onChange={(e) => setAdjustmentReason(e.target.value)}
                   className="mt-1"
                   placeholder="Contoh: Koreksi stok, barang rusak, dll"
-                required
+                  required
                 />
               </div>
             )}
@@ -512,12 +501,12 @@ export function ProductDetailPage() {
             <Button
               type="button"
               disabled={
-                (stocks.length === 0 && (!createStockOutletId || createStockQuantity <= 0 || createStockMutation.isPending)) ||
+                (stocks.length === 0 && (!selectedOutlet || createStockQuantity <= 0 || createStockMutation.isPending)) ||
                 (stocks.length > 0 && (createStockQuantity === 0 || !adjustmentReason.trim() || !session?.user || adjustStockMutation.isPending))
               }
               onClick={() => {
-                if (stocks.length === 0) {
-                  createStockMutation.mutate({ productId, outletId: createStockOutletId, quantity: createStockQuantity });
+                if (stocks.length === 0 && selectedOutlet) {
+                  createStockMutation.mutate({ productId, outletId: selectedOutlet.id, quantity: createStockQuantity });
                 } else {
                   const outletId = selectedOutlet?.id || stocks[0]?.outletId;
                   if (outletId && session?.user) {

@@ -1,8 +1,16 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
 import { productsApi, type Product } from "@/lib/api/products";
-import { ordersApi, type CreateOrderDto, type TaxBreakdown, type DiscountBreakdown } from "@/lib/api/orders";
-import { paymentMethodsApi, type PaymentMethod } from "@/lib/api/payment-methods";
+import {
+  ordersApi,
+  type CreateOrderDto,
+  type TaxBreakdown,
+  type DiscountBreakdown,
+} from "@/lib/api/orders";
+import {
+  paymentMethodsApi,
+  type PaymentMethod,
+} from "@/lib/api/payment-methods";
 import { taxesApi } from "@/lib/api/taxes";
 import { discountsApi } from "@/lib/api/discounts";
 import { useTenant } from "@/contexts/tenant-context";
@@ -23,7 +31,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Plus, Minus, ShoppingCart, Receipt, X, Store, CheckCircle, Printer } from "lucide-react";
+import {
+  Search,
+  Plus,
+  Minus,
+  ShoppingCart,
+  Receipt,
+  X,
+  Store,
+  CheckCircle,
+  Printer,
+} from "lucide-react";
 import { formatRupiah } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -66,30 +84,42 @@ export function PosPage() {
   const [selectedTaxIds, setSelectedTaxIds] = useState<string[]>([]);
   const [selectedDiscountIds, setSelectedDiscountIds] = useState<string[]>([]);
 
-  const { selectedTenant, selectedOutlet, isLoading: tenantLoading } = useTenant();
+  const {
+    selectedTenant,
+    selectedOutlet,
+    isLoading: tenantLoading,
+  } = useTenant();
   const effectiveTenantId = selectedTenant?.id;
   const effectiveOutletId = selectedOutlet?.id;
 
   const { data: productsData, isLoading: productsLoading } = useQuery({
-    queryKey: ["products", effectiveTenantId, searchQuery, categoryFilter],
+    queryKey: [
+      "products",
+      effectiveTenantId,
+      effectiveOutletId,
+      searchQuery,
+      categoryFilter,
+    ],
     queryFn: () =>
       productsApi.getAll({
         tenantId: effectiveTenantId,
+        outletId: effectiveOutletId,
         search: searchQuery || undefined,
         isActive: true,
       }),
     enabled: !!effectiveTenantId,
   });
 
-  const { data: paymentMethodsData, isLoading: paymentMethodsLoading } = useQuery({
-    queryKey: ["payment-methods", effectiveTenantId],
-    queryFn: () =>
-      paymentMethodsApi.getAll({
-        tenantId: effectiveTenantId,
-        isActive: true,
-      }),
-    enabled: !!effectiveTenantId,
-  });
+  const { data: paymentMethodsData, isLoading: paymentMethodsLoading } =
+    useQuery({
+      queryKey: ["payment-methods", effectiveTenantId],
+      queryFn: () =>
+        paymentMethodsApi.getAll({
+          tenantId: effectiveTenantId,
+          isActive: true,
+        }),
+      enabled: !!effectiveTenantId,
+    });
 
   const { data: taxesData } = useQuery({
     queryKey: ["taxes", effectiveTenantId, effectiveOutletId],
@@ -166,9 +196,13 @@ export function PosPage() {
       setCart(
         cart.map((item) =>
           item.product.id === product.id
-            ? { ...item, quantity: item.quantity + 1, total: String(Number(item.hargaSatuan) * (item.quantity + 1)) }
-            : item
-        )
+            ? {
+                ...item,
+                quantity: item.quantity + 1,
+                total: String(Number(item.hargaSatuan) * (item.quantity + 1)),
+              }
+            : item,
+        ),
       );
     } else {
       setCart([
@@ -185,11 +219,18 @@ export function PosPage() {
   };
 
   const updateQuantity = (productId: string, delta: number) => {
+    const cartItem = cart.find((item) => item.product.id === productId);
+    if (!cartItem) return;
+
+    const maxStock = cartItem.product.stock ?? 0;
+    const newQuantity = cartItem.quantity + delta;
+
+    if (newQuantity < 1 || newQuantity > maxStock) return;
+
     setCart(
       cart
         .map((item) => {
           if (item.product.id === productId) {
-            const newQuantity = Math.max(1, item.quantity + delta);
             return {
               ...item,
               quantity: newQuantity,
@@ -198,7 +239,7 @@ export function PosPage() {
           }
           return item;
         })
-        .filter((item) => item.quantity > 0)
+        .filter((item) => item.quantity > 0),
     );
   };
 
@@ -211,17 +252,19 @@ export function PosPage() {
   }, [cart]);
 
   const taxBreakdown = useMemo<TaxBreakdown[]>(() => {
-    return selectedTaxIds.map((taxId) => {
-      const tax = taxes.find((t) => t.id === taxId);
-      if (!tax) return null;
-      const amount = Math.round((subtotal * Number(tax.rate)) / 100);
-      return {
-        taxId: tax.id,
-        nama: tax.nama,
-        rate: tax.rate,
-        amount,
-      };
-    }).filter(Boolean) as TaxBreakdown[];
+    return selectedTaxIds
+      .map((taxId) => {
+        const tax = taxes.find((t) => t.id === taxId);
+        if (!tax) return null;
+        const amount = Math.round((subtotal * Number(tax.rate)) / 100);
+        return {
+          taxId: tax.id,
+          nama: tax.nama,
+          rate: tax.rate,
+          amount,
+        };
+      })
+      .filter(Boolean) as TaxBreakdown[];
   }, [subtotal, selectedTaxIds, taxes]);
 
   const taxAmount = useMemo(() => {
@@ -229,21 +272,26 @@ export function PosPage() {
   }, [taxBreakdown]);
 
   const discountBreakdown = useMemo<DiscountBreakdown[]>(() => {
-    return selectedDiscountIds.map((discountId) => {
-      const discount = discounts.find((d) => d.id === discountId);
-      if (!discount) return null;
-      const amount = Math.round((subtotal * Number(discount.rate)) / 100);
-      return {
-        discountId: discount.id,
-        nama: discount.nama,
-        rate: discount.rate,
-        amount,
-      };
-    }).filter(Boolean) as DiscountBreakdown[];
+    return selectedDiscountIds
+      .map((discountId) => {
+        const discount = discounts.find((d) => d.id === discountId);
+        if (!discount) return null;
+        const amount = Math.round((subtotal * Number(discount.rate)) / 100);
+        return {
+          discountId: discount.id,
+          nama: discount.nama,
+          rate: discount.rate,
+          amount,
+        };
+      })
+      .filter(Boolean) as DiscountBreakdown[];
   }, [subtotal, selectedDiscountIds, discounts]);
 
   const discountAmount = useMemo(() => {
-    return discountBreakdown.reduce((sum, discount) => sum + discount.amount, 0);
+    return discountBreakdown.reduce(
+      (sum, discount) => sum + discount.amount,
+      0,
+    );
   }, [discountBreakdown]);
 
   const total = subtotal + taxAmount - discountAmount;
@@ -275,12 +323,16 @@ export function PosPage() {
       total: item.total,
     }));
 
+    const selectedPaymentMethod = paymentMethodsData?.data?.find(
+      (pm) => pm.nama.toLowerCase().replace(/\s+/g, "_") === paymentMethod,
+    );
+
     createOrderMutation.mutate({
       tenantId: effectiveTenantId,
       outletId: effectiveOutletId,
       orderNumber: generateOrderNumber(
         selectedTenant?.slug || "UNKNOWN",
-        selectedOutlet?.kode || "OUT"
+        selectedOutlet?.kode || "OUT",
       ),
       status: "complete",
       subtotal: String(subtotal),
@@ -288,6 +340,7 @@ export function PosPage() {
       pajakBreakdown: taxBreakdown,
       jumlahDiskon: String(discountAmount),
       diskonBreakdown: discountBreakdown,
+      paymentMethodId: selectedPaymentMethod?.id || null,
       total: String(total),
       notes: notes || null,
       completedAt: new Date().toISOString(),
@@ -302,7 +355,7 @@ export function PosPage() {
           <div>
             <h4 className="text-lg font-semibold m-0">Kasir</h4>
             <p className="text-sm text-gray-500 m-0">
-              {selectedOutlet?.name || "Pilih outlet"}
+              {selectedOutlet?.nama || "Pilih outlet"}
             </p>
           </div>
           <div className="flex gap-2">
@@ -340,7 +393,9 @@ export function PosPage() {
             <div className="text-center">
               <Receipt className="h-12 w-12 mx-auto mb-4 text-gray-300" />
               <p className="text-gray-500">Anda belum memiliki tenant</p>
-              <p className="text-sm text-gray-400">Silakan hubungi admin untuk informasi lebih lanjut</p>
+              <p className="text-sm text-gray-400">
+                Silakan hubungi admin untuk informasi lebih lanjut
+              </p>
             </div>
           </div>
         ) : !effectiveOutletId ? (
@@ -348,7 +403,9 @@ export function PosPage() {
             <div className="text-center">
               <Store className="h-12 w-12 mx-auto mb-4 text-gray-300" />
               <p className="text-gray-500">Silakan pilih outlet</p>
-              <p className="text-sm text-gray-400">Pilih outlet dari dropdown di header</p>
+              <p className="text-sm text-gray-400">
+                Pilih outlet dari dropdown di header
+              </p>
             </div>
           </div>
         ) : productsLoading ? (
@@ -358,21 +415,41 @@ export function PosPage() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto flex-1">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto flex-1 py-4">
             {filteredProducts.map((product) => (
               <div
                 key={product.id}
-                onClick={() => addToCart(product)}
-                className="border rounded-lg p-4 cursor-pointer hover:border-primary hover:shadow-md transition-all h-48 flex flex-col"
+                onClick={() => (product.stock ?? 0) > 0 && addToCart(product)}
+                className={`relative border rounded-lg p-4 cursor-pointer hover:shadow-md transition-all h-48 flex flex-col ${
+                  (product.stock ?? 0) < product.minStockLevel
+                    ? "bg-red-50 border-red-200"
+                    : ""
+                } ${(product.stock ?? 0) === 0 ? "bg-gray-100 border-gray-200 opacity-60 cursor-not-allowed" : "hover:border-primary"}`}
               >
+                <div
+                  className={`absolute -top-3 -right-3 flex items-center justify-center h-8 min-w-8 px-2 rounded-full text-xs font-bold shadow-sm border-2 border-white ${
+                    (product.stock ?? 0) === 0
+                      ? "bg-gray-400 text-white"
+                      : (product.stock ?? 0) < product.minStockLevel
+                        ? "bg-red-500 text-white"
+                        : "bg-primary text-primary-foreground"
+                  }`}
+                >
+                  {product.stock ?? 0}
+                </div>
                 <div className="h-20 bg-gray-100 rounded-md mb-3 flex items-center justify-center">
                   <Receipt className="h-8 w-8 text-gray-400" />
                 </div>
                 <h5 className="font-medium text-sm truncate">{product.nama}</h5>
                 <p className="text-xs text-gray-500">{product.sku}</p>
-                <p className="font-bold text-primary mt-2">
-                  {formatRupiah(product.hargaJual)}
-                </p>
+                <div className="flex justify-between items-end mt-auto">
+                  <p className="font-bold text-primary">
+                    {formatRupiah(product.hargaJual)}
+                  </p>
+                  {(product.stock ?? 0) === 0 && (
+                    <p className="text-xs font-medium text-gray-500">Habis</p>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -421,6 +498,7 @@ export function PosPage() {
                       variant="outline"
                       size="icon"
                       className="h-7 w-7"
+                      disabled={item.quantity <= 1}
                       onClick={() => updateQuantity(item.product.id, -1)}
                     >
                       <Minus className="h-3 w-3" />
@@ -432,6 +510,7 @@ export function PosPage() {
                       variant="outline"
                       size="icon"
                       className="h-7 w-7"
+                      disabled={item.quantity >= (item.product.stock ?? 0)}
                       onClick={() => updateQuantity(item.product.id, 1)}
                     >
                       <Plus className="h-3 w-3" />
@@ -483,7 +562,10 @@ export function PosPage() {
               <h5 className="font-semibold mb-3">Ringkasan Pesanan</h5>
               <div className="space-y-3 max-h-64 overflow-y-auto mb-4">
                 {cart.map((item) => (
-                  <div key={item.product.id} className="flex justify-between text-sm">
+                  <div
+                    key={item.product.id}
+                    className="flex justify-between text-sm"
+                  >
                     <span className="text-gray-600">
                       {item.product.nama} x {item.quantity}
                     </span>
@@ -496,18 +578,27 @@ export function PosPage() {
                   <span className="text-gray-500">Subtotal</span>
                   <span>{formatRupiah(subtotal)}</span>
                 </div>
-                {taxBreakdown.length > 0 && taxBreakdown.map((tax) => (
-                  <div key={tax.taxId} className="flex justify-between">
-                    <span className="text-gray-500">{tax.nama} ({tax.rate}%)</span>
-                    <span>{formatRupiah(tax.amount)}</span>
-                  </div>
-                ))}
-                {discountBreakdown.length > 0 && discountBreakdown.map((discount) => (
-                  <div key={discount.discountId} className="flex justify-between">
-                    <span className="text-gray-500">{discount.nama} ({discount.rate}%)</span>
-                    <span>-{formatRupiah(discount.amount)}</span>
-                  </div>
-                ))}
+                {taxBreakdown.length > 0 &&
+                  taxBreakdown.map((tax) => (
+                    <div key={tax.taxId} className="flex justify-between">
+                      <span className="text-gray-500">
+                        {tax.nama} ({tax.rate}%)
+                      </span>
+                      <span>{formatRupiah(tax.amount)}</span>
+                    </div>
+                  ))}
+                {discountBreakdown.length > 0 &&
+                  discountBreakdown.map((discount) => (
+                    <div
+                      key={discount.discountId}
+                      className="flex justify-between"
+                    >
+                      <span className="text-gray-500">
+                        {discount.nama} ({discount.rate}%)
+                      </span>
+                      <span>-{formatRupiah(discount.amount)}</span>
+                    </div>
+                  ))}
                 <div className="flex justify-between font-bold text-lg border-t pt-2">
                   <span>Total</span>
                   <span>{formatRupiah(total)}</span>
@@ -527,9 +618,19 @@ export function PosPage() {
                   <label className="text-sm font-medium">Pajak</label>
                   <div className="border rounded-lg p-3 space-y-2">
                     {taxes.map((tax) => (
-                      <div key={tax.id} className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600">{tax.nama} ({tax.rate}%)</span>
-                        <span>{formatRupiah(taxBreakdown.find((t) => t.taxId === tax.id)?.amount || 0)}</span>
+                      <div
+                        key={tax.id}
+                        className="flex items-center justify-between text-sm"
+                      >
+                        <span className="text-gray-600">
+                          {tax.nama} ({tax.rate}%)
+                        </span>
+                        <span>
+                          {formatRupiah(
+                            taxBreakdown.find((t) => t.taxId === tax.id)
+                              ?.amount || 0,
+                          )}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -541,23 +642,42 @@ export function PosPage() {
                   <label className="text-sm font-medium">Diskon</label>
                   <div className="border rounded-lg p-3 space-y-2">
                     {discounts.map((discount) => (
-                      <div key={discount.id} className="flex items-center justify-between text-sm">
+                      <div
+                        key={discount.id}
+                        className="flex items-center justify-between text-sm"
+                      >
                         <label className="flex items-center gap-2 cursor-pointer">
                           <input
                             type="checkbox"
                             checked={selectedDiscountIds.includes(discount.id)}
                             onChange={(e) => {
                               if (e.target.checked) {
-                                setSelectedDiscountIds([...selectedDiscountIds, discount.id]);
+                                setSelectedDiscountIds([
+                                  ...selectedDiscountIds,
+                                  discount.id,
+                                ]);
                               } else {
-                                setSelectedDiscountIds(selectedDiscountIds.filter((id) => id !== discount.id));
+                                setSelectedDiscountIds(
+                                  selectedDiscountIds.filter(
+                                    (id) => id !== discount.id,
+                                  ),
+                                );
                               }
                             }}
                             className="rounded border-gray-300"
                           />
-                          <span className="text-gray-600">{discount.nama} ({discount.rate}%)</span>
+                          <span className="text-gray-600">
+                            {discount.nama} ({discount.rate}%)
+                          </span>
                         </label>
-                        <span>-{formatRupiah(discountBreakdown.find((d) => d.discountId === discount.id)?.amount || 0)}</span>
+                        <span>
+                          -
+                          {formatRupiah(
+                            discountBreakdown.find(
+                              (d) => d.discountId === discount.id,
+                            )?.amount || 0,
+                          )}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -573,9 +693,13 @@ export function PosPage() {
                   <SelectContent>
                     {paymentMethodsLoading ? (
                       <div className="p-2 text-sm text-gray-500">Memuat...</div>
-                    ) : paymentMethodsData?.data && paymentMethodsData.data.length > 0 ? (
+                    ) : paymentMethodsData?.data &&
+                      paymentMethodsData.data.length > 0 ? (
                       paymentMethodsData.data.map((pm: PaymentMethod) => (
-                        <SelectItem key={pm.id} value={pm.nama.toLowerCase().replace(/\s+/g, "_")}>
+                        <SelectItem
+                          key={pm.id}
+                          value={pm.nama.toLowerCase().replace(/\s+/g, "_")}
+                        >
                           {pm.nama}
                         </SelectItem>
                       ))
@@ -584,7 +708,9 @@ export function PosPage() {
                         <SelectItem value="cash">Tunai</SelectItem>
                         <SelectItem value="qris">QRIS</SelectItem>
                         <SelectItem value="card">Kartu</SelectItem>
-                        <SelectItem value="bank_transfer">Transfer Bank</SelectItem>
+                        <SelectItem value="bank_transfer">
+                          Transfer Bank
+                        </SelectItem>
                         <SelectItem value="e_wallet">E-Wallet</SelectItem>
                       </>
                     )}
@@ -597,7 +723,11 @@ export function PosPage() {
                   <label className="text-sm font-medium">Jumlah Bayar</label>
                   <Input
                     type="text"
-                    value={amountPaid ? Number(amountPaid).toLocaleString("id-ID") : ""}
+                    value={
+                      amountPaid
+                        ? Number(amountPaid).toLocaleString("id-ID")
+                        : ""
+                    }
                     onChange={(e) => {
                       const value = e.target.value.replace(/[^\d]/g, "");
                       setAmountPaid(value);
@@ -622,7 +752,9 @@ export function PosPage() {
               )}
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Catatan (Opsional)</label>
+                <label className="text-sm font-medium">
+                  Catatan (Opsional)
+                </label>
                 <Input
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
@@ -642,7 +774,9 @@ export function PosPage() {
                 (paymentMethod === "cash" && amountPaidNum < total)
               }
             >
-              {createOrderMutation.isPending ? "Memproses..." : "Simpan Pesanan"}
+              {createOrderMutation.isPending
+                ? "Memproses..."
+                : "Simpan Pesanan"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -660,7 +794,10 @@ export function PosPage() {
             <p className="text-gray-600">Pesanan telah berhasil dibuat.</p>
             {lastOrder && (
               <p className="text-sm text-gray-500 mt-2">
-                No. Pesanan: <span className="font-mono font-bold">{lastOrder.orderNumber}</span>
+                No. Pesanan:{" "}
+                <span className="font-mono font-bold">
+                  {lastOrder.orderNumber}
+                </span>
               </p>
             )}
           </div>
@@ -687,15 +824,22 @@ export function PosPage() {
       {lastOrder && (
         <div className="hidden print:block p-4 text-sm" id="receipt">
           <div className="text-center mb-4">
-            <h2 className="font-bold text-lg">{selectedTenant?.nama || "Toko"}</h2>
-            <p className="text-xs">{selectedOutlet?.name || ""}</p>
+            <h2 className="font-bold text-lg">
+              {selectedTenant?.nama || "Toko"}
+            </h2>
+            <p className="text-xs">{selectedOutlet?.nama || ""}</p>
             <p className="text-xs">No. {lastOrder.orderNumber}</p>
             <p className="text-xs">{new Date().toLocaleString("id-ID")}</p>
           </div>
           <div className="border-t border-b border-dashed py-2 mb-2">
             {lastOrder.items.map((item) => (
-              <div key={item.product.id} className="flex justify-between text-xs">
-                <span>{item.product.nama} x {item.quantity}</span>
+              <div
+                key={item.product.id}
+                className="flex justify-between text-xs"
+              >
+                <span>
+                  {item.product.nama} x {item.quantity}
+                </span>
                 <span>{formatRupiah(item.total)}</span>
               </div>
             ))}
@@ -707,13 +851,17 @@ export function PosPage() {
             </div>
             {lastOrder.taxBreakdown.map((tax) => (
               <div key={tax.taxId} className="flex justify-between">
-                <span>{tax.nama} ({tax.rate}%)</span>
+                <span>
+                  {tax.nama} ({tax.rate}%)
+                </span>
                 <span>{formatRupiah(tax.amount)}</span>
               </div>
             ))}
             {lastOrder.discountBreakdown.map((discount) => (
               <div key={discount.discountId} className="flex justify-between">
-                <span>{discount.nama} ({discount.rate}%)</span>
+                <span>
+                  {discount.nama} ({discount.rate}%)
+                </span>
                 <span>-{formatRupiah(discount.amount)}</span>
               </div>
             ))}

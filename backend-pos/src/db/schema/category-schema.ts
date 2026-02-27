@@ -4,7 +4,9 @@ import { tenants } from './tenant-schema';
 import { products } from './product-schema';
 
 export const categories = pgTable('categories', {
-  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  id: text('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   tenantId: text('tenant_id')
     .references(() => tenants.id)
     .notNull(),

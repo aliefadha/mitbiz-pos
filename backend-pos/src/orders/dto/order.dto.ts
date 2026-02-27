@@ -11,18 +11,30 @@ export const CreateOrderItemSchema = z.object({
   total: z.string().min(1, 'Total price is required'),
 });
 
+export const TaxBreakdownSchema = z.object({
+  taxId: z.string(),
+  nama: z.string(),
+  rate: z.string(),
+  amount: z.number(),
+});
+
+export const DiscountBreakdownSchema = z.object({
+  discountId: z.string(),
+  nama: z.string(),
+  rate: z.string(),
+  amount: z.number(),
+});
+
 export const CreateOrderSchema = z.object({
   tenantId: z.string().min(1, 'Tenant ID is required'),
   outletId: z.string().min(1, 'Outlet ID is required'),
   orderNumber: z.string().min(1, 'Order number is required'),
   status: OrderStatusSchema.default('complete'),
   subtotal: z.string().optional().default('0'),
-  taxId: z.string().optional().nullable(),
-  taxNama: z.string().optional().nullable(),
   jumlahPajak: z.string().optional().default('0'),
-  discountId: z.string().optional().nullable(),
-  discountNama: z.string().optional().nullable(),
+  pajakBreakdown: z.array(TaxBreakdownSchema).optional(),
   jumlahDiskon: z.string().optional().default('0'),
+  diskonBreakdown: z.array(DiscountBreakdownSchema).optional(),
   paymentMethodId: z.string().optional().nullable(),
   total: z.string().optional().default('0'),
   notes: z.string().optional().nullable(),
@@ -35,12 +47,10 @@ export const UpdateOrderSchema = z.object({
   orderNumber: z.string().min(1).optional(),
   status: OrderStatusSchema.optional(),
   subtotal: z.string().optional(),
-  taxId: z.string().optional().nullable(),
-  taxNama: z.string().optional().nullable(),
   jumlahPajak: z.string().optional(),
-  discountId: z.string().optional().nullable(),
-  discountNama: z.string().optional().nullable(),
+  pajakBreakdown: z.array(TaxBreakdownSchema).optional(),
   jumlahDiskon: z.string().optional(),
+  diskonBreakdown: z.array(DiscountBreakdownSchema).optional(),
   paymentMethodId: z.string().optional().nullable(),
   total: z.string().optional(),
   notes: z.string().optional().nullable(),

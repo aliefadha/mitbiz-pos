@@ -81,13 +81,14 @@ export function ProductPage() {
       isActive: true,
     },
   });
-  const { selectedTenant: contextSelectedTenant } = useTenant();
+  const { selectedTenant: contextSelectedTenant, selectedOutlet } = useTenant();
 
   const effectiveTenantId = contextSelectedTenant?.id;
+  const effectiveOutletId = selectedOutlet?.id;
 
   const { data: productsData, isLoading: productsLoading } = useQuery({
-    queryKey: ["products", effectiveTenantId, searchQuery],
-    queryFn: () => productsApi.getAll({ tenantId: effectiveTenantId, search: searchQuery || undefined }),
+    queryKey: ["products", effectiveTenantId, effectiveOutletId, searchQuery],
+    queryFn: () => productsApi.getAll({ tenantId: effectiveTenantId, outletId: effectiveOutletId, search: searchQuery || undefined }),
     enabled: !!effectiveTenantId,
   });
 
@@ -269,6 +270,7 @@ export function ProductPage() {
                 <TableHead>Kategori</TableHead>
                 <TableHead>Tipe</TableHead>
                 <TableHead>Harga Jual</TableHead>
+                <TableHead>Stok</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="w-[120px]">Aksi</TableHead>
               </TableRow>
@@ -299,6 +301,13 @@ export function ProductPage() {
                     </span>
                   </TableCell>
                   <TableCell>{formatRupiah(product.hargaJual)}</TableCell>
+                  <TableCell>
+                    <span
+                      className={`font-medium ${(product.stock ?? 0) < product.minStockLevel ? 'text-red-600' : ''}`}
+                    >
+                      {product.stock ?? 0}
+                    </span>
+                  </TableCell>
                   <TableCell>
                     <span
                       className={`px-2 py-1 rounded-full text-xs ${getStatusColor(!!product.isActive)}`}

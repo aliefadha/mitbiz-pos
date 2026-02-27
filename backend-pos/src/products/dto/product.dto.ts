@@ -59,6 +59,7 @@ export const ProductQuerySchema = z.object({
   tenantId: z.string().min(1).optional(),
   categoryId: z.string().min(1).optional(),
   tipe: ProductTypeSchema.optional(),
+  outletId: z.string().min(1).optional(),
 });
 
 export class CreateProductDto extends createZodDto(CreateProductSchema) {}

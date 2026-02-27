@@ -20,7 +20,7 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     "/payment-methods"
   ],
   owner: ["/tenants/new", "/account", "/categories", "/products", "/settings", "/dashboard", "/inventory", "/outlets", "/orders", "/pos", "/taxes", "/discounts", "/payment-methods"],
-  cashier: ["/dashboard", "/inventory", "/outlets", "/categories", "/products", "/orders", "/pos", "/payment-methods", "/discounts", "/taxes", "/settings"],
+  cashier: ["/dashboard", "/inventory", "/categories", "/products", "/orders", "/pos", "/payment-methods", "/discounts", "/taxes", "/settings"],
 };
 
 export async function checkAuth() {

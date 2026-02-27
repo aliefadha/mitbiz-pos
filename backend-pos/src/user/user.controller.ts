@@ -4,6 +4,7 @@ import {
   Post,
   Patch,
   Body,
+  Query,
   Request,
   UseGuards,
   UsePipes,
@@ -12,7 +13,7 @@ import { AuthService, AuthGuard } from '@thallesp/nestjs-better-auth';
 import { auth } from '../lib/auth';
 import type { Request as ExpressRequest } from 'express';
 import { fromNodeHeaders } from 'better-auth/node';
-import { CreateUserSchema, CreateUserDto } from './dto';
+import { CreateUserSchema, CreateUserDto, UserQueryDto, UserQuerySchema } from './dto';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import { PermissionGuard } from '../common/guards/permission.guard';
 import { UserService } from './user.service';
@@ -26,14 +27,15 @@ export class UserController {
   ) {}
 
   @Get()
-  async getUsers(@Request() req: ExpressRequest) {
+  @UsePipes(new ZodValidationPipe(UserQuerySchema, 'query'))
+  async getUsers(@Query() query: UserQueryDto, @Request() req: ExpressRequest) {
     const headers = fromNodeHeaders(req.headers);
     const session = await this.authService.api.getSession({ headers });
     const role = session?.user?.role;
 
     if (role === 'owner') {
       const userId = session?.user?.id;
-      return this.userService.getUsersByOwner(userId!);
+      return this.userService.getUsersByOwner(userId!, query.tenantId);
     }
 
     const users = await this.authService.api.listUsers({

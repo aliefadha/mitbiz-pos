@@ -1,4 +1,3 @@
-
 import { relations, sql } from 'drizzle-orm';
 import {
   pgTable,
@@ -12,7 +11,9 @@ import { orders } from './order-schema';
 import { products } from './product-schema';
 
 export const orderItems = pgTable('order_items', {
-  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  id: text('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   outletId: text('outlet_id')
     .references(() => outlets.id)
     .notNull(),

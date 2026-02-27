@@ -10,6 +10,7 @@ import { products } from '../db/schema/product-schema';
 import { tenants } from '../db/schema/tenant-schema';
 import { outlets } from '../db/schema/outlet-schema';
 import { categories } from '../db/schema/category-schema';
+import { productStocks } from '../db/schema/stock-schema';
 import { CreateProductDto, UpdateProductDto, ProductQueryDto } from './dto';
 import { DB_CONNECTION } from '../db/db.module';
 import type { DrizzleDB } from '../db/type';
@@ -28,6 +29,7 @@ export class ProductsService {
       tenantId,
       categoryId,
       tipe,
+      outletId,
     } = query;
     const offset = (page - 1) * limit;
 
@@ -54,11 +56,19 @@ export class ProductsService {
       conditions.push(like(products.nama, `%${search}%`));
     }
 
+    const stockCondition = outletId
+      ? eq(productStocks.outletId, outletId)
+      : undefined;
+
     const [data, totalResult] = await Promise.all([
       this.db
         .select()
         .from(products)
         .leftJoin(categories, eq(products.categoryId, categories.id))
+        .leftJoin(productStocks, and(
+          eq(products.id, productStocks.productId),
+          stockCondition,
+        ))
         .where(conditions.length > 0 ? and(...conditions) : undefined)
         .limit(limit)
         .offset(offset)
@@ -69,8 +79,18 @@ export class ProductsService {
         .where(conditions.length > 0 ? and(...conditions) : undefined),
     ]);
 
+    const productsMap = new Map<string, number>();
+    data.forEach((row) => {
+      const current = productsMap.get(row.products.id) ?? 0;
+      productsMap.set(
+        row.products.id,
+        current + (row.product_stocks?.quantity ?? 0),
+      );
+    });
+
     const productsWithCategory = data.map((row) => ({
       ...row.products,
+      stock: productsMap.get(row.products.id) ?? 0,
       category: row.categories
         ? {
             id: row.categories.id,

@@ -22,7 +22,7 @@ export interface User {
 export interface Outlet {
   id: string;
   tenantId: string;
-  name: string;
+  nama: string;
   kode: string;
   alamat?: string;
   noHp?: string;
@@ -81,10 +81,10 @@ export const tenantsApi = {
     const allParams = { ...params, ...(userId ? { userId } : {}) };
     const queryString = Object.keys(allParams).length > 0
       ? "?" +
-        Object.entries(allParams)
-          .filter(([_, value]) => value !== undefined)
-          .map(([key, value]) => `${key}=${value}`)
-          .join("&")
+      Object.entries(allParams)
+        .filter(([_, value]) => value !== undefined)
+        .map(([key, value]) => `${key}=${value}`)
+        .join("&")
       : "";
     const response = await fetchApi<{ data: Tenant[] }>(`/tenants${queryString}`);
     return response.data;

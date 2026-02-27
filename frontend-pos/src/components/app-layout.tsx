@@ -88,13 +88,13 @@ const menuConfig = [
         key: "/tenants",
         icon: Users,
         label: "Tenant",
-        roles: ["admin", "owner"],
+        roles: ["admin",],
       },
       {
         key: "/outlets",
         icon: Store,
         label: "Outlet",
-        roles: ["owner", "cashier"],
+        roles: ["owner"],
       },
       {
         key: "/account",

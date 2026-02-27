@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/auth-context";
 import { useTenant } from "@/contexts/tenant-context";
-import { type Tenant, type Outlet as OutletType } from "@/lib/api/tenants";
+import { type Tenant, type Outlet } from "@/lib/api/tenants";
 import { type Role } from "@/lib/rbac";
 import {
   DropdownMenu,
@@ -47,7 +47,7 @@ export function TenantSwitcher() {
                   <span className="truncate font-semibold">
                     {selectedTenant
                       ? selectedOutlet
-                        ? `${selectedTenant.nama} - ${selectedOutlet.name}`
+                        ? `${selectedTenant.nama} - ${selectedOutlet.nama}`
                         : selectedTenant.nama
                       : "Pilih Tenant"}
                   </span>
@@ -93,16 +93,23 @@ export function TenantSwitcher() {
                     </div>
                     {openFolders[tenant.id] && (
                       <div className="flex flex-col pl-7 mt-0.5 space-y-0.5">
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setSelectedTenant(tenant);
-                            setSelectedOutlet(null);
-                          }}
-                          className="cursor-pointer flex items-center px-1"
-                        >
-                          <span className="truncate">Semua Outlet</span>
-                        </DropdownMenuItem>
-                        {tenant.outlets?.map((outlet: OutletType) => (
+                        {(user?.role as Role) === "owner" && (
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setSelectedTenant(tenant);
+                              setSelectedOutlet(null);
+                            }}
+                            className="cursor-pointer flex items-center px-1"
+                          >
+                            <span className={`truncate ${!selectedOutlet && selectedTenant?.id === tenant.id ? "font-semibold" : ""}`}>
+                              {!selectedOutlet && selectedTenant?.id === tenant.id && (
+                                <div className="inline-block align-middle mr-2 h-2 w-2 rounded-full bg-current" />
+                              )}
+                              Semua Outlet
+                            </span>
+                          </DropdownMenuItem>
+                        )}
+                        {tenant.outlets?.map((outlet: Outlet) => (
                           <DropdownMenuItem
                             key={outlet.id}
                             onClick={() => {
@@ -111,7 +118,12 @@ export function TenantSwitcher() {
                             }}
                             className="cursor-pointer flex items-center px-1"
                           >
-                            <span className="truncate">{outlet.name}</span>
+                            <span className={`truncate ${selectedOutlet?.id === outlet.id ? "font-semibold" : ""}`}>
+                              {selectedOutlet?.id === outlet.id && (
+                                <div className="inline-block align-middle mr-2 h-2 w-2 rounded-full bg-current" />
+                              )}
+                              {outlet.nama}
+                            </span>
                           </DropdownMenuItem>
                         ))}
                       </div>

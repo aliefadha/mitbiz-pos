@@ -21,6 +21,7 @@ export interface Product {
   tipe: 'barang' | 'jasa' | 'digital';
   hargaBeli: string | null;
   hargaJual: string;
+  stock: number;
   stockQuantity: number;
   minStockLevel: number;
   unit: string;
@@ -79,9 +80,10 @@ export interface StockAdjustmentResponse {
 }
 
 export const productsApi = {
-  getAll: async (filters?: { tenantId?: string; categoryId?: string; isActive?: boolean; search?: string }): Promise<{ data: Product[]; meta: any }> => {
+  getAll: async (filters?: { tenantId?: string; outletId?: string; categoryId?: string; isActive?: boolean; search?: string }): Promise<{ data: Product[]; meta: any }> => {
     const params = new URLSearchParams();
     if (filters?.tenantId) params.append("tenantId", filters.tenantId.toString());
+    if (filters?.outletId) params.append("outletId", filters.outletId.toString());
     if (filters?.categoryId) params.append("categoryId", filters.categoryId.toString());
     if (filters?.isActive !== undefined) params.append("isActive", filters.isActive.toString());
     if (filters?.search) params.append("search", filters.search);

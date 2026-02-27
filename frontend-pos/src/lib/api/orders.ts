@@ -26,6 +26,7 @@ export interface Order {
   pajakBreakdown: TaxBreakdown[] | null;
   jumlahDiskon: string;
   diskonBreakdown: DiscountBreakdown[] | null;
+  paymentMethodId: string | null;
   total: string;
   notes: string | null;
   completedAt: Date | null;
@@ -36,6 +37,10 @@ export interface Order {
     nama: string;
     alamat: string | null;
     isActive: boolean;
+  };
+  paymentMethod?: {
+    id: string;
+    nama: string;
   };
   orderItems?: OrderItem[];
 }
@@ -65,6 +70,7 @@ export interface CreateOrderDto {
   pajakBreakdown?: TaxBreakdown[];
   jumlahDiskon?: string;
   diskonBreakdown?: DiscountBreakdown[];
+  paymentMethodId?: string | null;
   total?: string;
   notes?: string | null;
   completedAt?: string | null;
@@ -85,7 +91,10 @@ export interface UpdateOrderDto {
   status?: "complete" | "cancel" | "refunded";
   subtotal?: string;
   jumlahPajak?: string;
+  pajakBreakdown?: TaxBreakdown[];
   jumlahDiskon?: string;
+  diskonBreakdown?: DiscountBreakdown[];
+  paymentMethodId?: string | null;
   total?: string;
   notes?: string | null;
   completedAt?: string | null;

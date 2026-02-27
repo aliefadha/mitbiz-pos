@@ -1,18 +1,14 @@
 import { relations, sql } from 'drizzle-orm';
-import {
-  pgTable,
-  text,
-  timestamp,
-  boolean,
-  jsonb,
-} from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, boolean, jsonb } from 'drizzle-orm/pg-core';
 import { user } from './auth-schema';
 import { outlets } from './outlet-schema';
 import { categories } from './category-schema';
 import { products } from './product-schema';
 
 export const tenants = pgTable('tenants', {
-  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  id: text('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   nama: text('nama').notNull(),
   slug: text('slug').unique().notNull(),
   userId: text('user_id').references(() => user.id, { onDelete: 'cascade' }),

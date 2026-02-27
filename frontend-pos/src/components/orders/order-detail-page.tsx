@@ -140,14 +140,32 @@ export function OrderDetailPage() {
               <span className="text-gray-500">Subtotal</span>
               <span>{formatRupiah(order.subtotal)}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Pajak</span>
-              <span>{formatRupiah(order.jumlahPajak)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Diskon</span>
-              <span>{formatRupiah(order.jumlahDiskon)}</span>
-            </div>
+            {order.pajakBreakdown && order.pajakBreakdown.length > 0 && (
+              <>
+                {order.pajakBreakdown.map((tax) => (
+                  <div key={tax.taxId} className="flex justify-between">
+                    <span className="text-gray-500">{tax.nama} ({tax.rate}%)</span>
+                    <span>{formatRupiah(tax.amount)}</span>
+                  </div>
+                ))}
+              </>
+            )}
+            {order.diskonBreakdown && order.diskonBreakdown.length > 0 && (
+              <>
+                {order.diskonBreakdown.map((discount) => (
+                  <div key={discount.discountId} className="flex justify-between">
+                    <span className="text-gray-500">{discount.nama} ({discount.rate}%)</span>
+                    <span>-{formatRupiah(discount.amount)}</span>
+                  </div>
+                ))}
+              </>
+            )}
+            {order.paymentMethod && (
+              <div className="flex justify-between">
+                <span className="text-gray-500">Metode Pembayaran</span>
+                <span>{order.paymentMethod.nama}</span>
+              </div>
+            )}
             <div className="flex justify-between font-bold text-lg border-t pt-3 mt-3">
               <span>Total</span>
               <span>{formatRupiah(order.total)}</span>

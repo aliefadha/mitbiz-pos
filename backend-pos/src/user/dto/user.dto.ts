@@ -24,3 +24,9 @@ export const CreateUserSchema = z
   );
 
 export class CreateUserDto extends createZodDto(CreateUserSchema) {}
+
+export const UserQuerySchema = z.object({
+  tenantId: z.string().optional(),
+});
+
+export class UserQueryDto extends createZodDto(UserQuerySchema) {}

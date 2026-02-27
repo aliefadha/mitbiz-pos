@@ -5,7 +5,9 @@ import { user } from './auth-schema';
 import { outlets } from './outlet-schema';
 
 export const stockAdjustments = pgTable('stock_adjustments', {
-  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  id: text('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   outletId: text('outlet_id')
     .references(() => outlets.id)
     .notNull(),

@@ -72,7 +72,7 @@ export const cashierRole = ac.newRole({
   settings: ['read'],
   tenants: ['read'],
   stocks: ['read'],
-  stockAdjustments: ['read'],
+  stockAdjustments: ['read', 'create', 'update', 'delete'],
   orders: ['create', 'read'],
   orderItems: ['create', 'read'],
   taxes: ['read', 'update'],

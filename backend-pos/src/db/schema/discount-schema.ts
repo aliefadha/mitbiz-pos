@@ -1,5 +1,12 @@
 import { relations, sql } from 'drizzle-orm';
-import { pgTable, text, timestamp, boolean, decimal, pgEnum } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  text,
+  timestamp,
+  boolean,
+  decimal,
+  pgEnum,
+} from 'drizzle-orm/pg-core';
 import { tenants } from './tenant-schema';
 import { outlets } from './outlet-schema';
 
@@ -9,12 +16,13 @@ export const discountScopeEnum = pgEnum('discount_scope', [
 ]);
 
 export const discounts = pgTable('discounts', {
-  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  id: text('id')
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
   tenantId: text('tenant_id')
     .references(() => tenants.id)
     .notNull(),
-  outletId: text('outlet_id')
-    .references(() => outlets.id),
+  outletId: text('outlet_id').references(() => outlets.id),
   nama: text('nama').notNull(),
   rate: decimal('rate', { precision: 5, scale: 2 }).notNull(),
   scope: discountScopeEnum('scope').default('transaction').notNull(),

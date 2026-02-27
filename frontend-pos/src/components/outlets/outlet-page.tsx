@@ -34,6 +34,7 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Link } from "@tanstack/react-router";
 import { Plus, Pencil, Trash2, Store } from "lucide-react";
 
 const formSchema = z.object({
@@ -219,7 +220,15 @@ export function OutletPage() {
                       {outlet.kode}
                     </div>
                   </TableCell>
-                  <TableCell>{outlet.nama}</TableCell>
+                  <TableCell>
+                    <Link
+                      to="/outlets/$outletId"
+                      params={{ outletId: outlet.id }}
+                      className="hover:underline font-medium"
+                    >
+                      {outlet.nama}
+                    </Link>
+                  </TableCell>
                   <TableCell>{outlet.alamat || "-"}</TableCell>
                   <TableCell>{outlet.noHp || "-"}</TableCell>
                   <TableCell>
