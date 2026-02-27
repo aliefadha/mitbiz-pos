@@ -10,7 +10,8 @@
     "test": "vitest run",
     "lint": "biome check",
     "format": "biome format",
-    "check": "biome check --write"
+    "check": "biome check --write",
+    "prepare": "husky"
   },
   "dependencies": {
     "@fontsource/plus-jakarta-sans": "^5.2.8",

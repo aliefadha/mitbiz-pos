@@ -13,3 +13,5 @@
 opencode.json
 
 .agents/
+
+node_modules
