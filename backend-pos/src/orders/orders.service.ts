@@ -34,7 +34,10 @@ export class OrdersService {
     }
 
     if (search) {
-      conditions.push(like(orders.orderNumber, `%${search}%`));
+      conditions.push(
+        like(orders.orderNumber, `%${search}%`),
+        like(orders.nomorAntrian, `%${search}%`),
+      );
     }
 
     const [data, totalResult] = await Promise.all([

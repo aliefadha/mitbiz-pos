@@ -46,6 +46,7 @@ export const orders = pgTable('orders', {
   paymentMethodId: text('payment_method_id').references(() => paymentMethods.id),
   total: decimal('total', { precision: 12, scale: 2 }).default('0').notNull(),
   notes: text('notes'),
+  nomorAntrian: text('nomor_antrian'),
   completedAt: timestamp('completed_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),

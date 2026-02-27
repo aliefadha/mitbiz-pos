@@ -29,6 +29,7 @@ export interface Order {
   paymentMethodId: string | null;
   total: string;
   notes: string | null;
+  nomorAntrian: string | null;
   completedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
@@ -72,6 +73,7 @@ export interface CreateOrderDto {
   paymentMethodId?: string | null;
   total?: string;
   notes?: string | null;
+  nomorAntrian?: string | null;
   completedAt?: string | null;
   items?: CreateOrderItemDto[];
 }

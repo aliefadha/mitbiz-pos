@@ -37,6 +37,7 @@ export const CreateOrderSchema = z.object({
   paymentMethodId: z.string().optional().nullable(),
   total: z.string().optional().default('0'),
   notes: z.string().optional().nullable(),
+  nomorAntrian: z.string().optional().nullable(),
   completedAt: z.string().optional().nullable(),
   items: z.array(CreateOrderItemSchema).optional(),
 });
@@ -53,6 +54,7 @@ export const UpdateOrderSchema = z.object({
   paymentMethodId: z.string().optional().nullable(),
   total: z.string().optional(),
   notes: z.string().optional().nullable(),
+  nomorAntrian: z.string().optional().nullable(),
   completedAt: z.string().optional().nullable(),
 });
 
@@ -81,7 +83,7 @@ export const OrderQuerySchema = z.object({
   outletId: z.string().min(1).optional(),
 });
 
-export class CreateOrderDto extends createZodDto(CreateOrderSchema) { }
-export class UpdateOrderDto extends createZodDto(UpdateOrderSchema) { }
-export class OrderIdDto extends createZodDto(OrderIdSchema) { }
-export class OrderQueryDto extends createZodDto(OrderQuerySchema) { }
+export class CreateOrderDto extends createZodDto(CreateOrderSchema) {}
+export class UpdateOrderDto extends createZodDto(UpdateOrderSchema) {}
+export class OrderIdDto extends createZodDto(OrderIdSchema) {}
+export class OrderQueryDto extends createZodDto(OrderQuerySchema) {}

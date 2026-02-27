@@ -59,6 +59,7 @@ export function PosPage() {
   const [successOpen, setSuccessOpen] = useState(false);
   const [lastOrder, setLastOrder] = useState<{
     orderNumber: string;
+    nomorAntrian: string;
     items: CartItem[];
     subtotal: number;
     taxBreakdown: TaxBreakdown[];
@@ -72,6 +73,7 @@ export function PosPage() {
   const [paymentMethod, setPaymentMethod] = useState<string>('cash');
   const [amountPaid, setAmountPaid] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
+  const [nomorAntrian, setNomorAntrian] = useState<string>('');
   const [selectedTaxIds, setSelectedTaxIds] = useState<string[]>([]);
   const [selectedDiscountIds, setSelectedDiscountIds] = useState<string[]>([]);
 
@@ -122,6 +124,7 @@ export function PosPage() {
       const orderNumber = response.orderNumber;
       setLastOrder({
         orderNumber,
+        nomorAntrian,
         items: [...cart],
         subtotal,
         taxBreakdown,
@@ -136,7 +139,8 @@ export function PosPage() {
       setCheckoutOpen(false);
       setPaymentMethod('cash');
       setAmountPaid('');
-      setNotes('');
+              setNotes('');
+      setNomorAntrian('');
       setSelectedTaxIds([]);
       setSelectedDiscountIds([]);
       queryClient.invalidateQueries({ queryKey: ['orders'] });
@@ -314,6 +318,7 @@ export function PosPage() {
       paymentMethodId: selectedPaymentMethod?.id || null,
       total: String(total),
       notes: notes || null,
+      nomorAntrian: nomorAntrian || null,
       completedAt: new Date().toISOString(),
       items: orderItems,
     });
@@ -686,6 +691,15 @@ export function PosPage() {
                   placeholder="Tambahkan catatan..."
                 />
               </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Nomor Antrian</label>
+                <Input
+                  value={nomorAntrian}
+                  onChange={(e) => setNomorAntrian(e.target.value)}
+                  placeholder="Masukkan nomor antrian..."
+                />
+              </div>
             </div>
           </div>
           <DialogFooter className="mt-4">
@@ -719,6 +733,11 @@ export function PosPage() {
                 No. Pesanan: <span className="font-mono font-bold">{lastOrder.orderNumber}</span>
               </p>
             )}
+            {lastOrder && lastOrder.nomorAntrian && (
+              <p className="text-sm text-gray-500">
+                No. Antrian: <span className="font-mono font-bold">{lastOrder.nomorAntrian}</span>
+              </p>
+            )}
           </div>
           <div className="flex gap-2">
             <Button
@@ -746,6 +765,7 @@ export function PosPage() {
             <h2 className="font-bold text-lg">{selectedTenant?.nama || 'Toko'}</h2>
             <p className="text-xs">{selectedOutlet?.nama || ''}</p>
             <p className="text-xs">No. {lastOrder.orderNumber}</p>
+            {lastOrder.nomorAntrian && <p className="text-xs">No. Antrian: {lastOrder.nomorAntrian}</p>}
             <p className="text-xs">{new Date().toLocaleString('id-ID')}</p>
           </div>
           <div className="border-t border-b border-dashed py-2 mb-2">
