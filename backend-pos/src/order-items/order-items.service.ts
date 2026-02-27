@@ -1,23 +1,14 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-  Inject,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Inject } from '@nestjs/common';
 import { eq, and, sql, SQL } from 'drizzle-orm';
-import { orderItems } from '../db/schema/order-item-schema';
-import { tenants } from '../db/schema/tenant-schema';
-import { outlets } from '../db/schema/outlet-schema';
-import { orders } from '../db/schema/order-schema';
-import { products } from '../db/schema/product-schema';
-import {
-  CreateOrderItemDto,
-  UpdateOrderItemDto,
-  OrderItemQueryDto,
-} from './dto';
-import { DB_CONNECTION } from '../db/db.module';
-import type { DrizzleDB } from '../db/type';
-import type { CurrentUserType } from '../common/decorators/current-user.decorator';
+import { orderItems } from '@/db/schema/order-item-schema';
+import { tenants } from '@/db/schema/tenant-schema';
+import { outlets } from '@/db/schema/outlet-schema';
+import { orders } from '@/db/schema/order-schema';
+import { products } from '@/db/schema/product-schema';
+import { CreateOrderItemDto, UpdateOrderItemDto, OrderItemQueryDto } from './dto';
+import { DB_CONNECTION } from '@/db/db.module';
+import type { DrizzleDB } from '@/db/type';
+import type { CurrentUserType } from '@/common/decorators/current-user.decorator';
 
 @Injectable()
 export class OrderItemsService {
@@ -99,13 +90,8 @@ export class OrderItemsService {
         where: eq(tenants.userId, user.id),
       });
       const userTenantIds = userTenants.map((t) => t.id);
-      if (
-        userTenantIds.length > 0 &&
-        !userTenantIds.includes(orderItem.outlet.tenantId)
-      ) {
-        throw new ForbiddenException(
-          'You do not have access to this order item',
-        );
+      if (userTenantIds.length > 0 && !userTenantIds.includes(orderItem.outlet.tenantId)) {
+        throw new ForbiddenException('You do not have access to this order item');
       }
     }
 
@@ -149,9 +135,7 @@ export class OrderItemsService {
     });
 
     if (!product) {
-      throw new NotFoundException(
-        `Product with ID ${data.productId} not found`,
-      );
+      throw new NotFoundException(`Product with ID ${data.productId} not found`);
     }
 
     if (product.tenantId !== outlet.tenantId) {
@@ -183,9 +167,7 @@ export class OrderItemsService {
       });
 
       if (!product) {
-        throw new NotFoundException(
-          `Product with ID ${data.productId} not found`,
-        );
+        throw new NotFoundException(`Product with ID ${data.productId} not found`);
       }
 
       if (product.tenantId !== existingOrderItem.outlet.tenantId) {
@@ -205,10 +187,7 @@ export class OrderItemsService {
   async remove(id: string, user: CurrentUserType) {
     await this.findById(id, user);
 
-    const [orderItem] = await this.db
-      .delete(orderItems)
-      .where(eq(orderItems.id, id))
-      .returning();
+    const [orderItem] = await this.db.delete(orderItems).where(eq(orderItems.id, id)).returning();
 
     return orderItem;
   }

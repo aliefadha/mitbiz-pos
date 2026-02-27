@@ -1,29 +1,18 @@
-import { useState } from "react";
-import { useParams, useNavigate } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { categoriesApi, type Category, type CreateCategoryDto, type UpdateCategoryDto } from "@/lib/api/categories";
-import { tenantsApi } from "@/lib/api/tenants";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNavigate, useParams } from '@tanstack/react-router';
+import { ArrowLeft, Pencil, Plus, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -31,38 +20,54 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, Plus, Pencil, Trash2 } from "lucide-react";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  type Category,
+  type CreateCategoryDto,
+  categoriesApi,
+  type UpdateCategoryDto,
+} from '@/lib/api/categories';
+import { tenantsApi } from '@/lib/api/tenants';
 
 const formSchema = z.object({
-  nama: z.string().min(1, "Nama kategori wajib diisi"),
+  nama: z.string().min(1, 'Nama kategori wajib diisi'),
   deskripsi: z.string().optional(),
 });
 
 export function TenantCategoriesPage() {
-  const { slug } = useParams({ from: "/_protected/tenants/$slug/categories/" });
+  const { slug } = useParams({ from: '/_protected/tenants/$slug/categories/' });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [searchText, setSearchText] = useState("");
+  const [searchText, setSearchText] = useState('');
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      nama: "",
-      deskripsi: "",
+      nama: '',
+      deskripsi: '',
     },
   });
 
   const { data: tenant } = useQuery({
-    queryKey: ["tenant", slug],
+    queryKey: ['tenant', slug],
     queryFn: () => tenantsApi.getBySlug(slug),
   });
 
   const { data: categories, isLoading } = useQuery({
-    queryKey: ["categories", tenant?.id],
+    queryKey: ['categories', tenant?.id],
     queryFn: () => categoriesApi.getAll({ tenantId: tenant!.id }),
     enabled: !!tenant?.id,
   });
@@ -70,7 +75,7 @@ export function TenantCategoriesPage() {
   const createMutation = useMutation({
     mutationFn: (data: CreateCategoryDto) => categoriesApi.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["categories", tenant?.id] });
+      queryClient.invalidateQueries({ queryKey: ['categories', tenant?.id] });
       setIsModalOpen(false);
       form.reset();
     },
@@ -83,7 +88,7 @@ export function TenantCategoriesPage() {
     mutationFn: ({ id, data }: { id: string; data: UpdateCategoryDto }) =>
       categoriesApi.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["categories", tenant?.id] });
+      queryClient.invalidateQueries({ queryKey: ['categories', tenant?.id] });
       setIsModalOpen(false);
       setEditingCategory(null);
       form.reset();
@@ -96,7 +101,7 @@ export function TenantCategoriesPage() {
   const toggleStatusMutation = useMutation({
     mutationFn: categoriesApi.toggleStatus,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["categories", tenant?.id] });
+      queryClient.invalidateQueries({ queryKey: ['categories', tenant?.id] });
     },
     onError: (error: Error) => {
       alert(error.message);
@@ -106,7 +111,7 @@ export function TenantCategoriesPage() {
   const deleteMutation = useMutation({
     mutationFn: categoriesApi.delete,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["categories", tenant?.id] });
+      queryClient.invalidateQueries({ queryKey: ['categories', tenant?.id] });
     },
     onError: (error: Error) => {
       alert(error.message);
@@ -123,7 +128,7 @@ export function TenantCategoriesPage() {
     setEditingCategory(category);
     form.reset({
       nama: category.nama,
-      deskripsi: category.deskripsi || "",
+      deskripsi: category.deskripsi || '',
     });
     setIsModalOpen(true);
   };
@@ -133,7 +138,7 @@ export function TenantCategoriesPage() {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to delete this category? This action cannot be undone.")) {
+    if (confirm('Are you sure you want to delete this category? This action cannot be undone.')) {
       deleteMutation.mutate(id);
     }
   };
@@ -164,11 +169,11 @@ export function TenantCategoriesPage() {
     <div>
       <Button
         variant="link"
-        onClick={() => navigate({ to: "/tenants/$slug", params: { slug } })}
+        onClick={() => navigate({ to: '/tenants/$slug', params: { slug } })}
         className="mb-4 pl-0"
       >
         <ArrowLeft className="mr-2 h-4 w-4" />
-        Back to {tenant?.nama || "Tenant"}
+        Back to {tenant?.nama || 'Tenant'}
       </Button>
 
       <div className="flex justify-between items-center mb-6">
@@ -214,7 +219,7 @@ export function TenantCategoriesPage() {
               <TableRow key={category.id}>
                 <TableCell>{index + 1}</TableCell>
                 <TableCell className="font-medium">{category.nama}</TableCell>
-                <TableCell>{category.deskripsi || "-"}</TableCell>
+                <TableCell>{category.deskripsi || '-'}</TableCell>
                 <TableCell>{category.productsCount || 0}</TableCell>
                 <TableCell>
                   <Switch
@@ -241,10 +246,16 @@ export function TenantCategoriesPage() {
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingCategory ? "Edit Category" : "Add Category"}</DialogTitle>
+            <DialogTitle>{editingCategory ? 'Edit Category' : 'Add Category'}</DialogTitle>
           </DialogHeader>
           <Form {...form}>
-            <form onSubmit={(e) => { e.preventDefault(); handleModalOk(); }} className="space-y-4">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleModalOk();
+              }}
+              className="space-y-4"
+            >
               <FormField
                 control={form.control}
                 name="nama"
@@ -272,8 +283,11 @@ export function TenantCategoriesPage() {
                 )}
               />
               <DialogFooter>
-                <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                  {editingCategory ? "Save" : "Create"}
+                <Button
+                  type="submit"
+                  disabled={createMutation.isPending || updateMutation.isPending}
+                >
+                  {editingCategory ? 'Save' : 'Create'}
                 </Button>
               </DialogFooter>
             </form>

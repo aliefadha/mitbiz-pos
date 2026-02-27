@@ -1,18 +1,14 @@
-import { useNavigate } from "@tanstack/react-router";
-import { signIn, signOut, authClient } from "../lib/auth-client";
+import { useNavigate } from '@tanstack/react-router';
+import { authClient, signIn, signOut } from '../lib/auth-client';
 
 export function useRegister() {
   return {
-    mutate: async (input: {
-      name: string;
-      email: string;
-      password: string;
-    }) => {
+    mutate: async (input: { name: string; email: string; password: string }) => {
       const { error } = await authClient.signUp.email({
         name: input.name,
         email: input.email,
         password: input.password,
-        callbackURL: `${import.meta.env.VITE_APP_URL || "http://localhost:3000"}/verify-email`,
+        callbackURL: `${import.meta.env.VITE_APP_URL || 'http://localhost:3000'}/verify-email`,
       });
 
       if (error) {
@@ -29,7 +25,7 @@ export function useForgotPassword() {
     mutate: async (input: { email: string }) => {
       const { error } = await authClient.requestPasswordReset({
         email: input.email,
-        redirectTo: `${import.meta.env.VITE_APP_URL || "http://localhost:3000"}/reset-password`,
+        redirectTo: `${import.meta.env.VITE_APP_URL || 'http://localhost:3000'}/reset-password`,
       });
 
       if (error) {
@@ -59,7 +55,7 @@ export function useResetPassword() {
 }
 
 export function useLogin() {
-  const navigate = useNavigate({ from: "/login" });
+  const navigate = useNavigate({ from: '/login' });
 
   return {
     mutate: async (input: { email: string; password: string }) => {
@@ -72,7 +68,7 @@ export function useLogin() {
         throw error;
       }
 
-      navigate({ to: "/dashboard" });
+      navigate({ to: '/dashboard' });
     },
     isPending: false,
     isError: false,
@@ -80,7 +76,7 @@ export function useLogin() {
 }
 
 export function useLogout() {
-  const navigate = useNavigate({ from: "/dashboard" });
+  const navigate = useNavigate({ from: '/dashboard' });
 
   return {
     mutate: async () => {
@@ -90,7 +86,7 @@ export function useLogout() {
         throw error;
       }
 
-      navigate({ to: "/login" });
+      navigate({ to: '/login' });
     },
     isPending: false,
     isError: false,

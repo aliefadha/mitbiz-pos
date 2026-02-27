@@ -1,49 +1,46 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useMemo } from "react";
-import { productsApi, type Product } from "@/lib/api/products";
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  ordersApi,
-  type CreateOrderDto,
-  type TaxBreakdown,
-  type DiscountBreakdown,
-} from "@/lib/api/orders";
-import {
-  paymentMethodsApi,
-  type PaymentMethod,
-} from "@/lib/api/payment-methods";
-import { taxesApi } from "@/lib/api/taxes";
-import { discountsApi } from "@/lib/api/discounts";
-import { useTenant } from "@/contexts/tenant-context";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
+  CheckCircle,
+  Minus,
+  Plus,
+  Printer,
+  Receipt,
+  Search,
+  ShoppingCart,
+  Store,
+  X,
+} from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useTenant } from '@/contexts/tenant-context';
+import { discountsApi } from '@/lib/api/discounts';
 import {
-  Search,
-  Plus,
-  Minus,
-  ShoppingCart,
-  Receipt,
-  X,
-  Store,
-  CheckCircle,
-  Printer,
-} from "lucide-react";
-import { formatRupiah } from "@/lib/utils";
-import { toast } from "sonner";
+  type CreateOrderDto,
+  type DiscountBreakdown,
+  ordersApi,
+  type TaxBreakdown,
+} from '@/lib/api/orders';
+import { type PaymentMethod, paymentMethodsApi } from '@/lib/api/payment-methods';
+import { type Product, productsApi } from '@/lib/api/products';
+import { taxesApi } from '@/lib/api/taxes';
+import { formatRupiah } from '@/lib/utils';
 
 interface CartItem {
   product: Product;
@@ -61,8 +58,8 @@ const generateOrderNumber = (tenantSlug: string, outletKode: string) => {
 
 export function PosPage() {
   const queryClient = useQueryClient();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [successOpen, setSuccessOpen] = useState(false);
@@ -78,28 +75,18 @@ export function PosPage() {
     change: number;
     notes: string;
   } | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<string>("cash");
-  const [amountPaid, setAmountPaid] = useState<string>("");
-  const [notes, setNotes] = useState<string>("");
+  const [paymentMethod, setPaymentMethod] = useState<string>('cash');
+  const [amountPaid, setAmountPaid] = useState<string>('');
+  const [notes, setNotes] = useState<string>('');
   const [selectedTaxIds, setSelectedTaxIds] = useState<string[]>([]);
   const [selectedDiscountIds, setSelectedDiscountIds] = useState<string[]>([]);
 
-  const {
-    selectedTenant,
-    selectedOutlet,
-    isLoading: tenantLoading,
-  } = useTenant();
+  const { selectedTenant, selectedOutlet, isLoading: tenantLoading } = useTenant();
   const effectiveTenantId = selectedTenant?.id;
   const effectiveOutletId = selectedOutlet?.id;
 
   const { data: productsData, isLoading: productsLoading } = useQuery({
-    queryKey: [
-      "products",
-      effectiveTenantId,
-      effectiveOutletId,
-      searchQuery,
-      categoryFilter,
-    ],
+    queryKey: ['products', effectiveTenantId, effectiveOutletId, searchQuery, categoryFilter],
     queryFn: () =>
       productsApi.getAll({
         tenantId: effectiveTenantId,
@@ -110,28 +97,25 @@ export function PosPage() {
     enabled: !!effectiveTenantId,
   });
 
-  const { data: paymentMethodsData, isLoading: paymentMethodsLoading } =
-    useQuery({
-      queryKey: ["payment-methods", effectiveTenantId],
-      queryFn: () =>
-        paymentMethodsApi.getAll({
-          tenantId: effectiveTenantId,
-          isActive: true,
-        }),
-      enabled: !!effectiveTenantId,
-    });
+  const { data: paymentMethodsData, isLoading: paymentMethodsLoading } = useQuery({
+    queryKey: ['payment-methods', effectiveTenantId],
+    queryFn: () =>
+      paymentMethodsApi.getAll({
+        tenantId: effectiveTenantId,
+        isActive: true,
+      }),
+    enabled: !!effectiveTenantId,
+  });
 
   const { data: taxesData } = useQuery({
-    queryKey: ["taxes", effectiveTenantId, effectiveOutletId],
-    queryFn: () =>
-      taxesApi.getActiveForOutlet(effectiveTenantId!, effectiveOutletId!),
+    queryKey: ['taxes', effectiveTenantId, effectiveOutletId],
+    queryFn: () => taxesApi.getActiveForOutlet(effectiveTenantId!, effectiveOutletId!),
     enabled: !!effectiveTenantId && !!effectiveOutletId,
   });
 
   const { data: discountsData } = useQuery({
-    queryKey: ["discounts", effectiveTenantId, effectiveOutletId],
-    queryFn: () =>
-      discountsApi.getActiveForOutlet(effectiveTenantId!, effectiveOutletId!),
+    queryKey: ['discounts', effectiveTenantId, effectiveOutletId],
+    queryFn: () => discountsApi.getActiveForOutlet(effectiveTenantId!, effectiveOutletId!),
     enabled: !!effectiveTenantId && !!effectiveOutletId,
   });
 
@@ -156,17 +140,17 @@ export function PosPage() {
       });
       setCart([]);
       setCheckoutOpen(false);
-      setPaymentMethod("cash");
-      setAmountPaid("");
-      setNotes("");
+      setPaymentMethod('cash');
+      setAmountPaid('');
+      setNotes('');
       setSelectedTaxIds([]);
       setSelectedDiscountIds([]);
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
       setSuccessOpen(true);
     },
     onError: (error: Error) => {
-      alert(error.message || "Gagal membuat pesanan");
+      alert(error.message || 'Gagal membuat pesanan');
     },
   });
 
@@ -183,7 +167,7 @@ export function PosPage() {
 
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
-      if (categoryFilter !== "all" && p.categoryId !== categoryFilter) {
+      if (categoryFilter !== 'all' && p.categoryId !== categoryFilter) {
         return false;
       }
       return true;
@@ -201,8 +185,8 @@ export function PosPage() {
                 quantity: item.quantity + 1,
                 total: String(Number(item.hargaSatuan) * (item.quantity + 1)),
               }
-            : item,
-        ),
+            : item
+        )
       );
     } else {
       setCart([
@@ -211,7 +195,7 @@ export function PosPage() {
           product,
           quantity: 1,
           hargaSatuan: product.hargaJual,
-          jumlahDiskon: "0",
+          jumlahDiskon: '0',
           total: product.hargaJual,
         },
       ]);
@@ -239,7 +223,7 @@ export function PosPage() {
           }
           return item;
         })
-        .filter((item) => item.quantity > 0),
+        .filter((item) => item.quantity > 0)
     );
   };
 
@@ -288,10 +272,7 @@ export function PosPage() {
   }, [subtotal, selectedDiscountIds, discounts]);
 
   const discountAmount = useMemo(() => {
-    return discountBreakdown.reduce(
-      (sum, discount) => sum + discount.amount,
-      0,
-    );
+    return discountBreakdown.reduce((sum, discount) => sum + discount.amount, 0);
   }, [discountBreakdown]);
 
   const total = subtotal + taxAmount - discountAmount;
@@ -301,17 +282,17 @@ export function PosPage() {
 
   const handleCheckout = () => {
     if (!effectiveTenantId) {
-      alert("Anda belum memiliki tenant. Silakan hubungi admin.");
+      alert('Anda belum memiliki tenant. Silakan hubungi admin.');
       return;
     }
 
     if (!effectiveOutletId) {
-      alert("Silakan pilih outlet terlebih dahulu");
+      alert('Silakan pilih outlet terlebih dahulu');
       return;
     }
 
     if (cart.length === 0) {
-      alert("Keranjang belanja kosong");
+      alert('Keranjang belanja kosong');
       return;
     }
 
@@ -324,17 +305,17 @@ export function PosPage() {
     }));
 
     const selectedPaymentMethod = paymentMethodsData?.data?.find(
-      (pm) => pm.nama.toLowerCase().replace(/\s+/g, "_") === paymentMethod,
+      (pm) => pm.nama.toLowerCase().replace(/\s+/g, '_') === paymentMethod
     );
 
     createOrderMutation.mutate({
       tenantId: effectiveTenantId,
       outletId: effectiveOutletId,
       orderNumber: generateOrderNumber(
-        selectedTenant?.slug || "UNKNOWN",
-        selectedOutlet?.kode || "OUT",
+        selectedTenant?.slug || 'UNKNOWN',
+        selectedOutlet?.kode || 'OUT'
       ),
-      status: "complete",
+      status: 'complete',
       subtotal: String(subtotal),
       jumlahPajak: String(taxAmount),
       pajakBreakdown: taxBreakdown,
@@ -354,9 +335,7 @@ export function PosPage() {
         <div className="flex justify-between items-center mb-4">
           <div>
             <h4 className="text-lg font-semibold m-0">Kasir</h4>
-            <p className="text-sm text-gray-500 m-0">
-              {selectedOutlet?.nama || "Pilih outlet"}
-            </p>
+            <p className="text-sm text-gray-500 m-0">{selectedOutlet?.nama || 'Pilih outlet'}</p>
           </div>
           <div className="flex gap-2">
             <div className="relative">
@@ -403,9 +382,7 @@ export function PosPage() {
             <div className="text-center">
               <Store className="h-12 w-12 mx-auto mb-4 text-gray-300" />
               <p className="text-gray-500">Silakan pilih outlet</p>
-              <p className="text-sm text-gray-400">
-                Pilih outlet dari dropdown di header
-              </p>
+              <p className="text-sm text-gray-400">Pilih outlet dari dropdown di header</p>
             </div>
           </div>
         ) : productsLoading ? (
@@ -421,18 +398,16 @@ export function PosPage() {
                 key={product.id}
                 onClick={() => (product.stock ?? 0) > 0 && addToCart(product)}
                 className={`relative border rounded-lg p-4 cursor-pointer hover:shadow-md transition-all h-48 flex flex-col ${
-                  (product.stock ?? 0) < product.minStockLevel
-                    ? "bg-red-50 border-red-200"
-                    : ""
-                } ${(product.stock ?? 0) === 0 ? "bg-gray-100 border-gray-200 opacity-60 cursor-not-allowed" : "hover:border-primary"}`}
+                  (product.stock ?? 0) < product.minStockLevel ? 'bg-red-50 border-red-200' : ''
+                } ${(product.stock ?? 0) === 0 ? 'bg-gray-100 border-gray-200 opacity-60 cursor-not-allowed' : 'hover:border-primary'}`}
               >
                 <div
                   className={`absolute -top-3 -right-3 flex items-center justify-center h-8 min-w-8 px-2 rounded-full text-xs font-bold shadow-sm border-2 border-white ${
                     (product.stock ?? 0) === 0
-                      ? "bg-gray-400 text-white"
+                      ? 'bg-gray-400 text-white'
                       : (product.stock ?? 0) < product.minStockLevel
-                        ? "bg-red-500 text-white"
-                        : "bg-primary text-primary-foreground"
+                        ? 'bg-red-500 text-white'
+                        : 'bg-primary text-primary-foreground'
                   }`}
                 >
                   {product.stock ?? 0}
@@ -443,9 +418,7 @@ export function PosPage() {
                 <h5 className="font-medium text-sm truncate">{product.nama}</h5>
                 <p className="text-xs text-gray-500">{product.sku}</p>
                 <div className="flex justify-between items-end mt-auto">
-                  <p className="font-bold text-primary">
-                    {formatRupiah(product.hargaJual)}
-                  </p>
+                  <p className="font-bold text-primary">{formatRupiah(product.hargaJual)}</p>
                   {(product.stock ?? 0) === 0 && (
                     <p className="text-xs font-medium text-gray-500">Habis</p>
                   )}
@@ -503,9 +476,7 @@ export function PosPage() {
                     >
                       <Minus className="h-3 w-3" />
                     </Button>
-                    <span className="w-8 text-center text-sm font-medium">
-                      {item.quantity}
-                    </span>
+                    <span className="w-8 text-center text-sm font-medium">{item.quantity}</span>
                     <Button
                       variant="outline"
                       size="icon"
@@ -516,9 +487,7 @@ export function PosPage() {
                       <Plus className="h-3 w-3" />
                     </Button>
                   </div>
-                  <span className="font-bold text-sm">
-                    {formatRupiah(item.total)}
-                  </span>
+                  <span className="font-bold text-sm">{formatRupiah(item.total)}</span>
                 </div>
               </div>
             ))
@@ -562,10 +531,7 @@ export function PosPage() {
               <h5 className="font-semibold mb-3">Ringkasan Pesanan</h5>
               <div className="space-y-3 max-h-64 overflow-y-auto mb-4">
                 {cart.map((item) => (
-                  <div
-                    key={item.product.id}
-                    className="flex justify-between text-sm"
-                  >
+                  <div key={item.product.id} className="flex justify-between text-sm">
                     <span className="text-gray-600">
                       {item.product.nama} x {item.quantity}
                     </span>
@@ -589,10 +555,7 @@ export function PosPage() {
                   ))}
                 {discountBreakdown.length > 0 &&
                   discountBreakdown.map((discount) => (
-                    <div
-                      key={discount.discountId}
-                      className="flex justify-between"
-                    >
+                    <div key={discount.discountId} className="flex justify-between">
                       <span className="text-gray-500">
                         {discount.nama} ({discount.rate}%)
                       </span>
@@ -603,7 +566,7 @@ export function PosPage() {
                   <span>Total</span>
                   <span>{formatRupiah(total)}</span>
                 </div>
-                {paymentMethod === "cash" && amountPaid && change >= 0 && (
+                {paymentMethod === 'cash' && amountPaid && change >= 0 && (
                   <div className="flex justify-between font-bold text-lg text-green-600 bg-green-50 p-3 rounded-lg">
                     <span>Kembalian</span>
                     <span>{formatRupiah(change)}</span>
@@ -618,18 +581,12 @@ export function PosPage() {
                   <label className="text-sm font-medium">Pajak</label>
                   <div className="border rounded-lg p-3 space-y-2">
                     {taxes.map((tax) => (
-                      <div
-                        key={tax.id}
-                        className="flex items-center justify-between text-sm"
-                      >
+                      <div key={tax.id} className="flex items-center justify-between text-sm">
                         <span className="text-gray-600">
                           {tax.nama} ({tax.rate}%)
                         </span>
                         <span>
-                          {formatRupiah(
-                            taxBreakdown.find((t) => t.taxId === tax.id)
-                              ?.amount || 0,
-                          )}
+                          {formatRupiah(taxBreakdown.find((t) => t.taxId === tax.id)?.amount || 0)}
                         </span>
                       </div>
                     ))}
@@ -642,25 +599,17 @@ export function PosPage() {
                   <label className="text-sm font-medium">Diskon</label>
                   <div className="border rounded-lg p-3 space-y-2">
                     {discounts.map((discount) => (
-                      <div
-                        key={discount.id}
-                        className="flex items-center justify-between text-sm"
-                      >
+                      <div key={discount.id} className="flex items-center justify-between text-sm">
                         <label className="flex items-center gap-2 cursor-pointer">
                           <input
                             type="checkbox"
                             checked={selectedDiscountIds.includes(discount.id)}
                             onChange={(e) => {
                               if (e.target.checked) {
-                                setSelectedDiscountIds([
-                                  ...selectedDiscountIds,
-                                  discount.id,
-                                ]);
+                                setSelectedDiscountIds([...selectedDiscountIds, discount.id]);
                               } else {
                                 setSelectedDiscountIds(
-                                  selectedDiscountIds.filter(
-                                    (id) => id !== discount.id,
-                                  ),
+                                  selectedDiscountIds.filter((id) => id !== discount.id)
                                 );
                               }
                             }}
@@ -673,9 +622,7 @@ export function PosPage() {
                         <span>
                           -
                           {formatRupiah(
-                            discountBreakdown.find(
-                              (d) => d.discountId === discount.id,
-                            )?.amount || 0,
+                            discountBreakdown.find((d) => d.discountId === discount.id)?.amount || 0
                           )}
                         </span>
                       </div>
@@ -693,13 +640,9 @@ export function PosPage() {
                   <SelectContent>
                     {paymentMethodsLoading ? (
                       <div className="p-2 text-sm text-gray-500">Memuat...</div>
-                    ) : paymentMethodsData?.data &&
-                      paymentMethodsData.data.length > 0 ? (
+                    ) : paymentMethodsData?.data && paymentMethodsData.data.length > 0 ? (
                       paymentMethodsData.data.map((pm: PaymentMethod) => (
-                        <SelectItem
-                          key={pm.id}
-                          value={pm.nama.toLowerCase().replace(/\s+/g, "_")}
-                        >
+                        <SelectItem key={pm.id} value={pm.nama.toLowerCase().replace(/\s+/g, '_')}>
                           {pm.nama}
                         </SelectItem>
                       ))
@@ -708,9 +651,7 @@ export function PosPage() {
                         <SelectItem value="cash">Tunai</SelectItem>
                         <SelectItem value="qris">QRIS</SelectItem>
                         <SelectItem value="card">Kartu</SelectItem>
-                        <SelectItem value="bank_transfer">
-                          Transfer Bank
-                        </SelectItem>
+                        <SelectItem value="bank_transfer">Transfer Bank</SelectItem>
                         <SelectItem value="e_wallet">E-Wallet</SelectItem>
                       </>
                     )}
@@ -718,18 +659,14 @@ export function PosPage() {
                 </Select>
               </div>
 
-              {paymentMethod === "cash" && (
+              {paymentMethod === 'cash' && (
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Jumlah Bayar</label>
                   <Input
                     type="text"
-                    value={
-                      amountPaid
-                        ? Number(amountPaid).toLocaleString("id-ID")
-                        : ""
-                    }
+                    value={amountPaid ? Number(amountPaid).toLocaleString('id-ID') : ''}
                     onChange={(e) => {
-                      const value = e.target.value.replace(/[^\d]/g, "");
+                      const value = e.target.value.replace(/[^\d]/g, '');
                       setAmountPaid(value);
                     }}
                     placeholder="0"
@@ -752,9 +689,7 @@ export function PosPage() {
               )}
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  Catatan (Opsional)
-                </label>
+                <label className="text-sm font-medium">Catatan (Opsional)</label>
                 <Input
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
@@ -770,13 +705,10 @@ export function PosPage() {
             <Button
               onClick={handleCheckout}
               disabled={
-                createOrderMutation.isPending ||
-                (paymentMethod === "cash" && amountPaidNum < total)
+                createOrderMutation.isPending || (paymentMethod === 'cash' && amountPaidNum < total)
               }
             >
-              {createOrderMutation.isPending
-                ? "Memproses..."
-                : "Simpan Pesanan"}
+              {createOrderMutation.isPending ? 'Memproses...' : 'Simpan Pesanan'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -794,10 +726,7 @@ export function PosPage() {
             <p className="text-gray-600">Pesanan telah berhasil dibuat.</p>
             {lastOrder && (
               <p className="text-sm text-gray-500 mt-2">
-                No. Pesanan:{" "}
-                <span className="font-mono font-bold">
-                  {lastOrder.orderNumber}
-                </span>
+                No. Pesanan: <span className="font-mono font-bold">{lastOrder.orderNumber}</span>
               </p>
             )}
           </div>
@@ -806,7 +735,7 @@ export function PosPage() {
               variant="outline"
               onClick={() => {
                 if (lastOrder) {
-                  toast.success("Struk sedang dicetak...");
+                  toast.success('Struk sedang dicetak...');
                 }
               }}
               className="flex-1"
@@ -824,19 +753,14 @@ export function PosPage() {
       {lastOrder && (
         <div className="hidden print:block p-4 text-sm" id="receipt">
           <div className="text-center mb-4">
-            <h2 className="font-bold text-lg">
-              {selectedTenant?.nama || "Toko"}
-            </h2>
-            <p className="text-xs">{selectedOutlet?.nama || ""}</p>
+            <h2 className="font-bold text-lg">{selectedTenant?.nama || 'Toko'}</h2>
+            <p className="text-xs">{selectedOutlet?.nama || ''}</p>
             <p className="text-xs">No. {lastOrder.orderNumber}</p>
-            <p className="text-xs">{new Date().toLocaleString("id-ID")}</p>
+            <p className="text-xs">{new Date().toLocaleString('id-ID')}</p>
           </div>
           <div className="border-t border-b border-dashed py-2 mb-2">
             {lastOrder.items.map((item) => (
-              <div
-                key={item.product.id}
-                className="flex justify-between text-xs"
-              >
+              <div key={item.product.id} className="flex justify-between text-xs">
                 <span>
                   {item.product.nama} x {item.quantity}
                 </span>

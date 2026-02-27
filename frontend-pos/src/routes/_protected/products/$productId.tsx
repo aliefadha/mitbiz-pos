@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { ProductDetailPage } from "@/components/products/product-detail-page";
+import { createFileRoute } from '@tanstack/react-router';
+import { ProductDetailPage } from '@/components/products/product-detail-page';
 
-export const Route = createFileRoute("/_protected/products/$productId")({
+export const Route = createFileRoute('/_protected/products/$productId')({
   component: ProductDetailPage,
 });

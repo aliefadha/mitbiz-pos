@@ -1,27 +1,18 @@
-import { useState } from "react";
-import { useParams, useNavigate } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { tenantsApi, type User } from "@/lib/api/tenants";
-import { outletsApi, type Outlet } from "@/lib/api/outlets";
-import { usersApi, type CreateUserDto } from "@/lib/api/users";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNavigate, useParams } from '@tanstack/react-router';
+import { ArrowLeft, Plus, User as UserIcon } from 'lucide-react';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -29,55 +20,64 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { ArrowLeft, Plus, User as UserIcon } from "lucide-react";
+} from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { type Outlet, outletsApi } from '@/lib/api/outlets';
+import { tenantsApi, type User } from '@/lib/api/tenants';
+import { type CreateUserDto, usersApi } from '@/lib/api/users';
 
 const formSchema = z.object({
-  name: z.string().min(1, "Nama wajib diisi"),
-  email: z.string().email("Email tidak valid"),
-  password: z.string().min(8, "Password minimal 8 karakter"),
+  name: z.string().min(1, 'Nama wajib diisi'),
+  email: z.string().email('Email tidak valid'),
+  password: z.string().min(8, 'Password minimal 8 karakter'),
   outletId: z.string().optional(),
 });
 
 export function TenantUsersPage() {
-  const { slug } = useParams({ from: "/_protected/tenants/$slug/users/" });
+  const { slug } = useParams({ from: '/_protected/tenants/$slug/users/' });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [searchText, setSearchText] = useState("");
+  const [searchText, setSearchText] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      email: "",
-      password: "",
+      name: '',
+      email: '',
+      password: '',
       outletId: undefined,
     },
   });
 
   const { data: tenantData } = useQuery({
-    queryKey: ["tenant", slug],
+    queryKey: ['tenant', slug],
     queryFn: () => tenantsApi.getBySlug(slug),
   });
 
   const { data: usersData, isLoading } = useQuery({
-    queryKey: ["tenant-users", slug],
+    queryKey: ['tenant-users', slug],
     queryFn: () => tenantsApi.getUsers(slug),
     enabled: !!tenantData,
   });
 
   const { data: outletsData } = useQuery({
-    queryKey: ["outlets", tenantData?.id],
+    queryKey: ['outlets', tenantData?.id],
     queryFn: () => outletsApi.getAll({ tenantId: tenantData!.id }),
     enabled: !!tenantData?.id,
   });
@@ -87,7 +87,7 @@ export function TenantUsersPage() {
     onSuccess: () => {
       setIsModalOpen(false);
       form.reset();
-      queryClient.invalidateQueries({ queryKey: ["tenant-users", slug] });
+      queryClient.invalidateQueries({ queryKey: ['tenant-users', slug] });
     },
     onError: (error: Error) => {
       alert(error.message);
@@ -100,14 +100,17 @@ export function TenantUsersPage() {
   const filteredUsers = users.filter(
     (user) =>
       user.name?.toLowerCase().includes(searchText.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchText.toLowerCase()),
+      user.email.toLowerCase().includes(searchText.toLowerCase())
   );
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case "owner": return "bg-blue-100 text-blue-700";
-      case "admin": return "bg-purple-100 text-purple-700";
-      default: return "bg-gray-100 text-gray-700";
+      case 'owner':
+        return 'bg-blue-100 text-blue-700';
+      case 'admin':
+        return 'bg-purple-100 text-purple-700';
+      default:
+        return 'bg-gray-100 text-gray-700';
     }
   };
 
@@ -115,11 +118,11 @@ export function TenantUsersPage() {
     <div>
       <Button
         variant="link"
-        onClick={() => navigate({ to: "/tenants/$slug", params: { slug } })}
+        onClick={() => navigate({ to: '/tenants/$slug', params: { slug } })}
         className="mb-4 pl-0"
       >
         <ArrowLeft className="mr-2 h-4 w-4" />
-        Back to {tenantData?.nama || "Tenant"}
+        Back to {tenantData?.nama || 'Tenant'}
       </Button>
 
       <div className="flex justify-between items-center mb-6">
@@ -171,24 +174,26 @@ export function TenantUsersPage() {
                       <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
                         <UserIcon className="h-4 w-4" />
                       </div>
-                      <span className="font-medium">{user.name || "-"}</span>
+                      <span className="font-medium">{user.name || '-'}</span>
                     </div>
                   </TableCell>
                   <TableCell className="text-gray-500">{user.email}</TableCell>
                   <TableCell>
-                    <span className={`px-2 py-1 rounded-full text-xs ${getRoleColor(user.role || "")}`}>
-                      {user.role || "cashier"}
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs ${getRoleColor(user.role || '')}`}
+                    >
+                      {user.role || 'cashier'}
                     </span>
                   </TableCell>
                   <TableCell className="text-gray-500">
                     {outlet ? (
-                      <div className="flex items-center gap-1">
-                        {outlet.nama}
-                      </div>
-                    ) : "Owner"}
+                      <div className="flex items-center gap-1">{outlet.nama}</div>
+                    ) : (
+                      'Owner'
+                    )}
                   </TableCell>
                   <TableCell className="text-gray-500">
-                    {new Date(user.createdAt).toLocaleDateString("id-ID")}
+                    {new Date(user.createdAt).toLocaleDateString('id-ID')}
                   </TableCell>
                 </TableRow>
               );
@@ -203,16 +208,19 @@ export function TenantUsersPage() {
             <DialogTitle>Tambah Kasir</DialogTitle>
           </DialogHeader>
           <Form {...form}>
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              form.handleSubmit((values) => {
-                createUserMutation.mutate({
-                  ...values,
-                  role: "cashier",
-                  outletId: values.outletId ? Number(values.outletId) : undefined,
-                } as CreateUserDto);
-              })();
-            }} className="space-y-4">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                form.handleSubmit((values) => {
+                  createUserMutation.mutate({
+                    ...values,
+                    role: 'cashier',
+                    outletId: values.outletId ? Number(values.outletId) : undefined,
+                  } as CreateUserDto);
+                })();
+              }}
+              className="space-y-4"
+            >
               <FormField
                 control={form.control}
                 name="name"

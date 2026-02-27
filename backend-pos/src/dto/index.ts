@@ -14,4 +14,4 @@ export * from './products/product.dto';
 export * from './orders/order.dto';
 
 // Re-export validation pipe
-export * from '../common/pipes/zod-validation.pipe';
+export * from '@/common/pipes/zod-validation.pipe';

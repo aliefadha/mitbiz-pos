@@ -5,28 +5,16 @@ import {
   ForbiddenException,
   Inject,
 } from '@nestjs/common';
-import {
-  eq,
-  and,
-  like,
-  asc,
-  desc,
-  sql,
-  or,
-  ilike,
-  count,
-  SQL,
-  inArray,
-} from 'drizzle-orm';
-import { tenants } from '../db/schema';
-import { user as userSchema } from '../db/schema';
-import { outlets } from '../db/schema/outlet-schema';
-import { categories } from '../db/schema/category-schema';
-import { products } from '../db/schema/product-schema';
+import { eq, and, like, asc, desc, sql, or, ilike, count, SQL, inArray } from 'drizzle-orm';
+import { tenants } from '@/db/schema';
+import { user as userSchema } from '@/db/schema';
+import { outlets } from '@/db/schema/outlet-schema';
+import { categories } from '@/db/schema/category-schema';
+import { products } from '@/db/schema/product-schema';
 import { CreateTenantDto, UpdateTenantDto, TenantQueryDto } from './dto';
-import { DB_CONNECTION } from '../db/db.module';
-import type { DrizzleDB } from '../db/type';
-import type { CurrentUserType } from '../common/decorators/current-user.decorator';
+import { DB_CONNECTION } from '@/db/db.module';
+import type { DrizzleDB } from '@/db/type';
+import type { CurrentUserType } from '@/common/decorators/current-user.decorator';
 
 @Injectable()
 export class TenantsService {
@@ -72,10 +60,7 @@ export class TenantsService {
           outlets: true,
         },
       }),
-      this.db
-        .select({ count: sql<number>`count(*)` })
-        .from(tenants)
-        .where(whereClause),
+      this.db.select({ count: sql<number>`count(*)` }).from(tenants).where(whereClause),
     ]);
 
     const total = Number(totalResult[0]?.count || 0);
@@ -170,9 +155,7 @@ export class TenantsService {
 
     // Verify ownership again
     if (user.role === 'owner' && existingTenant.userId !== user.id) {
-      throw new ForbiddenException(
-        'You do not have permission to update this tenant',
-      );
+      throw new ForbiddenException('You do not have permission to update this tenant');
     }
 
     if (data.slug && data.slug !== slug) {
@@ -212,15 +195,10 @@ export class TenantsService {
 
     // Verify ownership
     if (user.role === 'owner' && tenant.userId !== user.id) {
-      throw new ForbiddenException(
-        'You do not have permission to delete this tenant',
-      );
+      throw new ForbiddenException('You do not have permission to delete this tenant');
     }
 
-    const [deletedTenant] = await this.db
-      .delete(tenants)
-      .where(eq(tenants.slug, slug))
-      .returning();
+    const [deletedTenant] = await this.db.delete(tenants).where(eq(tenants.slug, slug)).returning();
 
     return deletedTenant;
   }
@@ -228,22 +206,11 @@ export class TenantsService {
   async getSummary(slug: string, user: CurrentUserType) {
     const tenant = await this.findBySlug(slug, user);
 
-    const [outletsResult, categoriesResult, productsResult] = await Promise.all(
-      [
-        this.db
-          .select({ count: count() })
-          .from(outlets)
-          .where(eq(outlets.tenantId, tenant.id)),
-        this.db
-          .select({ count: count() })
-          .from(categories)
-          .where(eq(categories.tenantId, tenant.id)),
-        this.db
-          .select({ count: count() })
-          .from(products)
-          .where(eq(products.tenantId, tenant.id)),
-      ],
-    );
+    const [outletsResult, categoriesResult, productsResult] = await Promise.all([
+      this.db.select({ count: count() }).from(outlets).where(eq(outlets.tenantId, tenant.id)),
+      this.db.select({ count: count() }).from(categories).where(eq(categories.tenantId, tenant.id)),
+      this.db.select({ count: count() }).from(products).where(eq(products.tenantId, tenant.id)),
+    ]);
 
     return {
       outletsCount: Number(outletsResult[0]?.count || 0),

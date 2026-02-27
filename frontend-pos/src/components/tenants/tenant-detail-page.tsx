@@ -1,22 +1,19 @@
-import { useParams, useNavigate } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import { tenantsApi } from "@/lib/api/tenants";
-import { categoriesApi } from "@/lib/api/categories";
-import { productsApi } from "@/lib/api/products";
-import { outletsApi } from "@/lib/api/outlets";
-import { useSession } from "@/lib/auth-client";
-import { generateSlug } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNavigate, useParams } from '@tanstack/react-router';
+import { AppWindow, ArrowLeft, Edit, ShoppingBag, ShoppingCart, Trash2, Users } from 'lucide-react';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -24,31 +21,30 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import {
-  ArrowLeft,
-  Edit,
-  Trash2,
-  Users,
-  ShoppingBag,
-  AppWindow,
-  ShoppingCart,
-} from "lucide-react";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Textarea } from '@/components/ui/textarea';
+import { categoriesApi } from '@/lib/api/categories';
+import { outletsApi } from '@/lib/api/outlets';
+import { productsApi } from '@/lib/api/products';
+import { tenantsApi } from '@/lib/api/tenants';
+import { useSession } from '@/lib/auth-client';
+import { generateSlug } from '@/lib/utils';
 
 const formSchema = z.object({
-  nama: z.string().min(1, "Nama tenant wajib diisi"),
+  nama: z.string().min(1, 'Nama tenant wajib diisi'),
   slug: z.string(),
-  noHp: z.string().regex(/^(\+62|62|0)?[0-9]{9,14}$/, "Masukkan nomor HP yang valid").optional().or(z.literal("")),
+  noHp: z
+    .string()
+    .regex(/^(\+62|62|0)?[0-9]{9,14}$/, 'Masukkan nomor HP yang valid')
+    .optional()
+    .or(z.literal('')),
   alamat: z.string().optional(),
 });
 
 export function TenantDetailPage() {
-  const { slug } = useParams({ from: "/_protected/tenants/$slug/" });
+  const { slug } = useParams({ from: '/_protected/tenants/$slug/' });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: session } = useSession();
@@ -58,27 +54,26 @@ export function TenantDetailPage() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      nama: "",
-      slug: "",
-      noHp: "",
-      alamat: "",
+      nama: '',
+      slug: '',
+      noHp: '',
+      alamat: '',
     },
   });
 
   const { data: tenant, isLoading: tenantLoading } = useQuery({
-    queryKey: ["tenant", slug],
+    queryKey: ['tenant', slug],
     queryFn: () => tenantsApi.getBySlug(slug),
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: z.infer<typeof formSchema>) =>
-      tenantsApi.update(slug, data, userId),
+    mutationFn: (data: z.infer<typeof formSchema>) => tenantsApi.update(slug, data, userId),
     onSuccess: () => {
       setEditModalOpen(false);
-      queryClient.invalidateQueries({ queryKey: ["tenant", slug] });
+      queryClient.invalidateQueries({ queryKey: ['tenant', slug] });
     },
     onError: (error: Error) => {
-      alert(error.message || "Failed to update tenant");
+      alert(error.message || 'Failed to update tenant');
     },
   });
 
@@ -86,38 +81,39 @@ export function TenantDetailPage() {
     mutationFn: () => tenantsApi.delete(slug, userId),
     onSuccess: () => {
       setDeleteModalOpen(false);
-      navigate({ to: "/tenants" });
+      navigate({ to: '/tenants' });
     },
     onError: (error: Error) => {
-      alert(error.message || "Failed to delete tenant");
+      alert(error.message || 'Failed to delete tenant');
     },
   });
 
   const { data: categoriesData, isLoading: categoriesLoading } = useQuery({
-    queryKey: ["categories", tenant?.id],
+    queryKey: ['categories', tenant?.id],
     queryFn: () => categoriesApi.getAll({ tenantId: tenant!.id }),
     enabled: !!tenant?.id,
   });
 
   const { data: productsData, isLoading: productsLoading } = useQuery({
-    queryKey: ["products", tenant?.id],
+    queryKey: ['products', tenant?.id],
     queryFn: () => productsApi.getAll({ tenantId: tenant!.id }),
     enabled: !!tenant?.id,
   });
 
   const { data: outletsData, isLoading: outletsLoading } = useQuery({
-    queryKey: ["outlets", tenant?.id],
+    queryKey: ['outlets', tenant?.id],
     queryFn: () => outletsApi.getAll({ tenantId: tenant!.id }),
     enabled: !!tenant?.id,
   });
 
   const { data: usersData, isLoading: usersLoading } = useQuery({
-    queryKey: ["tenant-users", slug],
+    queryKey: ['tenant-users', slug],
     queryFn: () => tenantsApi.getUsers(slug),
     enabled: !!slug,
   });
 
-  const isLoading = tenantLoading || categoriesLoading || productsLoading || outletsLoading || usersLoading;
+  const isLoading =
+    tenantLoading || categoriesLoading || productsLoading || outletsLoading || usersLoading;
 
   if (isLoading) {
     return (
@@ -138,11 +134,7 @@ export function TenantDetailPage() {
 
   return (
     <div>
-      <Button
-        variant="link"
-        onClick={() => navigate({ to: "/tenants" })}
-        className="mb-4 pl-0"
-      >
+      <Button variant="link" onClick={() => navigate({ to: '/tenants' })} className="mb-4 pl-0">
         <ArrowLeft className="mr-2 h-4 w-4" />
         Back to Tenants
       </Button>
@@ -151,15 +143,18 @@ export function TenantDetailPage() {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Tenant Details</CardTitle>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => {
-              form.reset({
-                nama: tenant.nama,
-                slug: tenant.slug,
-                noHp: tenant.noHp,
-                alamat: tenant.alamat,
-              });
-              setEditModalOpen(true);
-            }}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                form.reset({
+                  nama: tenant.nama,
+                  slug: tenant.slug,
+                  noHp: tenant.noHp,
+                  alamat: tenant.alamat,
+                });
+                setEditModalOpen(true);
+              }}
+            >
               <Edit className="mr-2 h-4 w-4" />
               Edit
             </Button>
@@ -177,22 +172,25 @@ export function TenantDetailPage() {
             </div>
             <div>
               <dt className="text-sm font-medium text-gray-500">No. HP</dt>
-              <dd>{tenant.noHp || "-"}</dd>
+              <dd>{tenant.noHp || '-'}</dd>
             </div>
             <div>
               <dt className="text-sm font-medium text-gray-500">Alamat</dt>
-              <dd>{tenant.alamat || "-"}</dd>
+              <dd>{tenant.alamat || '-'}</dd>
             </div>
             <div>
               <dt className="text-sm font-medium text-gray-500">Dibuat</dt>
-              <dd>{new Date(tenant.createdAt).toLocaleString("id-ID")}</dd>
+              <dd>{new Date(tenant.createdAt).toLocaleString('id-ID')}</dd>
             </div>
           </dl>
         </CardContent>
       </Card>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="cursor-pointer hover:bg-gray-50" onClick={() => navigate({ to: "/tenants/$slug/outlets", params: { slug } })}>
+        <Card
+          className="cursor-pointer hover:bg-gray-50"
+          onClick={() => navigate({ to: '/tenants/$slug/outlets', params: { slug } })}
+        >
           <CardContent>
             <div className="flex items-center gap-2 ">
               <ShoppingBag className="h-5 w-5" />
@@ -204,7 +202,10 @@ export function TenantDetailPage() {
             </Button>
           </CardContent>
         </Card>
-        <Card className="cursor-pointer hover:bg-gray-50" onClick={() => navigate({ to: "/tenants/$slug/categories", params: { slug } })}>
+        <Card
+          className="cursor-pointer hover:bg-gray-50"
+          onClick={() => navigate({ to: '/tenants/$slug/categories', params: { slug } })}
+        >
           <CardContent>
             <div className="flex items-center gap-2 ">
               <AppWindow className="h-5 w-5" />
@@ -216,7 +217,10 @@ export function TenantDetailPage() {
             </Button>
           </CardContent>
         </Card>
-        <Card className="cursor-pointer hover:bg-gray-50" onClick={() => navigate({ to: "/tenants/$slug/products", params: { slug } })}>
+        <Card
+          className="cursor-pointer hover:bg-gray-50"
+          onClick={() => navigate({ to: '/tenants/$slug/products', params: { slug } })}
+        >
           <CardContent>
             <div className="flex items-center gap-2 ">
               <ShoppingCart className="h-5 w-5" />
@@ -228,7 +232,10 @@ export function TenantDetailPage() {
             </Button>
           </CardContent>
         </Card>
-        <Card className="cursor-pointer hover:bg-gray-50" onClick={() => navigate({ to: "/tenants/$slug/users", params: { slug } })}>
+        <Card
+          className="cursor-pointer hover:bg-gray-50"
+          onClick={() => navigate({ to: '/tenants/$slug/users', params: { slug } })}
+        >
           <CardContent>
             <div className="flex items-center gap-2 ">
               <Users className="h-5 w-5" />
@@ -265,7 +272,7 @@ export function TenantDetailPage() {
                         onChange={(e) => {
                           field.onChange(e);
                           const slug = generateSlug(e.target.value);
-                          form.setValue("slug", slug);
+                          form.setValue('slug', slug);
                         }}
                       />
                     </FormControl>
@@ -273,7 +280,7 @@ export function TenantDetailPage() {
                   </FormItem>
                 )}
               />
-              <input type="hidden" {...form.register("slug")} />
+              <input type="hidden" {...form.register('slug')} />
               <FormField
                 control={form.control}
                 name="noHp"
@@ -317,7 +324,11 @@ export function TenantDetailPage() {
           </DialogHeader>
           <p>Apakah Anda yakin ingin menghapus tenant ini? Tindakan ini tidak dapat dibatalkan.</p>
           <DialogFooter>
-            <Button variant="destructive" onClick={() => deleteMutation.mutate()} disabled={deleteMutation.isPending}>
+            <Button
+              variant="destructive"
+              onClick={() => deleteMutation.mutate()}
+              disabled={deleteMutation.isPending}
+            >
               Hapus
             </Button>
           </DialogFooter>

@@ -1,19 +1,19 @@
-import { createFileRoute, redirect, Link } from "@tanstack/react-router";
-import { useForgotPassword } from "../hooks/use-auth";
-import { authClient } from "../lib/auth-client";
-import { useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Loader2, ArrowLeft, Mail } from "lucide-react";
+import { createFileRoute, Link, redirect } from '@tanstack/react-router';
+import { ArrowLeft, Loader2, Mail } from 'lucide-react';
+import { useState } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useForgotPassword } from '../hooks/use-auth';
+import { authClient } from '../lib/auth-client';
 
-export const Route = createFileRoute("/forgot-password")({
+export const Route = createFileRoute('/forgot-password')({
   component: ForgotPasswordPage,
   beforeLoad: async () => {
     const { data: session } = await authClient.getSession();
     if (session) {
-      throw redirect({ to: "/dashboard" });
+      throw redirect({ to: '/dashboard' });
     }
   },
 });
@@ -22,7 +22,7 @@ function ForgotPasswordPage() {
   const forgotPasswordMutation = useForgotPassword();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState('');
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +33,7 @@ function ForgotPasswordPage() {
       await forgotPasswordMutation.mutate({ email });
       setSuccess(true);
     } catch (err: any) {
-      setError(err?.message || "Gagal mengirim email reset password.");
+      setError(err?.message || 'Gagal mengirim email reset password.');
     }
   };
 
@@ -104,10 +104,7 @@ function ForgotPasswordPage() {
 
               <form onSubmit={onSubmit} className="space-y-5">
                 <div className="space-y-2">
-                  <Label
-                    htmlFor="email"
-                    className="text-sm font-medium text-gray-700"
-                  >
+                  <Label htmlFor="email" className="text-sm font-medium text-gray-700">
                     Email
                   </Label>
                   <Input
@@ -138,7 +135,7 @@ function ForgotPasswordPage() {
                       Mengirim...
                     </>
                   ) : (
-                    "Kirim Link Reset"
+                    'Kirim Link Reset'
                   )}
                 </Button>
 
@@ -175,7 +172,7 @@ function ForgotPasswordPage() {
                   type="button"
                   onClick={() => {
                     setSuccess(false);
-                    setEmail("");
+                    setEmail('');
                   }}
                   variant="outline"
                   className="h-12 w-full rounded-full border-gray-200 text-base font-semibold text-gray-700 shadow-sm transition-all hover:bg-gray-50 active:scale-[0.98]"

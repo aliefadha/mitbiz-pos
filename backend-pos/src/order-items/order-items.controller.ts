@@ -11,7 +11,7 @@ import {
   UsePipes,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
+import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
 import { OrderItemsService } from './order-items.service';
 import {
   CreateOrderItemSchema,
@@ -24,11 +24,8 @@ import {
   OrderItemQueryDto,
 } from './dto';
 import { AuthGuard } from '@thallesp/nestjs-better-auth';
-import { PermissionGuard } from '../common/guards/permission.guard';
-import {
-  CurrentUser,
-  type CurrentUserType,
-} from '../common/decorators/current-user.decorator';
+import { PermissionGuard } from '@/common/guards/permission.guard';
+import { CurrentUser, type CurrentUserType } from '@/common/decorators/current-user.decorator';
 
 @ApiTags('order-items')
 @Controller('order-items')
@@ -46,20 +43,14 @@ export class OrderItemsController {
   @Get(':id')
   @ApiOperation({ summary: 'Get order item by ID' })
   @UsePipes(new ZodValidationPipe(OrderItemIdSchema, 'params'))
-  findById(
-    @Param() { id }: OrderItemIdDto,
-    @CurrentUser() user: CurrentUserType,
-  ) {
+  findById(@Param() { id }: OrderItemIdDto, @CurrentUser() user: CurrentUserType) {
     return this.orderItemsService.findById(id, user);
   }
 
   @Post()
   @ApiOperation({ summary: 'Create a new order item' })
   @UsePipes(new ZodValidationPipe(CreateOrderItemSchema))
-  create(
-    @Body() data: CreateOrderItemDto,
-    @CurrentUser() user: CurrentUserType,
-  ) {
+  create(@Body() data: CreateOrderItemDto, @CurrentUser() user: CurrentUserType) {
     return this.orderItemsService.create(data, user);
   }
 
@@ -78,10 +69,7 @@ export class OrderItemsController {
   @Delete(':id')
   @ApiOperation({ summary: 'Delete an order item' })
   @UsePipes(new ZodValidationPipe(OrderItemIdSchema, 'params'))
-  remove(
-    @Param() { id }: OrderItemIdDto,
-    @CurrentUser() user: CurrentUserType,
-  ) {
+  remove(@Param() { id }: OrderItemIdDto, @CurrentUser() user: CurrentUserType) {
     return this.orderItemsService.remove(id, user);
   }
 }

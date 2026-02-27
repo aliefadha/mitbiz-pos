@@ -1,17 +1,12 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-  Inject,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Inject } from '@nestjs/common';
 import { eq, and, like, desc, sql, SQL, count, inArray } from 'drizzle-orm';
-import { categories } from '../db/schema/category-schema';
-import { tenants } from '../db/schema/tenant-schema';
-import { products } from '../db/schema/product-schema';
+import { categories } from '@/db/schema/category-schema';
+import { tenants } from '@/db/schema/tenant-schema';
+import { products } from '@/db/schema/product-schema';
 import { CreateCategoryDto, UpdateCategoryDto, CategoryQueryDto } from './dto';
-import { DB_CONNECTION } from '../db/db.module';
-import type { DrizzleDB } from '../db/type';
-import type { CurrentUserType } from '../common/decorators/current-user.decorator';
+import { DB_CONNECTION } from '@/db/db.module';
+import type { DrizzleDB } from '@/db/type';
+import type { CurrentUserType } from '@/common/decorators/current-user.decorator';
 
 @Injectable()
 export class CategoriesService {
@@ -44,10 +39,7 @@ export class CategoriesService {
       })
       .from(products)
       .where(
-        and(
-          tenantId ? eq(products.tenantId, tenantId) : undefined,
-          eq(products.isActive, true),
-        ),
+        and(tenantId ? eq(products.tenantId, tenantId) : undefined, eq(products.isActive, true)),
       )
       .groupBy(products.categoryId)
       .as('product_counts');
@@ -65,18 +57,12 @@ export class CategoriesService {
           productsCount: sql<number>`COALESCE(${productCountSubquery.count}, 0)`,
         })
         .from(categories)
-        .leftJoin(
-          productCountSubquery,
-          eq(categories.id, productCountSubquery.categoryId),
-        )
+        .leftJoin(productCountSubquery, eq(categories.id, productCountSubquery.categoryId))
         .where(whereClause)
         .limit(limit)
         .offset(offset)
         .orderBy(desc(categories.createdAt)),
-      this.db
-        .select({ count: sql<number>`count(*)` })
-        .from(categories)
-        .where(whereClause),
+      this.db.select({ count: sql<number>`count(*)` }).from(categories).where(whereClause),
     ]);
 
     const total = Number(totalResult[0]?.count || 0);
@@ -110,10 +96,7 @@ export class CategoriesService {
         where: eq(tenants.userId, user.id),
       });
       const userTenantIds = userTenants.map((t) => t.id);
-      if (
-        userTenantIds.length > 0 &&
-        !userTenantIds.includes(category.tenantId)
-      ) {
+      if (userTenantIds.length > 0 && !userTenantIds.includes(category.tenantId)) {
         throw new ForbiddenException('You do not have access to this category');
       }
     }
@@ -138,10 +121,7 @@ export class CategoriesService {
       );
     }
 
-    const [category] = await this.db
-      .insert(categories)
-      .values(data)
-      .returning();
+    const [category] = await this.db.insert(categories).values(data).returning();
 
     return category;
   }
@@ -155,13 +135,8 @@ export class CategoriesService {
         where: eq(tenants.userId, user.id),
       });
       const userTenantIds = userTenants.map((t) => t.id);
-      if (
-        userTenantIds.length > 0 &&
-        !userTenantIds.includes(existingCategory.tenantId)
-      ) {
-        throw new ForbiddenException(
-          'You do not have permission to update this category',
-        );
+      if (userTenantIds.length > 0 && !userTenantIds.includes(existingCategory.tenantId)) {
+        throw new ForbiddenException('You do not have permission to update this category');
       }
     }
 
@@ -186,13 +161,8 @@ export class CategoriesService {
         where: eq(tenants.userId, user.id),
       });
       const userTenantIds = userTenants.map((t) => t.id);
-      if (
-        userTenantIds.length > 0 &&
-        !userTenantIds.includes(category.tenantId)
-      ) {
-        throw new ForbiddenException(
-          'You do not have permission to delete this category',
-        );
+      if (userTenantIds.length > 0 && !userTenantIds.includes(category.tenantId)) {
+        throw new ForbiddenException('You do not have permission to delete this category');
       }
     }
 

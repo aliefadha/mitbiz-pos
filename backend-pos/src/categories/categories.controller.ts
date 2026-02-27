@@ -11,7 +11,7 @@ import {
   UsePipes,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
+import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
 import { CategoriesService } from './categories.service';
 import {
   CreateCategorySchema,
@@ -24,11 +24,8 @@ import {
   CategoryQueryDto,
 } from './dto';
 import { AuthGuard } from '@thallesp/nestjs-better-auth';
-import { PermissionGuard } from '../common/guards/permission.guard';
-import {
-  CurrentUser,
-  type CurrentUserType,
-} from '../common/decorators/current-user.decorator';
+import { PermissionGuard } from '@/common/guards/permission.guard';
+import { CurrentUser, type CurrentUserType } from '@/common/decorators/current-user.decorator';
 
 @ApiTags('categories')
 @Controller('categories')
@@ -46,20 +43,14 @@ export class CategoriesController {
   @Get(':id')
   @ApiOperation({ summary: 'Get category by ID' })
   @UsePipes(new ZodValidationPipe(CategoryIdSchema, 'params'))
-  findById(
-    @Param() { id }: CategoryIdDto,
-    @CurrentUser() user: CurrentUserType,
-  ) {
+  findById(@Param() { id }: CategoryIdDto, @CurrentUser() user: CurrentUserType) {
     return this.categoriesService.findById(id, user);
   }
 
   @Post()
   @ApiOperation({ summary: 'Create a new category' })
   @UsePipes(new ZodValidationPipe(CreateCategorySchema))
-  create(
-    @Body() data: CreateCategoryDto,
-    @CurrentUser() user: CurrentUserType,
-  ) {
+  create(@Body() data: CreateCategoryDto, @CurrentUser() user: CurrentUserType) {
     return this.categoriesService.create(data, user);
   }
 

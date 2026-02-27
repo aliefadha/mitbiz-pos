@@ -1,22 +1,18 @@
-import { useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
-import { useAuth } from "@/contexts/auth-context";
-import { useTenant } from "@/contexts/tenant-context";
-import { type Tenant, type Outlet } from "@/lib/api/tenants";
-import { type Role } from "@/lib/rbac";
+import { useNavigate } from '@tanstack/react-router';
+import { ChevronDown, ChevronRight, ChevronsUpDown, Plus } from 'lucide-react';
+import { useState } from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
-import { ChevronsUpDown, ChevronRight, ChevronDown, Plus } from "lucide-react";
+} from '@/components/ui/dropdown-menu';
+import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
+import { useAuth } from '@/contexts/auth-context';
+import { useTenant } from '@/contexts/tenant-context';
+import { type Outlet, type Tenant } from '@/lib/api/tenants';
+import { type Role } from '@/lib/rbac';
 
 export function TenantSwitcher() {
   const navigate = useNavigate();
@@ -49,7 +45,7 @@ export function TenantSwitcher() {
                       ? selectedOutlet
                         ? `${selectedTenant.nama} - ${selectedOutlet.nama}`
                         : selectedTenant.nama
-                      : "Pilih Tenant"}
+                      : 'Pilih Tenant'}
                   </span>
                 </div>
                 <ChevronsUpDown className="ml-auto size-4" />
@@ -62,10 +58,7 @@ export function TenantSwitcher() {
               sideOffset={4}
             >
               {!tenants || tenants.length === 0 ? (
-                <DropdownMenuItem
-                  disabled
-                  className="justify-center text-muted-foreground"
-                >
+                <DropdownMenuItem disabled className="justify-center text-muted-foreground">
                   No data
                 </DropdownMenuItem>
               ) : (
@@ -87,13 +80,11 @@ export function TenantSwitcher() {
                       ) : (
                         <ChevronRight className="mr-1 h-4 w-4 shrink-0 text-muted-foreground" />
                       )}
-                      <span className="font-medium truncate">
-                        {tenant.nama}
-                      </span>
+                      <span className="font-medium truncate">{tenant.nama}</span>
                     </div>
                     {openFolders[tenant.id] && (
                       <div className="flex flex-col pl-7 mt-0.5 space-y-0.5">
-                        {(user?.role as Role) === "owner" && (
+                        {(user?.role as Role) === 'owner' && (
                           <DropdownMenuItem
                             onClick={() => {
                               setSelectedTenant(tenant);
@@ -101,7 +92,9 @@ export function TenantSwitcher() {
                             }}
                             className="cursor-pointer flex items-center px-1"
                           >
-                            <span className={`truncate ${!selectedOutlet && selectedTenant?.id === tenant.id ? "font-semibold" : ""}`}>
+                            <span
+                              className={`truncate ${!selectedOutlet && selectedTenant?.id === tenant.id ? 'font-semibold' : ''}`}
+                            >
                               {!selectedOutlet && selectedTenant?.id === tenant.id && (
                                 <div className="inline-block align-middle mr-2 h-2 w-2 rounded-full bg-current" />
                               )}
@@ -118,7 +111,9 @@ export function TenantSwitcher() {
                             }}
                             className="cursor-pointer flex items-center px-1"
                           >
-                            <span className={`truncate ${selectedOutlet?.id === outlet.id ? "font-semibold" : ""}`}>
+                            <span
+                              className={`truncate ${selectedOutlet?.id === outlet.id ? 'font-semibold' : ''}`}
+                            >
                               {selectedOutlet?.id === outlet.id && (
                                 <div className="inline-block align-middle mr-2 h-2 w-2 rounded-full bg-current" />
                               )}
@@ -131,19 +126,17 @@ export function TenantSwitcher() {
                   </div>
                 ))
               )}
-              {(user?.role as Role) !== "cashier" && (
+              {(user?.role as Role) !== 'cashier' && (
                 <>
                   <DropdownMenuSeparator className="my-1" />
                   <DropdownMenuItem
                     className="gap-2 p-2 cursor-pointer"
-                    onClick={() => navigate({ to: "/tenants/new" })}
+                    onClick={() => navigate({ to: '/tenants/new' })}
                   >
                     <div className="flex size-6 items-center justify-center rounded-md border bg-background text-muted-foreground">
                       <Plus className="size-4" />
                     </div>
-                    <div className="font-medium text-muted-foreground">
-                      Add tenant
-                    </div>
+                    <div className="font-medium text-muted-foreground">Add tenant</div>
                   </DropdownMenuItem>
                 </>
               )}

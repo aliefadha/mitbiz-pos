@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { TenantsPage } from "@/components/tenants/tenants-page";
+import { createFileRoute } from '@tanstack/react-router';
+import { TenantsPage } from '@/components/tenants/tenants-page';
 
-export const Route = createFileRoute("/_protected/tenants/")({
+export const Route = createFileRoute('/_protected/tenants/')({
   component: TenantsPage,
 });

@@ -1,4 +1,4 @@
-import { fetchApi } from "./client";
+import { fetchApi } from './client';
 
 export interface StockAdjustment {
   id: string;
@@ -39,13 +39,11 @@ export const stockAdjustmentsApi = {
     outletId?: string;
   }): Promise<{ data: StockAdjustment[]; meta: any }> => {
     const params = new URLSearchParams();
-    if (filters?.productId)
-      params.append("productId", filters.productId.toString());
-    if (filters?.outletId)
-      params.append("outletId", filters.outletId.toString());
+    if (filters?.productId) params.append('productId', filters.productId.toString());
+    if (filters?.outletId) params.append('outletId', filters.outletId.toString());
     const query = params.toString();
     return fetchApi<{ data: StockAdjustment[]; meta: any }>(
-      `/stock-adjustments${query ? `?${query}` : ""}`,
+      `/stock-adjustments${query ? `?${query}` : ''}`
     );
   },
 
@@ -54,8 +52,8 @@ export const stockAdjustmentsApi = {
   },
 
   create: async (data: CreateStockAdjustmentDto): Promise<StockAdjustment> => {
-    return fetchApi<StockAdjustment>("/stock-adjustments", {
-      method: "POST",
+    return fetchApi<StockAdjustment>('/stock-adjustments', {
+      method: 'POST',
       data,
     });
   },

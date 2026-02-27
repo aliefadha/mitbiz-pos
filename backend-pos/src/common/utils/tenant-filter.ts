@@ -1,11 +1,8 @@
-import { eq, sql, SQL } from 'drizzle-orm';
-import { products } from '../../db/schema/product-schema';
-import type { DrizzleDB } from '../../db/type';
+import { eq, sql, type SQL } from 'drizzle-orm';
+import { products } from '@/db/schema/product-schema';
+import type { DrizzleDB } from '@/db/type';
 
-export async function getProductIdsByTenant(
-  db: DrizzleDB,
-  tenantId: string,
-): Promise<string[]> {
+export async function getProductIdsByTenant(db: DrizzleDB, tenantId: string): Promise<string[]> {
   const productIdsInTenant = await db
     .select({ id: products.id })
     .from(products)

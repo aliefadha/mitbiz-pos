@@ -1,29 +1,15 @@
 import { relations, sql } from 'drizzle-orm';
-import {
-  pgTable,
-  text,
-  timestamp,
-  boolean,
-  integer,
-  decimal,
-  pgEnum,
-} from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, boolean, integer, decimal, pgEnum } from 'drizzle-orm/pg-core';
 import { categories } from './category-schema';
 import { tenants } from './tenant-schema';
 import { productStocks } from './stock-schema';
 import { stockAdjustments } from './stock-adjustment-schema';
 import { orderItems } from './order-item-schema';
 
-export const productTypeEnum = pgEnum('product_type', [
-  'barang',
-  'jasa',
-  'digital',
-]);
+export const productTypeEnum = pgEnum('product_type', ['barang', 'jasa', 'digital']);
 
 export const products = pgTable('products', {
-  id: text('id')
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
   tenantId: text('tenant_id')
     .references(() => tenants.id)
     .notNull(),

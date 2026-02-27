@@ -8,9 +8,9 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthService } from '@thallesp/nestjs-better-auth';
-import { auth } from '../../lib/auth';
+import { auth } from '@/lib/auth';
 import { fromNodeHeaders } from 'better-auth/node';
-import { adminRole, ownerRole, cashierRole } from '../../lib/permissions';
+import { adminRole, ownerRole, cashierRole } from '@/lib/permissions';
 
 const METHOD_TO_ACTION: Record<string, string> = {
   GET: 'read',
@@ -20,10 +20,7 @@ const METHOD_TO_ACTION: Record<string, string> = {
   DELETE: 'delete',
 };
 
-const ROLE_MAP: Record<
-  string,
-  { authorize: (request: unknown) => { success: boolean } }
-> = {
+const ROLE_MAP: Record<string, { authorize: (request: unknown) => { success: boolean } }> = {
   admin: adminRole,
   owner: ownerRole,
   cashier: cashierRole,
@@ -66,8 +63,7 @@ export class PermissionGuard implements CanActivate {
       return true;
     }
 
-    const permissionKey =
-      CONTROLLER_TO_PERMISSION[controllerPath] || controllerPath;
+    const permissionKey = CONTROLLER_TO_PERMISSION[controllerPath] || controllerPath;
 
     const rolePermissions = ROLE_MAP[role];
     if (!rolePermissions) {
@@ -79,18 +75,14 @@ export class PermissionGuard implements CanActivate {
     });
 
     if (!result.success) {
-      throw new ForbiddenException(
-        `You don't have permission to ${action} ${controllerPath}`,
-      );
+      throw new ForbiddenException(`You don't have permission to ${action} ${controllerPath}`);
     }
 
     return true;
   }
 
   private getControllerPath(controller: new () => object): string | null {
-    const controllerPath = Reflect.getMetadata('path', controller) as
-      | string
-      | null;
+    const controllerPath = Reflect.getMetadata('path', controller) as string | null;
     return controllerPath || null;
   }
 

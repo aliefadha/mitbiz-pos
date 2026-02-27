@@ -1,6 +1,6 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { tenantsApi, type Tenant, type Outlet as OutletType } from '@/lib/api/tenants';
+import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
+import { type Outlet as OutletType, type Tenant, tenantsApi } from '@/lib/api/tenants';
 import { useAuth } from './auth-context';
 
 interface TenantContextType {
@@ -20,7 +20,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   const [selectedOutlet, setSelectedOutletState] = useState<OutletType | null>(null);
 
   const { data: tenantsData, isLoading: tenantsLoading } = useQuery({
-    queryKey: ["tenants"],
+    queryKey: ['tenants'],
     queryFn: () => tenantsApi.getMyTenants(),
     enabled: !!user?.id,
   });

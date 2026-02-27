@@ -1,18 +1,18 @@
-import { createAuthClient } from "better-auth/react"
-import { customSessionClient, inferAdditionalFields } from "better-auth/client/plugins"
+import { customSessionClient, inferAdditionalFields } from 'better-auth/client/plugins';
+import { createAuthClient } from 'better-auth/react';
 
 export const authClient = createAuthClient({
-  baseURL: "http://localhost:3001",
+  baseURL: 'http://localhost:3001',
   plugins: [
     customSessionClient(),
     inferAdditionalFields({
       user: {
-        role: { type: "string" },
-        outletId: { type: "number" },
-        isSubscribed: { type: "boolean" },
+        role: { type: 'string' },
+        outletId: { type: 'number' },
+        isSubscribed: { type: 'boolean' },
       },
-    })
+    }),
   ],
-})
+});
 
-export const { signIn, signOut, useSession } = authClient
+export const { signIn, signOut, useSession } = authClient;

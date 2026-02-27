@@ -1,12 +1,11 @@
-import { Outlet, createRootRouteWithContext } from "@tanstack/react-router";
-import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
-import { TanStackDevtools } from "@tanstack/react-devtools";
-import { QueryClient } from "@tanstack/react-query";
-import { Toaster } from "sonner";
-
-import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
-import { AuthProvider } from "../contexts/auth-context";
-import { TenantProvider } from "../contexts/tenant-context";
+import { TanStackDevtools } from '@tanstack/react-devtools';
+import { QueryClient } from '@tanstack/react-query';
+import { createRootRouteWithContext, Outlet } from '@tanstack/react-router';
+import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
+import { Toaster } from 'sonner';
+import { AuthProvider } from '../contexts/auth-context';
+import { TenantProvider } from '../contexts/tenant-context';
+import TanStackQueryDevtools from '../integrations/tanstack-query/devtools';
 
 interface MyRouterContext {
   queryClient: QueryClient;
@@ -38,11 +37,11 @@ function Layout() {
       <Outlet />
       <TanStackDevtools
         config={{
-          position: "bottom-right",
+          position: 'bottom-right',
         }}
         plugins={[
           {
-            name: "TanStack Router",
+            name: 'TanStack Router',
             render: <TanStackRouterDevtoolsPanel />,
           },
           TanStackQueryDevtools,

@@ -1,7 +1,7 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { admin, openAPI } from 'better-auth/plugins';
-import { db } from '../db';
+import { db } from '@/db';
 import { ac, adminRole, ownerRole, cashierRole } from './permissions';
 import { emailService } from './email.service';
 

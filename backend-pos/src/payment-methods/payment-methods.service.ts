@@ -1,20 +1,11 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-  Inject,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Inject } from '@nestjs/common';
 import { eq, and, like, desc, sql, SQL } from 'drizzle-orm';
-import { paymentMethods } from '../db/schema/payment-method-schema';
-import { tenants } from '../db/schema/tenant-schema';
-import {
-  CreatePaymentMethodDto,
-  UpdatePaymentMethodDto,
-  PaymentMethodQueryDto,
-} from './dto';
-import { DB_CONNECTION } from '../db/db.module';
-import type { DrizzleDB } from '../db/type';
-import type { CurrentUserType } from '../common/decorators/current-user.decorator';
+import { paymentMethods } from '@/db/schema/payment-method-schema';
+import { tenants } from '@/db/schema/tenant-schema';
+import { CreatePaymentMethodDto, UpdatePaymentMethodDto, PaymentMethodQueryDto } from './dto';
+import { DB_CONNECTION } from '@/db/db.module';
+import type { DrizzleDB } from '@/db/type';
+import type { CurrentUserType } from '@/common/decorators/current-user.decorator';
 
 @Injectable()
 export class PaymentMethodsService {
@@ -48,10 +39,7 @@ export class PaymentMethodsService {
         .limit(limit)
         .offset(offset)
         .orderBy(desc(paymentMethods.createdAt)),
-      this.db
-        .select({ count: sql<number>`count(*)` })
-        .from(paymentMethods)
-        .where(whereClause),
+      this.db.select({ count: sql<number>`count(*)` }).from(paymentMethods).where(whereClause),
     ]);
 
     const total = Number(totalResult[0]?.count || 0);
@@ -84,13 +72,8 @@ export class PaymentMethodsService {
         where: eq(tenants.userId, user.id),
       });
       const userTenantIds = userTenants.map((t) => t.id);
-      if (
-        userTenantIds.length > 0 &&
-        !userTenantIds.includes(paymentMethod.tenantId)
-      ) {
-        throw new ForbiddenException(
-          'You do not have access to this payment method',
-        );
+      if (userTenantIds.length > 0 && !userTenantIds.includes(paymentMethod.tenantId)) {
+        throw new ForbiddenException('You do not have access to this payment method');
       }
     }
 
@@ -112,19 +95,12 @@ export class PaymentMethodsService {
       );
     }
 
-    const [paymentMethod] = await this.db
-      .insert(paymentMethods)
-      .values(data)
-      .returning();
+    const [paymentMethod] = await this.db.insert(paymentMethods).values(data).returning();
 
     return paymentMethod;
   }
 
-  async update(
-    id: string,
-    data: UpdatePaymentMethodDto,
-    user: CurrentUserType,
-  ) {
+  async update(id: string, data: UpdatePaymentMethodDto, user: CurrentUserType) {
     const existingPaymentMethod = await this.findById(id, user);
 
     if (user.role === 'owner') {
@@ -132,13 +108,8 @@ export class PaymentMethodsService {
         where: eq(tenants.userId, user.id),
       });
       const userTenantIds = userTenants.map((t) => t.id);
-      if (
-        userTenantIds.length > 0 &&
-        !userTenantIds.includes(existingPaymentMethod.tenantId)
-      ) {
-        throw new ForbiddenException(
-          'You do not have permission to update this payment method',
-        );
+      if (userTenantIds.length > 0 && !userTenantIds.includes(existingPaymentMethod.tenantId)) {
+        throw new ForbiddenException('You do not have permission to update this payment method');
       }
     }
 
@@ -162,13 +133,8 @@ export class PaymentMethodsService {
         where: eq(tenants.userId, user.id),
       });
       const userTenantIds = userTenants.map((t) => t.id);
-      if (
-        userTenantIds.length > 0 &&
-        !userTenantIds.includes(paymentMethod.tenantId)
-      ) {
-        throw new ForbiddenException(
-          'You do not have permission to delete this payment method',
-        );
+      if (userTenantIds.length > 0 && !userTenantIds.includes(paymentMethod.tenantId)) {
+        throw new ForbiddenException('You do not have permission to delete this payment method');
       }
     }
 

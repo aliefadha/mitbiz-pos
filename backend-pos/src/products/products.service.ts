@@ -6,31 +6,22 @@ import {
   Inject,
 } from '@nestjs/common';
 import { eq, and, like, desc, sql, SQL } from 'drizzle-orm';
-import { products } from '../db/schema/product-schema';
-import { tenants } from '../db/schema/tenant-schema';
-import { outlets } from '../db/schema/outlet-schema';
-import { categories } from '../db/schema/category-schema';
-import { productStocks } from '../db/schema/stock-schema';
+import { products } from '@/db/schema/product-schema';
+import { tenants } from '@/db/schema/tenant-schema';
+import { outlets } from '@/db/schema/outlet-schema';
+import { categories } from '@/db/schema/category-schema';
+import { productStocks } from '@/db/schema/stock-schema';
 import { CreateProductDto, UpdateProductDto, ProductQueryDto } from './dto';
-import { DB_CONNECTION } from '../db/db.module';
-import type { DrizzleDB } from '../db/type';
-import type { CurrentUserType } from '../common/decorators/current-user.decorator';
+import { DB_CONNECTION } from '@/db/db.module';
+import type { DrizzleDB } from '@/db/type';
+import type { CurrentUserType } from '@/common/decorators/current-user.decorator';
 
 @Injectable()
 export class ProductsService {
   constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) {}
 
   async findAll(query: ProductQueryDto) {
-    const {
-      page = 1,
-      limit = 10,
-      search,
-      isActive,
-      tenantId,
-      categoryId,
-      tipe,
-      outletId,
-    } = query;
+    const { page = 1, limit = 10, search, isActive, tenantId, categoryId, tipe, outletId } = query;
     const offset = (page - 1) * limit;
 
     const conditions: SQL<unknown>[] = [];
@@ -56,19 +47,14 @@ export class ProductsService {
       conditions.push(like(products.nama, `%${search}%`));
     }
 
-    const stockCondition = outletId
-      ? eq(productStocks.outletId, outletId)
-      : undefined;
+    const stockCondition = outletId ? eq(productStocks.outletId, outletId) : undefined;
 
     const [data, totalResult] = await Promise.all([
       this.db
         .select()
         .from(products)
         .leftJoin(categories, eq(products.categoryId, categories.id))
-        .leftJoin(productStocks, and(
-          eq(products.id, productStocks.productId),
-          stockCondition,
-        ))
+        .leftJoin(productStocks, and(eq(products.id, productStocks.productId), stockCondition))
         .where(conditions.length > 0 ? and(...conditions) : undefined)
         .limit(limit)
         .offset(offset)
@@ -82,10 +68,7 @@ export class ProductsService {
     const productsMap = new Map<string, number>();
     data.forEach((row) => {
       const current = productsMap.get(row.products.id) ?? 0;
-      productsMap.set(
-        row.products.id,
-        current + (row.product_stocks?.quantity ?? 0),
-      );
+      productsMap.set(row.products.id, current + (row.product_stocks?.quantity ?? 0));
     });
 
     const productsWithCategory = data.map((row) => ({
@@ -135,10 +118,7 @@ export class ProductsService {
         where: eq(tenants.userId, user.id),
       });
       const userTenantIds = userTenants.map((t) => t.id);
-      if (
-        userTenantIds.length > 0 &&
-        !userTenantIds.includes(product.tenantId)
-      ) {
+      if (userTenantIds.length > 0 && !userTenantIds.includes(product.tenantId)) {
         throw new ForbiddenException('You do not have access to this product');
       }
     }
@@ -158,9 +138,7 @@ export class ProductsService {
 
     // Check ownership for owner
     if (user.role === 'owner' && tenant.userId !== user.id) {
-      throw new ForbiddenException(
-        'You do not have permission to create products in this tenant',
-      );
+      throw new ForbiddenException('You do not have permission to create products in this tenant');
     }
 
     // Check access for cashier
@@ -181,9 +159,7 @@ export class ProductsService {
       });
 
       if (!category) {
-        throw new NotFoundException(
-          `Category with ID ${data.categoryId} not found`,
-        );
+        throw new NotFoundException(`Category with ID ${data.categoryId} not found`);
       }
 
       // Verify category belongs to same tenant
@@ -197,9 +173,7 @@ export class ProductsService {
     });
 
     if (existingSku) {
-      throw new ConflictException(
-        `Product with SKU ${data.sku} already exists`,
-      );
+      throw new ConflictException(`Product with SKU ${data.sku} already exists`);
     }
 
     const [product] = await this.db
@@ -222,9 +196,7 @@ export class ProductsService {
       });
 
       if (skuExists) {
-        throw new ConflictException(
-          `Product with SKU ${data.sku} already exists`,
-        );
+        throw new ConflictException(`Product with SKU ${data.sku} already exists`);
       }
     }
 
@@ -234,9 +206,7 @@ export class ProductsService {
       });
 
       if (!category) {
-        throw new NotFoundException(
-          `Category with ID ${data.categoryId} not found`,
-        );
+        throw new NotFoundException(`Category with ID ${data.categoryId} not found`);
       }
 
       // Verify category belongs to same tenant
@@ -260,10 +230,7 @@ export class ProductsService {
   async remove(id: string, user: CurrentUserType) {
     await this.findById(id, user);
 
-    const [product] = await this.db
-      .delete(products)
-      .where(eq(products.id, id))
-      .returning();
+    const [product] = await this.db.delete(products).where(eq(products.id, id)).returning();
 
     return product;
   }

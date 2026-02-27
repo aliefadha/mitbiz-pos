@@ -12,24 +12,11 @@ export const CreateProductSchema = z.object({
     .string()
     .min(1, 'Product name is required')
     .max(255, 'Product name must be less than 255 characters'),
-  description: z
-    .string()
-    .max(1000, 'Description must be less than 1000 characters')
-    .optional(),
-  price: z
-    .number()
-    .positive('Price must be a positive number')
-    .max(999999999, 'Price is too high'),
-  sku: z
-    .string()
-    .min(1, 'SKU is required')
-    .max(100, 'SKU must be less than 100 characters'),
+  description: z.string().max(1000, 'Description must be less than 1000 characters').optional(),
+  price: z.number().positive('Price must be a positive number').max(999999999, 'Price is too high'),
+  sku: z.string().min(1, 'SKU is required').max(100, 'SKU must be less than 100 characters'),
   categoryId: z.string().uuid('Invalid category ID format').optional(),
-  stock: z
-    .number()
-    .int('Stock must be an integer')
-    .min(0, 'Stock cannot be negative')
-    .default(0),
+  stock: z.number().int('Stock must be an integer').min(0, 'Stock cannot be negative').default(0),
   isActive: z.boolean().default(true),
   imageUrl: z.string().url('Invalid image URL').optional(),
 });
@@ -41,10 +28,7 @@ export const UpdateProductSchema = z.object({
     .min(1, 'Product name is required')
     .max(255, 'Product name must be less than 255 characters')
     .optional(),
-  description: z
-    .string()
-    .max(1000, 'Description must be less than 1000 characters')
-    .optional(),
+  description: z.string().max(1000, 'Description must be less than 1000 characters').optional(),
   price: z
     .number()
     .positive('Price must be a positive number')
@@ -55,16 +39,8 @@ export const UpdateProductSchema = z.object({
     .min(1, 'SKU is required')
     .max(100, 'SKU must be less than 100 characters')
     .optional(),
-  categoryId: z
-    .string()
-    .uuid('Invalid category ID format')
-    .optional()
-    .nullable(),
-  stock: z
-    .number()
-    .int('Stock must be an integer')
-    .min(0, 'Stock cannot be negative')
-    .optional(),
+  categoryId: z.string().uuid('Invalid category ID format').optional().nullable(),
+  stock: z.number().int('Stock must be an integer').min(0, 'Stock cannot be negative').optional(),
   isActive: z.boolean().optional(),
   imageUrl: z.string().url('Invalid image URL').optional().nullable(),
 });

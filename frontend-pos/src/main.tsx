@@ -1,22 +1,22 @@
-import { StrictMode } from "react";
-import ReactDOM from "react-dom/client";
-import { RouterProvider, createRouter } from "@tanstack/react-router";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { ErrorPage } from "@/components/error-page";
+import { createRouter, RouterProvider } from '@tanstack/react-router';
+import { StrictMode } from 'react';
+import ReactDOM from 'react-dom/client';
+import { ErrorPage } from '@/components/error-page';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
-import * as TanStackQueryProvider from "./integrations/tanstack-query/root-provider.tsx";
+import * as TanStackQueryProvider from './integrations/tanstack-query/root-provider.tsx';
 
-import { routeTree } from "./routeTree.gen";
+import { routeTree } from './routeTree.gen';
 
 // Import Plus Jakarta Sans font
-import "@fontsource/plus-jakarta-sans/400.css";
-import "@fontsource/plus-jakarta-sans/500.css";
-import "@fontsource/plus-jakarta-sans/600.css";
-import "@fontsource/plus-jakarta-sans/700.css";
+import '@fontsource/plus-jakarta-sans/400.css';
+import '@fontsource/plus-jakarta-sans/500.css';
+import '@fontsource/plus-jakarta-sans/600.css';
+import '@fontsource/plus-jakarta-sans/700.css';
 
-import "./styles.css";
-import reportWebVitals from "./reportWebVitals.ts";
-import { NotFoundPage } from "./components/not-found-page.tsx";
+import './styles.css';
+import { NotFoundPage } from './components/not-found-page.tsx';
+import reportWebVitals from './reportWebVitals.ts';
 
 // Create a new router instance
 
@@ -26,27 +26,23 @@ const router = createRouter({
   context: {
     ...TanStackQueryProviderContext,
   },
-  defaultPreload: "intent",
+  defaultPreload: 'intent',
   scrollRestoration: true,
   defaultStructuralSharing: true,
   defaultPreloadStaleTime: 0,
-  defaultNotFoundComponent: () => (
-    <NotFoundPage />
-  ),
-  defaultErrorComponent: ({ reset }) => (
-    <ErrorPage reset={reset} />
-  ),
+  defaultNotFoundComponent: () => <NotFoundPage />,
+  defaultErrorComponent: ({ reset }) => <ErrorPage reset={reset} />,
 });
 
 // Register the router instance for type safety
-declare module "@tanstack/react-router" {
+declare module '@tanstack/react-router' {
   interface Register {
     router: typeof router;
   }
 }
 
 // Render the app
-const rootElement = document.getElementById("app");
+const rootElement = document.getElementById('app');
 if (rootElement && !rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement);
   root.render(
@@ -56,7 +52,7 @@ if (rootElement && !rootElement.innerHTML) {
           <RouterProvider router={router} />
         </TooltipProvider>
       </TanStackQueryProvider.Provider>
-    </StrictMode>,
+    </StrictMode>
   );
 }
 

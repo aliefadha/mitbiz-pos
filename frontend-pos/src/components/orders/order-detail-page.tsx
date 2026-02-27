@@ -1,29 +1,29 @@
-import { useQuery } from "@tanstack/react-query";
-import { useParams } from "@tanstack/react-router";
-import { ordersApi, type Order, type OrderItem } from "@/lib/api/orders";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft } from "lucide-react";
+import { useQuery } from '@tanstack/react-query';
+import { useParams } from '@tanstack/react-router';
+import { ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { type Order, type OrderItem, ordersApi } from '@/lib/api/orders';
 
 interface OrderDetail extends Order {
   orderItems?: OrderItem[];
 }
 
 export function OrderDetailPage() {
-  const { orderId } = useParams({ from: "/_protected/orders/$orderId" });
+  const { orderId } = useParams({ from: '/_protected/orders/$orderId' });
 
   const { data: orderData, isLoading } = useQuery({
-    queryKey: ["order", orderId],
+    queryKey: ['order', orderId],
     queryFn: () => ordersApi.getById(orderId),
   });
 
   const order = orderData as OrderDetail | undefined;
 
   const formatRupiah = (value: string | number): string => {
-    const num = typeof value === "string" ? parseFloat(value) : value;
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
+    const num = typeof value === 'string' ? parseFloat(value) : value;
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(num);
@@ -31,36 +31,36 @@ export function OrderDetailPage() {
 
   const formatDate = (date: Date | string): string => {
     const d = new Date(date);
-    return new Intl.DateTimeFormat("id-ID", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
+    return new Intl.DateTimeFormat('id-ID', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     }).format(d);
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "complete":
-        return "bg-green-100 text-green-700";
-      case "cancel":
-        return "bg-red-100 text-red-700";
-      case "refunded":
-        return "bg-yellow-100 text-yellow-700";
+      case 'complete':
+        return 'bg-green-100 text-green-700';
+      case 'cancel':
+        return 'bg-red-100 text-red-700';
+      case 'refunded':
+        return 'bg-yellow-100 text-yellow-700';
       default:
-        return "bg-gray-100 text-gray-700";
+        return 'bg-gray-100 text-gray-700';
     }
   };
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case "complete":
-        return "Selesai";
-      case "cancel":
-        return "Dibatalkan";
-      case "refunded":
-        return "Dikembalikan";
+      case 'complete':
+        return 'Selesai';
+      case 'cancel':
+        return 'Dibatalkan';
+      case 'refunded':
+        return 'Dikembalikan';
       default:
         return status;
     }
@@ -83,18 +83,12 @@ export function OrderDetailPage() {
   return (
     <div>
       <div className="flex items-center gap-4 mb-6">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => window.history.back()}
-        >
+        <Button variant="ghost" size="icon" onClick={() => window.history.back()}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
           <h4 className="text-lg font-semibold m-0">Detail Pesanan</h4>
-          <p className="text-sm text-gray-500 m-0">
-            Lihat detail pesanan
-          </p>
+          <p className="text-sm text-gray-500 m-0">Lihat detail pesanan</p>
         </div>
       </div>
 
@@ -118,7 +112,7 @@ export function OrderDetailPage() {
             </div>
             <div className="flex justify-between">
               <span className="text-gray-500">Outlet</span>
-              <span className="font-medium">{order.outlet?.nama || "-"}</span>
+              <span className="font-medium">{order.outlet?.nama || '-'}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-500">Tanggal</span>
@@ -144,7 +138,9 @@ export function OrderDetailPage() {
               <>
                 {order.pajakBreakdown.map((tax) => (
                   <div key={tax.taxId} className="flex justify-between">
-                    <span className="text-gray-500">{tax.nama} ({tax.rate}%)</span>
+                    <span className="text-gray-500">
+                      {tax.nama} ({tax.rate}%)
+                    </span>
                     <span>{formatRupiah(tax.amount)}</span>
                   </div>
                 ))}
@@ -154,7 +150,9 @@ export function OrderDetailPage() {
               <>
                 {order.diskonBreakdown.map((discount) => (
                   <div key={discount.discountId} className="flex justify-between">
-                    <span className="text-gray-500">{discount.nama} ({discount.rate}%)</span>
+                    <span className="text-gray-500">
+                      {discount.nama} ({discount.rate}%)
+                    </span>
                     <span>-{formatRupiah(discount.amount)}</span>
                   </div>
                 ))}
@@ -184,10 +182,10 @@ export function OrderDetailPage() {
                 className="flex justify-between items-center py-2 border-b last:border-0"
               >
                 <div>
-                  <p className="font-medium">{item.product?.nama || "Product"}</p>
+                  <p className="font-medium">{item.product?.nama || 'Product'}</p>
                   <p className="text-sm text-gray-500">
                     {item.quantity} x {formatRupiah(item.hargaSatuan)}
-                    {item.jumlahDiskon && item.jumlahDiskon !== "0" && (
+                    {item.jumlahDiskon && item.jumlahDiskon !== '0' && (
                       <span className="ml-2 text-green-600">
                         (-{formatRupiah(item.jumlahDiskon)})
                       </span>

@@ -1,18 +1,18 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useAuth } from "@/contexts/auth-context";
+import { createFileRoute } from '@tanstack/react-router';
+import { useAuth } from '@/contexts/auth-context';
 
-export const Route = createFileRoute("/_protected/dashboard")({
+export const Route = createFileRoute('/_protected/dashboard')({
   component: DashboardPage,
 });
 
 function DashboardPage() {
   const { role } = useAuth();
 
-  if (role === "admin") {
+  if (role === 'admin') {
     return <AdminDashboard />;
   }
 
-  if (role === "owner") {
+  if (role === 'owner') {
     return <OwnerDashboard />;
   }
 

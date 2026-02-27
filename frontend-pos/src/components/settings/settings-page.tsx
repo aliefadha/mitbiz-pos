@@ -1,13 +1,12 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { useEffect } from "react";
-import { usersApi } from "@/lib/api/users";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent } from "@/components/ui/card";
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { Upload, User } from 'lucide-react';
+import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -15,12 +14,13 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Upload, User } from "lucide-react";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { usersApi } from '@/lib/api/users';
 
 const formSchema = z.object({
-  name: z.string().min(1, "Name is required"),
+  name: z.string().min(1, 'Name is required'),
   email: z.string().email(),
 });
 
@@ -28,8 +28,8 @@ export function SettingsPage() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      email: "",
+      name: '',
+      email: '',
     },
   });
 
@@ -38,18 +38,17 @@ export function SettingsPage() {
     isLoading,
     refetch,
   } = useQuery({
-    queryKey: ["profile"],
+    queryKey: ['profile'],
     queryFn: () => usersApi.getProfile(),
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: { name?: string; image?: string }) =>
-      usersApi.updateProfile(data),
+    mutationFn: (data: { name?: string; image?: string }) => usersApi.updateProfile(data),
     onSuccess: () => {
       refetch();
     },
     onError: (error: Error) => {
-      alert(error.message || "Failed to update profile");
+      alert(error.message || 'Failed to update profile');
     },
   });
 
@@ -67,9 +66,7 @@ export function SettingsPage() {
       <div className="max-w-[600px]">
         <div className="mb-6">
           <h4 className="text-lg font-semibold m-0">Settings</h4>
-          <p className="text-sm text-gray-500 m-0">
-            Manage your account settings
-          </p>
+          <p className="text-sm text-gray-500 m-0">Manage your account settings</p>
         </div>
         <div className="space-y-2">
           <Skeleton className="h-10 w-full" />
@@ -83,9 +80,7 @@ export function SettingsPage() {
     <div className="w-full">
       <div className="mb-6">
         <h4 className="text-lg font-semibold m-0">Settings</h4>
-        <p className="text-sm text-gray-500 m-0">
-          Manage your account settings
-        </p>
+        <p className="text-sm text-gray-500 m-0">Manage your account settings</p>
       </div>
 
       <Card>
@@ -140,11 +135,7 @@ export function SettingsPage() {
                   <Button type="submit" disabled={updateMutation.isPending}>
                     Save Changes
                   </Button>
-                  <Button
-                    variant="outline"
-                    type="button"
-                    onClick={() => form.reset()}
-                  >
+                  <Button variant="outline" type="button" onClick={() => form.reset()}>
                     Cancel
                   </Button>
                 </div>

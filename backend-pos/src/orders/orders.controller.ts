@@ -11,7 +11,7 @@ import {
   UsePipes,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
+import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
 import { OrdersService } from './orders.service';
 import {
   CreateOrderSchema,
@@ -24,11 +24,8 @@ import {
   OrderQueryDto,
 } from './dto';
 import { AuthGuard } from '@thallesp/nestjs-better-auth';
-import { PermissionGuard } from '../common/guards/permission.guard';
-import {
-  CurrentUser,
-  type CurrentUserType,
-} from '../common/decorators/current-user.decorator';
+import { PermissionGuard } from '@/common/guards/permission.guard';
+import { CurrentUser, type CurrentUserType } from '@/common/decorators/current-user.decorator';
 
 @ApiTags('orders')
 @Controller('orders')

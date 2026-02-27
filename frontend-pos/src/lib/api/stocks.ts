@@ -1,4 +1,4 @@
-import { fetchApi } from "./client";
+import { fetchApi } from './client';
 
 export interface Stock {
   id: string;
@@ -29,12 +29,15 @@ export interface UpdateStockDto {
 }
 
 export const stocksApi = {
-  getAll: async (filters?: { productId?: string; outletId?: string }): Promise<{ data: Stock[]; meta: any }> => {
+  getAll: async (filters?: {
+    productId?: string;
+    outletId?: string;
+  }): Promise<{ data: Stock[]; meta: any }> => {
     const params = new URLSearchParams();
-    if (filters?.productId) params.append("productId", filters.productId.toString());
-    if (filters?.outletId) params.append("outletId", filters.outletId.toString());
+    if (filters?.productId) params.append('productId', filters.productId.toString());
+    if (filters?.outletId) params.append('outletId', filters.outletId.toString());
     const query = params.toString();
-    return fetchApi<{ data: Stock[]; meta: any }>(`/stocks${query ? `?${query}` : ""}`);
+    return fetchApi<{ data: Stock[]; meta: any }>(`/stocks${query ? `?${query}` : ''}`);
   },
 
   getById: async (id: string): Promise<Stock> => {
@@ -42,22 +45,22 @@ export const stocksApi = {
   },
 
   create: async (data: CreateStockDto): Promise<Stock> => {
-    return fetchApi<Stock>("/stocks", {
-      method: "POST",
+    return fetchApi<Stock>('/stocks', {
+      method: 'POST',
       data,
     });
   },
 
   update: async (id: string, data: UpdateStockDto): Promise<Stock> => {
     return fetchApi<Stock>(`/stocks/${id}`, {
-      method: "PUT",
+      method: 'PUT',
       data,
     });
   },
 
   delete: async (id: string): Promise<{ message: string }> => {
     return fetchApi<{ message: string }>(`/stocks/${id}`, {
-      method: "DELETE",
+      method: 'DELETE',
     });
   },
 };

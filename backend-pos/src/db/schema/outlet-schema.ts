@@ -6,9 +6,7 @@ import { productStocks } from './stock-schema';
 import { stockAdjustments } from './stock-adjustment-schema';
 
 export const outlets = pgTable('outlets', {
-  id: text('id')
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
   tenantId: text('tenant_id')
     .references(() => tenants.id)
     .notNull(),

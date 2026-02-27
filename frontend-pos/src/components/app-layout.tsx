@@ -1,136 +1,135 @@
-import { Outlet, useLocation, useNavigate } from "@tanstack/react-router";
-import { useAuth } from "../contexts/auth-context";
-import { TenantSwitcher } from "./tenant-switcher";
-import { useLogout } from "@/hooks/use-auth";
-import { type Role } from "@/lib/rbac";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Outlet, useLocation, useNavigate } from '@tanstack/react-router';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Separator } from "@/components/ui/separator";
-import {
-  LayoutDashboard,
-  Settings,
-  User,
-  LogOut,
   Bell,
-  Users,
   ChevronsUpDown,
-  Folder,
-  Package,
-  Store,
-  Receipt,
-  ShoppingCart,
   CreditCard,
+  Folder,
+  LayoutDashboard,
+  LogOut,
+  Package,
   Percent,
-} from "lucide-react";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarTrigger,
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarInset,
-  useSidebar,
-} from "@/components/ui/sidebar";
-
+  Receipt,
+  Settings,
+  ShoppingCart,
+  Store,
+  User,
+  Users,
+} from 'lucide-react';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
+} from '@/components/ui/breadcrumb';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Separator } from '@/components/ui/separator';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+  useSidebar,
+} from '@/components/ui/sidebar';
+import { useLogout } from '@/hooks/use-auth';
+import { type Role } from '@/lib/rbac';
+import { useAuth } from '../contexts/auth-context';
+import { TenantSwitcher } from './tenant-switcher';
 
 const menuConfig = [
   {
-    group: "Dashboard",
+    group: 'Dashboard',
     items: [
       {
-        key: "/dashboard",
+        key: '/dashboard',
         icon: LayoutDashboard,
-        label: "Dashboard",
-        roles: ["admin", "owner", "cashier"],
+        label: 'Dashboard',
+        roles: ['admin', 'owner', 'cashier'],
       },
     ],
   },
   {
-    group: "Transaksi",
+    group: 'Transaksi',
     items: [
       {
-        key: "/pos",
+        key: '/pos',
         icon: ShoppingCart,
-        label: "Kasir",
-        roles: ["cashier", "owner"],
+        label: 'Kasir',
+        roles: ['cashier', 'owner'],
       },
       {
-        key: "/orders",
+        key: '/orders',
         icon: Receipt,
-        label: "Pesanan",
-        roles: ["cashier", "owner"],
+        label: 'Pesanan',
+        roles: ['cashier', 'owner'],
       },
     ],
   },
   {
-    group: "Master Data",
+    group: 'Master Data',
     items: [
       {
-        key: "/tenants",
+        key: '/tenants',
         icon: Users,
-        label: "Tenant",
-        roles: ["admin",],
+        label: 'Tenant',
+        roles: ['admin'],
       },
       {
-        key: "/outlets",
+        key: '/outlets',
         icon: Store,
-        label: "Outlet",
-        roles: ["owner"],
+        label: 'Outlet',
+        roles: ['owner'],
       },
       {
-        key: "/account",
+        key: '/account',
         icon: User,
-        label: "Akun",
-        roles: ["admin", "owner"],
+        label: 'Akun',
+        roles: ['admin', 'owner'],
       },
       {
-        key: "/categories",
+        key: '/categories',
         icon: Folder,
-        label: "Kategori",
-        roles: ["cashier", "owner"],
+        label: 'Kategori',
+        roles: ['cashier', 'owner'],
       },
       {
-        key: "/products",
+        key: '/products',
         icon: Package,
-        label: "Produk",
-        roles: ["cashier", "owner"],
+        label: 'Produk',
+        roles: ['cashier', 'owner'],
       },
       {
-        key: "/taxes",
+        key: '/taxes',
         icon: Receipt,
-        label: "Pajak",
-        roles: ["cashier", "owner"],
+        label: 'Pajak',
+        roles: ['cashier', 'owner'],
       },
       {
-        key: "/discounts",
+        key: '/discounts',
         icon: Percent,
-        label: "Diskon",
-        roles: ["cashier", "owner"],
+        label: 'Diskon',
+        roles: ['cashier', 'owner'],
       },
       {
-        key: "/payment-methods",
+        key: '/payment-methods',
         icon: CreditCard,
-        label: "Metode Pembayaran",
-        roles: ["cashier", "owner"],
+        label: 'Metode Pembayaran',
+        roles: ['cashier', 'owner'],
       },
     ],
   },
@@ -146,26 +145,20 @@ function AppSidebar() {
   const filteredMenuConfig = menuConfig
     .map((group) => ({
       ...group,
-      items: group.items.filter((item) =>
-        item.roles.includes((user?.role as Role) || "cashier"),
-      ),
+      items: group.items.filter((item) => item.roles.includes((user?.role as Role) || 'cashier')),
     }))
     .filter((group) => group.items.length > 0);
 
   return (
     <>
       <SidebarHeader>
-        {state === "expanded" ? (
+        {state === 'expanded' ? (
           <div className="mx-auto py-2">
             <img src="/mitbiz-pos.png" className="w-32" alt="Mitbiz POS" />
           </div>
         ) : (
           <div className="flex justify-center py-2">
-            <img
-              src="/android-chrome-512x512.png"
-              className="h-8 w-8"
-              alt="Mitbiz POS"
-            />
+            <img src="/android-chrome-512x512.png" className="h-8 w-8" alt="Mitbiz POS" />
           </div>
         )}
       </SidebarHeader>
@@ -181,8 +174,7 @@ function AppSidebar() {
                     tooltip={item.label}
                     onClick={() => navigate({ to: item.key })}
                     isActive={
-                      location.pathname === item.key ||
-                      location.pathname.startsWith(item.key + "/")
+                      location.pathname === item.key || location.pathname.startsWith(item.key + '/')
                     }
                     className="cursor-pointer"
                   >
@@ -211,12 +203,8 @@ function AppSidebar() {
                     </AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">
-                      {user?.name || "User"}
-                    </span>
-                    <span className="truncate text-xs">
-                      {user?.email || ""}
-                    </span>
+                    <span className="truncate font-semibold">{user?.name || 'User'}</span>
+                    <span className="truncate text-xs">{user?.email || ''}</span>
                   </div>
                   <ChevronsUpDown className="ml-auto size-4" />
                 </SidebarMenuButton>
@@ -232,7 +220,7 @@ function AppSidebar() {
                   Notifications
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onClick={() => navigate({ to: "/settings" as any })}
+                  onClick={() => navigate({ to: '/settings' as any })}
                   className="cursor-pointer"
                 >
                   <Settings className="mr-2 h-4 w-4" />
@@ -257,11 +245,11 @@ function AppSidebar() {
 
 export function AppLayout() {
   const location = useLocation();
-  const pathnames = location.pathname.split("/").filter((x) => x);
+  const pathnames = location.pathname.split('/').filter((x) => x);
   const { user } = useAuth();
 
   const getBreadcrumbLabel = () => {
-    if (pathnames.length === 0) return "Data Fetching";
+    if (pathnames.length === 0) return 'Data Fetching';
 
     const firstSegment = pathnames[0];
     return firstSegment.charAt(0).toUpperCase() + firstSegment.slice(1);
@@ -281,14 +269,12 @@ export function AppLayout() {
               <BreadcrumbList>
                 <BreadcrumbSeparator className="hidden md:block" />
                 <BreadcrumbItem>
-                  <BreadcrumbPage>
-                    {getBreadcrumbLabel()}
-                  </BreadcrumbPage>
+                  <BreadcrumbPage>{getBreadcrumbLabel()}</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
           </div>
-          {(user?.role as Role) !== "admin" && <TenantSwitcher />}
+          {(user?.role as Role) !== 'admin' && <TenantSwitcher />}
         </header>
 
         <main className="flex flex-1 flex-col gap-4 p-4 bg-slate-50/50">

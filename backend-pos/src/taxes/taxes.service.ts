@@ -1,16 +1,11 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-  Inject,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Inject } from '@nestjs/common';
 import { eq, and, like, desc, sql, SQL, or } from 'drizzle-orm';
-import { taxes } from '../db/schema/tax-schema';
-import { tenants } from '../db/schema/tenant-schema';
+import { taxes } from '@/db/schema/tax-schema';
+import { tenants } from '@/db/schema/tenant-schema';
 import { CreateTaxDto, UpdateTaxDto, TaxQueryDto } from './dto';
-import { DB_CONNECTION } from '../db/db.module';
-import type { DrizzleDB } from '../db/type';
-import type { CurrentUserType } from '../common/decorators/current-user.decorator';
+import { DB_CONNECTION } from '@/db/db.module';
+import type { DrizzleDB } from '@/db/type';
+import type { CurrentUserType } from '@/common/decorators/current-user.decorator';
 
 @Injectable()
 export class TaxesService {
@@ -44,10 +39,7 @@ export class TaxesService {
         .limit(limit)
         .offset(offset)
         .orderBy(desc(taxes.createdAt)),
-      this.db
-        .select({ count: sql<number>`count(*)` })
-        .from(taxes)
-        .where(whereClause),
+      this.db.select({ count: sql<number>`count(*)` }).from(taxes).where(whereClause),
     ]);
 
     const total = Number(totalResult[0]?.count || 0);
@@ -116,9 +108,7 @@ export class TaxesService {
     }
 
     if (user.role === 'owner' && tenant.userId !== user.id) {
-      throw new ForbiddenException(
-        'You do not have permission to create taxes in this tenant',
-      );
+      throw new ForbiddenException('You do not have permission to create taxes in this tenant');
     }
 
     const [tax] = await this.db.insert(taxes).values(data).returning();
@@ -134,13 +124,8 @@ export class TaxesService {
         where: eq(tenants.userId, user.id),
       });
       const userTenantIds = userTenants.map((t) => t.id);
-      if (
-        userTenantIds.length > 0 &&
-        !userTenantIds.includes(existingTax.tenantId)
-      ) {
-        throw new ForbiddenException(
-          'You do not have permission to update this tax',
-        );
+      if (userTenantIds.length > 0 && !userTenantIds.includes(existingTax.tenantId)) {
+        throw new ForbiddenException('You do not have permission to update this tax');
       }
     }
 
@@ -165,16 +150,11 @@ export class TaxesService {
       });
       const userTenantIds = userTenants.map((t) => t.id);
       if (userTenantIds.length > 0 && !userTenantIds.includes(tax.tenantId)) {
-        throw new ForbiddenException(
-          'You do not have permission to delete this tax',
-        );
+        throw new ForbiddenException('You do not have permission to delete this tax');
       }
     }
 
-    const [deletedTax] = await this.db
-      .delete(taxes)
-      .where(eq(taxes.id, id))
-      .returning();
+    const [deletedTax] = await this.db.delete(taxes).where(eq(taxes.id, id)).returning();
 
     return deletedTax;
   }

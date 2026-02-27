@@ -24,23 +24,12 @@ export const CreateTenantSchema = z.object({
     .string()
     .min(1, 'Slug is required')
     .max(100, 'Slug must be less than 100 characters')
-    .regex(
-      /^[a-z0-9-]+$/,
-      'Slug must contain only lowercase letters, numbers, and hyphens',
-    ),
+    .regex(/^[a-z0-9-]+$/, 'Slug must contain only lowercase letters, numbers, and hyphens'),
   userId: z.string().min(1, 'User ID is required').optional(),
   settings: TenantSettingsSchema.optional(),
   image: z.string().url('Invalid image URL').optional().nullable(),
-  alamat: z
-    .string()
-    .max(500, 'Address must be less than 500 characters')
-    .optional()
-    .nullable(),
-  noHp: z
-    .string()
-    .max(20, 'Phone number must be less than 20 characters')
-    .optional()
-    .nullable(),
+  alamat: z.string().max(500, 'Address must be less than 500 characters').optional().nullable(),
+  noHp: z.string().max(20, 'Phone number must be less than 20 characters').optional().nullable(),
   isActive: z.boolean().default(true),
 });
 
@@ -55,23 +44,12 @@ export const UpdateTenantSchema = z.object({
     .string()
     .min(1, 'Slug is required')
     .max(100, 'Slug must be less than 100 characters')
-    .regex(
-      /^[a-z0-9-]+$/,
-      'Slug must contain only lowercase letters, numbers, and hyphens',
-    )
+    .regex(/^[a-z0-9-]+$/, 'Slug must contain only lowercase letters, numbers, and hyphens')
     .optional(),
   settings: TenantSettingsSchema.optional(),
   image: z.string().url('Invalid image URL').optional().nullable(),
-  alamat: z
-    .string()
-    .max(500, 'Address must be less than 500 characters')
-    .optional()
-    .nullable(),
-  noHp: z
-    .string()
-    .max(20, 'Phone number must be less than 20 characters')
-    .optional()
-    .nullable(),
+  alamat: z.string().max(500, 'Address must be less than 500 characters').optional().nullable(),
+  noHp: z.string().max(20, 'Phone number must be less than 20 characters').optional().nullable(),
   isActive: z.boolean().optional(),
 });
 

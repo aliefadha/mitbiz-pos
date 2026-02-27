@@ -1,5 +1,5 @@
-import { createContext, useContext, type ReactNode } from 'react';
-import { useSession, signOut as signOutAuth } from '../lib/auth-client';
+import { createContext, type ReactNode, useContext } from 'react';
+import { signOut as signOutAuth, useSession } from '../lib/auth-client';
 
 interface AuthContextType {
   user: any;
@@ -18,11 +18,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signOutAuth();
   };
 
-    return (
+  return (
     <AuthContext.Provider
       value={{
         user: session?.user ?? null,
-        // @ts-ignore
+        // @ts-expect-error
         role: session?.user?.role as 'admin' | 'owner' | 'cashier' | undefined,
         isLoading,
         isAuthenticated: !!session,

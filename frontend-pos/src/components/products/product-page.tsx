@@ -1,29 +1,19 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import { productsApi, type Product, type CreateProductDto, type UpdateProductDto } from "@/lib/api/products";
-import { categoriesApi } from "@/lib/api/categories";
-import { useTenant } from "@/contexts/tenant-context";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from '@tanstack/react-router';
+import { Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -31,29 +21,44 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Plus, Pencil, Trash2, Search } from "lucide-react";
-import { useNavigate } from "@tanstack/react-router";
+} from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
+import { useTenant } from '@/contexts/tenant-context';
+import { categoriesApi } from '@/lib/api/categories';
+import {
+  type CreateProductDto,
+  type Product,
+  productsApi,
+  type UpdateProductDto,
+} from '@/lib/api/products';
 
 const formSchema = z.object({
-  sku: z.string().min(1, "SKU wajib diisi"),
+  sku: z.string().min(1, 'SKU wajib diisi'),
   barcode: z.string().optional(),
-  nama: z.string().min(1, "Nama produk wajib diisi"),
+  nama: z.string().min(1, 'Nama produk wajib diisi'),
   deskripsi: z.string().optional(),
   categoryId: z.string().optional(),
-  tipe: z.enum(["barang", "jasa", "digital"]),
+  tipe: z.enum(['barang', 'jasa', 'digital']),
   hargaBeli: z.string(),
-  hargaJual: z.string().min(1, "Harga jual wajib diisi"),
+  hargaJual: z.string().min(1, 'Harga jual wajib diisi'),
   unit: z.string(),
   minStockLevel: z.number(),
   isActive: z.boolean().optional(),
@@ -64,19 +69,19 @@ export function ProductPage() {
   const navigate = useNavigate();
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      sku: "",
-      barcode: "",
-      nama: "",
-      deskripsi: "",
-      categoryId: "",
-      tipe: "barang",
-      hargaBeli: "0",
-      hargaJual: "0",
-      unit: "pcs",
+      sku: '',
+      barcode: '',
+      nama: '',
+      deskripsi: '',
+      categoryId: '',
+      tipe: 'barang',
+      hargaBeli: '0',
+      hargaJual: '0',
+      unit: 'pcs',
       minStockLevel: 0,
       isActive: true,
     },
@@ -87,13 +92,18 @@ export function ProductPage() {
   const effectiveOutletId = selectedOutlet?.id;
 
   const { data: productsData, isLoading: productsLoading } = useQuery({
-    queryKey: ["products", effectiveTenantId, effectiveOutletId, searchQuery],
-    queryFn: () => productsApi.getAll({ tenantId: effectiveTenantId, outletId: effectiveOutletId, search: searchQuery || undefined }),
+    queryKey: ['products', effectiveTenantId, effectiveOutletId, searchQuery],
+    queryFn: () =>
+      productsApi.getAll({
+        tenantId: effectiveTenantId,
+        outletId: effectiveOutletId,
+        search: searchQuery || undefined,
+      }),
     enabled: !!effectiveTenantId,
   });
 
   const { data: categoriesData } = useQuery({
-    queryKey: ["categories", effectiveTenantId],
+    queryKey: ['categories', effectiveTenantId],
     queryFn: () => categoriesApi.getAll({ tenantId: effectiveTenantId }),
     enabled: !!effectiveTenantId,
   });
@@ -103,10 +113,10 @@ export function ProductPage() {
     onSuccess: () => {
       setCreateModalOpen(false);
       form.reset();
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
     },
     onError: (error: Error) => {
-      alert(error.message || "Failed to create product");
+      alert(error.message || 'Failed to create product');
     },
   });
 
@@ -117,35 +127,35 @@ export function ProductPage() {
       setCreateModalOpen(false);
       setEditingProduct(null);
       form.reset();
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
     },
     onError: (error: Error) => {
-      alert(error.message || "Failed to update product");
+      alert(error.message || 'Failed to update product');
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: productsApi.delete,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
     },
     onError: (error: Error) => {
-      alert(error.message || "Failed to delete product");
+      alert(error.message || 'Failed to delete product');
     },
   });
 
   const handleCreate = () => {
     setEditingProduct(null);
     form.reset({
-      sku: "",
-      barcode: "",
-      nama: "",
-      deskripsi: "",
-      categoryId: "",
-      tipe: "barang",
-      hargaBeli: "0",
-      hargaJual: "0",
-      unit: "pcs",
+      sku: '',
+      barcode: '',
+      nama: '',
+      deskripsi: '',
+      categoryId: '',
+      tipe: 'barang',
+      hargaBeli: '0',
+      hargaJual: '0',
+      unit: 'pcs',
       minStockLevel: 0,
       isActive: true,
     });
@@ -156,12 +166,12 @@ export function ProductPage() {
     setEditingProduct(product);
     form.reset({
       sku: product.sku,
-      barcode: product.barcode || "",
+      barcode: product.barcode || '',
       nama: product.nama,
-      deskripsi: product.deskripsi || "",
-      categoryId: product.categoryId?.toString() || "",
+      deskripsi: product.deskripsi || '',
+      categoryId: product.categoryId?.toString() || '',
       tipe: product.tipe,
-      hargaBeli: product.hargaBeli || "0",
+      hargaBeli: product.hargaBeli || '0',
       hargaJual: product.hargaJual,
       unit: product.unit,
       minStockLevel: product.minStockLevel || 0,
@@ -171,7 +181,9 @@ export function ProductPage() {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm("Apakah Anda yakin ingin menghapus produk ini? Tindakan ini tidak dapat dibatalkan.")) {
+    if (
+      confirm('Apakah Anda yakin ingin menghapus produk ini? Tindakan ini tidak dapat dibatalkan.')
+    ) {
       deleteMutation.mutate(id);
     }
   };
@@ -180,7 +192,7 @@ export function ProductPage() {
     const productData = {
       ...values,
       categoryId: values.categoryId ? values.categoryId : undefined,
-      hargaBeli: values.hargaBeli || "0",
+      hargaBeli: values.hargaBeli || '0',
       hargaJual: values.hargaJual,
     };
 
@@ -201,27 +213,29 @@ export function ProductPage() {
   const categories = categoriesData?.data ?? [];
 
   const formatRupiah = (value: string | number): string => {
-    const num = typeof value === "string" ? parseFloat(value) : value;
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
+    const num = typeof value === 'string' ? parseFloat(value) : value;
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(num);
   };
 
   const getStatusColor = (isActive: boolean) => {
-    return isActive
-      ? "bg-green-100 text-green-700"
-      : "bg-gray-100 text-gray-700";
+    return isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700';
   };
 
   const getTypeColor = (tipe: string) => {
     switch (tipe) {
-      case "barang": return "bg-blue-100 text-blue-700";
-      case "jasa": return "bg-purple-100 text-purple-700";
-      case "digital": return "bg-cyan-100 text-cyan-700";
-      default: return "bg-gray-100 text-gray-700";
+      case 'barang':
+        return 'bg-blue-100 text-blue-700';
+      case 'jasa':
+        return 'bg-purple-100 text-purple-700';
+      case 'digital':
+        return 'bg-cyan-100 text-cyan-700';
+      default:
+        return 'bg-gray-100 text-gray-700';
     }
   };
 
@@ -231,9 +245,7 @@ export function ProductPage() {
         <div className="flex justify-between items-center mb-6">
           <div>
             <h4 className="text-lg font-semibold m-0">Produk</h4>
-            <p className="text-sm text-gray-500 m-0">
-              Kelola semua produk dalam sistem
-            </p>
+            <p className="text-sm text-gray-500 m-0">Kelola semua produk dalam sistem</p>
           </div>
           <div className="flex gap-2">
             <div className="relative">
@@ -280,19 +292,22 @@ export function ProductPage() {
                 <TableRow key={product.id}>
                   <TableCell>{index + 1}</TableCell>
                   <TableCell>
-                    <code className="bg-gray-100 px-2 py-1 rounded text-xs">
-                      {product.sku}
-                    </code>
+                    <code className="bg-gray-100 px-2 py-1 rounded text-xs">{product.sku}</code>
                   </TableCell>
                   <TableCell>
                     <button
-                      onClick={() => navigate({ to: "/products/$productId", params: { productId: String(product.id) } })}
+                      onClick={() =>
+                        navigate({
+                          to: '/products/$productId',
+                          params: { productId: String(product.id) },
+                        })
+                      }
                       className="flex items-center gap-2 hover:underline text-left"
                     >
                       {product.nama}
                     </button>
                   </TableCell>
-                  <TableCell>{product.category?.nama || "-"}</TableCell>
+                  <TableCell>{product.category?.nama || '-'}</TableCell>
                   <TableCell>
                     <span
                       className={`px-2 py-1 rounded-full text-xs capitalize ${getTypeColor(product.tipe)}`}
@@ -312,7 +327,7 @@ export function ProductPage() {
                     <span
                       className={`px-2 py-1 rounded-full text-xs ${getStatusColor(!!product.isActive)}`}
                     >
-                      {product.isActive ? "Aktif" : "Tidak Aktif"}
+                      {product.isActive ? 'Aktif' : 'Tidak Aktif'}
                     </span>
                   </TableCell>
                   <TableCell>
@@ -333,15 +348,10 @@ export function ProductPage() {
 
         <DialogContent className="max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>
-              {editingProduct ? "Edit Produk" : "Tambah Produk"}
-            </DialogTitle>
+            <DialogTitle>{editingProduct ? 'Edit Produk' : 'Tambah Produk'}</DialogTitle>
           </DialogHeader>
           <Form {...form}>
-            <form
-              onSubmit={handleSubmit}
-              className="space-y-4"
-            >
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -512,15 +522,10 @@ export function ProductPage() {
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
-                        <FormLabel className="text-base">
-                          Status Aktif
-                        </FormLabel>
+                        <FormLabel className="text-base">Status Aktif</FormLabel>
                       </div>
                       <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
+                        <Switch checked={field.value} onCheckedChange={field.onChange} />
                       </FormControl>
                     </FormItem>
                   )}
@@ -529,9 +534,11 @@ export function ProductPage() {
               <DialogFooter>
                 <Button
                   type="submit"
-                  disabled={createMutation.isPending || updateMutation.isPending || !effectiveTenantId}
+                  disabled={
+                    createMutation.isPending || updateMutation.isPending || !effectiveTenantId
+                  }
                 >
-                  {editingProduct ? "Simpan" : "Buat"}
+                  {editingProduct ? 'Simpan' : 'Buat'}
                 </Button>
               </DialogFooter>
             </form>

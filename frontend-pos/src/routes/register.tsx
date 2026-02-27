@@ -1,23 +1,19 @@
-import {
-  createFileRoute,
-  redirect,
-  Link,
-} from "@tanstack/react-router";
-import { useRegister } from "../hooks/use-auth";
-import { authClient } from "../lib/auth-client";
-import { useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Loader2, Eye, EyeOff } from "lucide-react";
+import { createFileRoute, Link, redirect } from '@tanstack/react-router';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useRegister } from '../hooks/use-auth';
+import { authClient } from '../lib/auth-client';
 
-export const Route = createFileRoute("/register")({
+export const Route = createFileRoute('/register')({
   component: RegisterPage,
   beforeLoad: async () => {
     const { data: session } = await authClient.getSession();
     if (session) {
-      throw redirect({ to: "/dashboard" });
+      throw redirect({ to: '/dashboard' });
     }
   },
 });
@@ -26,10 +22,10 @@ function RegisterPage() {
   const registerMutation = useRegister();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -39,20 +35,18 @@ function RegisterPage() {
     setSuccess(null);
 
     if (password !== confirmPassword) {
-      setError("Password dan konfirmasi password tidak cocok");
+      setError('Password dan konfirmasi password tidak cocok');
       return;
     }
 
     try {
       await registerMutation.mutate({ name, email, password });
-      setSuccess(
-        "Registrasi berhasil! Silakan cek email Anda untuk verifikasi.",
-      );
+      setSuccess('Registrasi berhasil! Silakan cek email Anda untuk verifikasi.');
     } catch (err: any) {
-      if (err?.code === "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL") {
-        setError("Email sudah terdaftar");
+      if (err?.code === 'USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL') {
+        setError('Email sudah terdaftar');
       } else {
-        setError(err?.message || "Gagal mendaftar. Silakan coba lagi.");
+        setError(err?.message || 'Gagal mendaftar. Silakan coba lagi.');
       }
     }
   };
@@ -122,10 +116,7 @@ function RegisterPage() {
 
           <form onSubmit={onSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label
-                htmlFor="name"
-                className="text-sm font-medium text-gray-700"
-              >
+              <Label htmlFor="name" className="text-sm font-medium text-gray-700">
                 Nama Lengkap
               </Label>
               <Input
@@ -140,10 +131,7 @@ function RegisterPage() {
             </div>
 
             <div className="space-y-2">
-              <Label
-                htmlFor="email"
-                className="text-sm font-medium text-gray-700"
-              >
+              <Label htmlFor="email" className="text-sm font-medium text-gray-700">
                 Email
               </Label>
               <Input
@@ -158,16 +146,13 @@ function RegisterPage() {
             </div>
 
             <div className="space-y-2">
-              <Label
-                htmlFor="password"
-                className="text-sm font-medium text-gray-700"
-              >
+              <Label htmlFor="password" className="text-sm font-medium text-gray-700">
                 Password
               </Label>
               <div className="relative">
                 <Input
                   id="password"
-                  type={showPassword ? "text" : "password"}
+                  type={showPassword ? 'text' : 'password'}
                   placeholder="Buat password (min. 8 karakter)"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -180,26 +165,19 @@ function RegisterPage() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label
-                htmlFor="confirmPassword"
-                className="text-sm font-medium text-gray-700"
-              >
+              <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">
                 Konfirmasi Password
               </Label>
               <div className="relative">
                 <Input
                   id="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
+                  type={showConfirmPassword ? 'text' : 'password'}
                   placeholder="Ulangi password Anda"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
@@ -244,12 +222,12 @@ function RegisterPage() {
                   Mendaftar...
                 </>
               ) : (
-                "Daftar"
+                'Daftar'
               )}
             </Button>
 
             <p className="pt-2 text-center text-sm text-gray-500">
-              Sudah punya akun?{" "}
+              Sudah punya akun?{' '}
               <Link
                 to="/login"
                 className="font-semibold text-blue-600 hover:text-blue-700 hover:underline"

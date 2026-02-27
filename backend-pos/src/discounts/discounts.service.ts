@@ -1,16 +1,11 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-  Inject,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Inject } from '@nestjs/common';
 import { eq, and, like, desc, sql, SQL, or } from 'drizzle-orm';
-import { discounts } from '../db/schema/discount-schema';
-import { tenants } from '../db/schema/tenant-schema';
+import { discounts } from '@/db/schema/discount-schema';
+import { tenants } from '@/db/schema/tenant-schema';
 import { CreateDiscountDto, UpdateDiscountDto, DiscountQueryDto } from './dto';
-import { DB_CONNECTION } from '../db/db.module';
-import type { DrizzleDB } from '../db/type';
-import type { CurrentUserType } from '../common/decorators/current-user.decorator';
+import { DB_CONNECTION } from '@/db/db.module';
+import type { DrizzleDB } from '@/db/type';
+import type { CurrentUserType } from '@/common/decorators/current-user.decorator';
 
 @Injectable()
 export class DiscountsService {
@@ -44,10 +39,7 @@ export class DiscountsService {
         .limit(limit)
         .offset(offset)
         .orderBy(desc(discounts.createdAt)),
-      this.db
-        .select({ count: sql<number>`count(*)` })
-        .from(discounts)
-        .where(whereClause),
+      this.db.select({ count: sql<number>`count(*)` }).from(discounts).where(whereClause),
     ]);
 
     const total = Number(totalResult[0]?.count || 0);
@@ -99,10 +91,7 @@ export class DiscountsService {
         where: eq(tenants.userId, user.id),
       });
       const userTenantIds = userTenants.map((t) => t.id);
-      if (
-        userTenantIds.length > 0 &&
-        !userTenantIds.includes(discount.tenantId)
-      ) {
+      if (userTenantIds.length > 0 && !userTenantIds.includes(discount.tenantId)) {
         throw new ForbiddenException('You do not have access to this discount');
       }
     }
@@ -120,9 +109,7 @@ export class DiscountsService {
     }
 
     if (user.role === 'owner' && tenant.userId !== user.id) {
-      throw new ForbiddenException(
-        'You do not have permission to create discounts in this tenant',
-      );
+      throw new ForbiddenException('You do not have permission to create discounts in this tenant');
     }
 
     const [discount] = await this.db.insert(discounts).values(data).returning();
@@ -138,13 +125,8 @@ export class DiscountsService {
         where: eq(tenants.userId, user.id),
       });
       const userTenantIds = userTenants.map((t) => t.id);
-      if (
-        userTenantIds.length > 0 &&
-        !userTenantIds.includes(existingDiscount.tenantId)
-      ) {
-        throw new ForbiddenException(
-          'You do not have permission to update this discount',
-        );
+      if (userTenantIds.length > 0 && !userTenantIds.includes(existingDiscount.tenantId)) {
+        throw new ForbiddenException('You do not have permission to update this discount');
       }
     }
 
@@ -168,13 +150,8 @@ export class DiscountsService {
         where: eq(tenants.userId, user.id),
       });
       const userTenantIds = userTenants.map((t) => t.id);
-      if (
-        userTenantIds.length > 0 &&
-        !userTenantIds.includes(discount.tenantId)
-      ) {
-        throw new ForbiddenException(
-          'You do not have permission to delete this discount',
-        );
+      if (userTenantIds.length > 0 && !userTenantIds.includes(discount.tenantId)) {
+        throw new ForbiddenException('You do not have permission to delete this discount');
       }
     }
 

@@ -1,28 +1,18 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import { taxesApi, type Tax, type CreateTaxDto, type UpdateTaxDto } from "@/lib/api/taxes";
-import { outletsApi } from "@/lib/api/outlets";
-import { useTenant } from "@/contexts/tenant-context";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -30,23 +20,33 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+} from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { useTenant } from '@/contexts/tenant-context';
+import { outletsApi } from '@/lib/api/outlets';
+import { type CreateTaxDto, type Tax, taxesApi, type UpdateTaxDto } from '@/lib/api/taxes';
 
 const formSchema = z.object({
-  nama: z.string().min(1, "Nama pajak wajib diisi"),
-  rate: z.string().min(1, "Tarif pajak wajib diisi"),
-  taxLevel: z.enum(["tenant", "outlet"]),
+  nama: z.string().min(1, 'Nama pajak wajib diisi'),
+  rate: z.string().min(1, 'Tarif pajak wajib diisi'),
+  taxLevel: z.enum(['tenant', 'outlet']),
   outletId: z.string().optional(),
   isActive: z.boolean().optional(),
 });
@@ -58,29 +58,27 @@ export function TaxPage() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      nama: "",
-      rate: "",
-      taxLevel: "tenant",
+      nama: '',
+      rate: '',
+      taxLevel: 'tenant',
       isActive: true,
     },
   });
 
-  const taxLevelValue = form.watch("taxLevel");
+  const taxLevelValue = form.watch('taxLevel');
 
-  const {
-    selectedTenant: contextSelectedTenant,
-  } = useTenant();
+  const { selectedTenant: contextSelectedTenant } = useTenant();
 
   const effectiveTenantId = contextSelectedTenant?.id;
 
   const { data, isLoading } = useQuery({
-    queryKey: ["taxes", effectiveTenantId],
+    queryKey: ['taxes', effectiveTenantId],
     queryFn: () => taxesApi.getAll({ tenantId: effectiveTenantId }),
     enabled: !!effectiveTenantId,
   });
 
   const { data: outletsData } = useQuery({
-    queryKey: ["outlets", effectiveTenantId],
+    queryKey: ['outlets', effectiveTenantId],
     queryFn: () => outletsApi.getAll({ tenantId: effectiveTenantId }),
     enabled: !!effectiveTenantId,
   });
@@ -92,43 +90,42 @@ export function TaxPage() {
     onSuccess: () => {
       setCreateModalOpen(false);
       form.reset();
-      queryClient.invalidateQueries({ queryKey: ["taxes"] });
+      queryClient.invalidateQueries({ queryKey: ['taxes'] });
     },
     onError: (error: Error) => {
-      alert(error.message || "Failed to create tax");
+      alert(error.message || 'Failed to create tax');
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateTaxDto }) =>
-      taxesApi.update(id, data),
+    mutationFn: ({ id, data }: { id: string; data: UpdateTaxDto }) => taxesApi.update(id, data),
     onSuccess: () => {
       setCreateModalOpen(false);
       setEditingTax(null);
       form.reset();
-      queryClient.invalidateQueries({ queryKey: ["taxes"] });
+      queryClient.invalidateQueries({ queryKey: ['taxes'] });
     },
     onError: (error: Error) => {
-      alert(error.message || "Failed to update tax");
+      alert(error.message || 'Failed to update tax');
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: taxesApi.delete,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["taxes"] });
+      queryClient.invalidateQueries({ queryKey: ['taxes'] });
     },
     onError: (error: Error) => {
-      alert(error.message || "Failed to delete tax");
+      alert(error.message || 'Failed to delete tax');
     },
   });
 
   const handleCreate = () => {
     setEditingTax(null);
     form.reset({
-      nama: "",
-      rate: "",
-      taxLevel: "tenant",
+      nama: '',
+      rate: '',
+      taxLevel: 'tenant',
       outletId: undefined,
       isActive: true,
     });
@@ -140,7 +137,7 @@ export function TaxPage() {
     form.reset({
       nama: tax.nama,
       rate: tax.rate,
-      taxLevel: tax.isGlobal ? "tenant" : "outlet",
+      taxLevel: tax.isGlobal ? 'tenant' : 'outlet',
       outletId: tax.outletId || undefined,
       isActive: tax.isActive,
     });
@@ -148,7 +145,9 @@ export function TaxPage() {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm("Apakah Anda yakin ingin menghapus pajak ini? Tindakan ini tidak dapat dibatalkan.")) {
+    if (
+      confirm('Apakah Anda yakin ingin menghapus pajak ini? Tindakan ini tidak dapat dibatalkan.')
+    ) {
       deleteMutation.mutate(id);
     }
   };
@@ -157,8 +156,8 @@ export function TaxPage() {
     const data = {
       nama: values.nama,
       rate: values.rate,
-      isGlobal: values.taxLevel === "tenant",
-      outletId: values.taxLevel === "outlet" ? values.outletId : null,
+      isGlobal: values.taxLevel === 'tenant',
+      outletId: values.taxLevel === 'outlet' ? values.outletId : null,
       isActive: values.isActive,
     };
 
@@ -178,9 +177,7 @@ export function TaxPage() {
   const displayedTaxes = data?.data ?? [];
 
   const getStatusColor = (isActive: boolean) => {
-    return isActive
-      ? "bg-green-100 text-green-700"
-      : "bg-gray-100 text-gray-700";
+    return isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700';
   };
 
   return (
@@ -189,9 +186,7 @@ export function TaxPage() {
         <div className="flex justify-between items-center mb-6">
           <div>
             <h4 className="text-lg font-semibold m-0">Pajak</h4>
-            <p className="text-sm text-gray-500 m-0">
-              Kelola semua pajak dalam sistem
-            </p>
+            <p className="text-sm text-gray-500 m-0">Kelola semua pajak dalam sistem</p>
           </div>
           <div className="flex gap-2">
             <DialogTrigger asChild>
@@ -240,13 +235,13 @@ export function TaxPage() {
                     )}
                   </TableCell>
                   <TableCell>
-                    {tax.isGlobal ? "-" : outlets.find((o) => o.id === tax.outletId)?.nama || "-"}
+                    {tax.isGlobal ? '-' : outlets.find((o) => o.id === tax.outletId)?.nama || '-'}
                   </TableCell>
                   <TableCell>
                     <span
                       className={`px-2 py-1 rounded-full text-xs ${getStatusColor(!!tax.isActive)}`}
                     >
-                      {tax.isActive ? "Aktif" : "Tidak Aktif"}
+                      {tax.isActive ? 'Aktif' : 'Tidak Aktif'}
                     </span>
                   </TableCell>
                   <TableCell>
@@ -267,15 +262,10 @@ export function TaxPage() {
 
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {editingTax ? "Edit Pajak" : "Tambah Pajak"}
-            </DialogTitle>
+            <DialogTitle>{editingTax ? 'Edit Pajak' : 'Tambah Pajak'}</DialogTitle>
           </DialogHeader>
           <Form {...form}>
-            <form
-              onSubmit={handleSubmit}
-              className="space-y-4"
-            >
+            <form onSubmit={handleSubmit} className="space-y-4">
               <FormField
                 control={form.control}
                 name="nama"
@@ -296,7 +286,12 @@ export function TaxPage() {
                   <FormItem>
                     <FormLabel>Tarif (%)</FormLabel>
                     <FormControl>
-                      <Input placeholder="Masukkan tarif pajak" type="number" step="0.01" {...field} />
+                      <Input
+                        placeholder="Masukkan tarif pajak"
+                        type="number"
+                        step="0.01"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -327,7 +322,7 @@ export function TaxPage() {
                   </FormItem>
                 )}
               />
-              {taxLevelValue === "outlet" && (
+              {taxLevelValue === 'outlet' && (
                 <FormField
                   control={form.control}
                   name="outletId"
@@ -363,14 +358,9 @@ export function TaxPage() {
                   name="isActive"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between">
-                      <FormLabel className="text-base">
-                        Status Aktif
-                      </FormLabel>
+                      <FormLabel className="text-base">Status Aktif</FormLabel>
                       <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
+                        <Switch checked={field.value} onCheckedChange={field.onChange} />
                       </FormControl>
                     </FormItem>
                   )}
@@ -379,9 +369,11 @@ export function TaxPage() {
               <DialogFooter>
                 <Button
                   type="submit"
-                  disabled={createMutation.isPending || updateMutation.isPending || !effectiveTenantId}
+                  disabled={
+                    createMutation.isPending || updateMutation.isPending || !effectiveTenantId
+                  }
                 >
-                  {editingTax ? "Simpan" : "Buat"}
+                  {editingTax ? 'Simpan' : 'Buat'}
                 </Button>
               </DialogFooter>
             </form>

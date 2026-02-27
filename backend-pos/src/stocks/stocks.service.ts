@@ -6,19 +6,19 @@ import {
   Inject,
 } from '@nestjs/common';
 import { eq, and, desc, sql, SQL } from 'drizzle-orm';
-import { productStocks } from '../db/schema/stock-schema';
-import { products } from '../db/schema/product-schema';
-import { outlets } from '../db/schema/outlet-schema';
-import { tenants } from '../db/schema/tenant-schema';
+import { productStocks } from '@/db/schema/stock-schema';
+import { products } from '@/db/schema/product-schema';
+import { outlets } from '@/db/schema/outlet-schema';
+import { tenants } from '@/db/schema/tenant-schema';
 import { CreateStockDto, UpdateStockDto, StockQueryDto } from './dto';
-import { DB_CONNECTION } from '../db/db.module';
-import type { DrizzleDB } from '../db/type';
-import type { CurrentUserType } from '../common/decorators/current-user.decorator';
-import { getProductIdsByTenant } from '../common/utils/tenant-filter';
+import { DB_CONNECTION } from '@/db/db.module';
+import type { DrizzleDB } from '@/db/type';
+import type { CurrentUserType } from '@/common/decorators/current-user.decorator';
+import { getProductIdsByTenant } from '@/common/utils/tenant-filter';
 
 @Injectable()
 export class StocksService {
-  constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) { }
+  constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) {}
 
   async findAll(query: StockQueryDto, user: CurrentUserType) {
     const { page = 1, limit = 10, productId, outletId, tenantId } = query;
@@ -69,10 +69,7 @@ export class StocksService {
           outlet: true,
         },
       }),
-      this.db
-        .select({ count: sql<number>`count(*)` })
-        .from(productStocks)
-        .where(whereClause),
+      this.db.select({ count: sql<number>`count(*)` }).from(productStocks).where(whereClause),
     ]);
 
     const total = Number(queryResult[1][0]?.count || 0);
@@ -116,10 +113,7 @@ export class StocksService {
 
   async findByProductAndOutlet(productId: string, outletId: string) {
     const stock = await this.db.query.productStocks.findFirst({
-      where: and(
-        eq(productStocks.productId, productId),
-        eq(productStocks.outletId, outletId),
-      ),
+      where: and(eq(productStocks.productId, productId), eq(productStocks.outletId, outletId)),
       with: {
         product: true,
         outlet: true,
@@ -136,9 +130,7 @@ export class StocksService {
     });
 
     if (!product) {
-      throw new NotFoundException(
-        `Product with ID ${data.productId} not found`,
-      );
+      throw new NotFoundException(`Product with ID ${data.productId} not found`);
     }
 
     // Check ownership for owner
@@ -147,9 +139,7 @@ export class StocksService {
         where: eq(tenants.userId, user.id),
       });
       if (userTenant && product.tenantId !== userTenant.id) {
-        throw new ForbiddenException(
-          'You do not have permission to create stock for this product',
-        );
+        throw new ForbiddenException('You do not have permission to create stock for this product');
       }
     }
 
@@ -163,24 +153,16 @@ export class StocksService {
     }
 
     if (outlet.tenantId !== product.tenantId) {
-      throw new ForbiddenException(
-        'Outlet does not belong to the same tenant as the product',
-      );
+      throw new ForbiddenException('Outlet does not belong to the same tenant as the product');
     }
 
-    const existingStock = await this.findByProductAndOutlet(
-      data.productId,
-      data.outletId,
-    );
+    const existingStock = await this.findByProductAndOutlet(data.productId, data.outletId);
 
     if (existingStock) {
       throw new ConflictException(`Stock telah dibuat`);
     }
 
-    const [stock] = await this.db
-      .insert(productStocks)
-      .values(data)
-      .returning();
+    const [stock] = await this.db.insert(productStocks).values(data).returning();
 
     return stock;
   }
@@ -194,9 +176,7 @@ export class StocksService {
         where: eq(tenants.userId, user.id),
       });
       if (userTenant && existingStock.product.tenantId !== userTenant.id) {
-        throw new ForbiddenException(
-          'You do not have permission to update this stock',
-        );
+        throw new ForbiddenException('You do not have permission to update this stock');
       }
     }
 
@@ -221,9 +201,7 @@ export class StocksService {
         where: eq(tenants.userId, user.id),
       });
       if (userTenant && stock.product.tenantId !== userTenant.id) {
-        throw new ForbiddenException(
-          'You do not have permission to delete this stock',
-        );
+        throw new ForbiddenException('You do not have permission to delete this stock');
       }
     }
 
@@ -249,9 +227,7 @@ export class StocksService {
         where: eq(tenants.userId, user.id),
       });
       if (userTenant && stock.product.tenantId !== userTenant.id) {
-        throw new ForbiddenException(
-          'You do not have permission to adjust this stock',
-        );
+        throw new ForbiddenException('You do not have permission to adjust this stock');
       }
     }
 

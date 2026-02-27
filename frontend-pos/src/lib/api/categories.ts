@@ -1,4 +1,4 @@
-import { fetchApi } from "./client";
+import { fetchApi } from './client';
 
 export interface Category {
   id: string;
@@ -25,12 +25,15 @@ export interface UpdateCategoryDto {
 }
 
 export const categoriesApi = {
-  getAll: async (filters?: { tenantId?: string; isActive?: boolean }): Promise<{ data: Category[]; meta: any }> => {
+  getAll: async (filters?: {
+    tenantId?: string;
+    isActive?: boolean;
+  }): Promise<{ data: Category[]; meta: any }> => {
     const params = new URLSearchParams();
-    if (filters?.tenantId) params.append("tenantId", filters.tenantId.toString());
-    if (filters?.isActive !== undefined) params.append("isActive", filters.isActive.toString());
+    if (filters?.tenantId) params.append('tenantId', filters.tenantId.toString());
+    if (filters?.isActive !== undefined) params.append('isActive', filters.isActive.toString());
     const query = params.toString();
-    return fetchApi<{ data: Category[]; meta: any }>(`/categories${query ? `?${query}` : ""}`);
+    return fetchApi<{ data: Category[]; meta: any }>(`/categories${query ? `?${query}` : ''}`);
   },
 
   getById: async (id: string): Promise<Category> => {
@@ -38,28 +41,28 @@ export const categoriesApi = {
   },
 
   create: async (data: CreateCategoryDto): Promise<Category> => {
-    return fetchApi<Category>("/categories", {
-      method: "POST",
+    return fetchApi<Category>('/categories', {
+      method: 'POST',
       data,
     });
   },
 
   update: async (id: string, data: UpdateCategoryDto): Promise<Category> => {
     return fetchApi<Category>(`/categories/${id}`, {
-      method: "PUT",
+      method: 'PUT',
       data,
     });
   },
 
   toggleStatus: async (id: string): Promise<Category> => {
     return fetchApi<Category>(`/categories/${id}/toggle-status`, {
-      method: "PUT",
+      method: 'PUT',
     });
   },
 
   delete: async (id: string): Promise<void> => {
     return fetchApi<void>(`/categories/${id}`, {
-      method: "DELETE",
+      method: 'DELETE',
     });
   },
 };

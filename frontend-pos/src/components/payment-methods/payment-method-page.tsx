@@ -1,28 +1,18 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import { paymentMethodsApi, type PaymentMethod, type CreatePaymentMethodDto, type UpdatePaymentMethodDto } from "@/lib/api/payment-methods";
-import { useSession } from "@/lib/auth-client";
-import { useTenant } from "@/contexts/tenant-context";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -30,14 +20,29 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { useTenant } from '@/contexts/tenant-context';
+import {
+  type CreatePaymentMethodDto,
+  type PaymentMethod,
+  paymentMethodsApi,
+  type UpdatePaymentMethodDto,
+} from '@/lib/api/payment-methods';
+import { useSession } from '@/lib/auth-client';
 
 const formSchema = z.object({
-  nama: z.string().min(1, "Nama metode pembayaran wajib diisi"),
+  nama: z.string().min(1, 'Nama metode pembayaran wajib diisi'),
   isActive: z.boolean().optional(),
 });
 
@@ -48,21 +53,19 @@ export function PaymentMethodPage() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      nama: "",
+      nama: '',
       isActive: true,
     },
   });
   const { data: session } = useSession();
-  // @ts-ignore - role is added by custom session client
-  const userRole = (session?.user?.role as string) || "cashier";
-  const {
-    selectedTenant: contextSelectedTenant,
-  } = useTenant();
+  // @ts-expect-error - role is added by custom session client
+  const userRole = (session?.user?.role as string) || 'cashier';
+  const { selectedTenant: contextSelectedTenant } = useTenant();
 
   const effectiveTenantId = contextSelectedTenant?.id;
 
   const { data, isLoading } = useQuery({
-    queryKey: ["payment-methods", effectiveTenantId],
+    queryKey: ['payment-methods', effectiveTenantId],
     queryFn: () => paymentMethodsApi.getAll({ tenantId: effectiveTenantId }),
     enabled: !!effectiveTenantId,
   });
@@ -72,10 +75,10 @@ export function PaymentMethodPage() {
     onSuccess: () => {
       setCreateModalOpen(false);
       form.reset();
-      queryClient.invalidateQueries({ queryKey: ["payment-methods"] });
+      queryClient.invalidateQueries({ queryKey: ['payment-methods'] });
     },
     onError: (error: Error) => {
-      alert(error.message || "Failed to create payment method");
+      alert(error.message || 'Failed to create payment method');
     },
   });
 
@@ -86,27 +89,27 @@ export function PaymentMethodPage() {
       setCreateModalOpen(false);
       setEditingPaymentMethod(null);
       form.reset();
-      queryClient.invalidateQueries({ queryKey: ["payment-methods"] });
+      queryClient.invalidateQueries({ queryKey: ['payment-methods'] });
     },
     onError: (error: Error) => {
-      alert(error.message || "Failed to update payment method");
+      alert(error.message || 'Failed to update payment method');
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: paymentMethodsApi.delete,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["payment-methods"] });
+      queryClient.invalidateQueries({ queryKey: ['payment-methods'] });
     },
     onError: (error: Error) => {
-      alert(error.message || "Failed to delete payment method");
+      alert(error.message || 'Failed to delete payment method');
     },
   });
 
   const handleCreate = () => {
     setEditingPaymentMethod(null);
     form.reset({
-      nama: "",
+      nama: '',
       isActive: true,
     });
     setCreateModalOpen(true);
@@ -122,7 +125,11 @@ export function PaymentMethodPage() {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm("Apakah Anda yakin ingin menghapus metode pembayaran ini? Tindakan ini tidak dapat dibatalkan.")) {
+    if (
+      confirm(
+        'Apakah Anda yakin ingin menghapus metode pembayaran ini? Tindakan ini tidak dapat dibatalkan.'
+      )
+    ) {
       deleteMutation.mutate(id);
     }
   };
@@ -144,9 +151,7 @@ export function PaymentMethodPage() {
   const displayedPaymentMethods = data?.data ?? [];
 
   const getStatusColor = (isActive: boolean) => {
-    return isActive
-      ? "bg-green-100 text-green-700"
-      : "bg-gray-100 text-gray-700";
+    return isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700';
   };
 
   return (
@@ -155,9 +160,7 @@ export function PaymentMethodPage() {
         <div className="flex justify-between items-center mb-6">
           <div>
             <h4 className="text-lg font-semibold m-0">Metode Pembayaran</h4>
-            <p className="text-sm text-gray-500 m-0">
-              Kelola semua metode pembayaran dalam sistem
-            </p>
+            <p className="text-sm text-gray-500 m-0">Kelola semua metode pembayaran dalam sistem</p>
           </div>
           <div className="flex gap-2">
             <DialogTrigger asChild>
@@ -189,14 +192,12 @@ export function PaymentMethodPage() {
               {displayedPaymentMethods.map((paymentMethod, index) => (
                 <TableRow key={paymentMethod.id}>
                   <TableCell>{index + 1}</TableCell>
-                  <TableCell >
-                    {paymentMethod.nama}
-                  </TableCell>
+                  <TableCell>{paymentMethod.nama}</TableCell>
                   <TableCell>
                     <span
                       className={`px-2 py-1 rounded-full text-xs ${getStatusColor(!!paymentMethod.isActive)}`}
                     >
-                      {paymentMethod.isActive ? "Aktif" : "Tidak Aktif"}
+                      {paymentMethod.isActive ? 'Aktif' : 'Tidak Aktif'}
                     </span>
                   </TableCell>
                   <TableCell>
@@ -204,7 +205,11 @@ export function PaymentMethodPage() {
                       <Button variant="ghost" size="icon" onClick={() => handleEdit(paymentMethod)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(paymentMethod.id)}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(paymentMethod.id)}
+                      >
                         <Trash2 className="h-4 w-4 text-red-500" />
                       </Button>
                     </div>
@@ -218,14 +223,11 @@ export function PaymentMethodPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {editingPaymentMethod ? "Edit Metode Pembayaran" : "Tambah Metode Pembayaran"}
+              {editingPaymentMethod ? 'Edit Metode Pembayaran' : 'Tambah Metode Pembayaran'}
             </DialogTitle>
           </DialogHeader>
           <Form {...form}>
-            <form
-              onSubmit={handleSubmit}
-              className="space-y-4"
-            >
+            <form onSubmit={handleSubmit} className="space-y-4">
               <FormField
                 control={form.control}
                 name="nama"
@@ -246,15 +248,10 @@ export function PaymentMethodPage() {
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
-                        <FormLabel className="text-base">
-                          Status Aktif
-                        </FormLabel>
+                        <FormLabel className="text-base">Status Aktif</FormLabel>
                       </div>
                       <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
+                        <Switch checked={field.value} onCheckedChange={field.onChange} />
                       </FormControl>
                     </FormItem>
                   )}
@@ -263,9 +260,11 @@ export function PaymentMethodPage() {
               <DialogFooter>
                 <Button
                   type="submit"
-                  disabled={createMutation.isPending || updateMutation.isPending || !effectiveTenantId}
+                  disabled={
+                    createMutation.isPending || updateMutation.isPending || !effectiveTenantId
+                  }
                 >
-                  {editingPaymentMethod ? "Simpan" : "Buat"}
+                  {editingPaymentMethod ? 'Simpan' : 'Buat'}
                 </Button>
               </DialogFooter>
             </form>

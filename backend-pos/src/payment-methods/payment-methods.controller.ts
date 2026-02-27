@@ -11,7 +11,7 @@ import {
   UsePipes,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
+import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
 import { PaymentMethodsService } from './payment-methods.service';
 import {
   CreatePaymentMethodSchema,
@@ -24,11 +24,8 @@ import {
   PaymentMethodQueryDto,
 } from './dto';
 import { AuthGuard } from '@thallesp/nestjs-better-auth';
-import { PermissionGuard } from '../common/guards/permission.guard';
-import {
-  CurrentUser,
-  type CurrentUserType,
-} from '../common/decorators/current-user.decorator';
+import { PermissionGuard } from '@/common/guards/permission.guard';
+import { CurrentUser, type CurrentUserType } from '@/common/decorators/current-user.decorator';
 
 @ApiTags('payment-methods')
 @Controller('payment-methods')
@@ -46,20 +43,14 @@ export class PaymentMethodsController {
   @Get(':id')
   @ApiOperation({ summary: 'Get payment method by ID' })
   @UsePipes(new ZodValidationPipe(PaymentMethodIdSchema, 'params'))
-  findById(
-    @Param() { id }: PaymentMethodIdDto,
-    @CurrentUser() user: CurrentUserType,
-  ) {
+  findById(@Param() { id }: PaymentMethodIdDto, @CurrentUser() user: CurrentUserType) {
     return this.paymentMethodsService.findById(id, user);
   }
 
   @Post()
   @ApiOperation({ summary: 'Create a new payment method' })
   @UsePipes(new ZodValidationPipe(CreatePaymentMethodSchema))
-  create(
-    @Body() data: CreatePaymentMethodDto,
-    @CurrentUser() user: CurrentUserType,
-  ) {
+  create(@Body() data: CreatePaymentMethodDto, @CurrentUser() user: CurrentUserType) {
     return this.paymentMethodsService.create(data, user);
   }
 
@@ -78,10 +69,7 @@ export class PaymentMethodsController {
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a payment method' })
   @UsePipes(new ZodValidationPipe(PaymentMethodIdSchema, 'params'))
-  remove(
-    @Param() { id }: PaymentMethodIdDto,
-    @CurrentUser() user: CurrentUserType,
-  ) {
+  remove(@Param() { id }: PaymentMethodIdDto, @CurrentUser() user: CurrentUserType) {
     return this.paymentMethodsService.remove(id, user);
   }
 }

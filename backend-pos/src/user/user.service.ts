@@ -1,13 +1,13 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
-import { tenants } from '../db/schema/tenant-schema';
-import { user } from '../db/schema/auth-schema';
-import { DB_CONNECTION } from '../db/db.module';
-import type { DrizzleDB } from '../db/type';
+import { tenants } from '@/db/schema/tenant-schema';
+import { user } from '@/db/schema/auth-schema';
+import { DB_CONNECTION } from '@/db/db.module';
+import type { DrizzleDB } from '@/db/type';
 
 @Injectable()
 export class UserService {
-  constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) { }
+  constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) {}
 
   async getUserTenantsAndOutlets(userId: string) {
     const [userWithOutlet, ownedTenants] = await Promise.all([
@@ -89,9 +89,7 @@ export class UserService {
       where: eq(user.role, 'cashier'),
     });
 
-    const filteredUsers = allUsers.filter(
-      (u) => u.outletId && outletIds.includes(u.outletId),
-    );
+    const filteredUsers = allUsers.filter((u) => u.outletId && outletIds.includes(u.outletId));
 
     return { users: filteredUsers, total: filteredUsers.length };
   }

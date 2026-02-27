@@ -39,13 +39,7 @@ export const PaymentMethodQuerySchema = z.object({
   tenantId: z.string().min(1).optional(),
 });
 
-export class CreatePaymentMethodDto extends createZodDto(
-  CreatePaymentMethodSchema,
-) {}
-export class UpdatePaymentMethodDto extends createZodDto(
-  UpdatePaymentMethodSchema,
-) {}
+export class CreatePaymentMethodDto extends createZodDto(CreatePaymentMethodSchema) {}
+export class UpdatePaymentMethodDto extends createZodDto(UpdatePaymentMethodSchema) {}
 export class PaymentMethodIdDto extends createZodDto(PaymentMethodIdSchema) {}
-export class PaymentMethodQueryDto extends createZodDto(
-  PaymentMethodQuerySchema,
-) {}
+export class PaymentMethodQueryDto extends createZodDto(PaymentMethodQuerySchema) {}

@@ -11,7 +11,7 @@ import {
   UsePipes,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
-import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
+import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
 import { DiscountsService } from './discounts.service';
 import {
   CreateDiscountSchema,
@@ -24,11 +24,8 @@ import {
   DiscountQueryDto,
 } from './dto';
 import { AuthGuard } from '@thallesp/nestjs-better-auth';
-import { PermissionGuard } from '../common/guards/permission.guard';
-import {
-  CurrentUser,
-  type CurrentUserType,
-} from '../common/decorators/current-user.decorator';
+import { PermissionGuard } from '@/common/guards/permission.guard';
+import { CurrentUser, type CurrentUserType } from '@/common/decorators/current-user.decorator';
 
 @ApiTags('discounts')
 @Controller('discounts')
@@ -47,30 +44,21 @@ export class DiscountsController {
   @ApiOperation({ summary: 'Get active discounts for a specific outlet' })
   @ApiQuery({ name: 'tenantId', required: true, type: String })
   @ApiQuery({ name: 'outletId', required: true, type: String })
-  findActiveForOutlet(
-    @Query('tenantId') tenantId: string,
-    @Query('outletId') outletId: string,
-  ) {
+  findActiveForOutlet(@Query('tenantId') tenantId: string, @Query('outletId') outletId: string) {
     return this.discountsService.findActiveForOutlet(tenantId, outletId);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get discount by ID' })
   @UsePipes(new ZodValidationPipe(DiscountIdSchema, 'params'))
-  findById(
-    @Param() { id }: DiscountIdDto,
-    @CurrentUser() user: CurrentUserType,
-  ) {
+  findById(@Param() { id }: DiscountIdDto, @CurrentUser() user: CurrentUserType) {
     return this.discountsService.findById(id, user);
   }
 
   @Post()
   @ApiOperation({ summary: 'Create a new discount' })
   @UsePipes(new ZodValidationPipe(CreateDiscountSchema))
-  create(
-    @Body() data: CreateDiscountDto,
-    @CurrentUser() user: CurrentUserType,
-  ) {
+  create(@Body() data: CreateDiscountDto, @CurrentUser() user: CurrentUserType) {
     return this.discountsService.create(data, user);
   }
 

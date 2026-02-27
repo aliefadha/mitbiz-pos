@@ -1,19 +1,19 @@
-import { createFileRoute, redirect, Link } from "@tanstack/react-router";
-import { useLogin } from "../hooks/use-auth";
-import { authClient } from "../lib/auth-client";
-import { useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Loader2, Eye, EyeOff } from "lucide-react";
+import { createFileRoute, Link, redirect } from '@tanstack/react-router';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useLogin } from '../hooks/use-auth';
+import { authClient } from '../lib/auth-client';
 
-export const Route = createFileRoute("/login")({
+export const Route = createFileRoute('/login')({
   component: LoginPage,
   beforeLoad: async () => {
     const { data: session } = await authClient.getSession();
     if (session) {
-      throw redirect({ to: "/dashboard" });
+      throw redirect({ to: '/dashboard' });
     }
   },
 });
@@ -21,8 +21,8 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   const loginMutation = useLogin();
   const [error, setError] = useState<string | null>(null);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -31,13 +31,13 @@ function LoginPage() {
     try {
       await loginMutation.mutate({ email, password });
     } catch (err: any) {
-      const message = err?.message || "";
-      if (message === "Invalid email or password") {
-        setError("Email atau password salah");
-      } else if (message === "Email not verified") {
-        setError("Email belum diverifikasi");
+      const message = err?.message || '';
+      if (message === 'Invalid email or password') {
+        setError('Email atau password salah');
+      } else if (message === 'Email not verified') {
+        setError('Email belum diverifikasi');
       } else {
-        setError(message || "Terjadi kesalahan saat login");
+        setError(message || 'Terjadi kesalahan saat login');
       }
     }
   };
@@ -107,10 +107,7 @@ function LoginPage() {
 
           <form onSubmit={onSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label
-                htmlFor="email"
-                className="text-sm font-medium text-gray-700"
-              >
+              <Label htmlFor="email" className="text-sm font-medium text-gray-700">
                 Email
               </Label>
               <Input
@@ -125,16 +122,13 @@ function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <Label
-                htmlFor="password"
-                className="text-sm font-medium text-gray-700"
-              >
+              <Label htmlFor="password" className="text-sm font-medium text-gray-700">
                 Password
               </Label>
               <div className="relative">
                 <Input
                   id="password"
-                  type={showPassword ? "text" : "password"}
+                  type={showPassword ? 'text' : 'password'}
                   placeholder="Input your store password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -147,11 +141,7 @@ function LoginPage() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
               <div className="flex justify-end">
@@ -181,12 +171,12 @@ function LoginPage() {
                   Signing in...
                 </>
               ) : (
-                "Next"
+                'Next'
               )}
             </Button>
 
             <p className="pt-2 text-center text-sm text-gray-500">
-              Belum punya akun?{" "}
+              Belum punya akun?{' '}
               <Link
                 to="/register"
                 className="font-semibold text-blue-600 hover:text-blue-700 hover:underline"

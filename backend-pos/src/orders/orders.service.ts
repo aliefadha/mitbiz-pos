@@ -1,19 +1,14 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-  Inject,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Inject } from '@nestjs/common';
 import { eq, and, like, desc, sql, SQL } from 'drizzle-orm';
-import { orders } from '../db/schema/order-schema';
-import { tenants } from '../db/schema/tenant-schema';
-import { outlets } from '../db/schema/outlet-schema';
-import { orderItems } from '../db/schema/order-item-schema';
-import { productStocks } from '../db/schema/stock-schema';
+import { orders } from '@/db/schema/order-schema';
+import { tenants } from '@/db/schema/tenant-schema';
+import { outlets } from '@/db/schema/outlet-schema';
+import { orderItems } from '@/db/schema/order-item-schema';
+import { productStocks } from '@/db/schema/stock-schema';
 import { CreateOrderDto, UpdateOrderDto, OrderQueryDto } from './dto';
-import { DB_CONNECTION } from '../db/db.module';
-import type { DrizzleDB } from '../db/type';
-import type { CurrentUserType } from '../common/decorators/current-user.decorator';
+import { DB_CONNECTION } from '@/db/db.module';
+import type { DrizzleDB } from '@/db/type';
+import type { CurrentUserType } from '@/common/decorators/current-user.decorator';
 
 @Injectable()
 export class OrdersService {
@@ -120,9 +115,7 @@ export class OrdersService {
       });
       const userTenantIds = userTenants.map((t) => t.id);
       if (!userTenantIds.includes(data.tenantId)) {
-        throw new ForbiddenException(
-          'You do not have permission to create orders in this tenant',
-        );
+        throw new ForbiddenException('You do not have permission to create orders in this tenant');
       }
     }
 
@@ -131,9 +124,7 @@ export class OrdersService {
         where: eq(outlets.id, user.outletId),
       });
       if (!userOutlet || userOutlet.tenantId !== data.tenantId) {
-        throw new ForbiddenException(
-          'You do not have permission to create orders in this tenant',
-        );
+        throw new ForbiddenException('You do not have permission to create orders in this tenant');
       }
     }
 
@@ -143,9 +134,7 @@ export class OrdersService {
         .values({
           ...data,
           cashierId: user.id,
-          completedAt: data.completedAt
-            ? new Date(data.completedAt)
-            : undefined,
+          completedAt: data.completedAt ? new Date(data.completedAt) : undefined,
         })
         .returning();
 
@@ -208,9 +197,7 @@ export class OrdersService {
       });
 
       if (!outlet) {
-        throw new NotFoundException(
-          `Outlet with ID ${data.outletId} not found`,
-        );
+        throw new NotFoundException(`Outlet with ID ${data.outletId} not found`);
       }
 
       if (outlet.tenantId !== existingOrder.tenantId) {
@@ -234,10 +221,7 @@ export class OrdersService {
   async remove(id: string, user: CurrentUserType) {
     await this.findById(id, user);
 
-    const [order] = await this.db
-      .delete(orders)
-      .where(eq(orders.id, id))
-      .returning();
+    const [order] = await this.db.delete(orders).where(eq(orders.id, id)).returning();
 
     return order;
   }

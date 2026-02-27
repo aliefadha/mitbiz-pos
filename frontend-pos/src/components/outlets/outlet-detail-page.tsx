@@ -1,30 +1,19 @@
-import { useState } from "react";
-import { useParams, useNavigate } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { outletsApi } from "@/lib/api/outlets";
-import { stocksApi, type Stock } from "@/lib/api/stocks";
-import { productsApi, type Product } from "@/lib/api/products";
-import { stockAdjustmentsApi } from "@/lib/api/stock-adjustments";
-import { useSession } from "@/lib/auth-client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Card } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNavigate, useParams } from '@tanstack/react-router';
+import { ArrowLeft, ArrowRightLeft, Edit2, History, Package, Plus, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -32,17 +21,23 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { ArrowLeft, Plus, Trash2, Package, History, Edit2, ArrowRightLeft } from "lucide-react";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { outletsApi } from '@/lib/api/outlets';
+import { type Product, productsApi } from '@/lib/api/products';
+import { stockAdjustmentsApi } from '@/lib/api/stock-adjustments';
+import { type Stock, stocksApi } from '@/lib/api/stocks';
+import { useSession } from '@/lib/auth-client';
 
 interface ProductStockRow {
   product: Product;
@@ -60,14 +55,14 @@ const adjustFormSchema = z.object({
 
 export function OutletDetailPage() {
   const { slug, outletId } = useParams({
-    from: "/_protected/tenants/$slug/outlets/$outletId",
+    from: '/_protected/tenants/$slug/outlets/$outletId',
   });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: session } = useSession();
   const userId = session?.user?.id;
 
-  const [searchText, setSearchText] = useState("");
+  const [searchText, setSearchText] = useState('');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
   const [editingRow, setEditingRow] = useState<ProductStockRow | null>(null);
@@ -80,60 +75,89 @@ export function OutletDetailPage() {
 
   const adjustForm = useForm<z.infer<typeof adjustFormSchema>>({
     resolver: zodResolver(adjustFormSchema),
-    defaultValues: { quantity: 0, alasan: "" },
+    defaultValues: { quantity: 0, alasan: '' },
   });
 
-
   const { data: outlet, isLoading: outletLoading } = useQuery({
-    queryKey: ["outlet", outletId],
+    queryKey: ['outlet', outletId],
     queryFn: () => outletsApi.getById(outletId),
   });
 
   const { data: stocksData, isLoading: stocksLoading } = useQuery({
-    queryKey: ["stocks", { outletId: outletId }],
+    queryKey: ['stocks', { outletId: outletId }],
     queryFn: () => stocksApi.getAll({ outletId: outletId }),
     enabled: !!outletId,
   });
 
   const { data: productsData, isLoading: productsLoading } = useQuery({
-    queryKey: ["products", outlet?.tenantId],
+    queryKey: ['products', outlet?.tenantId],
     queryFn: () => productsApi.getAll({ tenantId: outlet!.tenantId }),
     enabled: !!outlet?.tenantId,
   });
 
   const { data: adjustmentsData } = useQuery({
-    queryKey: ["stock-adjustments", { outletId: outletId }],
+    queryKey: ['stock-adjustments', { outletId: outletId }],
     queryFn: () => stockAdjustmentsApi.getAll({ outletId: outletId }),
     enabled: !!outletId,
   });
 
   const invalidateAll = () => {
-    queryClient.invalidateQueries({ queryKey: ["stocks", { outletId: outletId }] });
-    queryClient.invalidateQueries({ queryKey: ["stock-adjustments", { outletId: outletId }] });
+    queryClient.invalidateQueries({ queryKey: ['stocks', { outletId: outletId }] });
+    queryClient.invalidateQueries({ queryKey: ['stock-adjustments', { outletId: outletId }] });
   };
 
   const createStockMutation = useMutation({
-    mutationFn: (data: { productId: string; outletId: string; quantity: number }) => stocksApi.create(data),
-    onSuccess: () => { invalidateAll(); },
-    onError: (error: Error) => { alert(error.message); },
+    mutationFn: (data: { productId: string; outletId: string; quantity: number }) =>
+      stocksApi.create(data),
+    onSuccess: () => {
+      invalidateAll();
+    },
+    onError: (error: Error) => {
+      alert(error.message);
+    },
   });
 
   const updateStockMutation = useMutation({
-    mutationFn: ({ stockId, quantity }: { stockId: string; quantity: number }) => stocksApi.update(stockId, { quantity }),
-    onSuccess: () => { invalidateAll(); setIsEditModalOpen(false); setEditingRow(null); editForm.reset(); },
-    onError: (error: Error) => { alert(error.message); },
+    mutationFn: ({ stockId, quantity }: { stockId: string; quantity: number }) =>
+      stocksApi.update(stockId, { quantity }),
+    onSuccess: () => {
+      invalidateAll();
+      setIsEditModalOpen(false);
+      setEditingRow(null);
+      editForm.reset();
+    },
+    onError: (error: Error) => {
+      alert(error.message);
+    },
   });
 
   const deleteStockMutation = useMutation({
     mutationFn: (stockId: string) => stocksApi.delete(stockId),
-    onSuccess: () => { invalidateAll(); },
-    onError: (error: Error) => { alert(error.message); },
+    onSuccess: () => {
+      invalidateAll();
+    },
+    onError: (error: Error) => {
+      alert(error.message);
+    },
   });
 
   const createAdjustmentMutation = useMutation({
-    mutationFn: (data: { productId: string; outletId: string; quantity: number; alasan?: string; adjustedBy: string }) => stockAdjustmentsApi.create(data),
-    onSuccess: () => { invalidateAll(); setIsAdjustModalOpen(false); setAdjustingRow(null); adjustForm.reset(); },
-    onError: (error: Error) => { alert(error.message); },
+    mutationFn: (data: {
+      productId: string;
+      outletId: string;
+      quantity: number;
+      alasan?: string;
+      adjustedBy: string;
+    }) => stockAdjustmentsApi.create(data),
+    onSuccess: () => {
+      invalidateAll();
+      setIsAdjustModalOpen(false);
+      setAdjustingRow(null);
+      adjustForm.reset();
+    },
+    onError: (error: Error) => {
+      alert(error.message);
+    },
   });
 
   const stocks = stocksData?.data || [];
@@ -154,7 +178,10 @@ export function OutletDetailPage() {
   const filteredRows = rows.filter((row) => {
     if (!searchText) return true;
     const search = searchText.toLowerCase();
-    return row.product.nama.toLowerCase().includes(search) || row.product.sku.toLowerCase().includes(search);
+    return (
+      row.product.nama.toLowerCase().includes(search) ||
+      row.product.sku.toLowerCase().includes(search)
+    );
   });
 
   const handleAddStock = (productId: string) => {
@@ -168,14 +195,14 @@ export function OutletDetailPage() {
   };
 
   const handleDeleteStock = (stockId: string) => {
-    if (confirm("Apakah Anda yakin ingin menghapus stock ini?")) {
+    if (confirm('Apakah Anda yakin ingin menghapus stock ini?')) {
       deleteStockMutation.mutate(stockId);
     }
   };
 
   const handleAdjustStock = (row: ProductStockRow) => {
     setAdjustingRow(row);
-    adjustForm.reset({ quantity: 0, alasan: "" });
+    adjustForm.reset({ quantity: 0, alasan: '' });
     setIsAdjustModalOpen(true);
   };
 
@@ -195,7 +222,11 @@ export function OutletDetailPage() {
 
   return (
     <div>
-      <Button variant="link" onClick={() => navigate({ to: `/tenants/${slug}/outlets` })} className="mb-4 pl-0">
+      <Button
+        variant="link"
+        onClick={() => navigate({ to: `/tenants/${slug}/outlets` })}
+        className="mb-4 pl-0"
+      >
         <ArrowLeft className="mr-2 h-4 w-4" />
         Back to Outlets
       </Button>
@@ -205,14 +236,23 @@ export function OutletDetailPage() {
           <div className="flex items-center gap-2 mb-4">
             <Package className="h-5 w-5" />
             <h3 className="text-lg font-semibold">{outlet.nama}</h3>
-            <span className={`px-2 py-1 rounded-full text-xs ${outlet.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-              {outlet.isActive ? "Active" : "Inactive"}
+            <span
+              className={`px-2 py-1 rounded-full text-xs ${outlet.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
+            >
+              {outlet.isActive ? 'Active' : 'Inactive'}
             </span>
           </div>
           <div className="grid grid-cols-3 gap-4 text-sm">
-            <div><span className="text-gray-500">Kode:</span> <code className="bg-gray-100 px-2 py-1 rounded">{outlet.kode}</code></div>
-            <div><span className="text-gray-500">Alamat:</span> {outlet.alamat || "-"}</div>
-            <div><span className="text-gray-500">No. HP:</span> {outlet.noHp || "-"}</div>
+            <div>
+              <span className="text-gray-500">Kode:</span>{' '}
+              <code className="bg-gray-100 px-2 py-1 rounded">{outlet.kode}</code>
+            </div>
+            <div>
+              <span className="text-gray-500">Alamat:</span> {outlet.alamat || '-'}
+            </div>
+            <div>
+              <span className="text-gray-500">No. HP:</span> {outlet.noHp || '-'}
+            </div>
           </div>
         </div>
       </Card>
@@ -234,11 +274,19 @@ export function OutletDetailPage() {
             {totalWithStock} dari {products.length} produk memiliki stock di outlet ini
           </div>
           <div className="mb-4">
-            <Input placeholder="Cari produk..." value={searchText} onChange={(e) => setSearchText(e.target.value)} className="max-w-[300px]" />
+            <Input
+              placeholder="Cari produk..."
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              className="max-w-[300px]"
+            />
           </div>
 
           {stocksLoading || productsLoading ? (
-            <div className="space-y-2"><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /></div>
+            <div className="space-y-2">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </div>
           ) : (
             <Table>
               <TableHeader>
@@ -256,36 +304,68 @@ export function OutletDetailPage() {
                 {filteredRows.map((row, index) => (
                   <TableRow key={row.product.id}>
                     <TableCell>{index + 1}</TableCell>
-                    <TableCell><code className="bg-gray-100 px-2 py-1 rounded text-sm">{row.product.sku}</code></TableCell>
+                    <TableCell>
+                      <code className="bg-gray-100 px-2 py-1 rounded text-sm">
+                        {row.product.sku}
+                      </code>
+                    </TableCell>
                     <TableCell>
                       <div className="font-medium">{row.product.nama}</div>
-                      {row.product.category && <div className="text-xs text-gray-500">{row.product.category.nama}</div>}
+                      {row.product.category && (
+                        <div className="text-xs text-gray-500">{row.product.category.nama}</div>
+                      )}
                     </TableCell>
-                    <TableCell>{Number(row.product.hargaJual).toLocaleString("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 })}</TableCell>
+                    <TableCell>
+                      {Number(row.product.hargaJual).toLocaleString('id-ID', {
+                        style: 'currency',
+                        currency: 'IDR',
+                        minimumFractionDigits: 0,
+                      })}
+                    </TableCell>
                     <TableCell>
                       {!row.stock ? (
-                        <Button variant="outline" size="sm" onClick={() => handleAddStock(row.product.id)}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleAddStock(row.product.id)}
+                        >
                           <Plus className="mr-1 h-3 w-3" /> Tambah
                         </Button>
                       ) : (
-                        <span className={row.stock.quantity > 0 ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
+                        <span
+                          className={
+                            row.stock.quantity > 0
+                              ? 'text-green-600 font-medium'
+                              : 'text-red-600 font-medium'
+                          }
+                        >
                           {row.stock.quantity}
                         </span>
                       )}
                     </TableCell>
                     <TableCell className="text-gray-500">
-                      {row.stock?.updatedAt ? new Date(row.stock.updatedAt).toLocaleString("id-ID") : "-"}
+                      {row.stock?.updatedAt
+                        ? new Date(row.stock.updatedAt).toLocaleString('id-ID')
+                        : '-'}
                     </TableCell>
                     <TableCell>
                       {!row.stock ? null : (
                         <div className="flex gap-1">
-                          <Button variant="ghost" size="icon" onClick={() => handleAdjustStock(row)}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleAdjustStock(row)}
+                          >
                             <ArrowRightLeft className="h-4 w-4" />
                           </Button>
                           <Button variant="ghost" size="icon" onClick={() => handleEditStock(row)}>
                             <Edit2 className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleDeleteStock(row.stock!.id)}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDeleteStock(row.stock!.id)}
+                          >
                             <Trash2 className="h-4 w-4 text-red-500" />
                           </Button>
                         </div>
@@ -314,18 +394,28 @@ export function OutletDetailPage() {
               {adjustments.map((adj, index) => (
                 <TableRow key={adj.id}>
                   <TableCell>{index + 1}</TableCell>
-                  <TableCell className="text-gray-500">{new Date(adj.createdAt).toLocaleString("id-ID")}</TableCell>
+                  <TableCell className="text-gray-500">
+                    {new Date(adj.createdAt).toLocaleString('id-ID')}
+                  </TableCell>
                   <TableCell>
-                    <div className="font-medium">{adj.product?.nama || `Product #${adj.productId}`}</div>
+                    <div className="font-medium">
+                      {adj.product?.nama || `Product #${adj.productId}`}
+                    </div>
                     <div className="text-xs text-gray-500">{adj.product?.sku}</div>
                   </TableCell>
                   <TableCell>
-                    <span className={adj.quantity > 0 ? "text-green-600" : adj.quantity < 0 ? "text-red-600" : ""}>
+                    <span
+                      className={
+                        adj.quantity > 0 ? 'text-green-600' : adj.quantity < 0 ? 'text-red-600' : ''
+                      }
+                    >
                       {adj.quantity > 0 ? `+${adj.quantity}` : adj.quantity}
                     </span>
                   </TableCell>
-                  <TableCell className="text-gray-500">{adj.alasan || "-"}</TableCell>
-                  <TableCell className="text-gray-500">{adj.user?.name || adj.user?.email || adj.adjustedBy || "-"}</TableCell>
+                  <TableCell className="text-gray-500">{adj.alasan || '-'}</TableCell>
+                  <TableCell className="text-gray-500">
+                    {adj.user?.name || adj.user?.email || adj.adjustedBy || '-'}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -335,13 +425,42 @@ export function OutletDetailPage() {
 
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Edit Stock — {editingRow?.product.nama || ""}</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>Edit Stock — {editingRow?.product.nama || ''}</DialogTitle>
+          </DialogHeader>
           <Form {...editForm}>
-            <form onSubmit={editForm.handleSubmit((v) => { if (editingRow?.stock) updateStockMutation.mutate({ stockId: editingRow.stock.id, quantity: v.quantity }); })} className="space-y-4">
-              <FormField control={editForm.control} name="quantity" render={({ field }) => (
-                <FormItem><FormLabel>Quantity</FormLabel><FormControl><Input type="number" {...field} onChange={(e) => field.onChange(Number(e.target.value))} /></FormControl><FormMessage /></FormItem>
-              )} />
-              <DialogFooter><Button type="submit" disabled={updateStockMutation.isPending}>Simpan</Button></DialogFooter>
+            <form
+              onSubmit={editForm.handleSubmit((v) => {
+                if (editingRow?.stock)
+                  updateStockMutation.mutate({
+                    stockId: editingRow.stock.id,
+                    quantity: v.quantity,
+                  });
+              })}
+              className="space-y-4"
+            >
+              <FormField
+                control={editForm.control}
+                name="quantity"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Quantity</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <Button type="submit" disabled={updateStockMutation.isPending}>
+                  Simpan
+                </Button>
+              </DialogFooter>
             </form>
           </Form>
         </DialogContent>
@@ -349,17 +468,65 @@ export function OutletDetailPage() {
 
       <Dialog open={isAdjustModalOpen} onOpenChange={setIsAdjustModalOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Adjust Stock — {adjustingRow?.product.nama || ""}</DialogTitle></DialogHeader>
-          <div className="mb-4 text-sm text-gray-500">Stock saat ini: <strong>{adjustingRow?.stock?.quantity ?? 0}</strong></div>
+          <DialogHeader>
+            <DialogTitle>Adjust Stock — {adjustingRow?.product.nama || ''}</DialogTitle>
+          </DialogHeader>
+          <div className="mb-4 text-sm text-gray-500">
+            Stock saat ini: <strong>{adjustingRow?.stock?.quantity ?? 0}</strong>
+          </div>
           <Form {...adjustForm}>
-            <form onSubmit={adjustForm.handleSubmit((v) => { if (adjustingRow) createAdjustmentMutation.mutate({ productId: adjustingRow.product.id, outletId: outletId, quantity: v.quantity, alasan: v.alasan, adjustedBy: userId! }); })} className="space-y-4">
-              <FormField control={adjustForm.control} name="quantity" render={({ field }) => (
-                <FormItem><FormLabel>Jumlah Adjustment</FormLabel><FormControl><Input type="number" placeholder="Contoh: 10 atau -5" {...field} onChange={(e) => field.onChange(Number(e.target.value))} /></FormControl><p className="text-xs text-gray-500">Gunakan angka positif untuk menambah, negatif untuk mengurangi</p><FormMessage /></FormItem>
-              )} />
-              <FormField control={adjustForm.control} name="alasan" render={({ field }) => (
-                <FormItem><FormLabel>Alasan</FormLabel><FormControl><Input placeholder="Contoh: Restock dari supplier" {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
-              <DialogFooter><Button type="submit" disabled={createAdjustmentMutation.isPending}>Simpan</Button></DialogFooter>
+            <form
+              onSubmit={adjustForm.handleSubmit((v) => {
+                if (adjustingRow)
+                  createAdjustmentMutation.mutate({
+                    productId: adjustingRow.product.id,
+                    outletId: outletId,
+                    quantity: v.quantity,
+                    alasan: v.alasan,
+                    adjustedBy: userId!,
+                  });
+              })}
+              className="space-y-4"
+            >
+              <FormField
+                control={adjustForm.control}
+                name="quantity"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Jumlah Adjustment</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="Contoh: 10 atau -5"
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                      />
+                    </FormControl>
+                    <p className="text-xs text-gray-500">
+                      Gunakan angka positif untuk menambah, negatif untuk mengurangi
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={adjustForm.control}
+                name="alasan"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Alasan</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Contoh: Restock dari supplier" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <Button type="submit" disabled={createAdjustmentMutation.isPending}>
+                  Simpan
+                </Button>
+              </DialogFooter>
             </form>
           </Form>
         </DialogContent>

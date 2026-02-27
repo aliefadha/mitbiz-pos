@@ -1,4 +1,4 @@
-import { auth } from '../../lib/auth';
+import { auth } from '@/lib/auth';
 
 export async function seedUser() {
   console.log('🌱 Seeding user...');

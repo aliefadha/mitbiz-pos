@@ -11,7 +11,7 @@ import {
   UsePipes,
 } from '@nestjs/common';
 import { ApiBody, ApiTags, ApiOperation } from '@nestjs/swagger';
-import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
+import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
 import { TenantsService } from './tenants.service';
 import {
   CreateTenantSchema,
@@ -26,11 +26,8 @@ import {
   TenantSummaryDto,
 } from './dto';
 import { AuthGuard, OptionalAuth } from '@thallesp/nestjs-better-auth';
-import { PermissionGuard } from '../common/guards/permission.guard';
-import {
-  CurrentUser,
-  type CurrentUserType,
-} from '../common/decorators/current-user.decorator';
+import { PermissionGuard } from '@/common/guards/permission.guard';
+import { CurrentUser, type CurrentUserType } from '@/common/decorators/current-user.decorator';
 
 @ApiTags('tenants')
 @Controller('tenants')
@@ -41,20 +38,14 @@ export class TenantsController {
   @Get()
   @ApiOperation({ summary: 'Get all tenants' })
   @UsePipes(new ZodValidationPipe(TenantQuerySchema, 'query'))
-  findAll(
-    @Query() query: TenantQueryDto,
-    @CurrentUser() user: CurrentUserType,
-  ) {
+  findAll(@Query() query: TenantQueryDto, @CurrentUser() user: CurrentUserType) {
     return this.tenantsService.findAll(query, user);
   }
 
   @Get(':slug')
   @ApiOperation({ summary: 'Get tenant by slug' })
   @UsePipes(new ZodValidationPipe(TenantSlugSchema, 'params'))
-  findBySlug(
-    @Param() { slug }: TenantSlugDto,
-    @CurrentUser() user: CurrentUserType,
-  ) {
+  findBySlug(@Param() { slug }: TenantSlugDto, @CurrentUser() user: CurrentUserType) {
     return this.tenantsService.findBySlug(slug, user);
   }
 
@@ -82,43 +73,30 @@ export class TenantsController {
   @Delete(':slug')
   @ApiOperation({ summary: 'Delete a tenant' })
   @UsePipes(new ZodValidationPipe(TenantSlugSchema, 'params'))
-  remove(
-    @Param() { slug }: TenantSlugDto,
-    @CurrentUser() user: CurrentUserType,
-  ) {
+  remove(@Param() { slug }: TenantSlugDto, @CurrentUser() user: CurrentUserType) {
     return this.tenantsService.remove(slug, user);
   }
 
   @Get(':slug/summary')
   @ApiOperation({
-    summary:
-      'Get tenant summary (counts for outlets, categories, products, user)',
+    summary: 'Get tenant summary (counts for outlets, categories, products, user)',
   })
   @UsePipes(new ZodValidationPipe(TenantSummarySchema, 'params'))
-  getSummary(
-    @Param() { slug }: TenantSummaryDto,
-    @CurrentUser() user: CurrentUserType,
-  ) {
+  getSummary(@Param() { slug }: TenantSummaryDto, @CurrentUser() user: CurrentUserType) {
     return this.tenantsService.getSummary(slug, user);
   }
 
   @Get(':slug/users')
   @ApiOperation({ summary: 'Get all users for a tenant' })
   @UsePipes(new ZodValidationPipe(TenantSlugSchema, 'params'))
-  findUsers(
-    @Param() { slug }: TenantSlugDto,
-    @CurrentUser() user: CurrentUserType,
-  ) {
+  findUsers(@Param() { slug }: TenantSlugDto, @CurrentUser() user: CurrentUserType) {
     return this.tenantsService.findUsers(slug, user);
   }
 
   @Get(':slug/outlets')
   @ApiOperation({ summary: 'Get all outlets for a tenant' })
   @UsePipes(new ZodValidationPipe(TenantSlugSchema, 'params'))
-  findOutlets(
-    @Param() { slug }: TenantSlugDto,
-    @CurrentUser() user: CurrentUserType,
-  ) {
+  findOutlets(@Param() { slug }: TenantSlugDto, @CurrentUser() user: CurrentUserType) {
     return this.tenantsService.findOutlets(slug, user);
   }
 }

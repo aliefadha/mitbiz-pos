@@ -1,28 +1,19 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import { outletsApi, type Outlet } from "@/lib/api/outlets";
-import { useTenant } from "@/contexts/tenant-context";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link } from '@tanstack/react-router';
+import { Pencil, Plus, Store, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -30,16 +21,25 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Link } from "@tanstack/react-router";
-import { Plus, Pencil, Trash2, Store } from "lucide-react";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
+import { useTenant } from '@/contexts/tenant-context';
+import { type Outlet, outletsApi } from '@/lib/api/outlets';
 
 const formSchema = z.object({
-  nama: z.string().min(1, "Nama outlet wajib diisi"),
-  kode: z.string().min(1, "Kode outlet wajib diisi"),
+  nama: z.string().min(1, 'Nama outlet wajib diisi'),
+  kode: z.string().min(1, 'Kode outlet wajib diisi'),
   alamat: z.string().optional(),
   noHp: z.string().optional(),
   isActive: z.boolean().optional(),
@@ -52,22 +52,20 @@ export function OutletPage() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      nama: "",
-      kode: "",
-      alamat: "",
-      noHp: "",
+      nama: '',
+      kode: '',
+      alamat: '',
+      noHp: '',
       isActive: true,
     },
   });
 
-  const {
-    selectedTenant,
-  } = useTenant();
+  const { selectedTenant } = useTenant();
 
   const effectiveTenantId = selectedTenant?.id;
 
   const { data, isLoading } = useQuery({
-    queryKey: ["outlets", effectiveTenantId],
+    queryKey: ['outlets', effectiveTenantId],
     queryFn: () => outletsApi.getAll({ tenantId: effectiveTenantId }),
     enabled: !!effectiveTenantId,
   });
@@ -84,10 +82,10 @@ export function OutletPage() {
     onSuccess: () => {
       setCreateModalOpen(false);
       form.reset();
-      queryClient.invalidateQueries({ queryKey: ["outlets"] });
+      queryClient.invalidateQueries({ queryKey: ['outlets'] });
     },
     onError: (error: Error) => {
-      alert(error.message || "Failed to create outlet");
+      alert(error.message || 'Failed to create outlet');
     },
   });
 
@@ -98,30 +96,30 @@ export function OutletPage() {
       setCreateModalOpen(false);
       setEditingOutlet(null);
       form.reset();
-      queryClient.invalidateQueries({ queryKey: ["outlets"] });
+      queryClient.invalidateQueries({ queryKey: ['outlets'] });
     },
     onError: (error: Error) => {
-      alert(error.message || "Failed to update outlet");
+      alert(error.message || 'Failed to update outlet');
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => outletsApi.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["outlets"] });
+      queryClient.invalidateQueries({ queryKey: ['outlets'] });
     },
     onError: (error: Error) => {
-      alert(error.message || "Failed to delete outlet");
+      alert(error.message || 'Failed to delete outlet');
     },
   });
 
   const handleCreate = () => {
     setEditingOutlet(null);
     form.reset({
-      nama: "",
-      kode: "",
-      alamat: "",
-      noHp: "",
+      nama: '',
+      kode: '',
+      alamat: '',
+      noHp: '',
       isActive: true,
     });
     setCreateModalOpen(true);
@@ -132,15 +130,17 @@ export function OutletPage() {
     form.reset({
       nama: outlet.nama,
       kode: outlet.kode,
-      alamat: outlet.alamat || "",
-      noHp: outlet.noHp || "",
+      alamat: outlet.alamat || '',
+      noHp: outlet.noHp || '',
       isActive: outlet.isActive,
     });
     setCreateModalOpen(true);
   };
 
   const handleDelete = (id: string) => {
-    if (confirm("Apakah Anda yakin ingin menghapus outlet ini? Tindakan ini tidak dapat dibatalkan.")) {
+    if (
+      confirm('Apakah Anda yakin ingin menghapus outlet ini? Tindakan ini tidak dapat dibatalkan.')
+    ) {
       deleteMutation.mutate(id);
     }
   };
@@ -162,9 +162,7 @@ export function OutletPage() {
   const displayedOutlets = data?.data ?? [];
 
   const getStatusColor = (isActive: boolean) => {
-    return isActive
-      ? "bg-green-100 text-green-700"
-      : "bg-gray-100 text-gray-700";
+    return isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700';
   };
 
   return (
@@ -173,9 +171,7 @@ export function OutletPage() {
         <div className="flex justify-between items-center mb-6">
           <div>
             <h4 className="text-lg font-semibold m-0">Outlet</h4>
-            <p className="text-sm text-gray-500 m-0">
-              Kelola semua outlet dalam sistem
-            </p>
+            <p className="text-sm text-gray-500 m-0">Kelola semua outlet dalam sistem</p>
           </div>
           <div className="flex gap-2">
             <DialogTrigger asChild>
@@ -216,9 +212,7 @@ export function OutletPage() {
                 <TableRow key={outlet.id}>
                   <TableCell>{index + 1}</TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2">
-                      {outlet.kode}
-                    </div>
+                    <div className="flex items-center gap-2">{outlet.kode}</div>
                   </TableCell>
                   <TableCell>
                     <Link
@@ -229,13 +223,13 @@ export function OutletPage() {
                       {outlet.nama}
                     </Link>
                   </TableCell>
-                  <TableCell>{outlet.alamat || "-"}</TableCell>
-                  <TableCell>{outlet.noHp || "-"}</TableCell>
+                  <TableCell>{outlet.alamat || '-'}</TableCell>
+                  <TableCell>{outlet.noHp || '-'}</TableCell>
                   <TableCell>
                     <span
                       className={`px-2 py-1 rounded-full text-xs ${getStatusColor(!!outlet.isActive)}`}
                     >
-                      {outlet.isActive ? "Aktif" : "Tidak Aktif"}
+                      {outlet.isActive ? 'Aktif' : 'Tidak Aktif'}
                     </span>
                   </TableCell>
                   <TableCell>
@@ -256,15 +250,10 @@ export function OutletPage() {
 
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {editingOutlet ? "Edit Outlet" : "Tambah Outlet"}
-            </DialogTitle>
+            <DialogTitle>{editingOutlet ? 'Edit Outlet' : 'Tambah Outlet'}</DialogTitle>
           </DialogHeader>
           <Form {...form}>
-            <form
-              onSubmit={handleSubmit}
-              className="space-y-4"
-            >
+            <form onSubmit={handleSubmit} className="space-y-4">
               <FormField
                 control={form.control}
                 name="kode"
@@ -324,15 +313,10 @@ export function OutletPage() {
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
-                        <FormLabel className="text-base">
-                          Status Aktif
-                        </FormLabel>
+                        <FormLabel className="text-base">Status Aktif</FormLabel>
                       </div>
                       <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
+                        <Switch checked={field.value} onCheckedChange={field.onChange} />
                       </FormControl>
                     </FormItem>
                   )}
@@ -341,9 +325,11 @@ export function OutletPage() {
               <DialogFooter>
                 <Button
                   type="submit"
-                  disabled={createMutation.isPending || updateMutation.isPending || !effectiveTenantId}
+                  disabled={
+                    createMutation.isPending || updateMutation.isPending || !effectiveTenantId
+                  }
                 >
-                  {editingOutlet ? "Simpan" : "Buat"}
+                  {editingOutlet ? 'Simpan' : 'Buat'}
                 </Button>
               </DialogFooter>
             </form>

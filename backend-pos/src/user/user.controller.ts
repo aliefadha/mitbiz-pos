@@ -10,12 +10,12 @@ import {
   UsePipes,
 } from '@nestjs/common';
 import { AuthService, AuthGuard } from '@thallesp/nestjs-better-auth';
-import { auth } from '../lib/auth';
+import { auth } from '@/lib/auth';
 import type { Request as ExpressRequest } from 'express';
 import { fromNodeHeaders } from 'better-auth/node';
 import { CreateUserSchema, CreateUserDto, UserQueryDto, UserQuerySchema } from './dto';
-import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
-import { PermissionGuard } from '../common/guards/permission.guard';
+import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
+import { PermissionGuard } from '@/common/guards/permission.guard';
 import { UserService } from './user.service';
 
 @Controller('users')
@@ -47,10 +47,7 @@ export class UserController {
 
   @Post()
   @UsePipes(new ZodValidationPipe(CreateUserSchema))
-  async createUser(
-    @Body() body: CreateUserDto,
-    @Request() req: ExpressRequest,
-  ) {
+  async createUser(@Body() body: CreateUserDto, @Request() req: ExpressRequest) {
     const headers = fromNodeHeaders(req.headers);
     const { role, outletId, isSubscribed, ...userData } = body;
     return this.authService.api.createUser({
@@ -85,9 +82,7 @@ export class UserController {
     if (!session) {
       return { error: 'No session found' };
     }
-    const tenants = await this.userService.getUserTenantsAndOutlets(
-      session.user.id,
-    );
+    const tenants = await this.userService.getUserTenantsAndOutlets(session.user.id);
     return { data: tenants };
   }
 

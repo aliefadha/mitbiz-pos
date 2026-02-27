@@ -1,19 +1,14 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-  Inject,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Inject } from '@nestjs/common';
 import { eq, and, desc, sql, SQL } from 'drizzle-orm';
-import { stockAdjustments } from '../db/schema/stock-adjustment-schema';
-import { products } from '../db/schema/product-schema';
-import { outlets } from '../db/schema/outlet-schema';
-import { productStocks } from '../db/schema/stock-schema';
-import { tenants } from '../db/schema/tenant-schema';
+import { stockAdjustments } from '@/db/schema/stock-adjustment-schema';
+import { products } from '@/db/schema/product-schema';
+import { outlets } from '@/db/schema/outlet-schema';
+import { productStocks } from '@/db/schema/stock-schema';
+import { tenants } from '@/db/schema/tenant-schema';
 import { CreateStockAdjustmentDto, StockAdjustmentQueryDto } from './dto';
-import { DB_CONNECTION } from '../db/db.module';
-import type { DrizzleDB } from '../db/type';
-import type { CurrentUserType } from '../common/decorators/current-user.decorator';
+import { DB_CONNECTION } from '@/db/db.module';
+import type { DrizzleDB } from '@/db/type';
+import type { CurrentUserType } from '@/common/decorators/current-user.decorator';
 
 @Injectable()
 export class StockAdjustmentsService {
@@ -91,10 +86,7 @@ export class StockAdjustmentsService {
           user: true,
         },
       }),
-      this.db
-        .select({ count: sql<number>`count(*)` })
-        .from(stockAdjustments)
-        .where(whereClause),
+      this.db.select({ count: sql<number>`count(*)` }).from(stockAdjustments).where(whereClause),
     ]);
 
     const total = Number(totalResult[0]?.count || 0);
@@ -130,9 +122,7 @@ export class StockAdjustmentsService {
         where: eq(tenants.userId, user.id),
       });
       if (userTenant && adjustment.outlet.tenantId !== userTenant.id) {
-        throw new ForbiddenException(
-          'You do not have access to this stock adjustment',
-        );
+        throw new ForbiddenException('You do not have access to this stock adjustment');
       }
     }
 
@@ -146,9 +136,7 @@ export class StockAdjustmentsService {
     });
 
     if (!product) {
-      throw new NotFoundException(
-        `Product with ID ${data.productId} not found`,
-      );
+      throw new NotFoundException(`Product with ID ${data.productId} not found`);
     }
 
     // Verify outlet exists
@@ -174,9 +162,7 @@ export class StockAdjustmentsService {
 
     // Verify outlet and product belong to same tenant
     if (outlet.tenantId !== product.tenantId) {
-      throw new ForbiddenException(
-        'Product and outlet do not belong to the same tenant',
-      );
+      throw new ForbiddenException('Product and outlet do not belong to the same tenant');
     }
 
     const adjustmentData = {
@@ -184,10 +170,7 @@ export class StockAdjustmentsService {
       adjustedBy: user.id,
     };
 
-    const [adjustment] = await this.db
-      .insert(stockAdjustments)
-      .values(adjustmentData)
-      .returning();
+    const [adjustment] = await this.db.insert(stockAdjustments).values(adjustmentData).returning();
 
     const existingStock = await this.db.query.productStocks.findFirst({
       where: and(

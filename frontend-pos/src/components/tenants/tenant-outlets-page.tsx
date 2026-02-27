@@ -1,26 +1,18 @@
-import { useState } from "react";
-import { useParams, useNavigate } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { outletsApi, type Outlet } from "@/lib/api/outlets";
-import { tenantsApi } from "@/lib/api/tenants";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNavigate, useParams } from '@tanstack/react-router';
+import { ArrowLeft, Package, Plus, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
@@ -28,43 +20,51 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Textarea } from "@/components/ui/textarea";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { ArrowLeft, Plus, Trash2, Package } from "lucide-react";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
+import { type Outlet, outletsApi } from '@/lib/api/outlets';
+import { tenantsApi } from '@/lib/api/tenants';
 
 const formSchema = z.object({
-  nama: z.string().min(1, "Nama outlet wajib diisi"),
-  kode: z.string().min(1, "Kode outlet wajib diisi"),
+  nama: z.string().min(1, 'Nama outlet wajib diisi'),
+  kode: z.string().min(1, 'Kode outlet wajib diisi'),
   alamat: z.string().optional(),
   noHp: z.string().optional(),
 });
 
 export function TenantOutletsPage() {
-  const { slug } = useParams({ from: "/_protected/tenants/$slug/outlets/" });
+  const { slug } = useParams({ from: '/_protected/tenants/$slug/outlets/' });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [searchText, setSearchText] = useState("");
+  const [searchText, setSearchText] = useState('');
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      nama: "",
-      kode: "",
-      alamat: "",
-      noHp: "",
+      nama: '',
+      kode: '',
+      alamat: '',
+      noHp: '',
     },
   });
 
   const { data: tenant } = useQuery({
-    queryKey: ["tenant", slug],
+    queryKey: ['tenant', slug],
     queryFn: () => tenantsApi.getBySlug(slug),
   });
 
   const { data: outlets, isLoading } = useQuery({
-    queryKey: ["outlets", tenant?.id],
+    queryKey: ['outlets', tenant?.id],
     queryFn: () => outletsApi.getAll({ tenantId: tenant!.id }),
     enabled: !!tenant?.id,
   });
@@ -78,7 +78,7 @@ export function TenantOutletsPage() {
       noHp?: string;
     }) => outletsApi.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["outlets", tenant?.id] });
+      queryClient.invalidateQueries({ queryKey: ['outlets', tenant?.id] });
       setIsModalOpen(false);
       form.reset();
     },
@@ -90,7 +90,7 @@ export function TenantOutletsPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => outletsApi.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["outlets", tenant?.id] });
+      queryClient.invalidateQueries({ queryKey: ['outlets', tenant?.id] });
     },
     onError: (error: Error) => {
       alert(error.message);
@@ -103,7 +103,7 @@ export function TenantOutletsPage() {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to delete this outlet? This action cannot be undone.")) {
+    if (confirm('Are you sure you want to delete this outlet? This action cannot be undone.')) {
       deleteMutation.mutate(id);
     }
   };
@@ -123,7 +123,7 @@ export function TenantOutletsPage() {
         className="mb-4 pl-0"
       >
         <ArrowLeft className="mr-2 h-4 w-4" />
-        Back to {tenant?.nama || "Tenant"}
+        Back to {tenant?.nama || 'Tenant'}
       </Button>
 
       <div className="flex justify-between items-center mb-6">
@@ -173,13 +173,15 @@ export function TenantOutletsPage() {
                 onClick={() => navigate({ to: `/tenants/${slug}/outlets/${outlet.id}` })}
               >
                 <TableCell>{index + 1}</TableCell>
-                <TableCell><code className="bg-gray-100 px-2 py-1 rounded text-sm">{outlet.kode}</code></TableCell>
-                <TableCell className="font-medium">{outlet.nama}</TableCell>
-                <TableCell>{outlet.alamat || "-"}</TableCell>
-                <TableCell>{outlet.noHp || "-"}</TableCell>
                 <TableCell>
-                  <span className={outlet.isActive ? "text-green-600" : "text-red-500"}>
-                    {outlet.isActive ? "Active" : "Inactive"}
+                  <code className="bg-gray-100 px-2 py-1 rounded text-sm">{outlet.kode}</code>
+                </TableCell>
+                <TableCell className="font-medium">{outlet.nama}</TableCell>
+                <TableCell>{outlet.alamat || '-'}</TableCell>
+                <TableCell>{outlet.noHp || '-'}</TableCell>
+                <TableCell>
+                  <span className={outlet.isActive ? 'text-green-600' : 'text-red-500'}>
+                    {outlet.isActive ? 'Active' : 'Inactive'}
                   </span>
                 </TableCell>
                 <TableCell>
@@ -218,7 +220,13 @@ export function TenantOutletsPage() {
             <DialogTitle>Add Outlet</DialogTitle>
           </DialogHeader>
           <Form {...form}>
-            <form onSubmit={(e) => { e.preventDefault(); form.handleSubmit((v) => createMutation.mutate({ ...v, tenantId: tenant!.id }))(); }} className="space-y-4">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                form.handleSubmit((v) => createMutation.mutate({ ...v, tenantId: tenant!.id }))();
+              }}
+              className="space-y-4"
+            >
               <FormField
                 control={form.control}
                 name="kode"

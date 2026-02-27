@@ -1,4 +1,4 @@
-import { fetchApi } from "./client";
+import { fetchApi } from './client';
 
 export interface TaxBreakdown {
   taxId: string;
@@ -20,7 +20,7 @@ export interface Order {
   outletId: string;
   orderNumber: string;
   cashierId: string;
-  status: "complete" | "cancel" | "refunded";
+  status: 'complete' | 'cancel' | 'refunded';
   subtotal: string;
   jumlahPajak: string;
   pajakBreakdown: TaxBreakdown[] | null;
@@ -64,7 +64,7 @@ export interface CreateOrderDto {
   tenantId: string;
   outletId: string;
   orderNumber: string;
-  status?: "complete" | "cancel" | "refunded";
+  status?: 'complete' | 'cancel' | 'refunded';
   subtotal?: string;
   jumlahPajak?: string;
   pajakBreakdown?: TaxBreakdown[];
@@ -88,7 +88,7 @@ export interface CreateOrderItemDto {
 export interface UpdateOrderDto {
   outletId?: string;
   orderNumber?: string;
-  status?: "complete" | "cancel" | "refunded";
+  status?: 'complete' | 'cancel' | 'refunded';
   subtotal?: string;
   jumlahPajak?: string;
   pajakBreakdown?: TaxBreakdown[];
@@ -114,7 +114,7 @@ export interface OrderQueryParams {
   page?: number;
   limit?: number;
   search?: string;
-  status?: "complete" | "cancel" | "refunded";
+  status?: 'complete' | 'cancel' | 'refunded';
   tenantId?: string;
   outletId?: string;
 }
@@ -122,14 +122,14 @@ export interface OrderQueryParams {
 export const ordersApi = {
   getAll: async (params?: OrderQueryParams): Promise<OrderListResponse> => {
     const queryParams = new URLSearchParams();
-    if (params?.page) queryParams.append("page", params.page.toString());
-    if (params?.limit) queryParams.append("limit", params.limit.toString());
-    if (params?.search) queryParams.append("search", params.search);
-    if (params?.status) queryParams.append("status", params.status);
-    if (params?.tenantId) queryParams.append("tenantId", params.tenantId);
-    if (params?.outletId) queryParams.append("outletId", params.outletId);
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.tenantId) queryParams.append('tenantId', params.tenantId);
+    if (params?.outletId) queryParams.append('outletId', params.outletId);
     const query = queryParams.toString();
-    return fetchApi<OrderListResponse>(`/orders${query ? `?${query}` : ""}`);
+    return fetchApi<OrderListResponse>(`/orders${query ? `?${query}` : ''}`);
   },
 
   getById: async (id: string): Promise<Order> => {
@@ -137,22 +137,22 @@ export const ordersApi = {
   },
 
   create: async (data: CreateOrderDto): Promise<Order> => {
-    return fetchApi<Order>("/orders", {
-      method: "POST",
+    return fetchApi<Order>('/orders', {
+      method: 'POST',
       data,
     });
   },
 
   update: async (id: string, data: UpdateOrderDto): Promise<Order> => {
     return fetchApi<Order>(`/orders/${id}`, {
-      method: "PUT",
+      method: 'PUT',
       data,
     });
   },
 
   delete: async (id: string): Promise<Order> => {
     return fetchApi<Order>(`/orders/${id}`, {
-      method: "DELETE",
+      method: 'DELETE',
     });
   },
 };

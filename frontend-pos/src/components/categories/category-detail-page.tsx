@@ -1,12 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
-import { useParams, Link } from "@tanstack/react-router";
-import { ArrowLeft, Package, } from "lucide-react";
-import { categoriesApi } from "@/lib/api/categories";
-import { productsApi, } from "@/lib/api/products";
-import { useTenant } from "@/contexts/tenant-context";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent } from "@/components/ui/card";
+import { useQuery } from '@tanstack/react-query';
+import { Link, useParams } from '@tanstack/react-router';
+import { ArrowLeft, Package } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -14,34 +11,37 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '@/components/ui/table';
+import { useTenant } from '@/contexts/tenant-context';
+import { categoriesApi } from '@/lib/api/categories';
+import { productsApi } from '@/lib/api/products';
 
 export function CategoryDetailPage() {
-  const { categoryId } = useParams({ from: "/_protected/categories/$categoryId" });
+  const { categoryId } = useParams({ from: '/_protected/categories/$categoryId' });
   const { selectedTenant } = useTenant();
 
   const { data: category, isLoading: categoryLoading } = useQuery({
-    queryKey: ["category", categoryId],
+    queryKey: ['category', categoryId],
     queryFn: () => categoriesApi.getById(categoryId),
     enabled: !!categoryId,
   });
 
   const { data: productsData, isLoading: productsLoading } = useQuery({
-    queryKey: ["products", "category", categoryId, selectedTenant?.id],
-    queryFn: () => productsApi.getAll({
-      tenantId: selectedTenant?.id,
-      categoryId: categoryId
-    }),
+    queryKey: ['products', 'category', categoryId, selectedTenant?.id],
+    queryFn: () =>
+      productsApi.getAll({
+        tenantId: selectedTenant?.id,
+        categoryId: categoryId,
+      }),
     enabled: !!categoryId && !!selectedTenant?.id,
   });
 
   const products = productsData?.data ?? [];
 
-
   const formatCurrency = (value: string | number) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
     }).format(Number(value));
   };
 
@@ -75,9 +75,7 @@ export function CategoryDetailPage() {
         </Button>
         <div>
           <h4 className="text-lg font-semibold m-0">Detail Kategori</h4>
-          <p className="text-sm text-gray-500 m-0">
-            Lihat informasi dan produk dalam kategori ini
-          </p>
+          <p className="text-sm text-gray-500 m-0">Lihat informasi dan produk dalam kategori ini</p>
         </div>
       </div>
 
@@ -134,14 +132,16 @@ export function CategoryDetailPage() {
                   <TableRow key={product.id}>
                     <TableCell>{index + 1}</TableCell>
                     <TableCell className="font-medium">
-                      <Link to="/products/$productId" params={{ productId: product.id.toString() }} className="hover:underline">
+                      <Link
+                        to="/products/$productId"
+                        params={{ productId: product.id.toString() }}
+                        className="hover:underline"
+                      >
                         {product.nama}
                       </Link>
                     </TableCell>
                     <TableCell>{product.sku}</TableCell>
-                    <TableCell>
-                      {formatCurrency(product.hargaJual)}
-                    </TableCell>
+                    <TableCell>{formatCurrency(product.hargaJual)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

@@ -1,4 +1,4 @@
-import { fetchApi } from "./client";
+import { fetchApi } from './client';
 
 export interface TenantSettings {
   currency: string;
@@ -15,7 +15,7 @@ export interface User {
   image: string | null;
   createdAt: Date;
   updatedAt: Date;
-  role?: "admin" | "owner" | "cashier";
+  role?: 'admin' | 'owner' | 'cashier';
   outletId?: string | null;
 }
 
@@ -60,13 +60,10 @@ interface FetchOptions extends RequestInit {
   userId?: string;
 }
 
-async function fetchApiWithUserId<T>(
-  endpoint: string,
-  options: FetchOptions = {}
-): Promise<T> {
+async function fetchApiWithUserId<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
   const { userId, ...fetchOptions } = options;
   const headers: HeadersInit = {
-    ...(userId ? { "x-user-id": userId } : {}),
+    ...(userId ? { 'x-user-id': userId } : {}),
     ...fetchOptions.headers,
   };
 
@@ -79,19 +76,20 @@ async function fetchApiWithUserId<T>(
 export const tenantsApi = {
   getAll: async (params?: TenantQueryParams, userId?: string): Promise<Tenant[]> => {
     const allParams = { ...params, ...(userId ? { userId } : {}) };
-    const queryString = Object.keys(allParams).length > 0
-      ? "?" +
-      Object.entries(allParams)
-        .filter(([_, value]) => value !== undefined)
-        .map(([key, value]) => `${key}=${value}`)
-        .join("&")
-      : "";
+    const queryString =
+      Object.keys(allParams).length > 0
+        ? '?' +
+          Object.entries(allParams)
+            .filter(([_, value]) => value !== undefined)
+            .map(([key, value]) => `${key}=${value}`)
+            .join('&')
+        : '';
     const response = await fetchApi<{ data: Tenant[] }>(`/tenants${queryString}`);
     return response.data;
   },
 
   getMyTenants: async (): Promise<Tenant[]> => {
-    const response = await fetchApi<{ data: Tenant[] }>("/users/me/tenants");
+    const response = await fetchApi<{ data: Tenant[] }>('/users/me/tenants');
     return response.data;
   },
 
@@ -112,8 +110,8 @@ export const tenantsApi = {
     },
     userId?: string
   ): Promise<Tenant> => {
-    return fetchApiWithUserId<Tenant>("/tenants", {
-      method: "POST",
+    return fetchApiWithUserId<Tenant>('/tenants', {
+      method: 'POST',
       body: JSON.stringify(data),
       userId,
     });
@@ -133,7 +131,7 @@ export const tenantsApi = {
     userId?: string
   ): Promise<Tenant> => {
     return fetchApiWithUserId<Tenant>(`/tenants/${slug}`, {
-      method: "PUT",
+      method: 'PUT',
       body: JSON.stringify(data),
       userId,
     });
@@ -141,7 +139,7 @@ export const tenantsApi = {
 
   delete: async (slug: string, userId?: string): Promise<{ message: string }> => {
     return fetchApiWithUserId<{ message: string }>(`/tenants/${slug}`, {
-      method: "DELETE",
+      method: 'DELETE',
       userId,
     });
   },

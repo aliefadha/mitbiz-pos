@@ -1,4 +1,4 @@
-import { fetchApi } from "./client";
+import { fetchApi } from './client';
 
 export interface Outlet {
   id: string;
@@ -22,18 +22,18 @@ export interface OutletQueryParams {
 
 export const outletsApi = {
   getAll: async (
-    params?: OutletQueryParams,
+    params?: OutletQueryParams
   ): Promise<{
     data: Outlet[];
     meta: { page: number; limit: number; total: number; totalPages: number };
   }> => {
     const queryString = params
-      ? "?" +
-      Object.entries(params)
-        .filter(([_, value]) => value !== undefined)
-        .map(([key, value]) => `${key}=${value}`)
-        .join("&")
-      : "";
+      ? '?' +
+        Object.entries(params)
+          .filter(([_, value]) => value !== undefined)
+          .map(([key, value]) => `${key}=${value}`)
+          .join('&')
+      : '';
     const response = await fetchApi<{
       data: Outlet[];
       meta: { page: number; limit: number; total: number; totalPages: number };
@@ -53,28 +53,31 @@ export const outletsApi = {
     noHp?: string;
     isActive?: boolean;
   }): Promise<Outlet> => {
-    return fetchApi<Outlet>("/outlets", {
-      method: "POST",
+    return fetchApi<Outlet>('/outlets', {
+      method: 'POST',
       body: JSON.stringify(data),
     });
   },
 
-  update: async (id: string, data: {
-    nama?: string;
-    kode?: string;
-    alamat?: string;
-    noHp?: string;
-    isActive?: boolean;
-  }): Promise<Outlet> => {
+  update: async (
+    id: string,
+    data: {
+      nama?: string;
+      kode?: string;
+      alamat?: string;
+      noHp?: string;
+      isActive?: boolean;
+    }
+  ): Promise<Outlet> => {
     return fetchApi<Outlet>(`/outlets/${id}`, {
-      method: "PUT",
+      method: 'PUT',
       body: JSON.stringify(data),
     });
   },
 
   delete: async (id: string): Promise<{ message: string }> => {
     return fetchApi<{ message: string }>(`/outlets/${id}`, {
-      method: "DELETE",
+      method: 'DELETE',
     });
   },
 };

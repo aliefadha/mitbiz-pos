@@ -1,24 +1,24 @@
-import { createFileRoute, redirect, Link } from "@tanstack/react-router";
-import { useResetPassword } from "../hooks/use-auth";
-import { authClient } from "../lib/auth-client";
-import { useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Loader2, ArrowLeft, CheckCircle2, Eye, EyeOff } from "lucide-react";
+import { createFileRoute, Link, redirect } from '@tanstack/react-router';
+import { ArrowLeft, CheckCircle2, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useResetPassword } from '../hooks/use-auth';
+import { authClient } from '../lib/auth-client';
 
-export const Route = createFileRoute("/reset-password")({
+export const Route = createFileRoute('/reset-password')({
   component: ResetPasswordPage,
   validateSearch: (search: Record<string, unknown>) => {
     return {
-      token: (search.token as string) || "",
+      token: (search.token as string) || '',
     };
   },
   beforeLoad: async () => {
     const { data: session } = await authClient.getSession();
     if (session) {
-      throw redirect({ to: "/dashboard" });
+      throw redirect({ to: '/dashboard' });
     }
   },
 });
@@ -28,8 +28,8 @@ function ResetPasswordPage() {
   const resetPasswordMutation = useResetPassword();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -39,17 +39,17 @@ function ResetPasswordPage() {
     setError(null);
 
     if (newPassword.length < 8) {
-      setError("Password minimal 8 karakter.");
+      setError('Password minimal 8 karakter.');
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError("Password dan konfirmasi password tidak cocok.");
+      setError('Password dan konfirmasi password tidak cocok.');
       return;
     }
 
     if (!token) {
-      setError("Token reset password tidak valid.");
+      setError('Token reset password tidak valid.');
       return;
     }
 
@@ -58,7 +58,7 @@ function ResetPasswordPage() {
       await resetPasswordMutation.mutate({ token, newPassword });
       setSuccess(true);
     } catch (err: any) {
-      setError(err?.message || "Gagal mereset password. Silakan coba lagi.");
+      setError(err?.message || 'Gagal mereset password. Silakan coba lagi.');
     } finally {
       setIsLoading(false);
     }
@@ -131,16 +131,13 @@ function ResetPasswordPage() {
 
               <form onSubmit={onSubmit} className="space-y-5">
                 <div className="space-y-2">
-                  <Label
-                    htmlFor="new-password"
-                    className="text-sm font-medium text-gray-700"
-                  >
+                  <Label htmlFor="new-password" className="text-sm font-medium text-gray-700">
                     Password Baru
                   </Label>
                   <div className="relative">
                     <Input
                       id="new-password"
-                      type={showPassword ? "text" : "password"}
+                      type={showPassword ? 'text' : 'password'}
                       placeholder="Masukkan password baru"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
@@ -152,26 +149,19 @@ function ResetPasswordPage() {
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                     >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label
-                    htmlFor="confirm-password"
-                    className="text-sm font-medium text-gray-700"
-                  >
+                  <Label htmlFor="confirm-password" className="text-sm font-medium text-gray-700">
                     Konfirmasi Password
                   </Label>
                   <div className="relative">
                     <Input
                       id="confirm-password"
-                      type={showConfirmPassword ? "text" : "password"}
+                      type={showConfirmPassword ? 'text' : 'password'}
                       placeholder="Masukkan ulang password baru"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
@@ -180,9 +170,7 @@ function ResetPasswordPage() {
                     />
                     <button
                       type="button"
-                      onClick={() =>
-                        setShowConfirmPassword(!showConfirmPassword)
-                      }
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                     >
                       {showConfirmPassword ? (
@@ -211,7 +199,7 @@ function ResetPasswordPage() {
                       Menyimpan...
                     </>
                   ) : (
-                    "Reset Password"
+                    'Reset Password'
                   )}
                 </Button>
 

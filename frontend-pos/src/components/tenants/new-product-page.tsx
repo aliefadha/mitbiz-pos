@@ -1,34 +1,34 @@
-import { toast } from "sonner";
-import { useParams, useNavigate } from "@tanstack/react-router";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { ArrowLeft, Save } from "lucide-react";
-import { tenantsApi } from "@/lib/api/tenants";
-import { categoriesApi } from "@/lib/api/categories";
-import { productsApi } from "@/lib/api/products";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { useNavigate, useParams } from '@tanstack/react-router';
+import { ArrowLeft, Save } from 'lucide-react';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
+} from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import { categoriesApi } from '@/lib/api/categories';
+import { productsApi } from '@/lib/api/products';
+import { tenantsApi } from '@/lib/api/tenants';
 
 export function NewProductPage() {
-  const { slug } = useParams({ from: "/_protected/tenants/$slug/products/new" });
+  const { slug } = useParams({ from: '/_protected/tenants/$slug/products/new' });
   const navigate = useNavigate();
 
   const { data: tenant, isLoading: tenantLoading } = useQuery({
-    queryKey: ["tenant", slug],
+    queryKey: ['tenant', slug],
     queryFn: () => tenantsApi.getBySlug(slug),
   });
 
   const { data: categoriesData, isLoading: categoriesLoading } = useQuery({
-    queryKey: ["categories", tenant?.id],
+    queryKey: ['categories', tenant?.id],
     queryFn: () => categoriesApi.getAll({ tenantId: tenant!.id }),
     enabled: !!tenant?.id,
   });
@@ -49,11 +49,11 @@ export function NewProductPage() {
       isActive?: boolean;
     }) => productsApi.create(data),
     onSuccess: () => {
-      toast.success("Produk berhasil dibuat");
-      navigate({ to: "/tenants/$slug/products", params: { slug } });
+      toast.success('Produk berhasil dibuat');
+      navigate({ to: '/tenants/$slug/products', params: { slug } });
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Gagal membuat produk");
+      toast.error(error.message || 'Gagal membuat produk');
     },
   });
 
@@ -75,7 +75,7 @@ export function NewProductPage() {
     <div>
       <Button
         variant="link"
-        onClick={() => navigate({ to: "/tenants/$slug", params: { slug } })}
+        onClick={() => navigate({ to: '/tenants/$slug', params: { slug } })}
         className="mb-4 pl-0"
       >
         <ArrowLeft className="mr-2 h-4 w-4" />
@@ -95,16 +95,18 @@ export function NewProductPage() {
               const formData = new FormData(e.currentTarget);
               createProductMutation.mutate({
                 tenantId: tenant.id,
-                sku: formData.get("sku") as string,
-                nama: formData.get("nama") as string,
-                barcode: formData.get("barcode") as string || undefined,
-                deskripsi: formData.get("deskripsi") as string || undefined,
-                categoryId: formData.get("categoryId") as string || undefined,
-                tipe: formData.get("tipe") as 'barang' | 'jasa' | 'digital',
-                unit: formData.get("unit") as string || undefined,
-                hargaJual: formData.get("hargaJual") as string,
-                hargaBeli: formData.get("hargaBeli") as string || undefined,
-                minStockLevel: formData.get("minStockLevel") ? Number(formData.get("minStockLevel")) : 0,
+                sku: formData.get('sku') as string,
+                nama: formData.get('nama') as string,
+                barcode: (formData.get('barcode') as string) || undefined,
+                deskripsi: (formData.get('deskripsi') as string) || undefined,
+                categoryId: (formData.get('categoryId') as string) || undefined,
+                tipe: formData.get('tipe') as 'barang' | 'jasa' | 'digital',
+                unit: (formData.get('unit') as string) || undefined,
+                hargaJual: formData.get('hargaJual') as string,
+                hargaBeli: (formData.get('hargaBeli') as string) || undefined,
+                minStockLevel: formData.get('minStockLevel')
+                  ? Number(formData.get('minStockLevel'))
+                  : 0,
                 isActive: true,
               });
             }}
@@ -157,12 +159,23 @@ export function NewProductPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="unit">Satuan</Label>
-                <Input id="unit" name="unit" placeholder="Contoh: pcs, kg, liter" defaultValue="pcs" />
+                <Input
+                  id="unit"
+                  name="unit"
+                  placeholder="Contoh: pcs, kg, liter"
+                  defaultValue="pcs"
+                />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="hargaJual">Harga Jual *</Label>
-                <Input id="hargaJual" name="hargaJual" type="number" placeholder="Contoh: 100000" required />
+                <Input
+                  id="hargaJual"
+                  name="hargaJual"
+                  type="number"
+                  placeholder="Contoh: 100000"
+                  required
+                />
               </div>
 
               <div className="space-y-2">
@@ -172,7 +185,13 @@ export function NewProductPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="minStockLevel">Minimum Stok</Label>
-                <Input id="minStockLevel" name="minStockLevel" type="number" min="0" defaultValue="0" />
+                <Input
+                  id="minStockLevel"
+                  name="minStockLevel"
+                  type="number"
+                  min="0"
+                  defaultValue="0"
+                />
               </div>
             </div>
 
@@ -190,12 +209,12 @@ export function NewProductPage() {
             <div className="mt-6 flex gap-4">
               <Button type="submit" disabled={createProductMutation.isPending}>
                 <Save className="mr-2 h-4 w-4" />
-                {createProductMutation.isPending ? "Menyimpan..." : "Simpan Produk"}
+                {createProductMutation.isPending ? 'Menyimpan...' : 'Simpan Produk'}
               </Button>
               <Button
                 variant="outline"
                 type="button"
-                onClick={() => navigate({ to: "/tenants/$slug", params: { slug } })}
+                onClick={() => navigate({ to: '/tenants/$slug', params: { slug } })}
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Kembali

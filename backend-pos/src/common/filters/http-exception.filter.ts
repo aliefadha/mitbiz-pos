@@ -43,9 +43,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
           code: string;
         }>;
       };
-      const errorMessages = zodError.errors.map(
-        (err) => `${err.path.join('.')}: ${err.message}`,
-      );
+      const errorMessages = zodError.errors.map((err) => `${err.path.join('.')}: ${err.message}`);
       message = errorMessages.join(', ');
     } else if (exception instanceof BadRequestException) {
       // Handle BadRequestException (often from validation pipes)
@@ -81,10 +79,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
       if (typeof exceptionResponse === 'string') {
         message = exceptionResponse;
-      } else if (
-        typeof exceptionResponse === 'object' &&
-        exceptionResponse !== null
-      ) {
+      } else if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
         const responseObj = exceptionResponse as Record<string, unknown>;
         if (Array.isArray(responseObj.message)) {
           message = (responseObj.message as string[])[0];

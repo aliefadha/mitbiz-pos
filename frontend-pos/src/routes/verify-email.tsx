@@ -1,8 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { Button } from "@/components/ui/button";
-import { CheckCircle2 } from "lucide-react";
+import { createFileRoute, Link } from '@tanstack/react-router';
+import { CheckCircle2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-export const Route = createFileRoute("/verify-email")({
+export const Route = createFileRoute('/verify-email')({
   component: VerifyEmailPage,
 });
 
@@ -24,8 +24,7 @@ function VerifyEmailPage() {
           Email Terverifikasi!
         </h2>
         <p className="text-sm text-gray-500 mb-6">
-          Email Anda telah berhasil diverifikasi. Silakan masuk untuk mulai
-          menggunakan Mitbiz POS.
+          Email Anda telah berhasil diverifikasi. Silakan masuk untuk mulai menggunakan Mitbiz POS.
         </p>
         <Button
           asChild

@@ -11,7 +11,7 @@ import {
   UsePipes,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
+import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
 import { OutletsService } from './outlets.service';
 import {
   CreateOutletSchema,
@@ -24,11 +24,8 @@ import {
   OutletQueryDto,
 } from './dto';
 import { AuthGuard } from '@thallesp/nestjs-better-auth';
-import { PermissionGuard } from '../common/guards/permission.guard';
-import {
-  CurrentUser,
-  type CurrentUserType,
-} from '../common/decorators/current-user.decorator';
+import { PermissionGuard } from '@/common/guards/permission.guard';
+import { CurrentUser, type CurrentUserType } from '@/common/decorators/current-user.decorator';
 
 @ApiTags('outlets')
 @Controller('outlets')
@@ -39,10 +36,7 @@ export class OutletsController {
   @Get()
   @ApiOperation({ summary: 'Get all outlets' })
   @UsePipes(new ZodValidationPipe(OutletQuerySchema, 'query'))
-  findAll(
-    @Query() query: OutletQueryDto,
-    @CurrentUser() user: CurrentUserType,
-  ) {
+  findAll(@Query() query: OutletQueryDto, @CurrentUser() user: CurrentUserType) {
     return this.outletsService.findAll(query, user);
   }
 

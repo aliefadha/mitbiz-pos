@@ -6,12 +6,12 @@ import {
   Inject,
 } from '@nestjs/common';
 import { eq, and, like, desc, sql, SQL } from 'drizzle-orm';
-import { outlets } from '../db/schema';
-import { tenants } from '../db/schema';
+import { outlets } from '@/db/schema';
+import { tenants } from '@/db/schema';
 import { CreateOutletDto, UpdateOutletDto, OutletQueryDto } from './dto';
-import { DB_CONNECTION } from '../db/db.module';
-import type { DrizzleDB } from '../db/type';
-import type { CurrentUserType } from '../common/decorators/current-user.decorator';
+import { DB_CONNECTION } from '@/db/db.module';
+import type { DrizzleDB } from '@/db/type';
+import type { CurrentUserType } from '@/common/decorators/current-user.decorator';
 
 @Injectable()
 export class OutletsService {
@@ -22,10 +22,7 @@ export class OutletsService {
     const offset = (page - 1) * limit;
 
     let effectiveTenantId = tenantId;
-    if (
-      !effectiveTenantId &&
-      (user.role === 'owner' || user.role === 'cashier')
-    ) {
+    if (!effectiveTenantId && (user.role === 'owner' || user.role === 'cashier')) {
       const userTenant = await this.db.query.tenants.findFirst({
         where: eq(tenants.userId, user.id),
       });
@@ -112,9 +109,7 @@ export class OutletsService {
 
     // Check ownership for owner
     if (user.role === 'owner' && tenant.userId !== user.id) {
-      throw new ForbiddenException(
-        'You do not have permission to create outlets in this tenant',
-      );
+      throw new ForbiddenException('You do not have permission to create outlets in this tenant');
     }
 
     const existing = await this.db.query.outlets.findFirst({
@@ -122,9 +117,7 @@ export class OutletsService {
     });
 
     if (existing) {
-      throw new ConflictException(
-        `Outlet with kode ${data.kode} already exists`,
-      );
+      throw new ConflictException(`Outlet with kode ${data.kode} already exists`);
     }
 
     const [outlet] = await this.db.insert(outlets).values(data).returning();
@@ -141,9 +134,7 @@ export class OutletsService {
         where: eq(tenants.userId, user.id),
       });
       if (userTenant && existingOutlet.tenantId !== userTenant.id) {
-        throw new ForbiddenException(
-          'You do not have permission to update this outlet',
-        );
+        throw new ForbiddenException('You do not have permission to update this outlet');
       }
     }
 
@@ -153,9 +144,7 @@ export class OutletsService {
       });
 
       if (kodeExists) {
-        throw new ConflictException(
-          `Outlet with kode ${data.kode} already exists`,
-        );
+        throw new ConflictException(`Outlet with kode ${data.kode} already exists`);
       }
     }
 
@@ -180,16 +169,11 @@ export class OutletsService {
         where: eq(tenants.userId, user.id),
       });
       if (userTenant && outlet.tenantId !== userTenant.id) {
-        throw new ForbiddenException(
-          'You do not have permission to delete this outlet',
-        );
+        throw new ForbiddenException('You do not have permission to delete this outlet');
       }
     }
 
-    const [deletedOutlet] = await this.db
-      .delete(outlets)
-      .where(eq(outlets.id, id))
-      .returning();
+    const [deletedOutlet] = await this.db.delete(outlets).where(eq(outlets.id, id)).returning();
 
     return deletedOutlet;
   }

@@ -5,9 +5,7 @@ import { user } from './auth-schema';
 import { outlets } from './outlet-schema';
 
 export const stockAdjustments = pgTable('stock_adjustments', {
-  id: text('id')
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
   outletId: text('outlet_id')
     .references(() => outlets.id)
     .notNull(),
@@ -22,20 +20,17 @@ export const stockAdjustments = pgTable('stock_adjustments', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
-export const stockAdjustmentsRelations = relations(
-  stockAdjustments,
-  ({ one }) => ({
-    outlet: one(outlets, {
-      fields: [stockAdjustments.outletId],
-      references: [outlets.id],
-    }),
-    product: one(products, {
-      fields: [stockAdjustments.productId],
-      references: [products.id],
-    }),
-    user: one(user, {
-      fields: [stockAdjustments.adjustedBy],
-      references: [user.id],
-    }),
+export const stockAdjustmentsRelations = relations(stockAdjustments, ({ one }) => ({
+  outlet: one(outlets, {
+    fields: [stockAdjustments.outletId],
+    references: [outlets.id],
   }),
-);
+  product: one(products, {
+    fields: [stockAdjustments.productId],
+    references: [products.id],
+  }),
+  user: one(user, {
+    fields: [stockAdjustments.adjustedBy],
+    references: [user.id],
+  }),
+}));

@@ -1,6 +1,6 @@
-import { Link } from "@tanstack/react-router";
-import { AlertCircle, Home, RotateCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Link } from '@tanstack/react-router';
+import { AlertCircle, Home, RotateCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface ErrorPageProps {
   reset: () => void;
@@ -25,9 +25,7 @@ export function ErrorPage({ reset }: ErrorPageProps) {
             <AlertCircle className="h-10 w-10 text-red-600" />
           </div>
 
-          <h2 className="mb-8 text-xl font-bold tracking-tight text-gray-900">
-            Terjadi Kesalahan
-          </h2>
+          <h2 className="mb-8 text-xl font-bold tracking-tight text-gray-900">Terjadi Kesalahan</h2>
           <div className="flex flex-col gap-3 sm:flex-row">
             <Button
               onClick={reset}
