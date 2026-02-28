@@ -17,8 +17,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useTenant } from '@/contexts/tenant-context';
-import { categoriesApi, type Category } from '@/lib/api/categories';
-import { outletsApi, type Outlet } from '@/lib/api/outlets';
+import { type Category, categoriesApi } from '@/lib/api/categories';
+import { type Outlet, outletsApi } from '@/lib/api/outlets';
 import { salesApi, type TopProduct } from '@/lib/api/sales';
 
 export const Route = createFileRoute('/_protected/laporan')({

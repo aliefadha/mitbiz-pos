@@ -69,7 +69,13 @@ export class SalesService {
       .leftJoin(categories, eq(products.categoryId, categories.id))
       .leftJoin(orders, eq(orderItems.orderId, orders.id))
       .where(and(whereCondition, eq(orders.status, 'complete')))
-      .groupBy(orderItems.productId, products.nama, products.sku, products.categoryId, categories.nama)
+      .groupBy(
+        orderItems.productId,
+        products.nama,
+        products.sku,
+        products.categoryId,
+        categories.nama,
+      )
       .orderBy(desc(sql`SUM(${orderItems.quantity})`))
       .limit(limit);
 

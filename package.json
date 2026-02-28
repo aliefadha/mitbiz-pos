@@ -8,7 +8,8 @@
   "scripts": {
     "lint": "npm run lint --workspaces --if-present",
     "format": "npm run format --workspaces --if-present",
-    "check": "npm run check --workspaces --if-present"
+    "check": "npm run check --workspaces --if-present",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.8.0",
