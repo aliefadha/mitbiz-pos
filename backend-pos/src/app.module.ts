@@ -24,6 +24,7 @@ import { DiscountsModule } from './discounts/discounts.module';
 import { PaymentMethodsModule } from './payment-methods/payment-methods.module';
 import { CashShiftsModule } from './cash-shifts/cash-shifts.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { SalesModule } from './sales/sales.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
     PaymentMethodsModule,
     CashShiftsModule,
     DashboardModule,
+    SalesModule,
   ],
   controllers: [AppController],
   providers: [

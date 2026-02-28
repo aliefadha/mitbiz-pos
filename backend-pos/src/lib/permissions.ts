@@ -20,6 +20,7 @@ const statement = {
   paymentMethods: ['create', 'read', 'update', 'delete'],
   cashShifts: ['create', 'read', 'update', 'delete'],
   dashboard: ['read'],
+  sales: ['read'],
 } as const;
 
 export const ac = createAccessControl(statement);
@@ -44,6 +45,7 @@ export const adminRole = ac.newRole({
   paymentMethods: ['create', 'read', 'update', 'delete'],
   cashShifts: ['create', 'read', 'update', 'delete'],
   dashboard: ['read'],
+  sales: ['read'],
 });
 
 export const ownerRole = ac.newRole({
@@ -65,6 +67,7 @@ export const ownerRole = ac.newRole({
   paymentMethods: ['create', 'read', 'update', 'delete'],
   cashShifts: ['create', 'read', 'update', 'delete'],
   dashboard: ['read'],
+  sales: ['read'],
 });
 
 export const cashierRole = ac.newRole({
@@ -86,4 +89,5 @@ export const cashierRole = ac.newRole({
   paymentMethods: ['read'],
   cashShifts: ['create', 'read', 'update'],
   dashboard: ['read'],
+  sales: ['read'],
 });

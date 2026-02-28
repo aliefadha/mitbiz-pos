@@ -19,6 +19,7 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     '/pos',
     '/payment-methods',
     '/cash-shifts',
+    '/laporan',
   ],
   owner: [
     '/tenants/new',
@@ -35,6 +36,7 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     '/discounts',
     '/payment-methods',
     '/cash-shifts',
+    '/laporan',
   ],
   cashier: [
     '/dashboard',
@@ -48,6 +50,7 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     '/taxes',
     '/settings',
     '/cash-shifts',
+    '/laporan',
   ],
 };
 

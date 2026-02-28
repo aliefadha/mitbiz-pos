@@ -16,6 +16,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as ProtectedRouteImport } from './routes/_protected'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ProtectedLaporanRouteImport } from './routes/_protected/laporan'
 import { Route as ProtectedDashboardRouteImport } from './routes/_protected/dashboard'
 import { Route as ProtectedTenantsIndexRouteImport } from './routes/_protected/tenants/index'
 import { Route as ProtectedTaxesIndexRouteImport } from './routes/_protected/taxes/index'
@@ -77,6 +78,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ProtectedLaporanRoute = ProtectedLaporanRouteImport.update({
+  id: '/laporan',
+  path: '/laporan',
+  getParentRoute: () => ProtectedRoute,
 } as any)
 const ProtectedDashboardRoute = ProtectedDashboardRouteImport.update({
   id: '/dashboard',
@@ -237,6 +243,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/verify-email': typeof VerifyEmailRoute
   '/dashboard': typeof ProtectedDashboardRoute
+  '/laporan': typeof ProtectedLaporanRoute
   '/cash-shifts/$cashShiftId': typeof ProtectedCashShiftsCashShiftIdRoute
   '/categories/$categoryId': typeof ProtectedCategoriesCategoryIdRoute
   '/orders/$orderId': typeof ProtectedOrdersOrderIdRoute
@@ -272,6 +279,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/verify-email': typeof VerifyEmailRoute
   '/dashboard': typeof ProtectedDashboardRoute
+  '/laporan': typeof ProtectedLaporanRoute
   '/cash-shifts/$cashShiftId': typeof ProtectedCashShiftsCashShiftIdRoute
   '/categories/$categoryId': typeof ProtectedCategoriesCategoryIdRoute
   '/orders/$orderId': typeof ProtectedOrdersOrderIdRoute
@@ -309,6 +317,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/verify-email': typeof VerifyEmailRoute
   '/_protected/dashboard': typeof ProtectedDashboardRoute
+  '/_protected/laporan': typeof ProtectedLaporanRoute
   '/_protected/cash-shifts/$cashShiftId': typeof ProtectedCashShiftsCashShiftIdRoute
   '/_protected/categories/$categoryId': typeof ProtectedCategoriesCategoryIdRoute
   '/_protected/orders/$orderId': typeof ProtectedOrdersOrderIdRoute
@@ -346,6 +355,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/verify-email'
     | '/dashboard'
+    | '/laporan'
     | '/cash-shifts/$cashShiftId'
     | '/categories/$categoryId'
     | '/orders/$orderId'
@@ -381,6 +391,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/verify-email'
     | '/dashboard'
+    | '/laporan'
     | '/cash-shifts/$cashShiftId'
     | '/categories/$categoryId'
     | '/orders/$orderId'
@@ -417,6 +428,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/verify-email'
     | '/_protected/dashboard'
+    | '/_protected/laporan'
     | '/_protected/cash-shifts/$cashShiftId'
     | '/_protected/categories/$categoryId'
     | '/_protected/orders/$orderId'
@@ -505,6 +517,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_protected/laporan': {
+      id: '/_protected/laporan'
+      path: '/laporan'
+      fullPath: '/laporan'
+      preLoaderRoute: typeof ProtectedLaporanRouteImport
+      parentRoute: typeof ProtectedRoute
     }
     '/_protected/dashboard': {
       id: '/_protected/dashboard'
@@ -700,6 +719,7 @@ declare module '@tanstack/react-router' {
 
 interface ProtectedRouteChildren {
   ProtectedDashboardRoute: typeof ProtectedDashboardRoute
+  ProtectedLaporanRoute: typeof ProtectedLaporanRoute
   ProtectedCashShiftsCashShiftIdRoute: typeof ProtectedCashShiftsCashShiftIdRoute
   ProtectedCategoriesCategoryIdRoute: typeof ProtectedCategoriesCategoryIdRoute
   ProtectedOrdersOrderIdRoute: typeof ProtectedOrdersOrderIdRoute
@@ -730,6 +750,7 @@ interface ProtectedRouteChildren {
 
 const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedDashboardRoute: ProtectedDashboardRoute,
+  ProtectedLaporanRoute: ProtectedLaporanRoute,
   ProtectedCashShiftsCashShiftIdRoute: ProtectedCashShiftsCashShiftIdRoute,
   ProtectedCategoriesCategoryIdRoute: ProtectedCategoriesCategoryIdRoute,
   ProtectedOrdersOrderIdRoute: ProtectedOrdersOrderIdRoute,
