@@ -74,9 +74,10 @@ export function SalesTrendChart({ tenantId, outletId, startDate, endDate }: Sale
             <YAxis
               tickLine={false}
               axisLine={false}
-              tickMargin={12}
+              tickMargin={16}
               tickFormatter={formatYAxis}
               tick={{ fill: '#6B7280', fontSize: 12 }}
+              width={80}
             />
             <ChartTooltip
               cursor={false}

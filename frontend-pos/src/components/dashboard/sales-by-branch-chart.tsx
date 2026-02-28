@@ -73,9 +73,10 @@ export function SalesByBranchChart({
             <YAxis
               tickLine={false}
               axisLine={false}
-              tickMargin={12}
+              tickMargin={16}
               tickFormatter={formatYAxis}
               tick={{ fill: '#6B7280', fontSize: 12 }}
+              width={80}
             />
             <ChartTooltip
               cursor={{ fill: 'rgba(0,0,0,0.04)' }}
