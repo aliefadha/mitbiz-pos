@@ -1,8 +1,9 @@
 import { createFileRoute, Link, redirect } from '@tanstack/react-router';
-import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Mail } from 'lucide-react';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useRegister } from '../hooks/use-auth';
@@ -21,7 +22,7 @@ export const Route = createFileRoute('/register')({
 function RegisterPage() {
   const registerMutation = useRegister();
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [successOpen, setSuccessOpen] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -32,7 +33,6 @@ function RegisterPage() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setSuccess(null);
 
     if (password !== confirmPassword) {
       setError('Password dan konfirmasi password tidak cocok');
@@ -41,7 +41,7 @@ function RegisterPage() {
 
     try {
       await registerMutation.mutate({ name, email, password });
-      setSuccess('Registrasi berhasil! Silakan cek email Anda untuk verifikasi.');
+      setSuccessOpen(true);
     } catch (err: any) {
       if (err?.code === 'USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL') {
         setError('Email sudah terdaftar');
@@ -205,12 +205,6 @@ function RegisterPage() {
               </div>
             )}
 
-            {success && (
-              <div className="rounded-lg bg-green-50 px-4 py-3 text-center text-sm text-green-600">
-                {success}
-              </div>
-            )}
-
             <Button
               type="submit"
               disabled={registerMutation.isPending}
@@ -236,6 +230,35 @@ function RegisterPage() {
               </Link>
             </p>
           </form>
+
+          <Dialog
+            open={successOpen}
+            onOpenChange={(open) => {
+              setSuccessOpen(open);
+              if (!open) {
+                window.location.href = '/login';
+              }
+            }}
+          >
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle className="text-center">Registrasi Berhasil!</DialogTitle>
+              </DialogHeader>
+              <div className=" flex justify-center">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
+                  <Mail className="h-8 w-8 text-blue-600" />
+                </div>
+              </div>
+              <p className="text-center text-sm text-gray-500">
+                Silakan cek email Anda untuk klik tautan verifikasi akun.
+              </p>
+              <div className="mt-4">
+                <Button onClick={() => setSuccessOpen(false)} className="w-full">
+                  OK
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </div>

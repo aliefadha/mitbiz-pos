@@ -1,23 +1,33 @@
 import { useNavigate } from '@tanstack/react-router';
+import { useState } from 'react';
 import { authClient, signIn, signOut } from '../lib/auth-client';
 
 export function useRegister() {
-  return {
-    mutate: async (input: { name: string; email: string; password: string }) => {
-      const { error } = await authClient.signUp.email({
+  const [isPending, setIsPending] = useState(false);
+  const mutate = async (input: { name: string; email: string; password: string }) => {
+    setIsPending(true);
+    try {
+      const { data, error } = await authClient.signUp.email({
         name: input.name,
         email: input.email,
         password: input.password,
         callbackURL: `${import.meta.env.VITE_APP_URL || 'http://localhost:3000'}/verify-email`,
+        roleId: '00000000-0000-0000-0000-000000000002',
+        tenantId: '',
+        outletId: '',
+        isSubscribed: false,
       });
 
       if (error) {
         throw error;
       }
-    },
-    isPending: false,
-    isError: false,
+
+      return data as { verificationUrl?: string } | undefined;
+    } finally {
+      setIsPending(false);
+    }
   };
+  return { mutate, isPending };
 }
 
 export function useForgotPassword() {

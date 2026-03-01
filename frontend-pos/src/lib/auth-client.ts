@@ -8,7 +8,6 @@ export const authClient = createAuthClient({
     inferAdditionalFields({
       user: {
         roleId: { type: 'string' },
-        role: { type: 'string' },
         tenantId: { type: 'string' },
         outletId: { type: 'string' },
         isSubscribed: { type: 'boolean' },
