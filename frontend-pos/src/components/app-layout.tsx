@@ -1,7 +1,5 @@
 import { Outlet, useLocation, useNavigate } from '@tanstack/react-router';
 import {
-  Bell,
-  ChevronsUpDown,
   CreditCard,
   FileText,
   Folder,
@@ -10,7 +8,6 @@ import {
   Package,
   Percent,
   Receipt,
-  Settings,
   ShoppingCart,
   Store,
   User,
@@ -25,13 +22,6 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
 import {
   Sidebar,
@@ -222,55 +212,26 @@ function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuButton
-                  size="lg"
-                  className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground cursor-pointer"
-                >
-                  <Avatar className="h-8 w-8 rounded-lg">
-                    <AvatarFallback className="rounded-lg">
-                      <User className="h-4 w-4" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">{user?.name || 'User'}</span>
-                    <span className="truncate text-xs">{user?.email || ''}</span>
-                  </div>
-                  <ChevronsUpDown className="ml-auto size-4" />
-                </SidebarMenuButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-                side="bottom"
-                align="end"
-                sideOffset={4}
-              >
-                <DropdownMenuItem className="cursor-pointer">
-                  <Bell className="mr-2 h-4 w-4" />
-                  Notifications
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => navigate({ to: '/settings' as any })}
-                  className="cursor-pointer"
-                >
-                  <Settings className="mr-2 h-4 w-4" />
-                  Settings
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={handleLogout}
-                  className="text-red-600 focus:text-red-600 cursor-pointer"
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Log out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <div className="flex flex-row gap-2 p-2 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:gap-1 group-data-[collapsible=icon]:p-2">
+          <div className="flex items-center gap-3 p-2 border border-[#D1D1D1] rounded-lg flex-1 group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:border-0 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:flex-none">
+            <Avatar className="h-8 w-8 rounded-lg">
+              <AvatarFallback className="rounded-lg">
+                <User className="h-4 w-4" />
+              </AvatarFallback>
+            </Avatar>
+            <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
+              <span className="truncate font-semibold">{user?.name || 'User'}</span>
+              <span className="truncate text-xs">{user?.roles?.name || ''}</span>
+            </div>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="flex items-center justify-center p-2 border border-[#D1D1D1] rounded-lg hover:bg-red-50 text-slate-600 hover:text-red-600 hover:border-red-200 transition-colors cursor-pointer group-data-[collapsible=icon]:border-0 group-data-[collapsible=icon]:p-0"
+            title="Logout"
+          >
+            <LogOut className="h-5 w-5 text-red-600 group-data-[collapsible=icon]:h-4 group-data-[collapsible=icon]:w-4" />
+          </button>
+        </div>
       </SidebarFooter>
     </>
   );

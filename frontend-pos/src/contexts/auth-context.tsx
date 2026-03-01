@@ -22,6 +22,11 @@ export interface User {
   emailVerified?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
+  roles?: {
+    id: string;
+    name: string;
+    scope: string;
+  };
 }
 
 export interface AuthContextType {
