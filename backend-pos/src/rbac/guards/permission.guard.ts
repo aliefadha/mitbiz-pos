@@ -1,17 +1,17 @@
 import {
-  Injectable,
   CanActivate,
   ExecutionContext,
-  UnauthorizedException,
   ForbiddenException,
   Inject,
+  Injectable,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthService } from '@thallesp/nestjs-better-auth';
 import { fromNodeHeaders } from 'better-auth/node';
-import { RbacService } from '../services/rbac.service';
 import { PERMISSION_KEY, PermissionMetadata } from '../decorators/permission.decorator';
-import { METHOD_TO_ACTION, CONTROLLER_TO_RESOURCE, Action } from '../types/rbac.types';
+import { RbacService } from '../services/rbac.service';
+import { Action, CONTROLLER_TO_RESOURCE, METHOD_TO_ACTION } from '../types/rbac.types';
 
 @Injectable()
 export class PermissionGuard implements CanActivate {

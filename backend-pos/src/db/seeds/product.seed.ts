@@ -1,7 +1,7 @@
-import { faker } from '@faker-js/faker';
 import { db } from '@/db';
-import { products } from '@/db/schema/product-schema';
 import { categories } from '@/db/schema/category-schema';
+import { products } from '@/db/schema/product-schema';
+import { faker } from '@faker-js/faker';
 import { eq } from 'drizzle-orm';
 
 export async function seedProduct(tenantId: string) {

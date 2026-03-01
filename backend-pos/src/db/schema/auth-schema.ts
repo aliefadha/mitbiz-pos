@@ -1,5 +1,5 @@
 import { relations } from 'drizzle-orm';
-import { pgTable, text, timestamp, boolean, index, integer, pgEnum } from 'drizzle-orm/pg-core';
+import { boolean, index, integer, pgEnum, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 
 export const user = pgTable('user', {
   id: text('id').primaryKey(),
@@ -81,11 +81,11 @@ export const verification = pgTable(
   (table) => [index('verification_identifier_idx').on(table.identifier)],
 );
 
-import { tenants } from './tenant-schema';
+import { cashShifts } from './cash-shift-schema';
 import { outlets } from './outlet-schema';
 import { roles } from './role-schema';
 import { stockAdjustments } from './stock-adjustment-schema';
-import { cashShifts } from './cash-shift-schema';
+import { tenants } from './tenant-schema';
 
 export const userRelations = relations(user, ({ one, many }) => ({
   sessions: many(session),

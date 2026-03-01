@@ -1,15 +1,15 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { eq, and, gte, lte, sql, desc, inArray } from 'drizzle-orm';
+import type { CurrentUserType } from '@/common/decorators/current-user.decorator';
+import { DB_CONNECTION } from '@/db/db.module';
+import { categories } from '@/db/schema/category-schema';
 import { orderItems } from '@/db/schema/order-item-schema';
 import { orders } from '@/db/schema/order-schema';
 import { outlets } from '@/db/schema/outlet-schema';
 import { products } from '@/db/schema/product-schema';
-import { categories } from '@/db/schema/category-schema';
 import { tenants } from '@/db/schema/tenant-schema';
-import { SalesQueryDto } from './dto';
-import { DB_CONNECTION } from '@/db/db.module';
 import type { DrizzleDB } from '@/db/type';
-import type { CurrentUserType } from '@/common/decorators/current-user.decorator';
+import { Inject, Injectable } from '@nestjs/common';
+import { and, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm';
+import { SalesQueryDto } from './dto';
 
 @Injectable()
 export class SalesService {

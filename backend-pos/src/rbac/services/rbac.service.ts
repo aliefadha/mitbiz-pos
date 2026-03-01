@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
 import { db } from '@/db';
-import { roles, rolePermissions, outlets } from '@/db/schema';
-import { eq, and } from 'drizzle-orm';
-import { RoleWithPermissions, Action, ScopeType, Resource } from '../types/rbac.types';
+import { outlets, rolePermissions, roles } from '@/db/schema';
+import { Injectable } from '@nestjs/common';
+import { and, eq } from 'drizzle-orm';
+import { Action, Resource, RoleWithPermissions, ScopeType } from '../types/rbac.types';
 
 @Injectable()
 export class RbacService {

@@ -1,10 +1,10 @@
 import { relations, sql } from 'drizzle-orm';
-import { pgTable, text, timestamp, boolean, jsonb } from 'drizzle-orm/pg-core';
+import { boolean, jsonb, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 import { user } from './auth-schema';
-import { outlets } from './outlet-schema';
-import { categories } from './category-schema';
-import { products } from './product-schema';
 import { cashShifts } from './cash-shift-schema';
+import { categories } from './category-schema';
+import { outlets } from './outlet-schema';
+import { products } from './product-schema';
 
 export const tenants = pgTable('tenants', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),

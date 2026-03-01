@@ -1,20 +1,20 @@
+import type { CurrentUserType } from '@/common/decorators/current-user.decorator';
+import { DB_CONNECTION } from '@/db/db.module';
+import { tenants } from '@/db/schema';
+import { user as userSchema } from '@/db/schema';
+import { categories } from '@/db/schema/category-schema';
+import { outlets } from '@/db/schema/outlet-schema';
+import { products } from '@/db/schema/product-schema';
+import type { DrizzleDB } from '@/db/type';
 import {
-  Injectable,
-  NotFoundException,
   ConflictException,
   ForbiddenException,
   Inject,
+  Injectable,
+  NotFoundException,
 } from '@nestjs/common';
-import { eq, and, like, asc, desc, sql, or, ilike, count, SQL, inArray } from 'drizzle-orm';
-import { tenants } from '@/db/schema';
-import { user as userSchema } from '@/db/schema';
-import { outlets } from '@/db/schema/outlet-schema';
-import { categories } from '@/db/schema/category-schema';
-import { products } from '@/db/schema/product-schema';
-import { CreateTenantDto, UpdateTenantDto, TenantQueryDto } from './dto';
-import { DB_CONNECTION } from '@/db/db.module';
-import type { DrizzleDB } from '@/db/type';
-import type { CurrentUserType } from '@/common/decorators/current-user.decorator';
+import { SQL, and, asc, count, desc, eq, ilike, inArray, like, or, sql } from 'drizzle-orm';
+import { CreateTenantDto, TenantQueryDto, UpdateTenantDto } from './dto';
 
 @Injectable()
 export class TenantsService {

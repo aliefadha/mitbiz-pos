@@ -1,7 +1,7 @@
+import { db } from '@/db';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { customSession, openAPI } from 'better-auth/plugins';
-import { db } from '@/db';
 import { emailService } from './email.service';
 import { findUserRoles } from './user.service';
 

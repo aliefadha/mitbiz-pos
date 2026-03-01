@@ -1,7 +1,7 @@
 import { relations, sql } from 'drizzle-orm';
-import { pgTable, text, timestamp, boolean, decimal, pgEnum } from 'drizzle-orm/pg-core';
-import { tenants } from './tenant-schema';
+import { boolean, decimal, pgEnum, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 import { outlets } from './outlet-schema';
+import { tenants } from './tenant-schema';
 
 export const discountScopeEnum = pgEnum('discount_scope', ['product', 'transaction']);
 

@@ -1,8 +1,8 @@
 import { relations, sql } from 'drizzle-orm';
-import { pgTable, text, timestamp, decimal, pgEnum } from 'drizzle-orm/pg-core';
-import { tenants } from './tenant-schema';
-import { outlets } from './outlet-schema';
+import { decimal, pgEnum, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 import { user } from './auth-schema';
+import { outlets } from './outlet-schema';
+import { tenants } from './tenant-schema';
 
 export const cashShiftStatusEnum = pgEnum('status_shift', ['buka', 'tutup']);
 

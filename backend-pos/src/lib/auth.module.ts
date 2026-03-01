@@ -1,5 +1,5 @@
-import { Module } from '@nestjs/common';
 import { DB_CONNECTION } from '@/db/db.module';
+import { Module } from '@nestjs/common';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 

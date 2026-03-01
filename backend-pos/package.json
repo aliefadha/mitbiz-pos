@@ -23,6 +23,7 @@
     "db:studio": "drizzle-kit studio",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx src/db/seeds/index.ts",
+    "check": "biome check --write",
     "prepare": "husky"
   },
   "dependencies": {

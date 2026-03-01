@@ -1,7 +1,7 @@
-import { Module, Global } from '@nestjs/common';
-import { RbacService } from './services/rbac.service';
+import { Global, Module } from '@nestjs/common';
 import { PermissionGuard } from './guards/permission.guard';
 import { ScopeGuard } from './guards/scope.guard';
+import { RbacService } from './services/rbac.service';
 
 @Global()
 @Module({

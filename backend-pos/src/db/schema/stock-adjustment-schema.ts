@@ -1,8 +1,8 @@
 import { relations, sql } from 'drizzle-orm';
-import { pgTable, text, timestamp, integer } from 'drizzle-orm/pg-core';
-import { products } from './product-schema';
+import { integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 import { user } from './auth-schema';
 import { outlets } from './outlet-schema';
+import { products } from './product-schema';
 
 export const stockAdjustments = pgTable('stock_adjustments', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),

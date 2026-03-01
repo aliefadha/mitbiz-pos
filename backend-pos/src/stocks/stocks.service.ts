@@ -1,20 +1,20 @@
+import type { CurrentUserType } from '@/common/decorators/current-user.decorator';
+import { getProductIdsByTenant } from '@/common/utils/tenant-filter';
+import { DB_CONNECTION } from '@/db/db.module';
+import { outlets } from '@/db/schema/outlet-schema';
+import { products } from '@/db/schema/product-schema';
+import { productStocks } from '@/db/schema/stock-schema';
+import { tenants } from '@/db/schema/tenant-schema';
+import type { DrizzleDB } from '@/db/type';
 import {
-  Injectable,
-  NotFoundException,
   ConflictException,
   ForbiddenException,
   Inject,
+  Injectable,
+  NotFoundException,
 } from '@nestjs/common';
-import { eq, and, desc, sql, SQL } from 'drizzle-orm';
-import { productStocks } from '@/db/schema/stock-schema';
-import { products } from '@/db/schema/product-schema';
-import { outlets } from '@/db/schema/outlet-schema';
-import { tenants } from '@/db/schema/tenant-schema';
-import { CreateStockDto, UpdateStockDto, StockQueryDto } from './dto';
-import { DB_CONNECTION } from '@/db/db.module';
-import type { DrizzleDB } from '@/db/type';
-import type { CurrentUserType } from '@/common/decorators/current-user.decorator';
-import { getProductIdsByTenant } from '@/common/utils/tenant-filter';
+import { SQL, and, desc, eq, sql } from 'drizzle-orm';
+import { CreateStockDto, StockQueryDto, UpdateStockDto } from './dto';
 
 @Injectable()
 export class StocksService {

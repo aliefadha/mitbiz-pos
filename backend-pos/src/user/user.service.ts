@@ -1,10 +1,10 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { eq, inArray } from 'drizzle-orm';
-import { tenants } from '@/db/schema/tenant-schema';
-import { user, roles } from '@/db/schema';
 import { DB_CONNECTION } from '@/db/db.module';
+import { roles, user } from '@/db/schema';
+import { tenants } from '@/db/schema/tenant-schema';
 import type { DrizzleDB } from '@/db/type';
 import { RbacService } from '@/rbac';
+import { Inject, Injectable } from '@nestjs/common';
+import { eq, inArray } from 'drizzle-orm';
 
 @Injectable()
 export class UserService {

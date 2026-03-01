@@ -1,17 +1,17 @@
+import type { CurrentUserType } from '@/common/decorators/current-user.decorator';
+import { DB_CONNECTION } from '@/db/db.module';
+import { outlets } from '@/db/schema';
+import { tenants } from '@/db/schema';
+import type { DrizzleDB } from '@/db/type';
 import {
-  Injectable,
-  NotFoundException,
   ConflictException,
   ForbiddenException,
   Inject,
+  Injectable,
+  NotFoundException,
 } from '@nestjs/common';
-import { eq, and, like, desc, sql, SQL } from 'drizzle-orm';
-import { outlets } from '@/db/schema';
-import { tenants } from '@/db/schema';
-import { CreateOutletDto, UpdateOutletDto, OutletQueryDto } from './dto';
-import { DB_CONNECTION } from '@/db/db.module';
-import type { DrizzleDB } from '@/db/type';
-import type { CurrentUserType } from '@/common/decorators/current-user.decorator';
+import { SQL, and, desc, eq, like, sql } from 'drizzle-orm';
+import { CreateOutletDto, OutletQueryDto, UpdateOutletDto } from './dto';
 
 @Injectable()
 export class OutletsService {

@@ -1,5 +1,5 @@
-import { z } from 'zod';
 import { createZodDto } from 'nestjs-zod';
+import { z } from 'zod';
 
 export const CreateStockAdjustmentSchema = z.object({
   outletId: z.string().min(1, 'Outlet ID is required'),

@@ -1,33 +1,33 @@
+import { CurrentUser, type CurrentUserType } from '@/common/decorators/current-user.decorator';
+import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
+import { Action, GlobalScope, Permission, PermissionGuard, ScopeGuard } from '@/rbac';
 import {
+  Body,
   Controller,
+  Delete,
   Get,
+  Param,
   Post,
   Put,
-  Delete,
-  Body,
-  Param,
   Query,
   UseGuards,
   UsePipes,
 } from '@nestjs/common';
-import { ApiBody, ApiTags, ApiOperation } from '@nestjs/swagger';
-import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
-import { TenantsService } from './tenants.service';
-import {
-  CreateTenantSchema,
-  UpdateTenantSchema,
-  TenantSlugSchema,
-  TenantQuerySchema,
-  TenantSummarySchema,
-  CreateTenantDto,
-  UpdateTenantDto,
-  TenantSlugDto,
-  TenantQueryDto,
-  TenantSummaryDto,
-} from './dto';
+import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthGuard, OptionalAuth } from '@thallesp/nestjs-better-auth';
-import { PermissionGuard, ScopeGuard, GlobalScope, Permission, Action } from '@/rbac';
-import { CurrentUser, type CurrentUserType } from '@/common/decorators/current-user.decorator';
+import {
+  CreateTenantDto,
+  CreateTenantSchema,
+  TenantQueryDto,
+  TenantQuerySchema,
+  TenantSlugDto,
+  TenantSlugSchema,
+  TenantSummaryDto,
+  TenantSummarySchema,
+  UpdateTenantDto,
+  UpdateTenantSchema,
+} from './dto';
+import { TenantsService } from './tenants.service';
 
 @ApiTags('tenants')
 @Controller('tenants')

@@ -1,12 +1,12 @@
 import { relations, sql } from 'drizzle-orm';
-import { pgTable, text, timestamp, decimal, jsonb } from 'drizzle-orm/pg-core';
-import { tenants } from './tenant-schema';
-import { outlets } from './outlet-schema';
-import { user } from './auth-schema';
+import { decimal, jsonb, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 import { pgEnum } from 'drizzle-orm/pg-core';
-import { orderItems } from './order-item-schema';
-import { paymentMethods } from './payment-method-schema';
+import { user } from './auth-schema';
 import { cashShifts } from './cash-shift-schema';
+import { orderItems } from './order-item-schema';
+import { outlets } from './outlet-schema';
+import { paymentMethods } from './payment-method-schema';
+import { tenants } from './tenant-schema';
 
 export const orderStatusEnum = pgEnum('order_status', ['complete', 'cancel', 'refunded']);
 

@@ -1,10 +1,10 @@
-import { seedRbac } from './rbac.seed';
-import { seedUser, seedOwnerUser, updateOwnerTenantId } from './user.seed';
-import { seedTenant } from './tenant.seed';
-import { seedOutlet } from './outlet.seed';
 import { seedCategory } from './category.seed';
-import { seedProduct } from './product.seed';
+import { seedOutlet } from './outlet.seed';
 import { seedPaymentMethod } from './payment-method.seed';
+import { seedProduct } from './product.seed';
+import { seedRbac } from './rbac.seed';
+import { seedTenant } from './tenant.seed';
+import { seedOwnerUser, seedUser, updateOwnerTenantId } from './user.seed';
 
 async function main() {
   console.log('Starting database seed...\n');

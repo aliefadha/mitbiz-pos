@@ -1,7 +1,7 @@
 import { relations, sql } from 'drizzle-orm';
-import { pgTable, text, timestamp, boolean, decimal } from 'drizzle-orm/pg-core';
-import { tenants } from './tenant-schema';
+import { boolean, decimal, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 import { outlets } from './outlet-schema';
+import { tenants } from './tenant-schema';
 
 export const taxes = pgTable('taxes', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),

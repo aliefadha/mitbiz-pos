@@ -1,7 +1,7 @@
 import { relations, sql } from 'drizzle-orm';
-import { pgTable, text, timestamp, boolean } from 'drizzle-orm/pg-core';
-import { tenants } from './tenant-schema';
+import { boolean, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 import { products } from './product-schema';
+import { tenants } from './tenant-schema';
 
 export const categories = pgTable('categories', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),

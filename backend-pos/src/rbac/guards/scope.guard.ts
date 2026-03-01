@@ -1,16 +1,16 @@
 import {
-  Injectable,
   CanActivate,
   ExecutionContext,
-  UnauthorizedException,
   ForbiddenException,
   Inject,
+  Injectable,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthService } from '@thallesp/nestjs-better-auth';
 import { fromNodeHeaders } from 'better-auth/node';
-import { RbacService } from '../services/rbac.service';
 import { SCOPE_KEY } from '../decorators/scope.decorator';
+import { RbacService } from '../services/rbac.service';
 import { ScopeType } from '../types/rbac.types';
 
 @Injectable()

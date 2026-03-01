@@ -1,7 +1,7 @@
 import { relations, sql } from 'drizzle-orm';
-import { pgTable, timestamp, text, integer, decimal } from 'drizzle-orm/pg-core';
-import { outlets } from './outlet-schema';
+import { decimal, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 import { orders } from './order-schema';
+import { outlets } from './outlet-schema';
 import { products } from './product-schema';
 
 export const orderItems = pgTable('order_items', {
