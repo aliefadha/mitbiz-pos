@@ -49,7 +49,9 @@ export class ProductsService {
 
     const stockCondition = outletId ? eq(productStocks.outletId, outletId) : undefined;
 
-    const [data, totalResult] = await Promise.all([
+    const tenantCondition = tenantId ? eq(products.tenantId, tenantId) : undefined;
+
+    const [data, totalResult, statsResult] = await Promise.all([
       this.db
         .select()
         .from(products)
@@ -63,6 +65,13 @@ export class ProductsService {
         .select({ count: sql<number>`count(*)` })
         .from(products)
         .where(conditions.length > 0 ? and(...conditions) : undefined),
+      this.db
+        .select({
+          total: sql<number>`count(*)`,
+          active: sql<number>`sum(case when ${products.isActive} = true then 1 else 0 end)`,
+        })
+        .from(products)
+        .where(tenantCondition),
     ]);
 
     const productsMap = new Map<string, number>();
@@ -87,6 +96,8 @@ export class ProductsService {
     }));
 
     const total = Number(totalResult[0]?.count || 0);
+    const totalProduk = Number(statsResult[0]?.total || 0);
+    const produkAktif = Number(statsResult[0]?.active || 0);
 
     return {
       data: productsWithCategory,
@@ -95,6 +106,8 @@ export class ProductsService {
         limit,
         total,
         totalPages: Math.ceil(total / limit),
+        totalProduk,
+        produkAktif,
       },
     };
   }

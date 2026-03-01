@@ -86,6 +86,8 @@ export const productsApi = {
     categoryId?: string;
     isActive?: boolean;
     search?: string;
+    page?: number;
+    limit?: number;
   }): Promise<{ data: Product[]; meta: any }> => {
     const params = new URLSearchParams();
     if (filters?.tenantId) params.append('tenantId', filters.tenantId.toString());
@@ -93,6 +95,8 @@ export const productsApi = {
     if (filters?.categoryId) params.append('categoryId', filters.categoryId.toString());
     if (filters?.isActive !== undefined) params.append('isActive', filters.isActive.toString());
     if (filters?.search) params.append('search', filters.search);
+    if (filters?.page) params.append('page', filters.page.toString());
+    if (filters?.limit) params.append('limit', filters.limit.toString());
     const query = params.toString();
     return fetchApi<{ data: Product[]; meta: any }>(`/products${query ? `?${query}` : ''}`);
   },

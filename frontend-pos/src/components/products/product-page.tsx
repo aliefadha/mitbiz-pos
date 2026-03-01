@@ -1,11 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Pencil, Plus, Search, Store, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -41,7 +42,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
-import { useTenant } from '@/contexts/tenant-context';
+import { useSession } from '@/lib/auth-client';
 import { categoriesApi } from '@/lib/api/categories';
 import {
   type CreateProductDto,
@@ -67,9 +68,14 @@ const formSchema = z.object({
 export function ProductPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { data: session } = useSession();
+  const tenantId = session?.user?.tenantId;
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -86,26 +92,23 @@ export function ProductPage() {
       isActive: true,
     },
   });
-  const { selectedTenant: contextSelectedTenant, selectedOutlet } = useTenant();
-
-  const effectiveTenantId = contextSelectedTenant?.id;
-  const effectiveOutletId = selectedOutlet?.id;
-
   const { data: productsData, isLoading: productsLoading } = useQuery({
-    queryKey: ['products', effectiveTenantId, effectiveOutletId, searchQuery],
+    queryKey: ['products', tenantId, searchQuery, categoryFilter, currentPage, pageSize],
     queryFn: () =>
       productsApi.getAll({
-        tenantId: effectiveTenantId,
-        outletId: effectiveOutletId,
+        tenantId,
         search: searchQuery || undefined,
+        categoryId: categoryFilter || undefined,
+        page: currentPage,
+        limit: pageSize,
       }),
-    enabled: !!effectiveTenantId,
+    enabled: !!tenantId,
   });
 
   const { data: categoriesData } = useQuery({
-    queryKey: ['categories', effectiveTenantId],
-    queryFn: () => categoriesApi.getAll({ tenantId: effectiveTenantId }),
-    enabled: !!effectiveTenantId,
+    queryKey: ['categories', tenantId],
+    queryFn: () => categoriesApi.getAll({ tenantId }),
+    enabled: !!tenantId,
   });
 
   const createMutation = useMutation({
@@ -204,13 +207,15 @@ export function ProductPage() {
     } else {
       createMutation.mutate({
         ...productData,
-        tenantId: effectiveTenantId!,
+        tenantId: tenantId!,
       } as CreateProductDto);
     }
   });
 
   const displayedProducts = productsData?.data ?? [];
   const categories = categoriesData?.data ?? [];
+  const totalProduk = productsData?.meta?.totalProduk ?? 0;
+  const produkAktif = productsData?.meta?.produkAktif ?? 0;
 
   const formatRupiah = (value: string | number): string => {
     const num = typeof value === 'string' ? parseFloat(value) : value;
@@ -226,125 +231,221 @@ export function ProductPage() {
     return isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700';
   };
 
-  const getTypeColor = (tipe: string) => {
-    switch (tipe) {
-      case 'barang':
-        return 'bg-blue-100 text-blue-700';
-      case 'jasa':
-        return 'bg-purple-100 text-purple-700';
-      case 'digital':
-        return 'bg-cyan-100 text-cyan-700';
-      default:
-        return 'bg-gray-100 text-gray-700';
-    }
-  };
-
   return (
     <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
       <div>
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h4 className="text-lg font-semibold m-0">Produk</h4>
-            <p className="text-sm text-gray-500 m-0">Kelola semua produk dalam sistem</p>
+            <h4 className="text-lg font-semibold m-0">Manajemen Produk</h4>
+            <p className="text-sm text-gray-500 m-0">Kelola produk Anda</p>
           </div>
-          <div className="flex gap-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Cari produk..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 w-64"
-              />
-            </div>
-            <DialogTrigger asChild>
-              <Button onClick={handleCreate}>
-                <Plus className="mr-2 h-4 w-4" />
-                Tambah Produk
-              </Button>
-            </DialogTrigger>
-          </div>
+          <DialogTrigger asChild>
+            <Button onClick={handleCreate}>
+              <Plus className="mr-2 h-4 w-4" />
+              Tambah Produk
+            </Button>
+          </DialogTrigger>
         </div>
 
-        {productsLoading ? (
-          <div className="p-6 space-y-2">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[80px]">No</TableHead>
-                <TableHead>SKU</TableHead>
-                <TableHead>Nama</TableHead>
-                <TableHead>Kategori</TableHead>
-                <TableHead>Tipe</TableHead>
-                <TableHead>Harga Jual</TableHead>
-                <TableHead>Stok</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-[120px]">Aksi</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {displayedProducts.map((product, index) => (
-                <TableRow key={product.id}>
-                  <TableCell>{index + 1}</TableCell>
-                  <TableCell>
-                    <code className="bg-gray-100 px-2 py-1 rounded text-xs">{product.sku}</code>
-                  </TableCell>
-                  <TableCell>
-                    <button
-                      onClick={() =>
-                        navigate({
-                          to: '/products/$productId',
-                          params: { productId: String(product.id) },
-                        })
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Produk</CardTitle>
+              <Store className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalProduk}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Produk Aktif</CardTitle>
+              <Store className="h-4 w-4 text-green-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{produkAktif}</div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card>
+          <CardContent>
+            <h4 className="text-base font-semibold mb-6">Daftar produk</h4>
+            <div className="grid grid-cols-2 gap-2 mb-6 w-full">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Cari produk..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="pl-9 w-full"
+                />
+              </div>
+              <Select
+                value={categoryFilter || 'all'}
+                onValueChange={(value) => {
+                  setCategoryFilter(value === 'all' ? '' : value);
+                  setCurrentPage(1);
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Semua Kategori" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Kategori</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.nama}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {productsLoading ? (
+              <div className="p-6 space-y-2">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>SKU</TableHead>
+                    <TableHead>Nama</TableHead>
+                    <TableHead>Kategori</TableHead>
+                    <TableHead>Harga</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="w-[120px]">Aksi</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {displayedProducts.map((product) => (
+                    <TableRow key={product.id}>
+                      <TableCell>
+                        <code className="bg-gray-100 px-2 py-1 rounded text-xs">{product.sku}</code>
+                      </TableCell>
+                      <TableCell>
+                        <button
+                          onClick={() =>
+                            navigate({
+                              to: '/products/$productId',
+                              params: { productId: String(product.id) },
+                            })
+                          }
+                          className="flex items-center gap-2 hover:underline text-left"
+                        >
+                          {product.nama}
+                        </button>
+                      </TableCell>
+                      <TableCell>{product.category?.nama || '-'}</TableCell>
+                      <TableCell>{formatRupiah(product.hargaJual)}</TableCell>
+                      <TableCell>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs ${getStatusColor(!!product.isActive)}`}
+                        >
+                          {product.isActive ? 'Aktif' : 'Tidak Aktif'}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="icon" onClick={() => handleEdit(product)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(product.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+
+            {productsData?.meta && (
+              <div className="flex items-center justify-between px-2 py-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">
+                    Menampilkan {(currentPage - 1) * pageSize + 1} -{' '}
+                    {Math.min(currentPage * pageSize, productsData.meta.total)} dari{' '}
+                    {productsData.meta.total} produk
+                  </span>
+                  <Select
+                    value={pageSize.toString()}
+                    onValueChange={(value) => {
+                      setPageSize(parseInt(value));
+                      setCurrentPage(1);
+                    }}
+                  >
+                    <SelectTrigger className="w-[70px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="5">5</SelectItem>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="20">20</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(currentPage - 1)}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Sebelumnya
+                  </Button>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.min(5, productsData.meta.totalPages) }, (_, i) => {
+                      let pageNum: number;
+                      if (productsData.meta.totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1;
+                      } else if (currentPage >= productsData.meta.totalPages - 2) {
+                        pageNum = productsData.meta.totalPages - 4 + i;
+                      } else {
+                        pageNum = currentPage - 2 + i;
                       }
-                      className="flex items-center gap-2 hover:underline text-left"
-                    >
-                      {product.nama}
-                    </button>
-                  </TableCell>
-                  <TableCell>{product.category?.nama || '-'}</TableCell>
-                  <TableCell>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs capitalize ${getTypeColor(product.tipe)}`}
-                    >
-                      {product.tipe}
-                    </span>
-                  </TableCell>
-                  <TableCell>{formatRupiah(product.hargaJual)}</TableCell>
-                  <TableCell>
-                    <span
-                      className={`font-medium ${(product.stock ?? 0) < product.minStockLevel ? 'text-red-600' : ''}`}
-                    >
-                      {product.stock ?? 0}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs ${getStatusColor(!!product.isActive)}`}
-                    >
-                      {product.isActive ? 'Aktif' : 'Tidak Aktif'}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => handleEdit(product)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(product.id)}>
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={currentPage === pageNum ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setCurrentPage(pageNum)}
+                          className="w-9"
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(currentPage + 1)}
+                    disabled={currentPage === productsData.meta.totalPages}
+                  >
+                    Selanjutnya
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         <DialogContent className="max-w-[600px]">
           <DialogHeader>
@@ -534,9 +635,7 @@ export function ProductPage() {
               <DialogFooter>
                 <Button
                   type="submit"
-                  disabled={
-                    createMutation.isPending || updateMutation.isPending || !effectiveTenantId
-                  }
+                  disabled={createMutation.isPending || updateMutation.isPending}
                 >
                   {editingProduct ? 'Simpan' : 'Buat'}
                 </Button>
