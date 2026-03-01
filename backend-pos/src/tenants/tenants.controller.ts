@@ -26,18 +26,20 @@ import {
   TenantSummaryDto,
 } from './dto';
 import { AuthGuard, OptionalAuth } from '@thallesp/nestjs-better-auth';
-import { PermissionGuard } from '@/common/guards/permission.guard';
+import { PermissionGuard, ScopeGuard, GlobalScope, Permission, Action } from '@/rbac';
 import { CurrentUser, type CurrentUserType } from '@/common/decorators/current-user.decorator';
 
 @ApiTags('tenants')
 @Controller('tenants')
-@UseGuards(AuthGuard, PermissionGuard)
+@UseGuards(AuthGuard, PermissionGuard, ScopeGuard)
+@GlobalScope()
 export class TenantsController {
   constructor(private readonly tenantsService: TenantsService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get all tenants' })
   @UsePipes(new ZodValidationPipe(TenantQuerySchema, 'query'))
+  @Permission('tenants', [Action.READ])
   findAll(@Query() query: TenantQueryDto, @CurrentUser() user: CurrentUserType) {
     return this.tenantsService.findAll(query, user);
   }
@@ -45,6 +47,7 @@ export class TenantsController {
   @Get(':slug')
   @ApiOperation({ summary: 'Get tenant by slug' })
   @UsePipes(new ZodValidationPipe(TenantSlugSchema, 'params'))
+  @Permission('tenants', [Action.READ])
   findBySlug(@Param() { slug }: TenantSlugDto, @CurrentUser() user: CurrentUserType) {
     return this.tenantsService.findBySlug(slug, user);
   }
@@ -54,6 +57,7 @@ export class TenantsController {
   @ApiOperation({ summary: 'Create a new tenant' })
   @ApiBody({ type: CreateTenantDto })
   @UsePipes(new ZodValidationPipe(CreateTenantSchema))
+  @Permission('tenants', [Action.CREATE])
   create(@Body() data: CreateTenantDto, @CurrentUser() user: CurrentUserType) {
     return this.tenantsService.create(data, user);
   }
@@ -62,6 +66,7 @@ export class TenantsController {
   @ApiOperation({ summary: 'Update a tenant' })
   @UsePipes(new ZodValidationPipe(TenantSlugSchema, 'params'))
   @UsePipes(new ZodValidationPipe(UpdateTenantSchema))
+  @Permission('tenants', [Action.UPDATE])
   update(
     @Param() { slug }: TenantSlugDto,
     @Body() data: UpdateTenantDto,
@@ -73,6 +78,7 @@ export class TenantsController {
   @Delete(':slug')
   @ApiOperation({ summary: 'Delete a tenant' })
   @UsePipes(new ZodValidationPipe(TenantSlugSchema, 'params'))
+  @Permission('tenants', [Action.DELETE])
   remove(@Param() { slug }: TenantSlugDto, @CurrentUser() user: CurrentUserType) {
     return this.tenantsService.remove(slug, user);
   }
@@ -82,6 +88,7 @@ export class TenantsController {
     summary: 'Get tenant summary (counts for outlets, categories, products, user)',
   })
   @UsePipes(new ZodValidationPipe(TenantSummarySchema, 'params'))
+  @Permission('tenants', [Action.READ])
   getSummary(@Param() { slug }: TenantSummaryDto, @CurrentUser() user: CurrentUserType) {
     return this.tenantsService.getSummary(slug, user);
   }
@@ -89,6 +96,7 @@ export class TenantsController {
   @Get(':slug/users')
   @ApiOperation({ summary: 'Get all users for a tenant' })
   @UsePipes(new ZodValidationPipe(TenantSlugSchema, 'params'))
+  @Permission('tenants', [Action.READ])
   findUsers(@Param() { slug }: TenantSlugDto, @CurrentUser() user: CurrentUserType) {
     return this.tenantsService.findUsers(slug, user);
   }
@@ -96,6 +104,7 @@ export class TenantsController {
   @Get(':slug/outlets')
   @ApiOperation({ summary: 'Get all outlets for a tenant' })
   @UsePipes(new ZodValidationPipe(TenantSlugSchema, 'params'))
+  @Permission('tenants', [Action.READ])
   findOutlets(@Param() { slug }: TenantSlugDto, @CurrentUser() user: CurrentUserType) {
     return this.tenantsService.findOutlets(slug, user);
   }

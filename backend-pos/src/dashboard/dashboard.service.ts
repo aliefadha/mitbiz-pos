@@ -1,15 +1,16 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { eq, and, gte, lte, sql, desc, inArray } from 'drizzle-orm';
+import type { CurrentUserType } from '@/common/decorators/current-user.decorator';
+import { DB_CONNECTION } from '@/db/db.module';
+import { roles } from '@/db/schema';
+import { user as usersTable } from '@/db/schema/auth-schema';
 import { orders } from '@/db/schema/order-schema';
 import { outlets } from '@/db/schema/outlet-schema';
 import { paymentMethods } from '@/db/schema/payment-method-schema';
-import { user as usersTable } from '@/db/schema/auth-schema';
 import { products } from '@/db/schema/product-schema';
-import { DashboardQueryDto } from './dto';
-import { DB_CONNECTION } from '@/db/db.module';
-import type { DrizzleDB } from '@/db/type';
-import type { CurrentUserType } from '@/common/decorators/current-user.decorator';
 import { tenants } from '@/db/schema/tenant-schema';
+import type { DrizzleDB } from '@/db/type';
+import { Inject, Injectable } from '@nestjs/common';
+import { and, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm';
+import { DashboardQueryDto } from './dto';
 
 @Injectable()
 export class DashboardService {
@@ -87,17 +88,25 @@ export class DashboardService {
       const outletIds = outletsForTenant.map((o) => o.id);
 
       if (outletIds.length > 0) {
-        const cashiersResult = await this.db
-          .select({ count: sql<number>`count(*)` })
-          .from(usersTable)
-          .where(
-            and(
-              inArray(usersTable.outletId, outletIds),
-              eq(usersTable.role, 'cashier'),
-              eq(usersTable.banned, false),
-            ),
-          );
-        activeCashiers = Number(cashiersResult[0]?.count || 0);
+        const [cashierRole] = await this.db
+          .select({ id: roles.id })
+          .from(roles)
+          .where(eq(roles.name, 'cashier'))
+          .limit(1);
+
+        if (cashierRole) {
+          const cashiersResult = await this.db
+            .select({ count: sql<number>`count(*)` })
+            .from(usersTable)
+            .where(
+              and(
+                inArray(usersTable.outletId, outletIds),
+                eq(usersTable.roleId, cashierRole.id),
+                eq(usersTable.banned, false),
+              ),
+            );
+          activeCashiers = Number(cashiersResult[0]?.count || 0);
+        }
       }
     }
 
@@ -120,7 +129,13 @@ export class DashboardService {
       return [tenantId];
     }
 
-    if (user.role === 'owner') {
+    const userTenantId = (user as unknown as { tenantId?: string }).tenantId;
+    if (userTenantId) {
+      return [userTenantId];
+    }
+
+    const userRole = (user as unknown as { role?: string }).role;
+    if (userRole === 'owner') {
       const userTenants = await this.db.query.tenants.findMany({
         where: eq(tenants.userId, user.id),
       });
@@ -218,7 +233,13 @@ export class DashboardService {
       return eq(orders.tenantId, tenantId);
     }
 
-    if (user.role === 'owner') {
+    const userTenantId = (user as unknown as { tenantId?: string }).tenantId;
+    if (userTenantId) {
+      return eq(orders.tenantId, userTenantId);
+    }
+
+    const userRole = (user as unknown as { role?: string }).role;
+    if (userRole === 'owner') {
       const userTenants = await this.db.query.tenants.findMany({
         where: eq(tenants.userId, user.id),
       });

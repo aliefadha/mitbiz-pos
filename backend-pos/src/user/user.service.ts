@@ -1,13 +1,17 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { tenants } from '@/db/schema/tenant-schema';
-import { user } from '@/db/schema/auth-schema';
+import { user, roles } from '@/db/schema';
 import { DB_CONNECTION } from '@/db/db.module';
 import type { DrizzleDB } from '@/db/type';
+import { RbacService } from '@/rbac';
 
 @Injectable()
 export class UserService {
-  constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) {}
+  constructor(
+    @Inject(DB_CONNECTION) private db: DrizzleDB,
+    private rbacService: RbacService,
+  ) {}
 
   async getUserTenantsAndOutlets(userId: string) {
     const [userWithOutlet, ownedTenants] = await Promise.all([
@@ -85,9 +89,18 @@ export class UserService {
 
     const outletIds = userTenants.flatMap((t) => t.outlets.map((o) => o.id));
 
-    const allUsers = await this.db.query.user.findMany({
-      where: eq(user.role, 'cashier'),
-    });
+    const [cashierRole] = await this.db
+      .select()
+      .from(roles)
+      .where(eq(roles.name, 'cashier'))
+      .limit(1);
+
+    let allUsers: Awaited<ReturnType<typeof this.db.query.user.findMany>> = [];
+    if (cashierRole) {
+      allUsers = await this.db.query.user.findMany({
+        where: eq(user.roleId, cashierRole.id),
+      });
+    }
 
     const filteredUsers = allUsers.filter((u) => u.outletId && outletIds.includes(u.outletId));
 

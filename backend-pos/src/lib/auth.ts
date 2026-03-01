@@ -1,9 +1,9 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { admin, openAPI } from 'better-auth/plugins';
+import { customSession, openAPI } from 'better-auth/plugins';
 import { db } from '@/db';
-import { ac, adminRole, ownerRole, cashierRole } from './permissions';
 import { emailService } from './email.service';
+import { findUserRoles } from './user.service';
 
 export const auth = betterAuth({
   url: process.env.BETTER_AUTH_URL,
@@ -29,25 +29,29 @@ export const auth = betterAuth({
   trustedOrigins: ['http://localhost:3000'],
   plugins: [
     openAPI(),
-    admin({
-      ac,
-      roles: {
-        admin: adminRole,
-        owner: ownerRole,
-        cashier: cashierRole,
-      },
-      defaultRole: 'owner',
+    customSession(async ({ user, session }) => {
+      const roles = await findUserRoles(session.userId);
+      return {
+        user: {
+          ...user,
+          roles,
+        },
+        session,
+      };
     }),
   ],
   user: {
     additionalFields: {
-      role: {
-        type: ['admin', 'owner', 'cashier'],
+      roleId: {
+        type: 'string',
         required: false,
-        defaultValue: 'owner',
+      },
+      tenantId: {
+        type: 'string',
+        required: false,
       },
       outletId: {
-        type: 'number',
+        type: 'string',
         required: false,
       },
       isSubscribed: {
@@ -55,12 +59,5 @@ export const auth = betterAuth({
         defaultValue: false,
       },
     },
-  },
-  customSession: async ({ user }) => {
-    return {
-      role: user.role,
-      outletId: user.outletId,
-      isSubscribed: user.isSubscribed,
-    };
   },
 });

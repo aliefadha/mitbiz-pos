@@ -36,4 +36,5 @@ export const tenantsRelations = relations(tenants, ({ one, many }) => ({
   categories: many(categories),
   products: many(products),
   cashShifts: many(cashShifts),
+  users: many(user),
 }));

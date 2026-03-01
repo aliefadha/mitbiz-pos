@@ -8,6 +8,7 @@ export const CreateUserSchema = z
     password: z.string().min(8, 'Password must be at least 8 characters'),
     role: z.enum(['admin', 'owner', 'cashier']).default('cashier'),
     outletId: z.string().min(1, 'Invalid outlet ID').optional(),
+    tenantId: z.string().min(1, 'Invalid tenant ID').optional(),
     isSubscribed: z.boolean().default(false),
   })
   .refine(

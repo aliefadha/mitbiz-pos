@@ -1,41 +1,43 @@
+import { CurrentUser, type CurrentUserType } from '@/common/decorators/current-user.decorator';
+import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
+import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
+import { Action, Permission, PermissionGuard, ScopeGuard, TenantScope } from '@/rbac';
 import {
+  Body,
   Controller,
+  Delete,
   Get,
+  Param,
   Post,
   Put,
-  Delete,
-  Body,
-  Param,
   Query,
   UseGuards,
   UsePipes,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CategoriesService } from './categories.service';
 import {
-  CreateCategorySchema,
-  UpdateCategorySchema,
+  CategoryIdDto,
   CategoryIdSchema,
+  CategoryQueryDto,
   CategoryQuerySchema,
   CreateCategoryDto,
+  CreateCategorySchema,
   UpdateCategoryDto,
-  CategoryIdDto,
-  CategoryQueryDto,
+  UpdateCategorySchema,
 } from './dto';
-import { AuthGuard } from '@thallesp/nestjs-better-auth';
-import { PermissionGuard } from '@/common/guards/permission.guard';
-import { CurrentUser, type CurrentUserType } from '@/common/decorators/current-user.decorator';
 
 @ApiTags('categories')
 @Controller('categories')
-@UseGuards(AuthGuard, PermissionGuard)
+@UseGuards(JwtAuthGuard, PermissionGuard, ScopeGuard)
+@TenantScope()
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get all categories' })
   @UsePipes(new ZodValidationPipe(CategoryQuerySchema, 'query'))
+  @Permission('categories', [Action.READ])
   findAll(@Query() query: CategoryQueryDto) {
     return this.categoriesService.findAll(query);
   }
@@ -43,6 +45,7 @@ export class CategoriesController {
   @Get(':id')
   @ApiOperation({ summary: 'Get category by ID' })
   @UsePipes(new ZodValidationPipe(CategoryIdSchema, 'params'))
+  @Permission('categories', [Action.READ])
   findById(@Param() { id }: CategoryIdDto, @CurrentUser() user: CurrentUserType) {
     return this.categoriesService.findById(id, user);
   }
@@ -50,6 +53,7 @@ export class CategoriesController {
   @Post()
   @ApiOperation({ summary: 'Create a new category' })
   @UsePipes(new ZodValidationPipe(CreateCategorySchema))
+  @Permission('categories', [Action.CREATE])
   create(@Body() data: CreateCategoryDto, @CurrentUser() user: CurrentUserType) {
     return this.categoriesService.create(data, user);
   }
@@ -58,6 +62,7 @@ export class CategoriesController {
   @ApiOperation({ summary: 'Update a category' })
   @UsePipes(new ZodValidationPipe(CategoryIdSchema, 'params'))
   @UsePipes(new ZodValidationPipe(UpdateCategorySchema))
+  @Permission('categories', [Action.UPDATE])
   update(
     @Param() { id }: CategoryIdDto,
     @Body() data: UpdateCategoryDto,
@@ -69,6 +74,7 @@ export class CategoriesController {
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a category' })
   @UsePipes(new ZodValidationPipe(CategoryIdSchema, 'params'))
+  @Permission('categories', [Action.DELETE])
   remove(@Param() { id }: CategoryIdDto, @CurrentUser() user: CurrentUserType) {
     return this.categoriesService.remove(id, user);
   }

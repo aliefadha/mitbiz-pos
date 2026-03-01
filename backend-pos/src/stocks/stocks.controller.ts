@@ -1,41 +1,43 @@
+import { CurrentUser, type CurrentUserType } from '@/common/decorators/current-user.decorator';
+import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
+import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
+import { Action, Permission, PermissionGuard, ScopeGuard, TenantScope } from '@/rbac';
 import {
+  Body,
   Controller,
+  Delete,
   Get,
+  Param,
   Post,
   Put,
-  Delete,
-  Body,
-  Param,
   Query,
   UseGuards,
   UsePipes,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
-import { StocksService } from './stocks.service';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
-  CreateStockSchema,
-  UpdateStockSchema,
-  StockIdSchema,
-  StockQuerySchema,
   CreateStockDto,
-  UpdateStockDto,
+  CreateStockSchema,
   StockIdDto,
+  StockIdSchema,
   StockQueryDto,
+  StockQuerySchema,
+  UpdateStockDto,
+  UpdateStockSchema,
 } from './dto';
-import { AuthGuard } from '@thallesp/nestjs-better-auth';
-import { PermissionGuard } from '@/common/guards/permission.guard';
-import { CurrentUser, type CurrentUserType } from '@/common/decorators/current-user.decorator';
+import { StocksService } from './stocks.service';
 
 @ApiTags('stocks')
 @Controller('stocks')
-@UseGuards(AuthGuard, PermissionGuard)
+@UseGuards(JwtAuthGuard, PermissionGuard, ScopeGuard)
+@TenantScope()
 export class StocksController {
   constructor(private readonly stocksService: StocksService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get all stocks' })
   @UsePipes(new ZodValidationPipe(StockQuerySchema, 'query'))
+  @Permission('stocks', [Action.READ])
   findAll(@Query() query: StockQueryDto, @CurrentUser() user: CurrentUserType) {
     return this.stocksService.findAll(query, user);
   }
@@ -43,6 +45,7 @@ export class StocksController {
   @Get(':id')
   @ApiOperation({ summary: 'Get stock by ID' })
   @UsePipes(new ZodValidationPipe(StockIdSchema, 'params'))
+  @Permission('stocks', [Action.READ])
   findById(@Param() { id }: StockIdDto, @CurrentUser() user: CurrentUserType) {
     return this.stocksService.findById(id, user);
   }
@@ -50,6 +53,7 @@ export class StocksController {
   @Post()
   @ApiOperation({ summary: 'Create a new stock' })
   @UsePipes(new ZodValidationPipe(CreateStockSchema))
+  @Permission('stocks', [Action.CREATE])
   create(@Body() data: CreateStockDto, @CurrentUser() user: CurrentUserType) {
     return this.stocksService.create(data, user);
   }
@@ -58,6 +62,7 @@ export class StocksController {
   @ApiOperation({ summary: 'Update a stock' })
   @UsePipes(new ZodValidationPipe(StockIdSchema, 'params'))
   @UsePipes(new ZodValidationPipe(UpdateStockSchema))
+  @Permission('stocks', [Action.UPDATE])
   update(
     @Param() { id }: StockIdDto,
     @Body() data: UpdateStockDto,
@@ -69,6 +74,7 @@ export class StocksController {
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a stock' })
   @UsePipes(new ZodValidationPipe(StockIdSchema, 'params'))
+  @Permission('stocks', [Action.DELETE])
   remove(@Param() { id }: StockIdDto, @CurrentUser() user: CurrentUserType) {
     return this.stocksService.remove(id, user);
   }

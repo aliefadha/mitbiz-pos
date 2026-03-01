@@ -1,40 +1,42 @@
+import { CurrentUser, type CurrentUserType } from '@/common/decorators/current-user.decorator';
+import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
+import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
+import { Action, Permission, PermissionGuard, ScopeGuard, TenantScope } from '@/rbac';
 import {
+  Body,
   Controller,
+  Delete,
   Get,
+  Param,
   Post,
   Put,
-  Delete,
-  Body,
-  Param,
   Query,
   UseGuards,
   UsePipes,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
-import { OrdersService } from './orders.service';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
-  CreateOrderSchema,
-  UpdateOrderSchema,
-  OrderIdSchema,
-  OrderQuerySchema,
   CreateOrderDto,
-  UpdateOrderDto,
+  CreateOrderSchema,
   OrderIdDto,
+  OrderIdSchema,
   OrderQueryDto,
+  OrderQuerySchema,
+  UpdateOrderDto,
+  UpdateOrderSchema,
 } from './dto';
-import { AuthGuard } from '@thallesp/nestjs-better-auth';
-import { PermissionGuard } from '@/common/guards/permission.guard';
-import { CurrentUser, type CurrentUserType } from '@/common/decorators/current-user.decorator';
+import { OrdersService } from './orders.service';
 
 @ApiTags('orders')
 @Controller('orders')
-@UseGuards(AuthGuard, PermissionGuard)
+@UseGuards(JwtAuthGuard, PermissionGuard, ScopeGuard)
+@TenantScope()
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get all orders' })
+  @Permission('orders', [Action.READ])
   @UsePipes(new ZodValidationPipe(OrderQuerySchema, 'query'))
   findAll(@Query() query: OrderQueryDto) {
     return this.ordersService.findAll(query);
@@ -42,6 +44,7 @@ export class OrdersController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get order by ID' })
+  @Permission('orders', [Action.READ])
   @UsePipes(new ZodValidationPipe(OrderIdSchema, 'params'))
   findById(@Param() { id }: OrderIdDto, @CurrentUser() user: CurrentUserType) {
     return this.ordersService.findById(id, user);
@@ -49,6 +52,7 @@ export class OrdersController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new order' })
+  @Permission('orders', [Action.CREATE])
   @UsePipes(new ZodValidationPipe(CreateOrderSchema))
   create(@Body() data: CreateOrderDto, @CurrentUser() user: CurrentUserType) {
     return this.ordersService.create(data, user);
@@ -56,6 +60,7 @@ export class OrdersController {
 
   @Put(':id')
   @ApiOperation({ summary: 'Update an order' })
+  @Permission('orders', [Action.UPDATE])
   @UsePipes(new ZodValidationPipe(OrderIdSchema, 'params'))
   @UsePipes(new ZodValidationPipe(UpdateOrderSchema))
   update(
@@ -68,6 +73,7 @@ export class OrdersController {
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete an order' })
+  @Permission('orders', [Action.DELETE])
   @UsePipes(new ZodValidationPipe(OrderIdSchema, 'params'))
   remove(@Param() { id }: OrderIdDto, @CurrentUser() user: CurrentUserType) {
     return this.ordersService.remove(id, user);

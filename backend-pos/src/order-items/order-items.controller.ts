@@ -1,41 +1,43 @@
+import { CurrentUser, type CurrentUserType } from '@/common/decorators/current-user.decorator';
+import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
+import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
+import { Action, Permission, PermissionGuard, ScopeGuard, TenantScope } from '@/rbac';
 import {
+  Body,
   Controller,
+  Delete,
   Get,
+  Param,
   Post,
   Put,
-  Delete,
-  Body,
-  Param,
   Query,
   UseGuards,
   UsePipes,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
-import { OrderItemsService } from './order-items.service';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
-  CreateOrderItemSchema,
-  UpdateOrderItemSchema,
-  OrderItemIdSchema,
-  OrderItemQuerySchema,
   CreateOrderItemDto,
-  UpdateOrderItemDto,
+  CreateOrderItemSchema,
   OrderItemIdDto,
+  OrderItemIdSchema,
   OrderItemQueryDto,
+  OrderItemQuerySchema,
+  UpdateOrderItemDto,
+  UpdateOrderItemSchema,
 } from './dto';
-import { AuthGuard } from '@thallesp/nestjs-better-auth';
-import { PermissionGuard } from '@/common/guards/permission.guard';
-import { CurrentUser, type CurrentUserType } from '@/common/decorators/current-user.decorator';
+import { OrderItemsService } from './order-items.service';
 
 @ApiTags('order-items')
 @Controller('order-items')
-@UseGuards(AuthGuard, PermissionGuard)
+@UseGuards(JwtAuthGuard, PermissionGuard, ScopeGuard)
+@TenantScope()
 export class OrderItemsController {
   constructor(private readonly orderItemsService: OrderItemsService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get all order items' })
   @UsePipes(new ZodValidationPipe(OrderItemQuerySchema, 'query'))
+  @Permission('orderItems', [Action.READ])
   findAll(@Query() query: OrderItemQueryDto) {
     return this.orderItemsService.findAll(query);
   }
@@ -43,6 +45,7 @@ export class OrderItemsController {
   @Get(':id')
   @ApiOperation({ summary: 'Get order item by ID' })
   @UsePipes(new ZodValidationPipe(OrderItemIdSchema, 'params'))
+  @Permission('orderItems', [Action.READ])
   findById(@Param() { id }: OrderItemIdDto, @CurrentUser() user: CurrentUserType) {
     return this.orderItemsService.findById(id, user);
   }
@@ -50,6 +53,7 @@ export class OrderItemsController {
   @Post()
   @ApiOperation({ summary: 'Create a new order item' })
   @UsePipes(new ZodValidationPipe(CreateOrderItemSchema))
+  @Permission('orderItems', [Action.CREATE])
   create(@Body() data: CreateOrderItemDto, @CurrentUser() user: CurrentUserType) {
     return this.orderItemsService.create(data, user);
   }
@@ -58,6 +62,7 @@ export class OrderItemsController {
   @ApiOperation({ summary: 'Update an order item' })
   @UsePipes(new ZodValidationPipe(OrderItemIdSchema, 'params'))
   @UsePipes(new ZodValidationPipe(UpdateOrderItemSchema))
+  @Permission('orderItems', [Action.UPDATE])
   update(
     @Param() { id }: OrderItemIdDto,
     @Body() data: UpdateOrderItemDto,
@@ -69,6 +74,7 @@ export class OrderItemsController {
   @Delete(':id')
   @ApiOperation({ summary: 'Delete an order item' })
   @UsePipes(new ZodValidationPipe(OrderItemIdSchema, 'params'))
+  @Permission('orderItems', [Action.DELETE])
   remove(@Param() { id }: OrderItemIdDto, @CurrentUser() user: CurrentUserType) {
     return this.orderItemsService.remove(id, user);
   }

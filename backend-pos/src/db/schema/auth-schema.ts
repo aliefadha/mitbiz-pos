@@ -1,8 +1,6 @@
 import { relations } from 'drizzle-orm';
 import { pgTable, text, timestamp, boolean, index, integer, pgEnum } from 'drizzle-orm/pg-core';
 
-export const userRoleEnum = pgEnum('user_role', ['admin', 'owner', 'cashier']);
-
 export const user = pgTable('user', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
@@ -14,7 +12,8 @@ export const user = pgTable('user', {
     .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
-  role: text('role', { enum: ['admin', 'owner', 'cashier'] }).default('cashier'),
+  roleId: text('role_id'),
+  tenantId: text('tenant_id'),
   banned: boolean('banned').default(false),
   banReason: text('ban_reason'),
   banExpires: timestamp('ban_expires'),
@@ -84,6 +83,7 @@ export const verification = pgTable(
 
 import { tenants } from './tenant-schema';
 import { outlets } from './outlet-schema';
+import { roles } from './role-schema';
 import { stockAdjustments } from './stock-adjustment-schema';
 import { cashShifts } from './cash-shift-schema';
 
@@ -91,6 +91,14 @@ export const userRelations = relations(user, ({ one, many }) => ({
   sessions: many(session),
   accounts: many(account),
   tenants: many(tenants),
+  role: one(roles, {
+    fields: [user.roleId],
+    references: [roles.id],
+  }),
+  tenant: one(tenants, {
+    fields: [user.tenantId],
+    references: [tenants.id],
+  }),
   outlet: one(outlets, {
     fields: [user.outletId],
     references: [outlets.id],

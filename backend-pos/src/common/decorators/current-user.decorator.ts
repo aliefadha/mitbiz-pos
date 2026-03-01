@@ -1,12 +1,14 @@
-import { createParamDecorator, ExecutionContext } from '@nestjs/common';
+import { ExecutionContext, createParamDecorator } from '@nestjs/common';
 import type { Request } from 'express';
 
 export interface CurrentUserType {
   id: string;
   email: string;
-  role: string;
-  tenantId?: string;
-  outletId?: string;
+  role?: string;
+  roleId?: string | null;
+  tenantId?: string | null;
+  outletId?: string | null;
+  isSubscribed?: boolean;
 }
 
 interface RequestWithUser extends Request {

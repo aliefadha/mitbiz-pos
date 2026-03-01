@@ -1,41 +1,43 @@
+import { CurrentUser, type CurrentUserType } from '@/common/decorators/current-user.decorator';
+import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
+import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
+import { Action, Permission, PermissionGuard, ScopeGuard, TenantScope } from '@/rbac';
 import {
+  Body,
   Controller,
+  Delete,
   Get,
+  Param,
   Post,
   Put,
-  Delete,
-  Body,
-  Param,
   Query,
   UseGuards,
   UsePipes,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
-import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
+import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { DiscountsService } from './discounts.service';
 import {
-  CreateDiscountSchema,
-  UpdateDiscountSchema,
-  DiscountIdSchema,
-  DiscountQuerySchema,
   CreateDiscountDto,
-  UpdateDiscountDto,
+  CreateDiscountSchema,
   DiscountIdDto,
+  DiscountIdSchema,
   DiscountQueryDto,
+  DiscountQuerySchema,
+  UpdateDiscountDto,
+  UpdateDiscountSchema,
 } from './dto';
-import { AuthGuard } from '@thallesp/nestjs-better-auth';
-import { PermissionGuard } from '@/common/guards/permission.guard';
-import { CurrentUser, type CurrentUserType } from '@/common/decorators/current-user.decorator';
 
 @ApiTags('discounts')
 @Controller('discounts')
-@UseGuards(AuthGuard, PermissionGuard)
+@UseGuards(JwtAuthGuard, PermissionGuard, ScopeGuard)
+@TenantScope()
 export class DiscountsController {
   constructor(private readonly discountsService: DiscountsService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get all discounts' })
   @UsePipes(new ZodValidationPipe(DiscountQuerySchema, 'query'))
+  @Permission('discounts', [Action.READ])
   findAll(@Query() query: DiscountQueryDto) {
     return this.discountsService.findAll(query);
   }
@@ -44,6 +46,7 @@ export class DiscountsController {
   @ApiOperation({ summary: 'Get active discounts for a specific outlet' })
   @ApiQuery({ name: 'tenantId', required: true, type: String })
   @ApiQuery({ name: 'outletId', required: true, type: String })
+  @Permission('discounts', [Action.READ])
   findActiveForOutlet(@Query('tenantId') tenantId: string, @Query('outletId') outletId: string) {
     return this.discountsService.findActiveForOutlet(tenantId, outletId);
   }
@@ -51,6 +54,7 @@ export class DiscountsController {
   @Get(':id')
   @ApiOperation({ summary: 'Get discount by ID' })
   @UsePipes(new ZodValidationPipe(DiscountIdSchema, 'params'))
+  @Permission('discounts', [Action.READ])
   findById(@Param() { id }: DiscountIdDto, @CurrentUser() user: CurrentUserType) {
     return this.discountsService.findById(id, user);
   }
@@ -58,6 +62,7 @@ export class DiscountsController {
   @Post()
   @ApiOperation({ summary: 'Create a new discount' })
   @UsePipes(new ZodValidationPipe(CreateDiscountSchema))
+  @Permission('discounts', [Action.CREATE])
   create(@Body() data: CreateDiscountDto, @CurrentUser() user: CurrentUserType) {
     return this.discountsService.create(data, user);
   }
@@ -66,6 +71,7 @@ export class DiscountsController {
   @ApiOperation({ summary: 'Update a discount' })
   @UsePipes(new ZodValidationPipe(DiscountIdSchema, 'params'))
   @UsePipes(new ZodValidationPipe(UpdateDiscountSchema))
+  @Permission('discounts', [Action.UPDATE])
   update(
     @Param() { id }: DiscountIdDto,
     @Body() data: UpdateDiscountDto,
@@ -77,6 +83,7 @@ export class DiscountsController {
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a discount' })
   @UsePipes(new ZodValidationPipe(DiscountIdSchema, 'params'))
+  @Permission('discounts', [Action.DELETE])
   remove(@Param() { id }: DiscountIdDto, @CurrentUser() user: CurrentUserType) {
     return this.discountsService.remove(id, user);
   }

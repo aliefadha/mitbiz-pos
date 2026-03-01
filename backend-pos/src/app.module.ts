@@ -1,36 +1,40 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { AuthModule } from '@thallesp/nestjs-better-auth';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { AuthModule } from '@thallesp/nestjs-better-auth';
-import { auth } from './lib/auth';
+import { CashShiftsModule } from './cash-shifts/cash-shifts.module';
+import { CategoriesModule } from './categories/categories.module';
+import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { ResponseEnvelopeInterceptor } from './common/interceptors/response-envelope.interceptor';
-import { AllExceptionsFilter } from './common/filters/http-exception.filter';
-import { TenantsModule } from './tenants/tenants.module';
-import { OutletsModule } from './outlets/outlets.module';
-import { CategoriesModule } from './categories/categories.module';
-import { ProductsModule } from './products/products.module';
-import { StocksModule } from './stocks/stocks.module';
-import { StockAdjustmentsModule } from './stock-adjustments/stock-adjustments.module';
-import { ConfigModule } from '@nestjs/config';
-import { DbModule } from './db/db.module';
-import { UserModule } from './user/user.module';
-import { OrdersModule } from './orders/orders.module';
-import { OrderItemsModule } from './order-items/order-items.module';
-import { TaxesModule } from './taxes/taxes.module';
-import { DiscountsModule } from './discounts/discounts.module';
-import { PaymentMethodsModule } from './payment-methods/payment-methods.module';
-import { CashShiftsModule } from './cash-shifts/cash-shifts.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { DbModule } from './db/db.module';
+import { DiscountsModule } from './discounts/discounts.module';
+import { auth } from './lib/auth';
+import { OrderItemsModule } from './order-items/order-items.module';
+import { OrdersModule } from './orders/orders.module';
+import { OutletsModule } from './outlets/outlets.module';
+import { PaymentMethodsModule } from './payment-methods/payment-methods.module';
+import { ProductsModule } from './products/products.module';
+import { RbacModule } from './rbac/rbac.module';
+import { RolesModule } from './roles/roles.module';
 import { SalesModule } from './sales/sales.module';
+import { StockAdjustmentsModule } from './stock-adjustments/stock-adjustments.module';
+import { StocksModule } from './stocks/stocks.module';
+import { TaxesModule } from './taxes/taxes.module';
+import { TenantsModule } from './tenants/tenants.module';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
     AuthModule.forRoot({ auth, disableGlobalAuthGuard: true }),
     ConfigModule.forRoot({ isGlobal: true }),
     DbModule,
+    RbacModule,
+    RolesModule,
     ThrottlerModule.forRoot([
       {
         name: 'short',

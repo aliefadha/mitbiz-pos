@@ -11,3 +11,6 @@ export * from './tax-schema';
 export * from './discount-schema';
 export * from './payment-method-schema';
 export * from './cash-shift-schema';
+export * from './role-schema';
+export * from './role-permission-schema';
+export * from './resource-schema';

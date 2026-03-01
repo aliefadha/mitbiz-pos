@@ -8,7 +8,7 @@ export const Route = createFileRoute('/_protected')({
   beforeLoad: async ({ location }) => {
     await checkRoleAccess(location.pathname);
   },
-  errorComponent: ({ error, reset }) => <ErrorPage error={error} reset={reset} />,
+  errorComponent: ({ reset }) => <ErrorPage reset={reset} />,
 });
 
 function ProtectedLayout() {

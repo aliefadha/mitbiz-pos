@@ -23,6 +23,8 @@
     "db:studio": "drizzle-kit studio",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx src/db/seeds/user.seed.ts",
+    "db:seed:rbac": "tsx src/db/seeds/rbac.seed.ts",
+    "db:seed:all": "npm run db:seed:rbac && npm run db:seed",
     "prepare": "husky"
   },
   "dependencies": {

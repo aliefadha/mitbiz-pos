@@ -69,7 +69,8 @@ export async function getSession() {
 
 export async function checkRoleAccess(pathname: string) {
   const session = await checkAuth();
-  const role = (session.user.role as Role) || 'cashier';
+  const roleObj = session.user.role as unknown as { name: string } | null | undefined;
+  const role = (roleObj?.name as Role) || 'cashier';
   const allowedRoutes = ROLE_PERMISSIONS[role];
 
   const hasAccess = allowedRoutes.some((route) => pathname.startsWith(route));
