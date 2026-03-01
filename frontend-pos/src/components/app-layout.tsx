@@ -48,12 +48,23 @@ import {
   SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { useLogout } from '@/hooks/use-auth';
-import { type Role } from '@/lib/rbac';
+import { useLogout, usePermissions } from '@/hooks/use-auth';
 import { useAuth } from '../contexts/auth-context';
 import { TenantSwitcher } from './tenant-switcher';
 
-const menuConfig = [
+interface MenuItem {
+  key: string;
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  permission: { resource: string; action: string };
+}
+
+interface MenuGroup {
+  group: string;
+  items: MenuItem[];
+}
+
+const menuConfig: MenuGroup[] = [
   {
     group: 'Dashboard',
     items: [
@@ -61,13 +72,13 @@ const menuConfig = [
         key: '/dashboard',
         icon: LayoutDashboard,
         label: 'Dashboard',
-        roles: ['admin', 'owner', 'cashier'],
+        permission: { resource: 'dashboard', action: 'read' },
       },
       {
         key: '/laporan',
         icon: FileText,
         label: 'Laporan',
-        roles: ['cashier', 'owner'],
+        permission: { resource: 'report', action: 'read' },
       },
     ],
   },
@@ -78,19 +89,19 @@ const menuConfig = [
         key: '/pos',
         icon: ShoppingCart,
         label: 'Kasir',
-        roles: ['cashier', 'owner'],
+        permission: { resource: 'orders', action: 'create' },
       },
       {
         key: '/orders',
         icon: Receipt,
         label: 'Pesanan',
-        roles: ['cashier', 'owner'],
+        permission: { resource: 'orders', action: 'read' },
       },
       {
         key: '/cash-shifts',
         icon: Wallet,
         label: 'Shift Kasir',
-        roles: ['cashier', 'owner'],
+        permission: { resource: 'cashShifts', action: 'read' },
       },
     ],
   },
@@ -101,49 +112,49 @@ const menuConfig = [
         key: '/tenants',
         icon: Users,
         label: 'Tenant',
-        roles: ['admin'],
+        permission: { resource: 'tenants', action: 'read' },
       },
       {
         key: '/outlets',
         icon: Store,
         label: 'Outlet',
-        roles: ['owner'],
+        permission: { resource: 'outlets', action: 'read' },
       },
       {
         key: '/account',
         icon: User,
         label: 'Akun',
-        roles: ['admin', 'owner'],
+        permission: { resource: 'users', action: 'read' },
       },
       {
         key: '/categories',
         icon: Folder,
         label: 'Kategori',
-        roles: ['cashier', 'owner'],
+        permission: { resource: 'categories', action: 'read' },
       },
       {
         key: '/products',
         icon: Package,
         label: 'Produk',
-        roles: ['cashier', 'owner'],
+        permission: { resource: 'products', action: 'read' },
       },
       {
         key: '/taxes',
         icon: Receipt,
         label: 'Pajak',
-        roles: ['cashier', 'owner'],
+        permission: { resource: 'taxes', action: 'read' },
       },
       {
         key: '/discounts',
         icon: Percent,
         label: 'Diskon',
-        roles: ['cashier', 'owner'],
+        permission: { resource: 'discounts', action: 'read' },
       },
       {
         key: '/payment-methods',
         icon: CreditCard,
         label: 'Metode Pembayaran',
-        roles: ['cashier', 'owner'],
+        permission: { resource: 'paymentMethods', action: 'read' },
       },
     ],
   },
@@ -154,12 +165,20 @@ function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { hasPermission } = usePermissions();
   const logoutMutation = useLogout();
 
+  const handleLogout = () => {
+    logoutMutation.mutate();
+  };
+
+  // Filter menu based on permissions
   const filteredMenuConfig = menuConfig
     .map((group) => ({
       ...group,
-      items: group.items.filter((item) => item.roles.includes((user?.role as Role) || 'cashier')),
+      items: group.items.filter((item) =>
+        hasPermission(item.permission.resource, item.permission.action)
+      ),
     }))
     .filter((group) => group.items.length > 0);
 
@@ -242,7 +261,7 @@ function AppSidebar() {
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  onClick={() => logoutMutation.mutate()}
+                  onClick={handleLogout}
                   className="text-red-600 focus:text-red-600 cursor-pointer"
                 >
                   <LogOut className="mr-2 h-4 w-4" />
@@ -260,7 +279,7 @@ function AppSidebar() {
 export function AppLayout() {
   const location = useLocation();
   const pathnames = location.pathname.split('/').filter((x) => x);
-  const { user } = useAuth();
+  const { role } = useAuth();
 
   const getBreadcrumbLabel = () => {
     if (pathnames.length === 0) return 'Data Fetching';
@@ -288,11 +307,11 @@ export function AppLayout() {
               </BreadcrumbList>
             </Breadcrumb>
           </div>
-          {(user?.role as Role) !== 'admin' && <TenantSwitcher />}
+          {role !== 'admin' && <TenantSwitcher />}
         </header>
 
         <main className="flex flex-1 flex-col gap-4 p-4 bg-slate-50/50">
-          <div className="w-full h-full min-h-[calc(100vh-8rem)] rounded-xl border bg-white shadow-sm overflow-hidden p-6 text-slate-800">
+          <div className="relative w-full h-full min-h-[calc(100vh-8rem)] rounded-xl border bg-white shadow-sm overflow-hidden p-6 text-slate-800">
             <Outlet />
           </div>
         </main>

@@ -4,15 +4,29 @@ import { SalesByBranchChart } from '@/components/dashboard/sales-by-branch-chart
 import { SalesByPaymentMethodChart } from '@/components/dashboard/sales-by-payment-method-chart';
 import { SalesTrendChart } from '@/components/dashboard/sales-trend-chart';
 import { StatCards } from '@/components/dashboard/stat-cards';
+import { ErrorPage } from '@/components/error-page';
+import { ForbiddenPage } from '@/components/forbidden-page';
 import { useTenant } from '@/contexts/tenant-context';
+import { checkPermission, ForbiddenError } from '@/lib/permissions';
 
 export const Route = createFileRoute('/_protected/dashboard')({
   component: DashboardPage,
+  beforeLoad: async () => {
+    const { allowed } = await checkPermission('dashboard', 'read');
+    if (!allowed) {
+      throw new ForbiddenError('dashboard');
+    }
+  },
+  errorComponent: ({ error }) => {
+    if (error instanceof ForbiddenError) {
+      return <ForbiddenPage resource={error.resource} />;
+    }
+    return <ErrorPage reset={() => window.location.reload()} />;
+  },
 });
 
 function DashboardPage() {
   const { selectedTenant, selectedOutlet } = useTenant();
-
   const { startDate, endDate } = useMemo(() => {
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);

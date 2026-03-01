@@ -15,6 +15,7 @@ import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as ProtectedRouteImport } from './routes/_protected'
+import { Route as R403RouteImport } from './routes/403'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProtectedLaporanRouteImport } from './routes/_protected/laporan'
 import { Route as ProtectedDashboardRouteImport } from './routes/_protected/dashboard'
@@ -72,6 +73,11 @@ const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
 } as any)
 const ProtectedRoute = ProtectedRouteImport.update({
   id: '/_protected',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const R403Route = R403RouteImport.update({
+  id: '/403',
+  path: '/403',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -237,6 +243,7 @@ const ProtectedTenantsSlugOutletsOutletIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/403': typeof R403Route
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
@@ -273,6 +280,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/403': typeof R403Route
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
@@ -310,6 +318,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/403': typeof R403Route
   '/_protected': typeof ProtectedRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
@@ -349,6 +358,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/403'
     | '/forgot-password'
     | '/login'
     | '/register'
@@ -385,6 +395,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/403'
     | '/forgot-password'
     | '/login'
     | '/register'
@@ -421,6 +432,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/403'
     | '/_protected'
     | '/forgot-password'
     | '/login'
@@ -459,6 +471,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  R403Route: typeof R403Route
   ProtectedRoute: typeof ProtectedRouteWithChildren
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
@@ -509,6 +522,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof ProtectedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/403': {
+      id: '/403'
+      path: '/403'
+      fullPath: '/403'
+      preLoaderRoute: typeof R403RouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -789,6 +809,7 @@ const ProtectedRouteWithChildren = ProtectedRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  R403Route: R403Route,
   ProtectedRoute: ProtectedRouteWithChildren,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,

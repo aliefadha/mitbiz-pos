@@ -1,13 +1,13 @@
-import { useAuth } from '../contexts/auth-context';
+import { type UserRole, useAuth } from '../contexts/auth-context';
 
-export type Role = 'admin' | 'owner' | 'cashier';
+export type { UserRole };
 
 export function useRole() {
-  const { role } = useAuth();
-  return role;
+  const { role, roleId } = useAuth();
+  return { role, roleId };
 }
 
-export function useHasRole(...allowedRoles: Role[]) {
-  const role = useRole();
-  return role ? allowedRoles.includes(role) : false;
+export function useHasRole(...allowedRoles: UserRole[]) {
+  const { isRole } = useAuth();
+  return isRole(...allowedRoles);
 }

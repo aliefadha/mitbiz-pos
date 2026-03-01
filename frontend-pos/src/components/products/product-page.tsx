@@ -42,7 +42,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
-import { useSession } from '@/lib/auth-client';
 import { categoriesApi } from '@/lib/api/categories';
 import {
   type CreateProductDto,
@@ -50,6 +49,7 @@ import {
   productsApi,
   type UpdateProductDto,
 } from '@/lib/api/products';
+import { useSession } from '@/lib/auth-client';
 
 const formSchema = z.object({
   sku: z.string().min(1, 'SKU wajib diisi'),

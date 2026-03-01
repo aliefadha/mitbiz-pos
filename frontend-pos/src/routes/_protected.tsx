@@ -1,14 +1,15 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, redirect } from '@tanstack/react-router';
 import { AppLayout } from '@/components/app-layout';
-import { ErrorPage } from '@/components/error-page';
-import { checkRoleAccess } from '@/lib/rbac';
+import { authClient } from '@/lib/auth-client';
 
 export const Route = createFileRoute('/_protected')({
   component: ProtectedLayout,
-  beforeLoad: async ({ location }) => {
-    await checkRoleAccess(location.pathname);
+  beforeLoad: async () => {
+    const session = await authClient.getSession();
+    if (!session.data) {
+      throw redirect({ to: '/login' });
+    }
   },
-  errorComponent: ({ reset }) => <ErrorPage reset={reset} />,
 });
 
 function ProtectedLayout() {
