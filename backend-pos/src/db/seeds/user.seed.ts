@@ -101,10 +101,7 @@ export async function seedOwnerUser(): Promise<string | null> {
 export async function updateOwnerTenantId(ownerId: string, tenantId: string): Promise<void> {
   console.log('🌱 Updating owner tenantId...');
   try {
-    await db
-      .update(user)
-      .set({ tenantId })
-      .where(eq(user.id, ownerId));
+    await db.update(user).set({ tenantId }).where(eq(user.id, ownerId));
     console.log('✅ Updated owner tenantId');
   } catch (error) {
     console.error('❌ Error updating owner tenantId:', error);
