@@ -22,12 +22,11 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:migrate": "drizzle-kit migrate",
-    "db:seed": "tsx src/db/seeds/user.seed.ts",
-    "db:seed:rbac": "tsx src/db/seeds/rbac.seed.ts",
-    "db:seed:all": "npm run db:seed:rbac && npm run db:seed",
+    "db:seed": "tsx src/db/seeds/index.ts",
     "prepare": "husky"
   },
   "dependencies": {
+    "@faker-js/faker": "^10.3.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.3",
     "@nestjs/core": "^11.0.1",

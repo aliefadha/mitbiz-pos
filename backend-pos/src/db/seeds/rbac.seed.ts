@@ -129,7 +129,7 @@ const cashierPermissions = [
   { resource: 'roles', actions: [Action.READ, Action.CREATE, Action.UPDATE, Action.DELETE] },
 ];
 
-async function seed() {
+async function seedRbac() {
   console.log('Seeding RBAC resources...');
 
   const defaultResources = [
@@ -198,11 +198,4 @@ async function seed() {
   console.log('✅ Seeding completed!');
 }
 
-seed()
-  .catch((error) => {
-    console.error('Error seeding:', error);
-    process.exit(1);
-  })
-  .finally(() => {
-    process.exit(0);
-  });
+export { seedRbac };
