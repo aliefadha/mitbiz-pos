@@ -13,7 +13,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   Form,
@@ -232,19 +231,17 @@ export function ProductPage() {
   };
 
   return (
-    <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
+    <>
       <div>
         <div className="flex justify-between items-center mb-6">
           <div>
             <h4 className="text-lg font-semibold m-0">Manajemen Produk</h4>
             <p className="text-sm text-gray-500 m-0">Kelola produk Anda</p>
           </div>
-          <DialogTrigger asChild>
-            <Button onClick={handleCreate}>
-              <Plus className="mr-2 h-4 w-4" />
-              Tambah Produk
-            </Button>
-          </DialogTrigger>
+          <Button onClick={handleCreate}>
+            <Plus className="mr-2 h-4 w-4" />
+            Tambah Produk
+          </Button>
         </div>
 
         <div className="grid grid-cols-2 gap-4 mb-6">
@@ -446,7 +443,9 @@ export function ProductPage() {
             )}
           </CardContent>
         </Card>
+      </div>
 
+      <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
         <DialogContent className="max-w-[600px]">
           <DialogHeader>
             <DialogTitle>{editingProduct ? 'Edit Produk' : 'Tambah Produk'}</DialogTitle>
@@ -643,7 +642,7 @@ export function ProductPage() {
             </form>
           </Form>
         </DialogContent>
-      </div>
-    </Dialog>
+      </Dialog>
+    </>
   );
 }

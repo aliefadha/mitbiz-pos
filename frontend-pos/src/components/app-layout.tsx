@@ -15,14 +15,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
-import { Separator } from '@/components/ui/separator';
+
 import {
   Sidebar,
   SidebarContent,
@@ -35,12 +28,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
-  SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar';
 import { useLogout, usePermissions } from '@/hooks/use-auth';
 import { useAuth } from '../contexts/auth-context';
-import { TenantSwitcher } from './tenant-switcher';
 
 interface MenuItem {
   key: string;
@@ -238,41 +229,14 @@ function AppSidebar() {
 }
 
 export function AppLayout() {
-  const location = useLocation();
-  const pathnames = location.pathname.split('/').filter((x) => x);
-  const { role } = useAuth();
-
-  const getBreadcrumbLabel = () => {
-    if (pathnames.length === 0) return 'Data Fetching';
-
-    const firstSegment = pathnames[0];
-    return firstSegment.charAt(0).toUpperCase() + firstSegment.slice(1);
-  };
-
   return (
     <SidebarProvider defaultOpen={true}>
-      <Sidebar variant="inset" collapsible="icon">
+      <Sidebar variant="inset" collapsible="icon" className="h-dvh">
         <AppSidebar />
       </Sidebar>
-      <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center justify-between gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 border-b bg-white pr-4 rounded-t-xl">
-          <div className="flex items-center gap-2 px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 h-4" />
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbSeparator className="hidden md:block" />
-                <BreadcrumbItem>
-                  <BreadcrumbPage>{getBreadcrumbLabel()}</BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-          </div>
-          {role !== 'admin' && <TenantSwitcher />}
-        </header>
-
-        <main className="flex flex-1 flex-col gap-4 p-4 bg-slate-50/50">
-          <div className="relative w-full h-full min-h-[calc(100vh-8rem)] rounded-xl border bg-white shadow-sm overflow-hidden p-6 text-slate-800">
+      <SidebarInset className="p-4 h-dvh overflow-hidden">
+        <main className="flex flex-1 flex-col gap-4 h-full overflow-hidden">
+          <div className="relative w-full h-full overflow-y-auto md:scrollbar-hide">
             <Outlet />
           </div>
         </main>
