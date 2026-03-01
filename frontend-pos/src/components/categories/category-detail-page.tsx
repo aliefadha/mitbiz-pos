@@ -12,13 +12,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useTenant } from '@/contexts/tenant-context';
 import { categoriesApi } from '@/lib/api/categories';
 import { productsApi } from '@/lib/api/products';
+import { useSession } from '@/lib/auth-client';
 
 export function CategoryDetailPage() {
   const { categoryId } = useParams({ from: '/_protected/categories/$categoryId' });
-  const { selectedTenant } = useTenant();
+  const { data: session } = useSession();
+  const tenantId = session?.user?.tenantId;
 
   const { data: category, isLoading: categoryLoading } = useQuery({
     queryKey: ['category', categoryId],
@@ -27,13 +28,13 @@ export function CategoryDetailPage() {
   });
 
   const { data: productsData, isLoading: productsLoading } = useQuery({
-    queryKey: ['products', 'category', categoryId, selectedTenant?.id],
+    queryKey: ['products', 'category', categoryId, tenantId],
     queryFn: () =>
       productsApi.getAll({
-        tenantId: selectedTenant?.id,
+        tenantId,
         categoryId: categoryId,
       }),
-    enabled: !!categoryId && !!selectedTenant?.id,
+    enabled: !!categoryId && !!tenantId,
   });
 
   const products = productsData?.data ?? [];
@@ -55,7 +56,7 @@ export function CategoryDetailPage() {
     );
   }
 
-  if (!category || (selectedTenant && category.tenantId !== selectedTenant.id)) {
+  if (!category || (tenantId && category.tenantId !== tenantId)) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px]">
         <p className="text-gray-500">Kategori tidak ditemukan</p>

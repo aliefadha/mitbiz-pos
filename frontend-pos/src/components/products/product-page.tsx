@@ -402,32 +402,48 @@ export function ProductPage() {
                     disabled={currentPage === 1}
                   >
                     <ChevronLeft className="h-4 w-4" />
-                    Sebelumnya
                   </Button>
                   <div className="flex items-center gap-1">
-                    {Array.from({ length: Math.min(5, productsData.meta.totalPages) }, (_, i) => {
-                      let pageNum: number;
-                      if (productsData.meta.totalPages <= 5) {
-                        pageNum = i + 1;
-                      } else if (currentPage <= 3) {
-                        pageNum = i + 1;
-                      } else if (currentPage >= productsData.meta.totalPages - 2) {
-                        pageNum = productsData.meta.totalPages - 4 + i;
+                    {(() => {
+                      const totalPages = productsData.meta.totalPages;
+                      const pages: (number | string)[] = [];
+
+                      if (totalPages <= 5) {
+                        for (let i = 1; i <= totalPages; i++) {
+                          pages.push(i);
+                        }
                       } else {
-                        pageNum = currentPage - 2 + i;
+                        pages.push(1);
+
+                        if (currentPage <= 3) {
+                          pages.push(2, 3, '...');
+                        } else if (currentPage >= totalPages - 2) {
+                          pages.push('...', totalPages - 2, totalPages - 1);
+                        } else {
+                          pages.push('...', currentPage, '...');
+                        }
+
+                        pages.push(totalPages);
                       }
-                      return (
-                        <Button
-                          key={pageNum}
-                          variant={currentPage === pageNum ? 'default' : 'outline'}
-                          size="sm"
-                          onClick={() => setCurrentPage(pageNum)}
-                          className="w-9"
-                        >
-                          {pageNum}
-                        </Button>
+
+                      return pages.map((page, index) =>
+                        page === '...' ? (
+                          <span key={`ellipsis-${index}`} className="px-2 text-sm text-gray-500">
+                            ...
+                          </span>
+                        ) : (
+                          <Button
+                            key={page}
+                            variant={currentPage === page ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setCurrentPage(page as number)}
+                            className="w-9"
+                          >
+                            {page}
+                          </Button>
+                        )
                       );
-                    })}
+                    })()}
                   </div>
                   <Button
                     variant="outline"
@@ -435,7 +451,6 @@ export function ProductPage() {
                     onClick={() => setCurrentPage(currentPage + 1)}
                     disabled={currentPage === productsData.meta.totalPages}
                   >
-                    Selanjutnya
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
