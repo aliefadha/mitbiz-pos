@@ -66,7 +66,6 @@ const adminPermissions = [
     actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE],
   },
   { resource: 'cashShifts', actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE] },
-  { resource: 'dashboard', actions: [Action.READ] },
   { resource: 'sales', actions: [Action.READ] },
   { resource: 'roles', actions: [Action.READ, Action.CREATE, Action.UPDATE, Action.DELETE] },
 ];
@@ -81,7 +80,6 @@ const ownerPermissions = [
     actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE, Action.REFUND],
   },
   { resource: 'outlets', actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE] },
-  { resource: 'tenants', actions: [Action.CREATE, Action.READ, Action.UPDATE] },
   { resource: 'stocks', actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE] },
   {
     resource: 'stockAdjustments',
@@ -124,7 +122,6 @@ const cashierPermissions = [
   { resource: 'discounts', actions: [Action.READ, Action.UPDATE] },
   { resource: 'paymentMethods', actions: [Action.READ] },
   { resource: 'cashShifts', actions: [Action.CREATE, Action.READ, Action.UPDATE] },
-  { resource: 'dashboard', actions: [Action.READ] },
   { resource: 'sales', actions: [Action.READ] },
   { resource: 'roles', actions: [Action.READ, Action.CREATE, Action.UPDATE, Action.DELETE] },
 ];
