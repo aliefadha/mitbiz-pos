@@ -1,290 +1,140 @@
-Welcome to your new TanStack app! 
+# Frontend POS
 
-# Getting Started
+Point of Sale frontend application built with React, TanStack Router, and Tailwind CSS.
 
-To run this application:
+## Prerequisites
+
+- Node.js (v20+)
+- Backend server running (see `../backend-pos/README.md`)
+
+## Quick Start
+
+### 1. Install Dependencies
 
 ```bash
 npm install
+```
+
+### 2. Setup Environment
+
+```bash
+cp .env.example .env
+# Edit .env with your API endpoint
+```
+
+### 3. Start Development Server
+
+```bash
 npm run dev
 ```
 
-# Building For Production
+App will be available at `http://localhost:3000`
 
-To build this application for production:
+## Development
 
 ```bash
+# Start dev server with hot reload
+npm run dev
+
+# Build for production
 npm run build
-```
 
-## Testing
+# Preview production build
+npm run preview
 
-This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:
-
-```bash
+# Run tests
 npm run test
+
+# Lint code
+npm run lint
+
+# Format code
+npm run format
+
+# Check and auto-fix issues
+npm run check
 ```
 
-## Styling
+## Tech Stack
 
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
+- **Framework**: React 19 + Vite
+- **Router**: TanStack Router (file-based routing)
+- **State Management**: TanStack Query (server state)
+- **Styling**: Tailwind CSS v4 + shadcn/ui
+- **Forms**: TanStack Form + React Hook Form
+- **Validation**: Zod
+- **Authentication**: Better Auth
+- **Charts**: Recharts
+- **Icons**: Lucide React + Tabler Icons
+- **Testing**: Vitest + Testing Library
+- **Linting**: Biome
 
+## Project Structure
 
-
+```
+frontend-pos/
+├── src/
+│   ├── routes/          # TanStack Router file-based routes
+│   ├── components/      # Reusable UI components
+│   ├── hooks/           # Custom React hooks
+│   ├── lib/             # Utility functions
+│   └── main.tsx         # Application entry point
+├── public/              # Static assets
+├── index.html           # HTML template
+└── vite.config.ts       # Vite configuration
+```
 
 ## Routing
-This project uses [TanStack Router](https://tanstack.com/router). The initial setup is a file based router. Which means that the routes are managed as files in `src/routes`.
 
-### Adding A Route
+This project uses TanStack Router with file-based routing. Routes are defined in `src/routes/`:
 
-To add a new route to your application just add another a new file in the `./src/routes` directory.
+- `index.tsx` → `/`
+- `about.tsx` → `/about`
+- `dashboard/index.tsx` → `/dashboard`
+- `__root.tsx` → Layout wrapper (appears on all pages)
 
-TanStack will automatically generate the content of the route file for you.
+### Creating New Routes
 
-Now that you have two routes you can use a `Link` component to navigate between them.
-
-### Adding Links
-
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
+Simply add a new file to `src/routes/`. TanStack Router will automatically generate the route configuration.
 
 ```tsx
-import { Link } from "@tanstack/react-router";
-```
+// src/routes/products.tsx
+import { createFileRoute } from '@tanstack/react-router'
 
-Then anywhere in your JSX you can use it like so:
-
-```tsx
-<Link to="/about">About</Link>
-```
-
-This will create a link that will navigate to the `/about` route.
-
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
-
-### Using A Layout
-
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you use the `<Outlet />` component.
-
-Here is an example layout that includes a header:
-
-```tsx
-import { Outlet, createRootRoute } from '@tanstack/react-router'
-import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
-
-import { Link } from "@tanstack/react-router";
-
-export const Route = createRootRoute({
-  component: () => (
-    <>
-      <header>
-        <nav>
-          <Link to="/">Home</Link>
-          <Link to="/about">About</Link>
-        </nav>
-      </header>
-      <Outlet />
-      <TanStackRouterDevtools />
-    </>
-  ),
+export const Route = createFileRoute('/products')({
+  component: ProductsComponent,
 })
-```
 
-The `<TanStackRouterDevtools />` component is not required so you can remove it if you don't want it in your layout.
-
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
-
-
-## Data Fetching
-
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
-
-```tsx
-const peopleRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/people",
-  loader: async () => {
-    const response = await fetch("https://swapi.dev/api/people");
-    return response.json() as Promise<{
-      results: {
-        name: string;
-      }[];
-    }>;
-  },
-  component: () => {
-    const data = peopleRoute.useLoaderData();
-    return (
-      <ul>
-        {data.results.map((person) => (
-          <li key={person.name}>{person.name}</li>
-        ))}
-      </ul>
-    );
-  },
-});
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-### React-Query
-
-React-Query is an excellent addition or alternative to route loading and integrating it into you application is a breeze.
-
-First add your dependencies:
-
-```bash
-npm install @tanstack/react-query @tanstack/react-query-devtools
-```
-
-Next we'll need to create a query client and provider. We recommend putting those in `main.tsx`.
-
-```tsx
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-
-// ...
-
-const queryClient = new QueryClient();
-
-// ...
-
-if (!rootElement.innerHTML) {
-  const root = ReactDOM.createRoot(rootElement);
-
-  root.render(
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>
-  );
+function ProductsComponent() {
+  return <div>Products Page</div>
 }
 ```
 
-You can also add TanStack Query Devtools to the root route (optional).
+## API Integration
+
+Uses TanStack Query for server state management. Example:
 
 ```tsx
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { useQuery } from '@tanstack/react-query'
 
-const rootRoute = createRootRoute({
-  component: () => (
-    <>
-      <Outlet />
-      <ReactQueryDevtools buttonPosition="top-right" />
-      <TanStackRouterDevtools />
-    </>
-  ),
-});
-```
-
-Now you can use `useQuery` to fetch your data.
-
-```tsx
-import { useQuery } from "@tanstack/react-query";
-
-import "./App.css";
-
-function App() {
-  const { data } = useQuery({
-    queryKey: ["people"],
-    queryFn: () =>
-      fetch("https://swapi.dev/api/people")
-        .then((res) => res.json())
-        .then((data) => data.results as { name: string }[]),
-    initialData: [],
-  });
-
-  return (
-    <div>
-      <ul>
-        {data.map((person) => (
-          <li key={person.name}>{person.name}</li>
-        ))}
-      </ul>
-    </div>
-  );
+function Products() {
+  const { data, isLoading } = useQuery({
+    queryKey: ['products'],
+    queryFn: () => fetch('/api/products').then(res => res.json())
+  })
+  
+  if (isLoading) return <div>Loading...</div>
+  return <ProductList products={data} />
 }
-
-export default App;
 ```
 
-You can find out everything you need to know on how to use React-Query in the [React-Query documentation](https://tanstack.com/query/latest/docs/framework/react/overview).
+## Development Tools
 
-## State Management
+- **React Query Devtools**: `Ctrl/Cmd + Shift + Q`
+- **Router Devtools**: Included in development mode
+- **Vite HMR**: Instant updates on file changes
 
-Another common requirement for React applications is state management. There are many options for state management in React. TanStack Store provides a great starting point for your project.
+## Backend Connection
 
-First you need to add TanStack Store as a dependency:
-
-```bash
-npm install @tanstack/store
-```
-
-Now let's create a simple counter in the `src/App.tsx` file as a demonstration.
-
-```tsx
-import { useStore } from "@tanstack/react-store";
-import { Store } from "@tanstack/store";
-import "./App.css";
-
-const countStore = new Store(0);
-
-function App() {
-  const count = useStore(countStore);
-  return (
-    <div>
-      <button onClick={() => countStore.setState((n) => n + 1)}>
-        Increment - {count}
-      </button>
-    </div>
-  );
-}
-
-export default App;
-```
-
-One of the many nice features of TanStack Store is the ability to derive state from other state. That derived state will update when the base state updates.
-
-Let's check this out by doubling the count using derived state.
-
-```tsx
-import { useStore } from "@tanstack/react-store";
-import { Store, Derived } from "@tanstack/store";
-import "./App.css";
-
-const countStore = new Store(0);
-
-const doubledStore = new Derived({
-  fn: () => countStore.state * 2,
-  deps: [countStore],
-});
-doubledStore.mount();
-
-function App() {
-  const count = useStore(countStore);
-  const doubledCount = useStore(doubledStore);
-
-  return (
-    <div>
-      <button onClick={() => countStore.setState((n) => n + 1)}>
-        Increment - {count}
-      </button>
-      <div>Doubled - {doubledCount}</div>
-    </div>
-  );
-}
-
-export default App;
-```
-
-We use the `Derived` class to create a new store that is derived from another store. The `Derived` class has a `mount` method that will start the derived store updating.
-
-Once we've created the derived store we can use it in the `App` component just like we would any other store using the `useStore` hook.
-
-You can find out everything you need to know on how to use TanStack Store in the [TanStack Store documentation](https://tanstack.com/store/latest).
-
-# Demo files
-
-Files prefixed with `demo` can be safely deleted. They are there to provide a starting point for you to play around with the features you've installed.
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
+Ensure the backend is running before starting the frontend. Default backend URL:
+- Development: `http://localhost:3001` (or your configured port)

@@ -1,1 +1,1 @@
-npm run format --workspaces --if-present
+npm run format -w backend-pos -w frontend --if-present
