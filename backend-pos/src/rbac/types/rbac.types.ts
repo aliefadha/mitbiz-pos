@@ -27,7 +27,6 @@ export const RESOURCES = [
   'orderItems',
   'report',
   'settings',
-  'taxes',
   'discounts',
   'paymentMethods',
   'cashShifts',

@@ -33,15 +33,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useTenant } from '@/contexts/tenant-context';
 import { cashShiftsApi } from '@/lib/api/cash-shifts';
 import { discountsApi } from '@/lib/api/discounts';
-import {
-  type CreateOrderDto,
-  type DiscountBreakdown,
-  ordersApi,
-  type TaxBreakdown,
-} from '@/lib/api/orders';
+import { type CreateOrderDto, type DiscountBreakdown, ordersApi } from '@/lib/api/orders';
 import { type PaymentMethod, paymentMethodsApi } from '@/lib/api/payment-methods';
 import { type Product, productsApi } from '@/lib/api/products';
-import { taxesApi } from '@/lib/api/taxes';
 import { formatRupiah } from '@/lib/utils';
 
 interface CartItem {
@@ -64,7 +58,7 @@ export function PosPage() {
     nomorAntrian: string;
     items: CartItem[];
     subtotal: number;
-    taxBreakdown: TaxBreakdown[];
+    jumlahPajak: number;
     discountBreakdown: DiscountBreakdown[];
     total: number;
     paymentMethod: string;
@@ -76,7 +70,6 @@ export function PosPage() {
   const [amountPaid, setAmountPaid] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
   const [nomorAntrian, setNomorAntrian] = useState<string>('');
-  const [selectedTaxIds, setSelectedTaxIds] = useState<string[]>([]);
   const [selectedDiscountIds, setSelectedDiscountIds] = useState<string[]>([]);
 
   const { selectedTenant, selectedOutlet, isLoading: tenantLoading } = useTenant();
@@ -105,12 +98,6 @@ export function PosPage() {
     enabled: !!effectiveTenantId,
   });
 
-  const { data: taxesData } = useQuery({
-    queryKey: ['taxes', effectiveTenantId, effectiveOutletId],
-    queryFn: () => taxesApi.getActiveForOutlet(effectiveTenantId!, effectiveOutletId!),
-    enabled: !!effectiveTenantId && !!effectiveOutletId,
-  });
-
   const { data: discountsData } = useQuery({
     queryKey: ['discounts', effectiveTenantId, effectiveOutletId],
     queryFn: () => discountsApi.getActiveForOutlet(effectiveTenantId!, effectiveOutletId!),
@@ -123,7 +110,6 @@ export function PosPage() {
     enabled: !!effectiveOutletId,
   });
 
-  const taxes = taxesData?.data ?? [];
   const discounts = discountsData?.data ?? [];
 
   const createOrderMutation = useMutation({
@@ -135,7 +121,7 @@ export function PosPage() {
         nomorAntrian,
         items: [...cart],
         subtotal,
-        taxBreakdown,
+        jumlahPajak,
         discountBreakdown,
         total,
         paymentMethod,
@@ -149,7 +135,6 @@ export function PosPage() {
       setAmountPaid('');
       setNotes('');
       setNomorAntrian('');
-      setSelectedTaxIds([]);
       setSelectedDiscountIds([]);
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
@@ -241,25 +226,10 @@ export function PosPage() {
     return cart.reduce((sum, item) => sum + Number(item.total), 0);
   }, [cart]);
 
-  const taxBreakdown = useMemo<TaxBreakdown[]>(() => {
-    return selectedTaxIds
-      .map((taxId) => {
-        const tax = taxes.find((t) => t.id === taxId);
-        if (!tax) return null;
-        const amount = Math.round((subtotal * Number(tax.rate)) / 100);
-        return {
-          taxId: tax.id,
-          nama: tax.nama,
-          rate: tax.rate,
-          amount,
-        };
-      })
-      .filter(Boolean) as TaxBreakdown[];
-  }, [subtotal, selectedTaxIds, taxes]);
-
-  const taxAmount = useMemo(() => {
-    return taxBreakdown.reduce((sum, tax) => sum + tax.amount, 0);
-  }, [taxBreakdown]);
+  const jumlahPajak = useMemo(() => {
+    const taxRate = selectedTenant?.settings?.taxRate ?? 0;
+    return Math.round((subtotal * taxRate) / 100);
+  }, [subtotal, selectedTenant]);
 
   const discountBreakdown = useMemo<DiscountBreakdown[]>(() => {
     return selectedDiscountIds
@@ -281,7 +251,7 @@ export function PosPage() {
     return discountBreakdown.reduce((sum, discount) => sum + discount.amount, 0);
   }, [discountBreakdown]);
 
-  const total = subtotal + taxAmount - discountAmount;
+  const total = subtotal + jumlahPajak - discountAmount;
 
   const amountPaidNum = Number(amountPaid) || 0;
   const change = amountPaidNum - total;
@@ -319,8 +289,7 @@ export function PosPage() {
       outletId: effectiveOutletId,
       status: 'complete',
       subtotal: String(subtotal),
-      jumlahPajak: String(taxAmount),
-      pajakBreakdown: taxBreakdown,
+      jumlahPajak: String(jumlahPajak),
       jumlahDiskon: String(discountAmount),
       diskonBreakdown: discountBreakdown,
       paymentMethodId: selectedPaymentMethod?.id || null,
@@ -539,9 +508,6 @@ export function PosPage() {
             className="w-full"
             size="lg"
             onClick={() => {
-              if (taxes.length > 0) {
-                setSelectedTaxIds(taxes.map((t) => t.id));
-              }
               setCheckoutOpen(true);
             }}
             disabled={cart.length === 0}
@@ -575,15 +541,14 @@ export function PosPage() {
                   <span className="text-gray-500">Subtotal</span>
                   <span>{formatRupiah(subtotal)}</span>
                 </div>
-                {taxBreakdown.length > 0 &&
-                  taxBreakdown.map((tax) => (
-                    <div key={tax.taxId} className="flex justify-between">
-                      <span className="text-gray-500">
-                        {tax.nama} ({tax.rate}%)
-                      </span>
-                      <span>{formatRupiah(tax.amount)}</span>
-                    </div>
-                  ))}
+                {jumlahPajak > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">
+                      Pajak ({selectedTenant?.settings?.taxRate}%)
+                    </span>
+                    <span>{formatRupiah(jumlahPajak)}</span>
+                  </div>
+                )}
                 {discountBreakdown.length > 0 &&
                   discountBreakdown.map((discount) => (
                     <div key={discount.discountId} className="flex justify-between">
@@ -607,24 +572,6 @@ export function PosPage() {
             </div>
 
             <div className="space-y-4">
-              {taxes.length > 0 && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Pajak</label>
-                  <div className="border rounded-lg p-3 space-y-2">
-                    {taxes.map((tax) => (
-                      <div key={tax.id} className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600">
-                          {tax.nama} ({tax.rate}%)
-                        </span>
-                        <span>
-                          {formatRupiah(taxBreakdown.find((t) => t.taxId === tax.id)?.amount || 0)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {discounts.length > 0 && (
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Diskon</label>
@@ -821,14 +768,12 @@ export function PosPage() {
               <span>Subtotal</span>
               <span>{formatRupiah(lastOrder.subtotal)}</span>
             </div>
-            {lastOrder.taxBreakdown.map((tax) => (
-              <div key={tax.taxId} className="flex justify-between">
-                <span>
-                  {tax.nama} ({tax.rate}%)
-                </span>
-                <span>{formatRupiah(tax.amount)}</span>
+            {lastOrder.jumlahPajak > 0 && (
+              <div className="flex justify-between">
+                <span>Pajak</span>
+                <span>{formatRupiah(lastOrder.jumlahPajak)}</span>
               </div>
-            ))}
+            )}
             {lastOrder.discountBreakdown.map((discount) => (
               <div key={discount.discountId} className="flex justify-between">
                 <span>

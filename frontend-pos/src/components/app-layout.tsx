@@ -120,12 +120,6 @@ const menuConfig: MenuGroup[] = [
         permission: { resource: 'products', action: 'read' },
       },
       {
-        key: '/taxes',
-        icon: Receipt,
-        label: 'Pajak',
-        permission: { resource: 'taxes', action: 'read' },
-      },
-      {
         key: '/discounts',
         icon: Percent,
         label: 'Diskon',

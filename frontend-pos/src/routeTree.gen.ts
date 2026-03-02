@@ -20,7 +20,6 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProtectedLaporanRouteImport } from './routes/_protected/laporan'
 import { Route as ProtectedDashboardRouteImport } from './routes/_protected/dashboard'
 import { Route as ProtectedTenantsIndexRouteImport } from './routes/_protected/tenants/index'
-import { Route as ProtectedTaxesIndexRouteImport } from './routes/_protected/taxes/index'
 import { Route as ProtectedSettingsIndexRouteImport } from './routes/_protected/settings/index'
 import { Route as ProtectedProductsIndexRouteImport } from './routes/_protected/products/index'
 import { Route as ProtectedPosIndexRouteImport } from './routes/_protected/pos/index'
@@ -98,11 +97,6 @@ const ProtectedDashboardRoute = ProtectedDashboardRouteImport.update({
 const ProtectedTenantsIndexRoute = ProtectedTenantsIndexRouteImport.update({
   id: '/tenants/',
   path: '/tenants/',
-  getParentRoute: () => ProtectedRoute,
-} as any)
-const ProtectedTaxesIndexRoute = ProtectedTaxesIndexRouteImport.update({
-  id: '/taxes/',
-  path: '/taxes/',
   getParentRoute: () => ProtectedRoute,
 } as any)
 const ProtectedSettingsIndexRoute = ProtectedSettingsIndexRouteImport.update({
@@ -267,7 +261,6 @@ export interface FileRoutesByFullPath {
   '/pos/': typeof ProtectedPosIndexRoute
   '/products/': typeof ProtectedProductsIndexRoute
   '/settings/': typeof ProtectedSettingsIndexRoute
-  '/taxes/': typeof ProtectedTaxesIndexRoute
   '/tenants/': typeof ProtectedTenantsIndexRoute
   '/tenants/$slug/': typeof ProtectedTenantsSlugIndexRoute
   '/tenants/$slug/outlets/$outletId': typeof ProtectedTenantsSlugOutletsOutletIdRoute
@@ -304,7 +297,6 @@ export interface FileRoutesByTo {
   '/pos': typeof ProtectedPosIndexRoute
   '/products': typeof ProtectedProductsIndexRoute
   '/settings': typeof ProtectedSettingsIndexRoute
-  '/taxes': typeof ProtectedTaxesIndexRoute
   '/tenants': typeof ProtectedTenantsIndexRoute
   '/tenants/$slug': typeof ProtectedTenantsSlugIndexRoute
   '/tenants/$slug/outlets/$outletId': typeof ProtectedTenantsSlugOutletsOutletIdRoute
@@ -343,7 +335,6 @@ export interface FileRoutesById {
   '/_protected/pos/': typeof ProtectedPosIndexRoute
   '/_protected/products/': typeof ProtectedProductsIndexRoute
   '/_protected/settings/': typeof ProtectedSettingsIndexRoute
-  '/_protected/taxes/': typeof ProtectedTaxesIndexRoute
   '/_protected/tenants/': typeof ProtectedTenantsIndexRoute
   '/_protected/tenants/$slug/': typeof ProtectedTenantsSlugIndexRoute
   '/_protected/tenants/$slug/outlets/$outletId': typeof ProtectedTenantsSlugOutletsOutletIdRoute
@@ -382,7 +373,6 @@ export interface FileRouteTypes {
     | '/pos/'
     | '/products/'
     | '/settings/'
-    | '/taxes/'
     | '/tenants/'
     | '/tenants/$slug/'
     | '/tenants/$slug/outlets/$outletId'
@@ -419,7 +409,6 @@ export interface FileRouteTypes {
     | '/pos'
     | '/products'
     | '/settings'
-    | '/taxes'
     | '/tenants'
     | '/tenants/$slug'
     | '/tenants/$slug/outlets/$outletId'
@@ -457,7 +446,6 @@ export interface FileRouteTypes {
     | '/_protected/pos/'
     | '/_protected/products/'
     | '/_protected/settings/'
-    | '/_protected/taxes/'
     | '/_protected/tenants/'
     | '/_protected/tenants/$slug/'
     | '/_protected/tenants/$slug/outlets/$outletId'
@@ -557,13 +545,6 @@ declare module '@tanstack/react-router' {
       path: '/tenants'
       fullPath: '/tenants/'
       preLoaderRoute: typeof ProtectedTenantsIndexRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
-    '/_protected/taxes/': {
-      id: '/_protected/taxes/'
-      path: '/taxes'
-      fullPath: '/taxes/'
-      preLoaderRoute: typeof ProtectedTaxesIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
     '/_protected/settings/': {
@@ -756,7 +737,6 @@ interface ProtectedRouteChildren {
   ProtectedPosIndexRoute: typeof ProtectedPosIndexRoute
   ProtectedProductsIndexRoute: typeof ProtectedProductsIndexRoute
   ProtectedSettingsIndexRoute: typeof ProtectedSettingsIndexRoute
-  ProtectedTaxesIndexRoute: typeof ProtectedTaxesIndexRoute
   ProtectedTenantsIndexRoute: typeof ProtectedTenantsIndexRoute
   ProtectedTenantsSlugIndexRoute: typeof ProtectedTenantsSlugIndexRoute
   ProtectedTenantsSlugOutletsOutletIdRoute: typeof ProtectedTenantsSlugOutletsOutletIdRoute
@@ -787,7 +767,6 @@ const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedPosIndexRoute: ProtectedPosIndexRoute,
   ProtectedProductsIndexRoute: ProtectedProductsIndexRoute,
   ProtectedSettingsIndexRoute: ProtectedSettingsIndexRoute,
-  ProtectedTaxesIndexRoute: ProtectedTaxesIndexRoute,
   ProtectedTenantsIndexRoute: ProtectedTenantsIndexRoute,
   ProtectedTenantsSlugIndexRoute: ProtectedTenantsSlugIndexRoute,
   ProtectedTenantsSlugOutletsOutletIdRoute:

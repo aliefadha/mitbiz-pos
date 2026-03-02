@@ -26,15 +26,6 @@ export const orders = pgTable('orders', {
   status: orderStatusEnum('status').default('complete').notNull(),
   subtotal: decimal('subtotal', { precision: 12, scale: 2 }).default('0').notNull(),
   jumlahPajak: decimal('jumlah_pajak', { precision: 12, scale: 2 }).default('0').notNull(),
-  pajakBreakdown:
-    jsonb('pajak_breakdown').$type<
-      {
-        taxId: string;
-        nama: string;
-        rate: string;
-        amount: number;
-      }[]
-    >(),
   jumlahDiskon: decimal('jumlah_diskon', { precision: 12, scale: 2 }).default('0').notNull(),
   diskonBreakdown:
     jsonb('diskon_breakdown').$type<

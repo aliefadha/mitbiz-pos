@@ -59,7 +59,6 @@ const adminPermissions = [
   { resource: 'orderItems', actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE] },
   { resource: 'report', actions: [Action.READ, Action.EXPORT] },
   { resource: 'settings', actions: [Action.READ, Action.UPDATE] },
-  { resource: 'taxes', actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE] },
   { resource: 'discounts', actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE] },
   {
     resource: 'paymentMethods',
@@ -89,7 +88,6 @@ const ownerPermissions = [
   { resource: 'orderItems', actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE] },
   { resource: 'report', actions: [Action.READ, Action.EXPORT] },
   { resource: 'settings', actions: [Action.READ, Action.UPDATE] },
-  { resource: 'taxes', actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE] },
   { resource: 'discounts', actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE] },
   {
     resource: 'paymentMethods',
@@ -118,7 +116,6 @@ const cashierPermissions = [
   { resource: 'orderItems', actions: [Action.CREATE, Action.READ] },
   { resource: 'report', actions: [Action.READ] },
   { resource: 'settings', actions: [Action.READ] },
-  { resource: 'taxes', actions: [Action.READ, Action.UPDATE] },
   { resource: 'discounts', actions: [Action.READ, Action.UPDATE] },
   { resource: 'paymentMethods', actions: [Action.READ] },
   { resource: 'cashShifts', actions: [Action.CREATE, Action.READ, Action.UPDATE] },
@@ -143,7 +140,6 @@ async function seedRbac() {
     { name: 'orderItems', description: 'Order item operations' },
     { name: 'report', description: 'Report access' },
     { name: 'settings', description: 'Settings management' },
-    { name: 'taxes', description: 'Tax management' },
     { name: 'discounts', description: 'Discount management' },
     { name: 'paymentMethods', description: 'Payment method management' },
     { name: 'cashShifts', description: 'Cash shift management' },

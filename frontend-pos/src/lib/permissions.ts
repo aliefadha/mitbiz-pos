@@ -87,7 +87,6 @@ export const ROUTE_PERMISSIONS: Record<string, PermissionCheck> = {
   '/account': { resource: 'users', action: 'read' },
   '/categories': { resource: 'categories', action: 'read' },
   '/products': { resource: 'products', action: 'read' },
-  '/taxes': { resource: 'taxes', action: 'read' },
   '/discounts': { resource: 'discounts', action: 'read' },
   '/payment-methods': { resource: 'paymentMethods', action: 'read' },
   '/settings': { resource: 'settings', action: 'read' },

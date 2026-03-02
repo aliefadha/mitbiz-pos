@@ -13,7 +13,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { SQL, and, asc, count, desc, eq, ilike, inArray, like, or, sql } from 'drizzle-orm';
+import { SQL, and, asc, count, eq, ilike, inArray, like, or, sql } from 'drizzle-orm';
 import { CreateTenantDto, TenantQueryDto, UpdateTenantDto } from './dto';
 
 @Injectable()

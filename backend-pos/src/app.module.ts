@@ -24,7 +24,6 @@ import { RolesModule } from './roles/roles.module';
 import { SalesModule } from './sales/sales.module';
 import { StockAdjustmentsModule } from './stock-adjustments/stock-adjustments.module';
 import { StocksModule } from './stocks/stocks.module';
-import { TaxesModule } from './taxes/taxes.module';
 import { TenantsModule } from './tenants/tenants.module';
 import { UserModule } from './user/user.module';
 
@@ -51,7 +50,6 @@ import { UserModule } from './user/user.module';
     UserModule,
     OrdersModule,
     OrderItemsModule,
-    TaxesModule,
     DiscountsModule,
     PaymentMethodsModule,
     CashShiftsModule,
