@@ -54,8 +54,8 @@ const adjustFormSchema = z.object({
 });
 
 export function OutletDetailPage() {
-  const { slug, outletId } = useParams({
-    from: '/_protected/tenants/$slug/outlets/$outletId',
+  const { outletId } = useParams({
+    from: '/_protected/outlets/$outletId',
   });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -222,13 +222,9 @@ export function OutletDetailPage() {
 
   return (
     <div>
-      <Button
-        variant="link"
-        onClick={() => navigate({ to: `/tenants/${slug}/outlets` })}
-        className="mb-4 pl-0"
-      >
+      <Button variant="link" onClick={() => navigate({ to: '/outlets' })} className="mb-4 pl-0">
         <ArrowLeft className="mr-2 h-4 w-4" />
-        Back to Outlets
+        Kembali ke outlet
       </Button>
 
       <Card className="mb-6">

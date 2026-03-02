@@ -45,7 +45,9 @@ export class OutletsService {
       conditions.push(like(outlets.nama, `%${search}%`));
     }
 
-    const [data, totalResult] = await Promise.all([
+    const tenantCondition = effectiveTenantId ? eq(outlets.tenantId, effectiveTenantId) : undefined;
+
+    const [data, totalResult, statsResult] = await Promise.all([
       this.db
         .select()
         .from(outlets)
@@ -57,9 +59,20 @@ export class OutletsService {
         .select({ count: sql<number>`count(*)` })
         .from(outlets)
         .where(conditions.length > 0 ? and(...conditions) : undefined),
+      this.db
+        .select({
+          total: sql<number>`count(*)`,
+          active: sql<number>`sum(case when ${outlets.isActive} = true then 1 else 0 end)`,
+          inactive: sql<number>`sum(case when ${outlets.isActive} = false then 1 else 0 end)`,
+        })
+        .from(outlets)
+        .where(tenantCondition),
     ]);
 
     const total = Number(totalResult[0]?.count || 0);
+    const totalOutlet = Number(statsResult[0]?.total || 0);
+    const outletAktif = Number(statsResult[0]?.active || 0);
+    const outletNonaktif = Number(statsResult[0]?.inactive || 0);
 
     return {
       data,
@@ -68,6 +81,9 @@ export class OutletsService {
         limit,
         total,
         totalPages: Math.ceil(total / limit),
+        totalOutlet,
+        outletAktif,
+        outletNonaktif,
       },
     };
   }

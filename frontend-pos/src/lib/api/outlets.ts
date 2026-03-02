@@ -25,7 +25,15 @@ export const outletsApi = {
     params?: OutletQueryParams
   ): Promise<{
     data: Outlet[];
-    meta: { page: number; limit: number; total: number; totalPages: number };
+    meta: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      totalOutlet: number;
+      outletAktif: number;
+      outletNonaktif: number;
+    };
   }> => {
     const queryString = params
       ? '?' +
@@ -36,7 +44,15 @@ export const outletsApi = {
       : '';
     const response = await fetchApi<{
       data: Outlet[];
-      meta: { page: number; limit: number; total: number; totalPages: number };
+      meta: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+        totalOutlet: number;
+        outletAktif: number;
+        outletNonaktif: number;
+      };
     }>(`/outlets${queryString}`);
     return response;
   },

@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { OutletStockPage } from '@/components/outlets/outlet-stock-page';
+import { OutletDetailPage } from '@/components/outlets/outlet-detail-page';
 
 export const Route = createFileRoute('/_protected/outlets/$outletId')({
-  component: OutletStockPage,
+  component: OutletDetailPage,
 });
