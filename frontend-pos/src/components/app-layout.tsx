@@ -37,7 +37,7 @@ interface MenuItem {
   key: string;
   icon: React.ComponentType<{ className?: string }>;
   label: string;
-  permission: { resource: string; action: string };
+  permission: { resource: string; actions: string[] };
 }
 
 interface MenuGroup {
@@ -53,13 +53,13 @@ const menuConfig: MenuGroup[] = [
         key: '/dashboard',
         icon: LayoutDashboard,
         label: 'Dashboard',
-        permission: { resource: 'dashboard', action: 'read' },
+        permission: { resource: 'dashboard', actions: ['read'] },
       },
       {
         key: '/laporan',
         icon: FileText,
         label: 'Laporan',
-        permission: { resource: 'report', action: 'read' },
+        permission: { resource: 'report', actions: ['read'] },
       },
     ],
   },
@@ -70,19 +70,19 @@ const menuConfig: MenuGroup[] = [
         key: '/pos',
         icon: ShoppingCart,
         label: 'Kasir',
-        permission: { resource: 'orders', action: 'create' },
+        permission: { resource: 'orders', actions: ['create'] },
       },
       {
         key: '/orders',
         icon: Receipt,
         label: 'Pesanan',
-        permission: { resource: 'orders', action: 'read' },
+        permission: { resource: 'orders', actions: ['read'] },
       },
       {
         key: '/cash-shifts',
         icon: Wallet,
         label: 'Shift Kasir',
-        permission: { resource: 'cashShifts', action: 'read' },
+        permission: { resource: 'cashShifts', actions: ['read'] },
       },
     ],
   },
@@ -93,43 +93,49 @@ const menuConfig: MenuGroup[] = [
         key: '/tenants',
         icon: Users,
         label: 'Tenant',
-        permission: { resource: 'tenants', action: 'read' },
+        permission: { resource: 'tenants', actions: ['read'] },
       },
       {
         key: '/outlets',
         icon: Store,
         label: 'Outlet',
-        permission: { resource: 'outlets', action: 'read' },
+        permission: { resource: 'outlets', actions: ['read'] },
       },
+      // {
+      //   key: '/account',
+      //   icon: User,
+      //   label: 'Akun',
+      //   permission: { resource: 'user', actions: ['read'] },
+      // },
       {
-        key: '/account',
-        icon: User,
-        label: 'Akun',
-        permission: { resource: 'users', action: 'read' },
+        key: '/kasir',
+        icon: Users,
+        label: 'Kasir',
+        permission: { resource: 'users', actions: ['read', 'create', 'list'] },
       },
       {
         key: '/categories',
         icon: Folder,
         label: 'Kategori',
-        permission: { resource: 'categories', action: 'read' },
+        permission: { resource: 'categories', actions: ['read'] },
       },
       {
         key: '/products',
         icon: Package,
         label: 'Produk',
-        permission: { resource: 'products', action: 'read' },
+        permission: { resource: 'products', actions: ['read'] },
       },
       {
         key: '/discounts',
         icon: Percent,
         label: 'Diskon',
-        permission: { resource: 'discounts', action: 'read' },
+        permission: { resource: 'discounts', actions: ['read'] },
       },
       {
         key: '/payment-methods',
         icon: CreditCard,
         label: 'Metode Pembayaran',
-        permission: { resource: 'paymentMethods', action: 'read' },
+        permission: { resource: 'paymentMethods', actions: ['read'] },
       },
     ],
   },
@@ -140,7 +146,7 @@ function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { hasPermission } = usePermissions();
+  const { hasAnyPermission } = usePermissions();
   const logoutMutation = useLogout();
 
   const handleLogout = () => {
@@ -152,7 +158,7 @@ function AppSidebar() {
     .map((group) => ({
       ...group,
       items: group.items.filter((item) =>
-        hasPermission(item.permission.resource, item.permission.action)
+        hasAnyPermission(item.permission.resource, item.permission.actions)
       ),
     }))
     .filter((group) => group.items.length > 0);

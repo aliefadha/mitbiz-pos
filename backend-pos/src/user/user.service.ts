@@ -2,108 +2,151 @@ import { DB_CONNECTION } from '@/db/db.module';
 import { roles, user } from '@/db/schema';
 import { tenants } from '@/db/schema/tenant-schema';
 import type { DrizzleDB } from '@/db/type';
-import { RbacService } from '@/rbac';
-import { Inject, Injectable } from '@nestjs/common';
-import { eq, inArray } from 'drizzle-orm';
+import { auth } from '@/lib/auth';
+import { Inject, Injectable, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { eq } from 'drizzle-orm';
+import type { CreateUserDto } from './dto';
 
 @Injectable()
 export class UserService {
-  constructor(
-    @Inject(DB_CONNECTION) private db: DrizzleDB,
-    private rbacService: RbacService,
-  ) {}
+  constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) {}
 
-  async getUserTenantsAndOutlets(userId: string) {
-    const [userWithOutlet, ownedTenants] = await Promise.all([
-      this.db.query.user.findFirst({
-        where: eq(user.id, userId),
+  async getAllUsers(currentUserId: string, tenantId?: string) {
+    // First check if user is admin
+    const userRole = await this.findUserRoles(currentUserId);
+    const isAdmin = userRole?.name === 'admin';
+
+    if (isAdmin) {
+      // Admin sees all users, optionally filtered by tenantId
+      const users = await this.db.query.user.findMany({
+        where: tenantId ? eq(user.tenantId, tenantId) : undefined,
         with: {
-          outlet: {
-            with: {
-              tenant: true,
-            },
-          },
+          role: true,
+          tenant: true,
+          outlet: true,
         },
-      }),
-      this.db.query.tenants.findMany({
-        where: eq(tenants.userId, userId),
-        with: {
-          outlets: true,
-        },
-      }),
-    ]);
-
-    const results = ownedTenants.map((tenant) => ({
-      id: tenant.id,
-      nama: tenant.nama,
-      slug: tenant.slug,
-      userId: tenant.userId,
-      outlets: tenant.outlets.map((outlet) => ({
-        id: outlet.id,
-        tenantId: outlet.tenantId,
-        nama: outlet.nama,
-        kode: outlet.kode,
-        alamat: outlet.alamat,
-        noHp: outlet.noHp,
-        isActive: outlet.isActive,
-        createdAt: outlet.createdAt,
-      })),
-    }));
-
-    if (userWithOutlet?.outlet?.tenant) {
-      const tenant = userWithOutlet.outlet.tenant;
-      results.push({
-        id: tenant.id,
-        nama: tenant.nama,
-        slug: tenant.slug,
-        userId: tenant.userId,
-        outlets: [
-          {
-            id: userWithOutlet.outlet.id,
-            tenantId: userWithOutlet.outlet.tenantId,
-            nama: userWithOutlet.outlet.nama,
-            kode: userWithOutlet.outlet.kode,
-            alamat: userWithOutlet.outlet.alamat,
-            noHp: userWithOutlet.outlet.noHp,
-            isActive: userWithOutlet.outlet.isActive,
-            createdAt: userWithOutlet.outlet.createdAt,
-          },
-        ],
       });
+      return { users, total: users.length };
     }
 
-    return results;
+    // Non-admin users: check tenant ownership
+    const ownedTenants = await this.db.query.tenants.findMany({
+      where: eq(tenants.userId, currentUserId),
+    });
+
+    if (ownedTenants.length === 0) {
+      return { users: [], total: 0 };
+    }
+
+    const ownedTenantIds = ownedTenants.map((t) => t.id);
+
+    // If tenantId is provided, verify ownership
+    if (tenantId) {
+      if (!ownedTenantIds.includes(tenantId)) {
+        return { users: [], total: 0 };
+      }
+
+      const users = await this.db.query.user.findMany({
+        where: eq(user.tenantId, tenantId),
+        with: {
+          role: true,
+          tenant: true,
+          outlet: true,
+        },
+      });
+      return { users, total: users.length };
+    }
+
+    // No tenantId provided, return users from all owned tenants
+    const users = await this.db.query.user.findMany({
+      where: (user, { inArray }) => inArray(user.tenantId, ownedTenantIds),
+      with: {
+        role: true,
+        tenant: true,
+        outlet: true,
+      },
+    });
+    return { users, total: users.length };
   }
 
-  async getUsersByOwner(userId: string, tenantId?: string) {
-    let userTenants = await this.db.query.tenants.findMany({
-      where: eq(tenants.userId, userId),
-      with: {
-        outlets: true,
+  async findUserRoles(userId: string) {
+    const userWithRole = await this.db
+      .select({
+        id: roles.id,
+        name: roles.name,
+        scope: roles.scope,
+      })
+      .from(user)
+      .leftJoin(roles, eq(user.roleId, roles.id))
+      .where(eq(user.id, userId))
+      .limit(1);
+
+    return userWithRole[0] || null;
+  }
+
+  async createUser(data: CreateUserDto, currentUserId: string) {
+    // Check current user's role
+    const creatorRole = await this.findUserRoles(currentUserId);
+    const isAdmin = creatorRole?.name === 'admin';
+
+    // If not admin, verify they own the target tenant
+    if (!isAdmin && data.tenantId) {
+      const ownedTenants = await this.db.query.tenants.findMany({
+        where: eq(tenants.userId, currentUserId),
+      });
+
+      const ownedTenantIds = ownedTenants.map((t) => t.id);
+      if (!ownedTenantIds.includes(data.tenantId)) {
+        throw new ForbiddenException('You do not have permission to create users in this tenant');
+      }
+    }
+
+    // Get role ID from role name
+    let roleId: string | undefined;
+    if (data.role) {
+      const [role] = await this.db.select().from(roles).where(eq(roles.name, data.role)).limit(1);
+
+      if (!role) {
+        throw new BadRequestException(`Role '${data.role}' not found`);
+      }
+      roleId = role.id;
+    }
+
+    // Create user using better-auth
+    const result = await auth.api.signUpEmail({
+      body: {
+        email: data.email,
+        password: data.password,
+        name: data.name,
       },
     });
 
-    if (tenantId) {
-      userTenants = userTenants.filter((t) => t.id === tenantId);
+    if (!result.user) {
+      throw new BadRequestException('Failed to create user');
     }
 
-    const outletIds = userTenants.flatMap((t) => t.outlets.map((o) => o.id));
+    // Update user with additional fields
+    await this.db
+      .update(user)
+      .set({
+        roleId,
+        tenantId: data.tenantId,
+        outletId: data.outletId,
+        isSubscribed: data.isSubscribed,
+        emailVerified: true,
+      })
+      .where(eq(user.id, result.user.id));
 
-    const [cashierRole] = await this.db
-      .select()
-      .from(roles)
-      .where(eq(roles.name, 'cashier'))
-      .limit(1);
+    // Return created user with relations
+    const createdUser = await this.db.query.user.findFirst({
+      where: eq(user.id, result.user.id),
+      with: {
+        role: true,
+        tenant: true,
+        outlet: true,
+      },
+    });
 
-    let allUsers: Awaited<ReturnType<typeof this.db.query.user.findMany>> = [];
-    if (cashierRole) {
-      allUsers = await this.db.query.user.findMany({
-        where: eq(user.roleId, cashierRole.id),
-      });
-    }
-
-    const filteredUsers = allUsers.filter((u) => u.outletId && outletIds.includes(u.outletId));
-
-    return { users: filteredUsers, total: filteredUsers.length };
+    return createdUser;
   }
 }

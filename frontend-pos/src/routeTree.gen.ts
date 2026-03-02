@@ -26,6 +26,7 @@ import { Route as ProtectedPosIndexRouteImport } from './routes/_protected/pos/i
 import { Route as ProtectedPaymentMethodsIndexRouteImport } from './routes/_protected/payment-methods/index'
 import { Route as ProtectedOutletsIndexRouteImport } from './routes/_protected/outlets/index'
 import { Route as ProtectedOrdersIndexRouteImport } from './routes/_protected/orders/index'
+import { Route as ProtectedKasirIndexRouteImport } from './routes/_protected/kasir/index'
 import { Route as ProtectedDiscountsIndexRouteImport } from './routes/_protected/discounts/index'
 import { Route as ProtectedCategoriesIndexRouteImport } from './routes/_protected/categories/index'
 import { Route as ProtectedCashShiftsIndexRouteImport } from './routes/_protected/cash-shifts/index'
@@ -128,6 +129,11 @@ const ProtectedOutletsIndexRoute = ProtectedOutletsIndexRouteImport.update({
 const ProtectedOrdersIndexRoute = ProtectedOrdersIndexRouteImport.update({
   id: '/orders/',
   path: '/orders/',
+  getParentRoute: () => ProtectedRoute,
+} as any)
+const ProtectedKasirIndexRoute = ProtectedKasirIndexRouteImport.update({
+  id: '/kasir/',
+  path: '/kasir/',
   getParentRoute: () => ProtectedRoute,
 } as any)
 const ProtectedDiscountsIndexRoute = ProtectedDiscountsIndexRouteImport.update({
@@ -255,6 +261,7 @@ export interface FileRoutesByFullPath {
   '/cash-shifts/': typeof ProtectedCashShiftsIndexRoute
   '/categories/': typeof ProtectedCategoriesIndexRoute
   '/discounts/': typeof ProtectedDiscountsIndexRoute
+  '/kasir/': typeof ProtectedKasirIndexRoute
   '/orders/': typeof ProtectedOrdersIndexRoute
   '/outlets/': typeof ProtectedOutletsIndexRoute
   '/payment-methods/': typeof ProtectedPaymentMethodsIndexRoute
@@ -291,6 +298,7 @@ export interface FileRoutesByTo {
   '/cash-shifts': typeof ProtectedCashShiftsIndexRoute
   '/categories': typeof ProtectedCategoriesIndexRoute
   '/discounts': typeof ProtectedDiscountsIndexRoute
+  '/kasir': typeof ProtectedKasirIndexRoute
   '/orders': typeof ProtectedOrdersIndexRoute
   '/outlets': typeof ProtectedOutletsIndexRoute
   '/payment-methods': typeof ProtectedPaymentMethodsIndexRoute
@@ -329,6 +337,7 @@ export interface FileRoutesById {
   '/_protected/cash-shifts/': typeof ProtectedCashShiftsIndexRoute
   '/_protected/categories/': typeof ProtectedCategoriesIndexRoute
   '/_protected/discounts/': typeof ProtectedDiscountsIndexRoute
+  '/_protected/kasir/': typeof ProtectedKasirIndexRoute
   '/_protected/orders/': typeof ProtectedOrdersIndexRoute
   '/_protected/outlets/': typeof ProtectedOutletsIndexRoute
   '/_protected/payment-methods/': typeof ProtectedPaymentMethodsIndexRoute
@@ -367,6 +376,7 @@ export interface FileRouteTypes {
     | '/cash-shifts/'
     | '/categories/'
     | '/discounts/'
+    | '/kasir/'
     | '/orders/'
     | '/outlets/'
     | '/payment-methods/'
@@ -403,6 +413,7 @@ export interface FileRouteTypes {
     | '/cash-shifts'
     | '/categories'
     | '/discounts'
+    | '/kasir'
     | '/orders'
     | '/outlets'
     | '/payment-methods'
@@ -440,6 +451,7 @@ export interface FileRouteTypes {
     | '/_protected/cash-shifts/'
     | '/_protected/categories/'
     | '/_protected/discounts/'
+    | '/_protected/kasir/'
     | '/_protected/orders/'
     | '/_protected/outlets/'
     | '/_protected/payment-methods/'
@@ -589,6 +601,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedOrdersIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
+    '/_protected/kasir/': {
+      id: '/_protected/kasir/'
+      path: '/kasir'
+      fullPath: '/kasir/'
+      preLoaderRoute: typeof ProtectedKasirIndexRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
     '/_protected/discounts/': {
       id: '/_protected/discounts/'
       path: '/discounts'
@@ -731,6 +750,7 @@ interface ProtectedRouteChildren {
   ProtectedCashShiftsIndexRoute: typeof ProtectedCashShiftsIndexRoute
   ProtectedCategoriesIndexRoute: typeof ProtectedCategoriesIndexRoute
   ProtectedDiscountsIndexRoute: typeof ProtectedDiscountsIndexRoute
+  ProtectedKasirIndexRoute: typeof ProtectedKasirIndexRoute
   ProtectedOrdersIndexRoute: typeof ProtectedOrdersIndexRoute
   ProtectedOutletsIndexRoute: typeof ProtectedOutletsIndexRoute
   ProtectedPaymentMethodsIndexRoute: typeof ProtectedPaymentMethodsIndexRoute
@@ -761,6 +781,7 @@ const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedCashShiftsIndexRoute: ProtectedCashShiftsIndexRoute,
   ProtectedCategoriesIndexRoute: ProtectedCategoriesIndexRoute,
   ProtectedDiscountsIndexRoute: ProtectedDiscountsIndexRoute,
+  ProtectedKasirIndexRoute: ProtectedKasirIndexRoute,
   ProtectedOrdersIndexRoute: ProtectedOrdersIndexRoute,
   ProtectedOutletsIndexRoute: ProtectedOutletsIndexRoute,
   ProtectedPaymentMethodsIndexRoute: ProtectedPaymentMethodsIndexRoute,
