@@ -34,7 +34,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cashShiftsApi } from '@/lib/api/cash-shifts';
 import { categoriesApi } from '@/lib/api/categories';
 import { discountsApi } from '@/lib/api/discounts';
-import { type CreateOrderDto, type DiscountBreakdown, ordersApi } from '@/lib/api/orders';
+import { ordersApi, type CreateOrderDto, type DiscountBreakdown } from '@/lib/api/orders';
+import { paymentMethodsApi } from '@/lib/api/payment-methods';
 
 import { type Product, productsApi } from '@/lib/api/products';
 import { useSession } from '@/lib/auth-client';
@@ -51,6 +52,7 @@ interface CartItem {
 export function PosPage() {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
@@ -68,7 +70,6 @@ export function PosPage() {
     change: number;
     notes: string;
   } | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<string>('cash');
   const [amountPaid, setAmountPaid] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
   const [nomorAntrian, setNomorAntrian] = useState<string>('');
@@ -78,6 +79,7 @@ export function PosPage() {
   const [jumlahTutup, setJumlahTutup] = useState<string>('');
   const [shiftNotes, setShiftNotes] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState<string>('');
   const pageSize = 12;
 
   const { data: session } = useSession();
@@ -104,6 +106,16 @@ export function PosPage() {
       setSelectedOutletId(userOpenShiftData.outletId);
     }
   }, [userOpenShiftData]);
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchQuery(searchInput);
+      setCurrentPage(1);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   const { data: productsData, isLoading: productsLoading } = useQuery({
     queryKey: [
@@ -144,7 +156,14 @@ export function PosPage() {
     enabled: !!tenantId,
   });
 
+  const { data: paymentMethodsData } = useQuery({
+    queryKey: ['payment-methods', tenantId],
+    queryFn: () => paymentMethodsApi.getAll({ tenantId, isActive: true }),
+    enabled: !!tenantId,
+  });
+
   const discounts = discountsData?.data ?? [];
+  const paymentMethods = paymentMethodsData?.data ?? [];
 
   const closeShiftMutation = useMutation({
     mutationFn: async ({
@@ -186,14 +205,14 @@ export function PosPage() {
         jumlahPajak,
         discountBreakdown,
         total,
-        paymentMethod,
+        paymentMethod: paymentMethods.find(pm => pm.id === selectedPaymentMethodId)?.nama || 'Unknown',
         amountPaid: Number(amountPaid),
         change,
         notes,
       });
       setCart([]);
       setCheckoutOpen(false);
-      setPaymentMethod('cash');
+      setSelectedPaymentMethodId(paymentMethods[0]?.id || '');
       setAmountPaid('');
       setNotes('');
       setNomorAntrian('');
@@ -333,7 +352,7 @@ export function PosPage() {
       jumlahPajak: String(jumlahPajak),
       jumlahDiskon: String(discountAmount),
       diskonBreakdown: discountBreakdown,
-      paymentMethodId: null,
+      paymentMethodId: selectedPaymentMethodId || null,
       total: String(total),
       notes: notes || null,
       nomorAntrian: nomorAntrian || null,
@@ -365,11 +384,8 @@ export function PosPage() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 placeholder="Cari produk..."
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setCurrentPage(1);
-                }}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
                 className="pl-9 w-64"
               />
             </div>
@@ -622,7 +638,7 @@ export function PosPage() {
             className="w-full"
             size="lg"
             onClick={() => {
-              setPaymentMethod('cash');
+              setSelectedPaymentMethodId(paymentMethods[0]?.id || '');
               setAmountPaid('');
               setNotes('');
               setNomorAntrian('');
@@ -678,7 +694,7 @@ export function PosPage() {
                   <span>Total</span>
                   <span>{formatRupiah(total)}</span>
                 </div>
-                {paymentMethod === 'cash' && amountPaid && change >= 0 && (
+                {paymentMethods.find(pm => pm.id === selectedPaymentMethodId)?.nama?.toLowerCase() === 'tunai' && amountPaid && change >= 0 && (
                   <div className="flex justify-between font-bold text-lg text-green-600 bg-green-50 p-3 rounded-lg">
                     <span>Kembalian</span>
                     <span>{formatRupiah(change)}</span>
@@ -727,21 +743,21 @@ export function PosPage() {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">Metode Pembayaran</label>
-                <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                <Select value={selectedPaymentMethodId} onValueChange={setSelectedPaymentMethodId}>
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Pilih metode pembayaran" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="cash">Tunai</SelectItem>
-                    <SelectItem value="qris">QRIS</SelectItem>
-                    <SelectItem value="card">Kartu</SelectItem>
-                    <SelectItem value="bank_transfer">Transfer Bank</SelectItem>
-                    <SelectItem value="e_wallet">E-Wallet</SelectItem>
+                    {paymentMethods.map((pm) => (
+                      <SelectItem key={pm.id} value={pm.id}>
+                        {pm.nama}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
 
-              {paymentMethod === 'cash' && (
+              {paymentMethods.find(pm => pm.id === selectedPaymentMethodId)?.nama?.toLowerCase() === 'tunai' && (
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Jumlah Bayar</label>
                   <Input
@@ -796,7 +812,7 @@ export function PosPage() {
             <Button
               onClick={handleCheckout}
               disabled={
-                createOrderMutation.isPending || (paymentMethod === 'cash' && amountPaidNum < total)
+                createOrderMutation.isPending || (paymentMethods.find(pm => pm.id === selectedPaymentMethodId)?.nama?.toLowerCase() === 'tunai' && amountPaidNum < total)
               }
             >
               {createOrderMutation.isPending ? 'Memproses...' : 'Simpan Pesanan'}

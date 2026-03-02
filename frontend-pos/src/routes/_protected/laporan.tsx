@@ -16,17 +16,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useTenant } from '@/contexts/tenant-context';
 import { type Category, categoriesApi } from '@/lib/api/categories';
 import { type Outlet, outletsApi } from '@/lib/api/outlets';
 import { salesApi, type TopProduct } from '@/lib/api/sales';
+import { useSession } from '@/lib/auth-client';
 
 export const Route = createFileRoute('/_protected/laporan')({
   component: LaporanPage,
 });
 
 function LaporanPage() {
-  const { selectedTenant } = useTenant();
+  const { data: session } = useSession();
+  const tenantId = session?.user?.tenantId;
 
   const [startDate, setStartDate] = useState<string>(() => {
     const now = new Date();
@@ -40,15 +41,15 @@ function LaporanPage() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
 
   const { data: outletsData } = useQuery({
-    queryKey: ['outlets', selectedTenant?.id],
-    queryFn: () => outletsApi.getAll({ tenantId: selectedTenant?.id }),
-    enabled: !!selectedTenant?.id,
+    queryKey: ['outlets', tenantId],
+    queryFn: () => outletsApi.getAll({ tenantId }),
+    enabled: !!tenantId,
   });
 
   const { data: categoriesData } = useQuery({
-    queryKey: ['categories', selectedTenant?.id],
-    queryFn: () => categoriesApi.getAll({ tenantId: selectedTenant?.id }),
-    enabled: !!selectedTenant?.id,
+    queryKey: ['categories', tenantId],
+    queryFn: () => categoriesApi.getAll({ tenantId }),
+    enabled: !!tenantId,
   });
 
   const outlets: Outlet[] = outletsData?.data ?? [];
@@ -58,10 +59,10 @@ function LaporanPage() {
     () => ({
       startDate,
       endDate,
-      tenantId: selectedTenant?.id,
+      tenantId,
       outletId: selectedOutletId === 'all' ? undefined : selectedOutletId,
     }),
-    [startDate, endDate, selectedTenant?.id, selectedOutletId]
+    [startDate, endDate, tenantId, selectedOutletId]
   );
 
   const { data: topProducts, isLoading: loadingTopProducts } = useQuery({
