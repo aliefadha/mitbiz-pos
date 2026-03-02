@@ -1,17 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   CheckCircle,
+  ChevronLeft,
+  ChevronRight,
   Minus,
   Plus,
   Printer,
   Receipt,
   Search,
   ShoppingCart,
-  Store,
   Wallet,
   X,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -30,12 +31,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useTenant } from '@/contexts/tenant-context';
 import { cashShiftsApi } from '@/lib/api/cash-shifts';
+import { categoriesApi } from '@/lib/api/categories';
 import { discountsApi } from '@/lib/api/discounts';
 import { type CreateOrderDto, type DiscountBreakdown, ordersApi } from '@/lib/api/orders';
-import { type PaymentMethod, paymentMethodsApi } from '@/lib/api/payment-methods';
+
 import { type Product, productsApi } from '@/lib/api/products';
+import { useSession } from '@/lib/auth-client';
 import { formatRupiah } from '@/lib/utils';
 
 interface CartItem {
@@ -71,46 +73,106 @@ export function PosPage() {
   const [notes, setNotes] = useState<string>('');
   const [nomorAntrian, setNomorAntrian] = useState<string>('');
   const [selectedDiscountIds, setSelectedDiscountIds] = useState<string[]>([]);
+  const [selectedOutletId, setSelectedOutletId] = useState<string>('');
+  const [closeShiftOpen, setCloseShiftOpen] = useState(false);
+  const [jumlahTutup, setJumlahTutup] = useState<string>('');
+  const [shiftNotes, setShiftNotes] = useState<string>('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 12;
 
-  const { selectedTenant, selectedOutlet, isLoading: tenantLoading } = useTenant();
-  const effectiveTenantId = selectedTenant?.id;
-  const effectiveOutletId = selectedOutlet?.id;
+  const { data: session } = useSession();
+  const tenantId = session?.user?.tenantId;
+  const userId = session?.user?.id;
 
-  const { data: productsData, isLoading: productsLoading } = useQuery({
-    queryKey: ['products', effectiveTenantId, effectiveOutletId, searchQuery, categoryFilter],
-    queryFn: () =>
-      productsApi.getAll({
-        tenantId: effectiveTenantId,
-        outletId: effectiveOutletId,
-        search: searchQuery || undefined,
-        isActive: true,
-      }),
-    enabled: !!effectiveTenantId,
+  // Check for user's open cash shift first
+  const { data: userOpenShiftData, isLoading: userOpenShiftLoading } = useQuery({
+    queryKey: ['cash-shifts', 'user-open', tenantId, userId],
+    queryFn: async () => {
+      const response = await cashShiftsApi.getAll({
+        tenantId,
+        status: 'buka',
+      });
+      // Filter to find shift belonging to current user
+      return response.data.find((shift) => shift.cashierId === userId) || null;
+    },
+    enabled: !!tenantId && !!userId,
   });
 
-  const { data: paymentMethodsData, isLoading: paymentMethodsLoading } = useQuery({
-    queryKey: ['payment-methods', effectiveTenantId],
+  // Auto-select outlet from user's open shift
+  useEffect(() => {
+    if (userOpenShiftData?.outletId) {
+      setSelectedOutletId(userOpenShiftData.outletId);
+    }
+  }, [userOpenShiftData]);
+
+  const { data: productsData, isLoading: productsLoading } = useQuery({
+    queryKey: [
+      'products',
+      tenantId,
+      selectedOutletId,
+      searchQuery,
+      categoryFilter,
+      currentPage,
+      pageSize,
+    ],
     queryFn: () =>
-      paymentMethodsApi.getAll({
-        tenantId: effectiveTenantId,
+      productsApi.getAll({
+        tenantId,
+        outletId: selectedOutletId,
+        categoryId: categoryFilter !== 'all' ? categoryFilter : undefined,
+        search: searchQuery || undefined,
         isActive: true,
+        page: currentPage,
+        limit: pageSize,
       }),
-    enabled: !!effectiveTenantId,
+    enabled: !!tenantId,
   });
 
   const { data: discountsData } = useQuery({
-    queryKey: ['discounts', effectiveTenantId, effectiveOutletId],
-    queryFn: () => discountsApi.getActiveForOutlet(effectiveTenantId!, effectiveOutletId!),
-    enabled: !!effectiveTenantId && !!effectiveOutletId,
+    queryKey: ['discounts', tenantId, selectedOutletId],
+    queryFn: () => discountsApi.getAll({
+      tenantId,
+      outletId: selectedOutletId,
+      isActive: true,
+    }),
+    enabled: !!tenantId && !!selectedOutletId,
   });
 
-  const { data: openShiftData, isLoading: openShiftLoading } = useQuery({
-    queryKey: ['cash-shifts', 'open', effectiveOutletId],
-    queryFn: () => cashShiftsApi.getOpen(effectiveOutletId),
-    enabled: !!effectiveOutletId,
+  const { data: categoriesData } = useQuery({
+    queryKey: ['categories', tenantId],
+    queryFn: () => categoriesApi.getAll({ tenantId }),
+    enabled: !!tenantId,
   });
 
   const discounts = discountsData?.data ?? [];
+
+  const closeShiftMutation = useMutation({
+    mutationFn: async ({
+      id,
+      jumlahTutup,
+      catatan,
+    }: {
+      id: string;
+      jumlahTutup: string;
+      catatan: string;
+    }) => {
+      return cashShiftsApi.update(id, {
+        jumlahTutup,
+        status: 'tutup',
+        catatan: catatan || null,
+      });
+    },
+    onSuccess: () => {
+      setCloseShiftOpen(false);
+      setJumlahTutup('');
+      setShiftNotes('');
+      queryClient.invalidateQueries({ queryKey: ['cash-shifts'] });
+      toast.success('Shift berhasil ditutup');
+    },
+    onError: (error: Error) => {
+      alert(error.message || 'Gagal menutup shift');
+    },
+  });
 
   const createOrderMutation = useMutation({
     mutationFn: (data: CreateOrderDto) => ordersApi.create(data),
@@ -146,24 +208,7 @@ export function PosPage() {
   });
 
   const products = productsData?.data ?? [];
-  const categories = useMemo(() => {
-    const cats = new Map<string, string>();
-    products.forEach((p) => {
-      if (p.category?.nama) {
-        cats.set(p.category.id, p.category.nama);
-      }
-    });
-    return Array.from(cats.entries()).map(([id, nama]) => ({ id, nama }));
-  }, [products]);
-
-  const filteredProducts = useMemo(() => {
-    return products.filter((p) => {
-      if (categoryFilter !== 'all' && p.categoryId !== categoryFilter) {
-        return false;
-      }
-      return true;
-    });
-  }, [products, categoryFilter]);
+  const categories = categoriesData?.data ?? [];
 
   const addToCart = (product: Product) => {
     const existingItem = cart.find((item) => item.product.id === product.id);
@@ -227,9 +272,9 @@ export function PosPage() {
   }, [cart]);
 
   const jumlahPajak = useMemo(() => {
-    const taxRate = selectedTenant?.settings?.taxRate ?? 0;
-    return Math.round((subtotal * taxRate) / 100);
-  }, [subtotal, selectedTenant]);
+    // Tax rate could be fetched from tenant settings API if needed
+    return 0;
+  }, [subtotal]);
 
   const discountBreakdown = useMemo<DiscountBreakdown[]>(() => {
     return selectedDiscountIds
@@ -257,12 +302,12 @@ export function PosPage() {
   const change = amountPaidNum - total;
 
   const handleCheckout = () => {
-    if (!effectiveTenantId) {
+    if (!tenantId) {
       alert('Anda belum memiliki tenant. Silakan hubungi admin.');
       return;
     }
 
-    if (!effectiveOutletId) {
+    if (!selectedOutletId) {
       alert('Silakan pilih outlet terlebih dahulu');
       return;
     }
@@ -280,19 +325,15 @@ export function PosPage() {
       total: item.total,
     }));
 
-    const selectedPaymentMethod = paymentMethodsData?.data?.find(
-      (pm) => pm.nama.toLowerCase().replace(/\s+/g, '_') === paymentMethod
-    );
-
     createOrderMutation.mutate({
-      tenantId: effectiveTenantId,
-      outletId: effectiveOutletId,
+      tenantId: tenantId,
+      outletId: selectedOutletId,
       status: 'complete',
       subtotal: String(subtotal),
       jumlahPajak: String(jumlahPajak),
       jumlahDiskon: String(discountAmount),
       diskonBreakdown: discountBreakdown,
-      paymentMethodId: selectedPaymentMethod?.id || null,
+      paymentMethodId: null,
       total: String(total),
       notes: notes || null,
       nomorAntrian: nomorAntrian || null,
@@ -301,25 +342,44 @@ export function PosPage() {
     });
   };
 
+  // Get outlet name from user's open shift
+  const selectedOutletName = useMemo(() => {
+    return userOpenShiftData?.outlet?.nama;
+  }, [userOpenShiftData]);
+
   return (
     <div className="flex h-full gap-4">
       <div className="flex-1 flex flex-col">
         <div className="flex justify-between items-center mb-4">
           <div>
             <h4 className="text-lg font-semibold m-0">Kasir</h4>
-            <p className="text-sm text-gray-500 m-0">{selectedOutlet?.nama || 'Pilih outlet'}</p>
+            <p className="text-sm text-gray-500 m-0">{selectedOutletName || 'Pilih outlet'}</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
+            {userOpenShiftData && (
+              <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2 flex items-center gap-2">
+                <span className="text-sm text-green-800">Shift Aktif</span>
+              </div>
+            )}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 placeholder="Cari produk..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
                 className="pl-9 w-64"
               />
             </div>
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <Select
+              value={categoryFilter}
+              onValueChange={(value) => {
+                setCategoryFilter(value);
+                setCurrentPage(1);
+              }}
+            >
               <SelectTrigger className="w-40">
                 <SelectValue placeholder="Kategori" />
               </SelectTrigger>
@@ -332,14 +392,24 @@ export function PosPage() {
                 ))}
               </SelectContent>
             </Select>
+            {userOpenShiftData && (
+              <Button
+                variant="outline"
+                className="border-red-200 text-red-600 hover:bg-red-50"
+                onClick={() => {
+                  setJumlahTutup('');
+                  setShiftNotes('');
+                  setCloseShiftOpen(true);
+                }}
+              >
+                <X className="h-4 w-4 mr-2" />
+                Tutup Shift
+              </Button>
+            )}
           </div>
         </div>
 
-        {tenantLoading ? (
-          <div className="flex items-center justify-center h-full">
-            <p className="text-gray-500">Memuat data...</p>
-          </div>
-        ) : !effectiveTenantId ? (
+        {!tenantId ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
               <Receipt className="h-12 w-12 mx-auto mb-4 text-gray-300" />
@@ -349,19 +419,11 @@ export function PosPage() {
               </p>
             </div>
           </div>
-        ) : !effectiveOutletId ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center">
-              <Store className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <p className="text-gray-500">Silakan pilih outlet</p>
-              <p className="text-sm text-gray-400">Pilih outlet dari dropdown di header</p>
-            </div>
-          </div>
-        ) : openShiftLoading ? (
+        ) : userOpenShiftLoading ? (
           <div className="flex items-center justify-center h-full">
             <p className="text-gray-500">Memuat data...</p>
           </div>
-        ) : !openShiftData ? (
+        ) : !userOpenShiftData ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
               <Wallet className="h-12 w-12 mx-auto mb-4 text-gray-300" />
@@ -379,25 +441,15 @@ export function PosPage() {
           </div>
         ) : (
           <div className="relative">
-            {openShiftData && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Wallet className="h-4 w-4 text-green-600" />
-                  <span className="text-sm text-green-800">
-                    Shift Aktif • Buka: {formatRupiah(openShiftData.jumlahBuka)}
-                  </span>
-                </div>
-              </div>
-            )}
-            <div
-              className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto flex-1 py-4 ${!openShiftData ? 'blur-sm pointer-events-none select-none' : ''}`}
-            >
-              {filteredProducts.map((product) => (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto flex-1 py-4">
+              {products.map((product) => (
                 <div
                   key={product.id}
                   onClick={() => (product.stock ?? 0) > 0 && addToCart(product)}
                   className={`relative border rounded-lg p-4 cursor-pointer hover:shadow-md transition-all h-48 flex flex-col ${
-                    (product.stock ?? 0) < product.minStockLevel ? 'bg-red-50 border-red-200' : ''
+                    (product.stock ?? 0) > 0 && (product.stock ?? 0) < product.minStockLevel
+                      ? 'bg-red-50 border-red-200'
+                      : ''
                   } ${(product.stock ?? 0) === 0 ? 'bg-gray-100 border-gray-200 opacity-60 cursor-not-allowed' : 'hover:border-primary'}`}
                 >
                   <div
@@ -425,6 +477,68 @@ export function PosPage() {
                 </div>
               ))}
             </div>
+            {productsData?.meta && productsData.meta.totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 py-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <div className="flex items-center gap-1">
+                  {(() => {
+                    const totalPages = productsData.meta.totalPages;
+                    const pages: (number | string)[] = [];
+
+                    if (totalPages <= 5) {
+                      for (let i = 1; i <= totalPages; i++) {
+                        pages.push(i);
+                      }
+                    } else {
+                      pages.push(1);
+
+                      if (currentPage <= 3) {
+                        pages.push(2, 3, '...');
+                      } else if (currentPage >= totalPages - 2) {
+                        pages.push('...', totalPages - 2, totalPages - 1);
+                      } else {
+                        pages.push('...', currentPage, '...');
+                      }
+
+                      pages.push(totalPages);
+                    }
+
+                    return pages.map((page, index) =>
+                      page === '...' ? (
+                        <span key={`ellipsis-${index}`} className="px-2 text-sm text-gray-500">
+                          ...
+                        </span>
+                      ) : (
+                        <Button
+                          key={page}
+                          variant={currentPage === page ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setCurrentPage(page as number)}
+                          className="w-9"
+                        >
+                          {page}
+                        </Button>
+                      )
+                    );
+                  })()}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={currentPage === productsData.meta.totalPages}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -508,6 +622,10 @@ export function PosPage() {
             className="w-full"
             size="lg"
             onClick={() => {
+              setPaymentMethod('cash');
+              setAmountPaid('');
+              setNotes('');
+              setNomorAntrian('');
               setCheckoutOpen(true);
             }}
             disabled={cart.length === 0}
@@ -543,9 +661,7 @@ export function PosPage() {
                 </div>
                 {jumlahPajak > 0 && (
                   <div className="flex justify-between">
-                    <span className="text-gray-500">
-                      Pajak ({selectedTenant?.settings?.taxRate}%)
-                    </span>
+                    <span className="text-gray-500">Pajak</span>
                     <span>{formatRupiah(jumlahPajak)}</span>
                   </div>
                 )}
@@ -616,23 +732,11 @@ export function PosPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {paymentMethodsLoading ? (
-                      <div className="p-2 text-sm text-gray-500">Memuat...</div>
-                    ) : paymentMethodsData?.data && paymentMethodsData.data.length > 0 ? (
-                      paymentMethodsData.data.map((pm: PaymentMethod) => (
-                        <SelectItem key={pm.id} value={pm.nama.toLowerCase().replace(/\s+/g, '_')}>
-                          {pm.nama}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <>
-                        <SelectItem value="cash">Tunai</SelectItem>
-                        <SelectItem value="qris">QRIS</SelectItem>
-                        <SelectItem value="card">Kartu</SelectItem>
-                        <SelectItem value="bank_transfer">Transfer Bank</SelectItem>
-                        <SelectItem value="e_wallet">E-Wallet</SelectItem>
-                      </>
-                    )}
+                    <SelectItem value="cash">Tunai</SelectItem>
+                    <SelectItem value="qris">QRIS</SelectItem>
+                    <SelectItem value="card">Kartu</SelectItem>
+                    <SelectItem value="bank_transfer">Transfer Bank</SelectItem>
+                    <SelectItem value="e_wallet">E-Wallet</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -701,6 +805,60 @@ export function PosPage() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={closeShiftOpen} onOpenChange={setCloseShiftOpen}>
+        <DialogContent className="max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Tutup Shift Kasir</DialogTitle>
+          </DialogHeader>
+          {userOpenShiftData && (
+            <div className="space-y-4">
+              <div className="bg-gray-50 p-3 rounded-lg space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Jumlah Buka:</span>
+                  <span className="font-medium">{formatRupiah(userOpenShiftData.jumlahBuka)}</span>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Jumlah Tutup (Kas di akhir)</label>
+                  <Input
+                    type="number"
+                    placeholder="0"
+                    value={jumlahTutup}
+                    onChange={(e) => setJumlahTutup(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Catatan (Opsional)</label>
+                  <Input
+                    placeholder="Masukkan catatan"
+                    value={shiftNotes}
+                    onChange={(e) => setShiftNotes(e.target.value)}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  disabled={closeShiftMutation.isPending || !jumlahTutup}
+                  onClick={() => {
+                    if (userOpenShiftData) {
+                      closeShiftMutation.mutate({
+                        id: userOpenShiftData.id,
+                        jumlahTutup,
+                        catatan: shiftNotes,
+                      });
+                    }
+                  }}
+                >
+                  {closeShiftMutation.isPending ? 'Menutup...' : 'Tutup Shift'}
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={successOpen} onOpenChange={setSuccessOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -745,8 +903,8 @@ export function PosPage() {
       {lastOrder && (
         <div className="hidden print:block p-4 text-sm" id="receipt">
           <div className="text-center mb-4">
-            <h2 className="font-bold text-lg">{selectedTenant?.nama || 'Toko'}</h2>
-            <p className="text-xs">{selectedOutlet?.nama || ''}</p>
+            <h2 className="font-bold text-lg">Toko</h2>
+            <p className="text-xs">{selectedOutletName || ''}</p>
             <p className="text-xs">No. {lastOrder.orderNumber}</p>
             {lastOrder.nomorAntrian && (
               <p className="text-xs">No. Antrian: {lastOrder.nomorAntrian}</p>

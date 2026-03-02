@@ -39,11 +39,13 @@ export interface UpdateDiscountDto {
 export const discountsApi = {
   getAll: async (filters?: {
     tenantId?: string;
+    outletId?: string;
     isActive?: boolean;
     search?: string;
   }): Promise<{ data: Discount[]; meta: any }> => {
     const params = new URLSearchParams();
     if (filters?.tenantId) params.append('tenantId', filters.tenantId.toString());
+    if (filters?.outletId) params.append('outletId', filters.outletId.toString());
     if (filters?.isActive !== undefined) params.append('isActive', filters.isActive.toString());
     if (filters?.search) params.append('search', filters.search);
     const query = params.toString();

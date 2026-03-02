@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { Banknote, Eye, Plus, Search, X } from 'lucide-react';
+import { Eye, Plus, Search, X } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -38,15 +38,17 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useTenant } from '@/contexts/tenant-context';
 import {
   type CashShift,
   type CreateCashShiftDto,
   cashShiftsApi,
   type UpdateCashShiftDto,
 } from '@/lib/api/cash-shifts';
+import { outletsApi } from '@/lib/api/outlets';
+import { useSession } from '@/lib/auth-client';
 
 const formSchema = z.object({
+  outletId: z.string().min(1, 'Outlet wajib dipilih'),
   jumlahBuka: z.string().optional(),
   status: z.enum(['buka', 'tutup']).optional(),
   catatan: z.string().optional(),
@@ -66,13 +68,33 @@ export function CashShiftPage() {
   const [closeModalOpen, setCloseModalOpen] = useState(false);
   const [selectedShift, setSelectedShift] = useState<CashShift | null>(null);
 
-  const { selectedTenant, selectedOutlet } = useTenant();
-  const effectiveTenantId = selectedTenant?.id;
-  const effectiveOutletId = selectedOutlet?.id;
+  const { data: session } = useSession();
+  const tenantId = session?.user?.tenantId;
+  const userId = session?.user?.id;
+
+  const { data: outletsData } = useQuery({
+    queryKey: ['outlets', tenantId],
+    queryFn: () => outletsApi.getAll({ tenantId }),
+    enabled: !!tenantId,
+  });
+
+  // Check for user's open cash shift
+  const { data: userOpenShiftData, isLoading: userOpenShiftLoading } = useQuery({
+    queryKey: ['cash-shifts', 'user-open', tenantId, userId],
+    queryFn: async () => {
+      const response = await cashShiftsApi.getAll({
+        tenantId,
+        status: 'buka',
+      });
+      return response.data.find((shift) => shift.cashierId === userId) || null;
+    },
+    enabled: !!tenantId && !!userId,
+  });
 
   const createForm = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      outletId: '',
       jumlahBuka: '0',
       status: 'buka',
       catatan: '',
@@ -88,21 +110,14 @@ export function CashShiftPage() {
   });
 
   const { data: cashShiftsData, isLoading: cashShiftsLoading } = useQuery({
-    queryKey: ['cash-shifts', effectiveTenantId, effectiveOutletId, searchQuery, statusFilter],
+    queryKey: ['cash-shifts', tenantId, searchQuery, statusFilter],
     queryFn: () =>
       cashShiftsApi.getAll({
-        tenantId: effectiveTenantId,
-        outletId: effectiveOutletId,
+        tenantId,
         search: searchQuery || undefined,
         status: statusFilter !== 'all' ? (statusFilter as 'buka' | 'tutup') : undefined,
       }),
-    enabled: !!effectiveTenantId,
-  });
-
-  const { data: openShiftData, isLoading: openShiftLoading } = useQuery({
-    queryKey: ['cash-shifts', 'open', effectiveOutletId],
-    queryFn: () => cashShiftsApi.getOpen(effectiveOutletId),
-    enabled: !!effectiveOutletId,
+    enabled: !!tenantId,
   });
 
   const createMutation = useMutation({
@@ -132,13 +147,13 @@ export function CashShiftPage() {
   });
 
   const handleCreate = createForm.handleSubmit((values) => {
-    if (!effectiveTenantId || !effectiveOutletId) {
+    if (!tenantId || !values.outletId) {
       alert('Silakan pilih tenant dan outlet terlebih dahulu');
       return;
     }
     createMutation.mutate({
-      tenantId: effectiveTenantId,
-      outletId: effectiveOutletId,
+      tenantId: tenantId,
+      outletId: values.outletId,
       jumlahBuka: values.jumlahBuka || '0',
       status: 'buka',
       catatan: values.catatan || null,
@@ -157,7 +172,6 @@ export function CashShiftPage() {
     });
   });
 
-  const openShift = openShiftData;
   const displayedShifts = cashShiftsData?.data ?? [];
 
   const formatRupiah = (value: string | number): string => {
@@ -210,34 +224,13 @@ export function CashShiftPage() {
           <h4 className="text-lg font-semibold m-0">Shift Kasir</h4>
           <p className="text-sm text-gray-500 m-0">Kelola shift kasir</p>
         </div>
-        {!openShift && (
-          <Button onClick={() => setCreateModalOpen(true)} disabled={!effectiveOutletId}>
-            <Plus className="h-4 w-4 mr-2" />
-            Buka Shift
-          </Button>
-        )}
-      </div>
-
-      {openShift && !openShiftLoading && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="bg-green-100 p-2 rounded-full">
-                <Banknote className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="font-medium text-green-800">Shift Sedang Aktif</p>
-                <p className="text-sm text-green-600">
-                  Dibuka: {formatDate(openShift.openedAt)} • Jumlah Buka:{' '}
-                  {formatRupiah(openShift.jumlahBuka)}
-                </p>
-              </div>
-            </div>
+        {!userOpenShiftLoading &&
+          (userOpenShiftData ? (
             <Button
               variant="outline"
               className="border-red-200 text-red-600 hover:bg-red-50"
               onClick={() => {
-                setSelectedShift(openShift);
+                setSelectedShift(userOpenShiftData);
                 closeForm.reset({ jumlahTutup: '', catatan: '' });
                 setCloseModalOpen(true);
               }}
@@ -245,9 +238,13 @@ export function CashShiftPage() {
               <X className="h-4 w-4 mr-2" />
               Tutup Shift
             </Button>
-          </div>
-        </div>
-      )}
+          ) : (
+            <Button onClick={() => setCreateModalOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Buka Shift
+            </Button>
+          ))}
+      </div>
 
       <div className="flex gap-2 mb-4">
         <div className="relative">
@@ -286,8 +283,6 @@ export function CashShiftPage() {
               <TableHead>Kasir</TableHead>
               <TableHead>Jumlah Buka</TableHead>
               <TableHead>Jumlah Tutup</TableHead>
-              <TableHead>Expected</TableHead>
-              <TableHead>Selisih</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Tanggal</TableHead>
               <TableHead className="w-[80px]">Aksi</TableHead>
@@ -302,20 +297,6 @@ export function CashShiftPage() {
                 <TableCell className="font-medium">{formatRupiah(shift.jumlahBuka)}</TableCell>
                 <TableCell className="font-medium">
                   {shift.status === 'tutup' ? formatRupiah(shift.jumlahTutup) : '-'}
-                </TableCell>
-                <TableCell className="font-medium">
-                  {shift.status === 'tutup' ? formatRupiah(shift.jumlahExpected) : '-'}
-                </TableCell>
-                <TableCell
-                  className={`font-medium ${
-                    shift.status === 'tutup' && parseFloat(shift.selisih) !== 0
-                      ? parseFloat(shift.selisih) > 0
-                        ? 'text-green-600'
-                        : 'text-red-600'
-                      : ''
-                  }`}
-                >
-                  {shift.status === 'tutup' ? formatRupiah(shift.selisih) : '-'}
                 </TableCell>
                 <TableCell>
                   <span
@@ -364,6 +345,30 @@ export function CashShiftPage() {
             <form onSubmit={handleCreate} className="space-y-4">
               <FormField
                 control={createForm.control}
+                name="outletId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Outlet</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Pilih outlet" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {outletsData?.data?.map((outlet) => (
+                          <SelectItem key={outlet.id} value={outlet.id}>
+                            {outlet.nama}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={createForm.control}
                 name="jumlahBuka"
                 render={({ field }) => (
                   <FormItem>
@@ -396,7 +401,7 @@ export function CashShiftPage() {
               <DialogFooter>
                 <Button
                   type="submit"
-                  disabled={createMutation.isPending || !effectiveTenantId || !effectiveOutletId}
+                  disabled={createMutation.isPending || !tenantId || !createForm.watch('outletId')}
                 >
                   {createMutation.isPending ? 'Membuka...' : 'Buka Shift'}
                 </Button>

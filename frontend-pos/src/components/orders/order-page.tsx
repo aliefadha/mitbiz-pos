@@ -38,8 +38,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useTenant } from '@/contexts/tenant-context';
 import { type Order, ordersApi, type UpdateOrderDto } from '@/lib/api/orders';
+import { outletsApi } from '@/lib/api/outlets';
+import { useSession } from '@/lib/auth-client';
 
 const formSchema = z.object({
   status: z.enum(['complete', 'cancel', 'refunded']).optional(),
@@ -51,6 +52,7 @@ export function OrderPage() {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [outletFilter, setOutletFilter] = useState<string>('all');
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
 
@@ -62,21 +64,26 @@ export function OrderPage() {
     },
   });
 
-  const { selectedTenant, selectedOutlet } = useTenant();
-  const effectiveTenantId = selectedTenant?.id;
-  const effectiveOutletId = selectedOutlet?.id;
+  const { data: session } = useSession();
+  const tenantId = session?.user?.tenantId;
+
+  const { data: outletsData } = useQuery({
+    queryKey: ['outlets', tenantId],
+    queryFn: () => outletsApi.getAll({ tenantId }),
+    enabled: !!tenantId,
+  });
 
   const { data: ordersData, isLoading: ordersLoading } = useQuery({
-    queryKey: ['orders', effectiveTenantId, effectiveOutletId, searchQuery, statusFilter],
+    queryKey: ['orders', tenantId, outletFilter, searchQuery, statusFilter],
     queryFn: () =>
       ordersApi.getAll({
-        tenantId: effectiveTenantId,
-        outletId: effectiveOutletId,
+        tenantId,
+        outletId: outletFilter !== 'all' ? outletFilter : undefined,
         search: searchQuery || undefined,
         status:
           statusFilter !== 'all' ? (statusFilter as 'complete' | 'cancel' | 'refunded') : undefined,
       }),
-    enabled: !!effectiveTenantId,
+    enabled: !!tenantId,
   });
 
   const updateMutation = useMutation({
@@ -198,6 +205,19 @@ export function OrderPage() {
               className="pl-9 w-64"
             />
           </div>
+          <Select value={outletFilter} onValueChange={setOutletFilter}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Semua Outlet" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Semua Outlet</SelectItem>
+              {outletsData?.data?.map((outlet) => (
+                <SelectItem key={outlet.id} value={outlet.id}>
+                  {outlet.nama}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-40">
               <SelectValue placeholder="Semua Status" />
@@ -320,7 +340,7 @@ export function OrderPage() {
                 )}
               />
               <DialogFooter>
-                <Button type="submit" disabled={updateMutation.isPending || !effectiveTenantId}>
+                <Button type="submit" disabled={updateMutation.isPending || !tenantId}>
                   Simpan
                 </Button>
               </DialogFooter>
