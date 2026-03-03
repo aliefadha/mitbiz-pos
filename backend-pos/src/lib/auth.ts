@@ -11,7 +11,16 @@ import { findUserRoles } from './user.service';
 // Hardcoded for production
 const BASE_URL =
   process.env.BETTER_AUTH_URL || 'https://backend-pos-508482854424.us-central1.run.app';
-const allowedOrigins = ['https://frontend-pos-508482854424.us-central1.run.app'];
+const getAllowedOrigins = (): string[] => {
+  const defaultOrigins = ['http://localhost:3000', 'http://localhost:5173'];
+  const envOrigins = process.env.ALLOWED_ORIGINS;
+  if (!envOrigins) {
+    return defaultOrigins;
+  }
+  return envOrigins.split(',').map((origin) => origin.trim()).filter(Boolean);
+};
+
+const allowedOrigins = getAllowedOrigins();
 
 console.log('Better Auth baseURL:', BASE_URL);
 
