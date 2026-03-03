@@ -3,6 +3,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { apiReference } from '@scalar/nestjs-api-reference';
 import { AppModule } from './app.module';
 
+// CORS fix deployed - using comma-separated origins
 function getAllowedOrigins(): string[] {
   const defaultOrigins = ['http://localhost:3000', 'http://localhost:5173'];
 
