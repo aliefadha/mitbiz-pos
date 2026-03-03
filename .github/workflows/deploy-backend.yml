@@ -87,11 +87,3 @@ jobs:
           SERVICE_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} --region=${{ env.REGION }} --format='value(status.url)')
           echo "service_url=$SERVICE_URL" >> $GITHUB_OUTPUT
           echo "Deployed to: $SERVICE_URL"
-
-      - name: Update service with BETTER_AUTH_URL
-        run: |
-          SERVICE_URL="${{ steps.deploy.outputs.service_url }}"
-          echo "Setting BETTER_AUTH_URL to: $SERVICE_URL"
-          gcloud run services update ${{ env.SERVICE_NAME }} \
-            --region ${{ env.REGION }} \
-            --update-env-vars="BETTER_AUTH_URL=$SERVICE_URL"
