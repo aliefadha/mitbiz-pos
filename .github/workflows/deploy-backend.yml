@@ -60,15 +60,8 @@ jobs:
             --service-account=projects/dulcet-outlook-479500-k3/serviceAccounts/cloudbuild@dulcet-outlook-479500-k3.iam.gserviceaccount.com \
             --gcs-log-dir=gs://dulcet-outlook-479500-k3_cloudbuild/logs
 
-      - name: Create env vars file
-        run: |
-          cat > env-vars.yaml << 'EOF'
-          BETTER_AUTH_URL: "https://${{ env.SERVICE_NAME }}-${{ env.REGION }}-a.run.app"
-          ALLOWED_ORIGINS: "https://frontend-pos-508482854424.us-central1.run.app,https://mitbizpos.baskograndmall.com,http://localhost:3000"
-          API_PREFIX: "/api"
-          EOF
-
       - name: Deploy to Cloud Run
+        id: deploy
         run: |
           gcloud run deploy ${{ env.SERVICE_NAME }} \
             --image ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
@@ -81,9 +74,17 @@ jobs:
             --max-instances 10 \
             --min-instances 0 \
             --set-secrets=DATABASE_URL=database-url:latest,BETTER_AUTH_SECRET=better-auth-secret:latest,JWT_SECRET=jwt-secret:latest \
-            --env-vars-file=env-vars.yaml
+            --set-env-vars="ALLOWED_ORIGINS=https://frontend-pos-508482854424.us-central1.run.app,https://mitbizpos.baskograndmall.com,http://localhost:3000,API_PREFIX=/api"
+          
+          # Get the deployed URL
+          SERVICE_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} --region=${{ env.REGION }} --format='value(status.url)')
+          echo "service_url=$SERVICE_URL" >> $GITHUB_OUTPUT
+          echo "Deployed to: $SERVICE_URL"
 
-      - name: Show deployed URL
+      - name: Update service with BETTER_AUTH_URL
         run: |
-          echo "Backend deployed to:"
-          gcloud run services describe ${{ env.SERVICE_NAME }} --region=${{ env.REGION }} --format='value(status.url)'
+          SERVICE_URL="${{ steps.deploy.outputs.service_url }}"
+          echo "Setting BETTER_AUTH_URL to: $SERVICE_URL"
+          gcloud run services update ${{ env.SERVICE_NAME }} \
+            --region ${{ env.REGION }} \
+            --set-env-vars="BETTER_AUTH_URL=$SERVICE_URL"
