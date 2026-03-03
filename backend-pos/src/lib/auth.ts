@@ -37,9 +37,6 @@ export const auth = betterAuth({
   }),
   advanced: {
     useSecureCookies: true,
-    crossSubDomainCookies: {
-      enabled: false,
-    },
     crossOrigin: {
       trustedOrigins: allowedOrigins,
     },
