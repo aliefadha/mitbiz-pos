@@ -42,15 +42,6 @@ export class DiscountsController {
     return this.discountsService.findAll(query);
   }
 
-  @Get('active-for-outlet')
-  @ApiOperation({ summary: 'Get active discounts for a specific outlet' })
-  @ApiQuery({ name: 'tenantId', required: true, type: String })
-  @ApiQuery({ name: 'outletId', required: true, type: String })
-  @Permission('discounts', [Action.READ])
-  findActiveForOutlet(@Query('tenantId') tenantId: string, @Query('outletId') outletId: string) {
-    return this.discountsService.findActiveForOutlet(tenantId, outletId);
-  }
-
   @Get(':id')
   @ApiOperation({ summary: 'Get discount by ID' })
   @UsePipes(new ZodValidationPipe(DiscountIdSchema, 'params'))

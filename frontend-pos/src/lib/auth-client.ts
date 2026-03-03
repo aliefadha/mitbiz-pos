@@ -2,7 +2,10 @@ import { customSessionClient, inferAdditionalFields } from 'better-auth/client/p
 import { createAuthClient } from 'better-auth/react';
 
 export const authClient = createAuthClient({
-  baseURL: 'http://localhost:3001',
+  baseURL: `https://backend-pos-508482854424.us-central1.run.app/api/auth`, // Uses nginx proxy
+  fetchOptions: {
+    credentials: 'include',
+  },
   plugins: [
     customSessionClient(),
     inferAdditionalFields({

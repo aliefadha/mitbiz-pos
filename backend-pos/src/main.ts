@@ -3,15 +3,30 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { apiReference } from '@scalar/nestjs-api-reference';
 import { AppModule } from './app.module';
 
+function getAllowedOrigins(): string[] {
+  const defaultOrigins = [
+    'http://localhost:3000',
+    'http://localhost:5173',
+  ];
+  
+  const envOrigins = process.env.ALLOWED_ORIGINS;
+  if (!envOrigins) {
+    return defaultOrigins;
+  }
+  
+  return envOrigins.split(',').map(origin => origin.trim()).filter(Boolean);
+}
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     bodyParser: false,
   });
 
-  const allowedOrigin = process.env.ALLOWED_ORIGINS?.trim() || 'http://localhost:3000';
+  const allowedOrigins = getAllowedOrigins();
+  console.log('CORS allowed origins:', allowedOrigins);
 
   app.enableCors({
-    origin: allowedOrigin,
+    origin: allowedOrigins,
     credentials: true,
   });
 

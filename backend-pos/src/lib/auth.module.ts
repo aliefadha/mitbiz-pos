@@ -3,6 +3,20 @@ import { Module } from '@nestjs/common';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 
+function getAllowedOrigins(): string[] {
+  const defaultOrigins = [
+    'http://localhost:3000',
+    'http://localhost:5173',
+  ];
+  
+  const envOrigins = process.env.ALLOWED_ORIGINS;
+  if (!envOrigins) {
+    return defaultOrigins;
+  }
+  
+  return envOrigins.split(',').map(origin => origin.trim()).filter(Boolean);
+}
+
 const authProvider = {
   provide: 'AUTH',
   useFactory: (db: any) => {
@@ -13,7 +27,7 @@ const authProvider = {
         provider: 'pg',
       }),
       emailAndPassword: { enabled: true },
-      trustedOrigins: ['http://localhost:3000'],
+      trustedOrigins: getAllowedOrigins(),
       plugins: [],
     });
   },

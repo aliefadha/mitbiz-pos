@@ -55,25 +55,6 @@ export class DiscountsService {
     };
   }
 
-  async findActiveForOutlet(tenantId: string, outletId: string) {
-    const data = await this.db
-      .select()
-      .from(discounts)
-      .where(
-        and(
-          eq(discounts.tenantId, tenantId),
-          eq(discounts.isActive, true),
-          eq(discounts.scope, 'transaction'),
-          or(eq(discounts.isGlobal, true), eq(discounts.outletId, outletId)),
-        ),
-      );
-
-    return {
-      data,
-      meta: { total: data.length },
-    };
-  }
-
   async findById(id: string, user: CurrentUserType) {
     const discount = await this.db.query.discounts.findFirst({
       where: eq(discounts.id, id),

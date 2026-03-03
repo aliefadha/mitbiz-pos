@@ -5,12 +5,47 @@ import { customSession, openAPI } from 'better-auth/plugins';
 import { emailService } from './email.service';
 import { findUserRoles } from './user.service';
 
+function getAllowedOrigins(): string[] {
+  const defaultOrigins = [
+    'http://localhost:3000',
+    'http://localhost:5173',
+  ];
+  
+  const envOrigins = process.env.ALLOWED_ORIGINS;
+  if (!envOrigins) {
+    return defaultOrigins;
+  }
+  
+  return envOrigins.split(',').map(origin => origin.trim()).filter(Boolean);
+}
+
+const allowedOrigins = getAllowedOrigins();
+
 export const auth = betterAuth({
   url: process.env.BETTER_AUTH_URL,
   secret: process.env.BETTER_AUTH_SECRET,
   database: drizzleAdapter(db, {
     provider: 'pg',
   }),
+  advanced: {
+    useSecureCookies: true,
+    crossSubDomainCookies: {
+      enabled: true,
+    },
+    crossOrigin: {
+      trustedOrigins: allowedOrigins,
+    },
+    defaultCookieAttributes: {
+      sameSite: 'none',
+      secure: true,
+    },
+  },
+  session: {
+    cookieCache: {
+      enabled: true,
+      maxAge: 5 * 60,
+    },
+  },
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
@@ -26,7 +61,7 @@ export const auth = betterAuth({
     expiresIn: 24 * 60 * 60,
     autoSignInAfterVerification: false,
   },
-  trustedOrigins: ['http://localhost:3000'],
+  trustedOrigins: allowedOrigins,
   plugins: [
     openAPI(),
     customSession(async ({ user, session }) => {
