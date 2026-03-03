@@ -9,7 +9,8 @@ import { findUserRoles } from './user.service';
 // Testing env-vars-file deployment
 // Trigger rebuild v2
 // Hardcoded for production
-const BASE_URL = process.env.BETTER_AUTH_URL || 'https://backend-pos-508482854424.us-central1.run.app';
+const BASE_URL =
+  process.env.BETTER_AUTH_URL || 'https://backend-pos-508482854424.us-central1.run.app';
 const allowedOrigins = ['https://frontend-pos-508482854424.us-central1.run.app'];
 
 console.log('Better Auth baseURL:', BASE_URL);
