@@ -23,10 +23,14 @@ function getAllowedOrigins(): string[] {
 }
 
 const allowedOrigins = getAllowedOrigins();
+const baseUrl = process.env.BETTER_AUTH_URL || 'https://backend-pos-508482854424.us-central1.run.app';
+
+console.log('Better Auth baseURL:', baseUrl);
+console.log('Better Auth env url:', process.env.BETTER_AUTH_URL);
 
 export const auth = betterAuth({
-  url: process.env.BETTER_AUTH_URL,
-  baseURL: process.env.BETTER_AUTH_URL,
+  url: baseUrl,
+  baseURL: baseUrl,
   secret: process.env.BETTER_AUTH_SECRET,
   database: drizzleAdapter(db, {
     provider: 'pg',
@@ -34,7 +38,7 @@ export const auth = betterAuth({
   advanced: {
     useSecureCookies: true,
     crossSubDomainCookies: {
-      enabled: true,
+      enabled: false,
     },
     crossOrigin: {
       trustedOrigins: allowedOrigins,
