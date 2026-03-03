@@ -8,23 +8,9 @@ import { findUserRoles } from './user.service';
 // Fix: BETTER_AUTH_URL now uses actual Cloud Run URL
 // Testing env-vars-file deployment
 // Trigger rebuild v2
-function getAllowedOrigins(): string[] {
-  const defaultOrigins = ['http://localhost:3000', 'http://localhost:5173'];
-
-  const envOrigins = process.env.ALLOWED_ORIGINS;
-  if (!envOrigins) {
-    return defaultOrigins;
-  }
-
-  return envOrigins
-    .split(',')
-    .map((origin) => origin.trim())
-    .filter(Boolean);
-}
-
-// Hardcoded for production - Cloud Run URL
+// Hardcoded for production
 const BASE_URL = 'https://backend-pos-508482854424.us-central1.run.app';
-const allowedOrigins = getAllowedOrigins();
+const allowedOrigins = ['https://frontend-pos-508482854424.us-central1.run.app'];
 
 console.log('Better Auth baseURL:', BASE_URL);
 
