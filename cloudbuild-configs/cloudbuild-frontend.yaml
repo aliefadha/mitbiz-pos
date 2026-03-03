@@ -27,7 +27,6 @@ substitutions:
   _REGION: us-central1
   _PROJECT_ID: dulcet-outlook-479500-k3
   _IMAGE_NAME: frontend-pos
-  _SERVICE_NAME: frontend-pos
 
 images:
   - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_IMAGE_NAME}:${COMMIT_SHA}'
