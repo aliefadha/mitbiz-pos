@@ -26,6 +26,7 @@ async function bootstrap() {
 
   const allowedOrigins = getAllowedOrigins();
   console.log('CORS allowed origins:', allowedOrigins);
+  console.log('ALLOWED_ORIGINS env raw:', process.env.ALLOWED_ORIGINS);
 
   app.enableCors({
     origin: allowedOrigins,

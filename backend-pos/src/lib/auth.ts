@@ -17,12 +17,17 @@ const getAllowedOrigins = (): string[] => {
   if (!envOrigins) {
     return defaultOrigins;
   }
-  return envOrigins.split(',').map((origin) => origin.trim()).filter(Boolean);
+  return envOrigins
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
 };
 
 const allowedOrigins = getAllowedOrigins();
 
 console.log('Better Auth baseURL:', BASE_URL);
+console.log('Better Auth allowed origins:', allowedOrigins);
+console.log('ALLOWED_ORIGINS env raw:', process.env.ALLOWED_ORIGINS);
 
 export const auth = betterAuth({
   url: BASE_URL,
