@@ -6,17 +6,17 @@ import { emailService } from './email.service';
 import { findUserRoles } from './user.service';
 
 function getAllowedOrigins(): string[] {
-  const defaultOrigins = [
-    'http://localhost:3000',
-    'http://localhost:5173',
-  ];
-  
+  const defaultOrigins = ['http://localhost:3000', 'http://localhost:5173'];
+
   const envOrigins = process.env.ALLOWED_ORIGINS;
   if (!envOrigins) {
     return defaultOrigins;
   }
-  
-  return envOrigins.split(',').map(origin => origin.trim()).filter(Boolean);
+
+  return envOrigins
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
 }
 
 const allowedOrigins = getAllowedOrigins();

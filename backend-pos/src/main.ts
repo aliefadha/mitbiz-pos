@@ -4,17 +4,17 @@ import { apiReference } from '@scalar/nestjs-api-reference';
 import { AppModule } from './app.module';
 
 function getAllowedOrigins(): string[] {
-  const defaultOrigins = [
-    'http://localhost:3000',
-    'http://localhost:5173',
-  ];
-  
+  const defaultOrigins = ['http://localhost:3000', 'http://localhost:5173'];
+
   const envOrigins = process.env.ALLOWED_ORIGINS;
   if (!envOrigins) {
     return defaultOrigins;
   }
-  
-  return envOrigins.split(',').map(origin => origin.trim()).filter(Boolean);
+
+  return envOrigins
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
 }
 
 async function bootstrap() {

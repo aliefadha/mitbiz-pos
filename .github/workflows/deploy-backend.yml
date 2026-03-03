@@ -38,10 +38,10 @@ jobs:
 
       - name: Enable required APIs
         run: |
-          gcloud services enable run.googleapis.com
-          gcloud services enable artifactregistry.googleapis.com
-          gcloud services enable cloudbuild.googleapis.com
-          gcloud services enable secretmanager.googleapis.com
+          gcloud services enable run.googleapis.com || true
+          gcloud services enable artifactregistry.googleapis.com || true
+          gcloud services enable cloudbuild.googleapis.com || true
+          gcloud services enable secretmanager.googleapis.com || true
 
       - name: Create Artifact Registry repository if not exists
         run: |
@@ -55,7 +55,7 @@ jobs:
         run: |
           cd backend-pos
           gcloud builds submit \
-            --config=../.github/workflows/cloudbuild-backend.yaml \
+            --config=../cloudbuild-configs/cloudbuild-backend.yaml \
             --substitutions=_REGION=${{ env.REGION }},_PROJECT_ID=${{ env.PROJECT_ID }},_IMAGE_NAME=${{ env.IMAGE_NAME }},_SERVICE_NAME=${{ env.SERVICE_NAME }}
 
       - name: Deploy to Cloud Run

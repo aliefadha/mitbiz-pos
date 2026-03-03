@@ -55,6 +55,10 @@ gcloud projects add-iam-policy-binding dulcet-outlook-479500-k3 \
   --member="serviceAccount:github-actions@dulcet-outlook-479500-k3.iam.gserviceaccount.com" \
   --role="roles/serviceusage.serviceUsageConsumer"
 
+gcloud projects add-iam-policy-binding dulcet-outlook-479500-k3 \
+  --member="serviceAccount:github-actions@dulcet-outlook-479500-k3.iam.gserviceaccount.com" \
+  --role="roles/serviceusage.serviceUsageAdmin"
+
 # Allow service account to act as itself
 gcloud iam service-accounts add-iam-policy-binding \
   github-actions@dulcet-outlook-479500-k3.iam.gserviceaccount.com \
