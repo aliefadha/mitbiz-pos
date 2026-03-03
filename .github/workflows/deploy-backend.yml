@@ -60,6 +60,13 @@ jobs:
             --service-account=projects/dulcet-outlook-479500-k3/serviceAccounts/cloudbuild@dulcet-outlook-479500-k3.iam.gserviceaccount.com \
             --gcs-log-dir=gs://dulcet-outlook-479500-k3_cloudbuild/logs
 
+      - name: Create env vars file
+        run: |
+          cat > env-vars.yaml << 'EOF'
+          ALLOWED_ORIGINS: "https://frontend-pos-508482854424.us-central1.run.app,https://mitbizpos.baskograndmall.com,http://localhost:3000"
+          API_PREFIX: "/api"
+          EOF
+
       - name: Deploy to Cloud Run
         id: deploy
         run: |
@@ -74,7 +81,7 @@ jobs:
             --max-instances 10 \
             --min-instances 0 \
             --set-secrets=DATABASE_URL=database-url:latest,BETTER_AUTH_SECRET=better-auth-secret:latest,JWT_SECRET=jwt-secret:latest \
-            --set-env-vars="ALLOWED_ORIGINS=https://frontend-pos-508482854424.us-central1.run.app,https://mitbizpos.baskograndmall.com,http://localhost:3000,API_PREFIX=/api"
+            --env-vars-file=env-vars.yaml
           
           # Get the deployed URL
           SERVICE_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} --region=${{ env.REGION }} --format='value(status.url)')
