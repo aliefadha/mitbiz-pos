@@ -26,6 +26,7 @@ const allowedOrigins = getAllowedOrigins();
 
 export const auth = betterAuth({
   url: process.env.BETTER_AUTH_URL,
+  baseURL: process.env.BETTER_AUTH_URL,
   secret: process.env.BETTER_AUTH_SECRET,
   database: drizzleAdapter(db, {
     provider: 'pg',
