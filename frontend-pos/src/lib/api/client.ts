@@ -1,4 +1,4 @@
-const API_URL = 'https://backend-pos-508482854424.us-central1.run.app/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 interface FetchOptions extends RequestInit {
   data?: unknown;

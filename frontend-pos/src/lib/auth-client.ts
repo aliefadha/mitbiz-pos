@@ -1,8 +1,10 @@
 import { customSessionClient, inferAdditionalFields } from 'better-auth/client/plugins';
 import { createAuthClient } from 'better-auth/react';
 
+const baseApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+
 export const authClient = createAuthClient({
-  baseURL: `https://backend-pos-508482854424.us-central1.run.app/api/auth`, // Uses nginx proxy
+  baseURL: `${baseApiUrl}/auth`, // Uses nginx proxy
   fetchOptions: {
     credentials: 'include',
   },

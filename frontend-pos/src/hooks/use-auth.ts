@@ -79,7 +79,7 @@ export function useLogin() {
       const { data, error } = await signIn.email({
         email: input.email,
         password: input.password,
-        callbackURL: 'https://frontend-pos-508482854424.us-central1.run.app/dashboard',
+        callbackURL: `${import.meta.env.VITE_APP_URL || 'http://localhost:3000'}/dashboard`,
       });
 
       if (error) {
