@@ -73,7 +73,7 @@ jobs:
             --max-instances 10 \
             --min-instances 0 \
             --set-secrets=DATABASE_URL=database-url:latest,BETTER_AUTH_SECRET=better-auth-secret:latest,JWT_SECRET=jwt-secret:latest \
-            --set-env-vars="BETTER_AUTH_URL=https://${{ env.SERVICE_NAME }}-${{ env.REGION }}-a.run.app,ALLOWED_ORIGINS=https://frontend-pos-508482854424.us-central1.run.app;https://mitbizpos.baskograndmall.com;http://localhost:3000,API_PREFIX=/api"
+            --set-env-vars="BETTER_AUTH_URL=https://${{ env.SERVICE_NAME }}-${{ env.REGION }}-a.run.app,ALLOWED_ORIGINS=https://frontend-pos-508482854424.us-central1.run.app,https://mitbizpos.baskograndmall.com,http://localhost:3000,API_PREFIX=/api"
 
       - name: Show deployed URL
         run: |
