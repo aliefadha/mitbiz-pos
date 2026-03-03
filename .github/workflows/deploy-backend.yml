@@ -94,4 +94,4 @@ jobs:
           echo "Setting BETTER_AUTH_URL to: $SERVICE_URL"
           gcloud run services update ${{ env.SERVICE_NAME }} \
             --region ${{ env.REGION }} \
-            --set-env-vars="BETTER_AUTH_URL=$SERVICE_URL"
+            --update-env-vars="BETTER_AUTH_URL=$SERVICE_URL"
