@@ -37,6 +37,7 @@ export const auth = betterAuth({
     provider: 'pg',
   }),
   advanced: {
+    cookiePrefix: 'mitbiz',
     useSecureCookies: true,
     crossOrigin: {
       trustedOrigins: allowedOrigins,
