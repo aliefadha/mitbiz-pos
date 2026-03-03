@@ -55,7 +55,7 @@ jobs:
           cd frontend-pos
           gcloud builds submit \
             --config=../cloudbuild-configs/cloudbuild-frontend.yaml \
-            --substitutions=_REGION=${{ env.REGION }},_PROJECT_ID=${{ env.PROJECT_ID }},_IMAGE_NAME=${{ env.IMAGE_NAME }}
+            --substitutions=_REGION=${{ env.REGION }},_PROJECT_ID=${{ env.PROJECT_ID }},_IMAGE_NAME=${{ env.IMAGE_NAME }},COMMIT_SHA=${{ github.sha }}
 
       - name: Deploy to Cloud Run
         run: |
