@@ -67,7 +67,6 @@ export const auth = betterAuth({
     expiresIn: 24 * 60 * 60,
     autoSignInAfterVerification: false,
   },
-  trustedOrigins: allowedOrigins,
   plugins: [
     openAPI(),
     customSession(async ({ user, session }) => {
