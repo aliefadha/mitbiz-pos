@@ -3,21 +3,21 @@ steps:
     args:
       - 'build'
       - '--tag'
-      - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_IMAGE_NAME}/${_SERVICE_NAME}:${COMMIT_SHA}'
+      - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_IMAGE_NAME}:${COMMIT_SHA}'
       - '--tag'
-      - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_IMAGE_NAME}/${_SERVICE_NAME}:latest'
+      - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_IMAGE_NAME}:latest'
       - '.'
     dir: 'backend-pos'
 
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
-      - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_IMAGE_NAME}/${_SERVICE_NAME}:${COMMIT_SHA}'
+      - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_IMAGE_NAME}:${COMMIT_SHA}'
 
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
-      - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_IMAGE_NAME}/${_SERVICE_NAME}:latest'
+      - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_IMAGE_NAME}:latest'
 
 substitutions:
   _REGION: us-central1
@@ -26,5 +26,5 @@ substitutions:
   _SERVICE_NAME: backend-pos
 
 images:
-  - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_IMAGE_NAME}/${_SERVICE_NAME}:${COMMIT_SHA}'
-  - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_IMAGE_NAME}/${_SERVICE_NAME}:latest'
+  - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_IMAGE_NAME}:${COMMIT_SHA}'
+  - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_IMAGE_NAME}:latest'
