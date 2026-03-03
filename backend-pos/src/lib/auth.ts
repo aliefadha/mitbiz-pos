@@ -44,13 +44,13 @@ export const auth = betterAuth({
     defaultCookieAttributes: {
       sameSite: 'none',
       secure: true,
+      path: '/',
     },
   },
   trustedOrigins: allowedOrigins,
   session: {
     cookieCache: {
-      enabled: true,
-      maxAge: 5 * 60,
+      enabled: false,
     },
   },
   emailAndPassword: {
