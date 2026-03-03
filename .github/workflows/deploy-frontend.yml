@@ -56,7 +56,7 @@ jobs:
           gcloud builds submit \
             --config=../cloudbuild-configs/cloudbuild-frontend.yaml \
             --substitutions=_REGION=${{ env.REGION }},_PROJECT_ID=${{ env.PROJECT_ID }},_IMAGE_NAME=${{ env.IMAGE_NAME }},COMMIT_SHA=${{ github.sha }} \
-            --service-account=cloudbuild@dulcet-outlook-479500-k3.iam.gserviceaccount.com \
+            --service-account=projects/dulcet-outlook-479500-k3/serviceAccounts/cloudbuild@dulcet-outlook-479500-k3.iam.gserviceaccount.com \
             --gcs-log-dir=gs://dulcet-outlook-479500-k3_cloudbuild/logs
 
       - name: Deploy to Cloud Run
