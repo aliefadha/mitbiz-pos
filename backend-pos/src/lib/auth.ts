@@ -7,7 +7,7 @@ import { findUserRoles } from './user.service';
 
 // Fix: BETTER_AUTH_URL now uses actual Cloud Run URL
 // Testing env-vars-file deployment
-// Trigger rebuild
+// Trigger rebuild v2
 function getAllowedOrigins(): string[] {
   const defaultOrigins = ['http://localhost:3000', 'http://localhost:5173'];
 
