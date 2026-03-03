@@ -50,7 +50,8 @@ export const auth = betterAuth({
   trustedOrigins: allowedOrigins,
   session: {
     cookieCache: {
-      enabled: false,
+      enabled: true,
+      maxAge: 5 * 60,
     },
   },
   emailAndPassword: {
