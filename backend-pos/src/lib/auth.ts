@@ -5,6 +5,7 @@ import { customSession, openAPI } from 'better-auth/plugins';
 import { emailService } from './email.service';
 import { findUserRoles } from './user.service';
 
+// Fix: BETTER_AUTH_URL now uses actual Cloud Run URL
 function getAllowedOrigins(): string[] {
   const defaultOrigins = ['http://localhost:3000', 'http://localhost:5173'];
 
