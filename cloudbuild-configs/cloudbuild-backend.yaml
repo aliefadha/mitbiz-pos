@@ -7,7 +7,6 @@ steps:
       - '--tag'
       - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_IMAGE_NAME}:latest'
       - '.'
-    dir: 'backend-pos'
 
   - name: 'gcr.io/cloud-builders/docker'
     args:
