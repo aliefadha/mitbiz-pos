@@ -1,6 +1,7 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 // CI/CD test build - triggered at 2026-03-03
+// Testing image path fix
 interface FetchOptions extends RequestInit {
   data?: unknown;
 }
