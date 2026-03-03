@@ -22,15 +22,15 @@ function getAllowedOrigins(): string[] {
     .filter(Boolean);
 }
 
+// Hardcoded for production - Cloud Run URL
+const BASE_URL = 'https://backend-pos-508482854424.us-central1.run.app';
 const allowedOrigins = getAllowedOrigins();
-const baseUrl = process.env.BETTER_AUTH_URL || 'https://backend-pos-508482854424.us-central1.run.app';
 
-console.log('Better Auth baseURL:', baseUrl);
-console.log('Better Auth env url:', process.env.BETTER_AUTH_URL);
+console.log('Better Auth baseURL:', BASE_URL);
 
 export const auth = betterAuth({
-  url: baseUrl,
-  baseURL: baseUrl,
+  url: BASE_URL,
+  baseURL: BASE_URL,
   secret: process.env.BETTER_AUTH_SECRET,
   database: drizzleAdapter(db, {
     provider: 'pg',
