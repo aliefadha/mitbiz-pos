@@ -6,6 +6,8 @@ steps:
       - 'VITE_API_URL=https://backend-pos-508482854424.us-central1.run.app/api'
       - '--build-arg'
       - 'VITE_APP_URL=https://frontend-pos-508482854424.us-central1.run.app'
+      - '--build-arg'
+      - 'BACKEND_URL=${_BACKEND_URL}'
       - '--tag'
       - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_IMAGE_NAME}/${_IMAGE_NAME}:${COMMIT_SHA}'
       - '--tag'
@@ -26,6 +28,7 @@ substitutions:
   _REGION: us-central1
   _PROJECT_ID: dulcet-outlook-479500-k3
   _IMAGE_NAME: frontend-pos
+  _BACKEND_URL: backend-pos-508482854424.us-central1.run.app
 
 images:
   - '${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_IMAGE_NAME}/${_IMAGE_NAME}:${COMMIT_SHA}'

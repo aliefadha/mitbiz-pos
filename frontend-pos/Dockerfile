@@ -27,19 +27,22 @@ RUN npm run build
 # Stage 2: Production
 FROM nginx:alpine
 
-# Install dumb-init for proper signal handling and openssl for envsubst
-RUN apk add --no-cache dumb-init openssl
+# Install dumb-init for proper signal handling
+RUN apk add --no-cache dumb-init
 
 # Copy built application from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copy nginx configuration
-COPY nginx.conf.template /etc/nginx/conf.d/default.conf.template
+# Build arg for backend URL
+ARG BACKEND_URL
+ENV BACKEND_URL=$BACKEND_URL
+
+# Copy nginx configuration (with placeholders replaced at build time)
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Cloud Run sets PORT environment variable, default to 8080
 ENV PORT=8080
 ENV NODE_ENV=production
-ENV BACKEND_URL=${BACKEND_URL:-backend-pos-508482854424.us-central1.run.app}
 
 # Expose the port
 EXPOSE $PORT
@@ -51,5 +54,5 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
 
-# Substitute environment variables in nginx config and start nginx
-CMD /bin/sh -c "envsubst < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]

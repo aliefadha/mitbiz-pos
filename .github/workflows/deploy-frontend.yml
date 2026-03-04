@@ -55,7 +55,7 @@ jobs:
           cd frontend-pos
           gcloud builds submit \
             --config=../cloudbuild-configs/cloudbuild-frontend.yaml \
-            --substitutions=_REGION=${{ env.REGION }},_PROJECT_ID=${{ env.PROJECT_ID }},_IMAGE_NAME=${{ env.IMAGE_NAME }},COMMIT_SHA=${{ github.sha }} \
+            --substitutions=_REGION=${{ env.REGION }},_PROJECT_ID=${{ env.PROJECT_ID }},_IMAGE_NAME=${{ env.IMAGE_NAME }},_BACKEND_URL=${{ secrets.BACKEND_URL }},COMMIT_SHA=${{ github.sha }} \
             --service-account=projects/dulcet-outlook-479500-k3/serviceAccounts/cloudbuild@dulcet-outlook-479500-k3.iam.gserviceaccount.com \
             --gcs-log-dir=gs://dulcet-outlook-479500-k3_cloudbuild/logs
 
@@ -70,8 +70,7 @@ jobs:
             --memory 512Mi \
             --cpu 1 \
             --max-instances 10 \
-            --min-instances 0 \
-            --set-env-vars=BACKEND_URL=${{ secrets.BACKEND_URL }}
+            --min-instances 0
 
       - name: Show deployed URL
         run: |
