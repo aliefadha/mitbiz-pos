@@ -82,7 +82,6 @@ jobs:
             --min-instances 0 \
             --set-secrets=DATABASE_URL=database-url:latest,BETTER_AUTH_SECRET=better-auth-secret:latest,JWT_SECRET=jwt-secret:latest \
             --env-vars-file=env-vars.yaml \
-            --to-latest
           
           # Get the deployed URL
           SERVICE_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} --region=${{ env.REGION }} --format='value(status.url)')
