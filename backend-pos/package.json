@@ -29,6 +29,7 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@better-auth/drizzle-adapter": "^1.5.3",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.3",
     "@nestjs/core": "^11.0.1",
@@ -43,7 +44,7 @@
     "drizzle-orm": "^0.45.1",
     "nestjs-zod": "^5.1.1",
     "nodemailer": "^8.0.1",
-    "pg": "^8.18.0",
+    "pg": "^8.20.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "swagger-ui-express": "^5.0.1",
@@ -51,8 +52,8 @@
     "zod-validation-error": "^5.0.0"
   },
   "devDependencies": {
-    "@faker-js/faker": "^10.3.0",
     "@biomejs/biome": "^1.9.4",
+    "@faker-js/faker": "^10.3.0",
     "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.1",
@@ -61,7 +62,7 @@
     "@types/jest": "^30.0.0",
     "@types/node": "^22.10.7",
     "@types/nodemailer": "^7.0.10",
-    "@types/pg": "^8.16.0",
+    "@types/pg": "^8.18.0",
     "@types/supertest": "^6.0.2",
     "drizzle-kit": "^0.31.9",
     "jest": "^30.0.0",

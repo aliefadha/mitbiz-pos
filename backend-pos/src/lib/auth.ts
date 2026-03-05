@@ -1,6 +1,7 @@
 import { db } from '@/db';
+import * as schema from '@/db/index';
 import { betterAuth } from 'better-auth';
-import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { customSession, openAPI } from 'better-auth/plugins';
 import { emailService } from './email.service';
 import { findUserRoles } from './user.service';
@@ -35,6 +36,7 @@ export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET,
   database: drizzleAdapter(db, {
     provider: 'pg',
+    schema,
   }),
   advanced: {
     cookiePrefix: 'mitbiz',
