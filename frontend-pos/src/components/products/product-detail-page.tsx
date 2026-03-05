@@ -18,8 +18,7 @@ import {
 import {
   Form,
   FormControl,
-  FormField,
-  FormItem,
+  FormField, FormItem,
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
@@ -688,8 +687,8 @@ export function ProductDetailPage() {
                   <span className="font-medium">
                     {stocks.length > 0
                       ? (stocks.find((s) =>
-                          selectedOutlet ? s.outletId === selectedOutlet.id : true
-                        )?.quantity ?? 0)
+                        selectedOutlet ? s.outletId === selectedOutlet.id : true
+                      )?.quantity ?? 0)
                       : 0}
                   </span>{' '}
                   menjadi{' '}
