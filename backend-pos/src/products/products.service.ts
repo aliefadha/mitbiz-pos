@@ -1,6 +1,7 @@
 import type { CurrentUserType } from '@/common/decorators/current-user.decorator';
 import { DB_CONNECTION } from '@/db/db.module';
 import { categories } from '@/db/schema/category-schema';
+import { discountProducts } from '@/db/schema/discount-schema';
 import { outlets } from '@/db/schema/outlet-schema';
 import { products } from '@/db/schema/product-schema';
 import { productStocks } from '@/db/schema/stock-schema';
@@ -201,6 +202,7 @@ export class ProductsService {
   }
 
   async update(id: string, data: UpdateProductDto, user: CurrentUserType) {
+    const { discountIds, ...productData } = data;
     const existingProduct = await this.findById(id, user);
 
     if (data.sku && data.sku !== existingProduct.sku) {
@@ -231,11 +233,27 @@ export class ProductsService {
     const [product] = await this.db
       .update(products)
       .set({
-        ...data,
+        ...productData,
         updatedAt: new Date(),
       })
       .where(eq(products.id, id))
       .returning();
+
+    // Update discount associations if discountIds provided
+    if (discountIds !== undefined) {
+      // Delete existing associations
+      await this.db.delete(discountProducts).where(eq(discountProducts.productId, id));
+
+      // Insert new associations
+      if (discountIds.length > 0) {
+        await this.db.insert(discountProducts).values(
+          discountIds.map(discountId => ({
+            discountId,
+            productId: id,
+          }))
+        );
+      }
+    }
 
     return product;
   }

@@ -30,6 +30,7 @@ export const UpdateProductSchema = z.object({
   unit: z.string().max(20).optional(),
   minStockLevel: z.number().int().min(0).optional(),
   isActive: z.boolean().optional(),
+  discountIds: z.array(z.string().min(1)).optional(),
 });
 
 export const ProductIdSchema = z.object({

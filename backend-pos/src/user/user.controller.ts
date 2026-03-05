@@ -15,10 +15,10 @@ import {
   UsePipes,
 } from '@nestjs/common';
 
-import { asc, eq } from 'drizzle-orm';
-import type { Request as ExpressRequest } from 'express';
 import { AuthService } from '@thallesp/nestjs-better-auth';
 import { fromNodeHeaders } from 'better-auth/node';
+import { asc, eq } from 'drizzle-orm';
+import type { Request as ExpressRequest } from 'express';
 import { CreateUserDto, CreateUserSchema, UserQueryDto, UserQuerySchema } from './dto';
 import { UserService } from './user.service';
 

@@ -1,15 +1,15 @@
 import type { CurrentUserType } from '@/common/decorators/current-user.decorator';
 import { DB_CONNECTION } from '@/db/db.module';
-import { discounts } from '@/db/schema/discount-schema';
+import { discountProducts, discounts } from '@/db/schema/discount-schema';
 import { tenants } from '@/db/schema/tenant-schema';
 import type { DrizzleDB } from '@/db/type';
 import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { SQL, and, desc, eq, like, or, sql } from 'drizzle-orm';
+import { SQL, and, asc, eq, inArray, like, or, sql } from 'drizzle-orm';
 import { CreateDiscountDto, DiscountQueryDto, UpdateDiscountDto } from './dto';
 
 @Injectable()
 export class DiscountsService {
-  constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) {}
+  constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) { }
 
   async findAll(query: DiscountQueryDto) {
     const { page = 1, limit = 10, search, isActive, tenantId } = query;
@@ -38,7 +38,7 @@ export class DiscountsService {
         .where(whereClause)
         .limit(limit)
         .offset(offset)
-        .orderBy(desc(discounts.createdAt)),
+        .orderBy(asc(discounts.createdAt)),
       this.db.select({ count: sql<number>`count(*)` }).from(discounts).where(whereClause),
     ]);
 
@@ -60,6 +60,11 @@ export class DiscountsService {
       where: eq(discounts.id, id),
       with: {
         tenant: true,
+        products: {
+          with: {
+            product: true,
+          },
+        },
       },
     });
 
@@ -81,6 +86,8 @@ export class DiscountsService {
   }
 
   async create(data: CreateDiscountDto, user: CurrentUserType) {
+    const { productIds, ...discountData } = data;
+
     const tenant = await this.db.query.tenants.findFirst({
       where: eq(tenants.id, data.tenantId),
     });
@@ -93,12 +100,23 @@ export class DiscountsService {
       throw new ForbiddenException('You do not have permission to create discounts in this tenant');
     }
 
-    const [discount] = await this.db.insert(discounts).values(data).returning();
+    const [discount] = await this.db.insert(discounts).values(discountData).returning();
+
+    // Insert into join table if productIds provided
+    if (productIds && productIds.length > 0) {
+      await this.db.insert(discountProducts).values(
+        productIds.map(productId => ({
+          discountId: discount.id,
+          productId,
+        }))
+      );
+    }
 
     return discount;
   }
 
   async update(id: string, data: UpdateDiscountDto, user: CurrentUserType) {
+    const { productIds, ...discountData } = data;
     const existingDiscount = await this.findById(id, user);
 
     if (user.role === 'owner') {
@@ -114,11 +132,27 @@ export class DiscountsService {
     const [discount] = await this.db
       .update(discounts)
       .set({
-        ...data,
+        ...discountData,
         updatedAt: new Date(),
       })
       .where(eq(discounts.id, id))
       .returning();
+
+    // Update product associations if productIds provided
+    if (productIds !== undefined) {
+      // Delete existing associations
+      await this.db.delete(discountProducts).where(eq(discountProducts.discountId, id));
+
+      // Insert new associations
+      if (productIds.length > 0) {
+        await this.db.insert(discountProducts).values(
+          productIds.map(productId => ({
+            discountId: id,
+            productId,
+          }))
+        );
+      }
+    }
 
     return discount;
   }

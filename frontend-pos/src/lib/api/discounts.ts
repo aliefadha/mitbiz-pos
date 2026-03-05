@@ -1,5 +1,16 @@
 import { fetchApi } from './client';
 
+export interface DiscountProduct {
+  id: string;
+  discountId: string;
+  productId: string;
+  product: {
+    id: string;
+    nama: string;
+    sku: string;
+  };
+}
+
 export interface Discount {
   id: string;
   tenantId: string;
@@ -7,7 +18,7 @@ export interface Discount {
   nama: string;
   rate: string;
   scope: 'product' | 'transaction';
-  isGlobal: boolean;
+  level: 'tenant' | 'outlet';
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -15,24 +26,27 @@ export interface Discount {
     id: string;
     nama: string;
   };
+  products?: DiscountProduct[];
 }
 
 export interface CreateDiscountDto {
   tenantId: string;
-  outletId?: string;
+  outletId?: string | null;
+  productIds?: string[];
   nama: string;
   rate: string;
   scope?: 'product' | 'transaction';
-  isGlobal?: boolean;
+  level?: 'tenant' | 'outlet';
   isActive?: boolean;
 }
 
 export interface UpdateDiscountDto {
   outletId?: string | null;
+  productIds?: string[];
   nama?: string;
   rate?: string;
   scope?: 'product' | 'transaction';
-  isGlobal?: boolean;
+  level?: 'tenant' | 'outlet';
   isActive?: boolean;
 }
 

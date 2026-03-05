@@ -1,6 +1,7 @@
 import { relations, sql } from 'drizzle-orm';
 import { boolean, decimal, integer, pgEnum, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 import { categories } from './category-schema';
+import { discountProducts } from './discount-schema';
 import { orderItems } from './order-item-schema';
 import { stockAdjustments } from './stock-adjustment-schema';
 import { productStocks } from './stock-schema';
@@ -43,4 +44,5 @@ export const productsRelations = relations(products, ({ one, many }) => ({
   stocks: many(productStocks),
   adjustments: many(stockAdjustments),
   orderItems: many(orderItems),
+  discountProducts: many(discountProducts),
 }));

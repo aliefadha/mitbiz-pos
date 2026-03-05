@@ -3,7 +3,7 @@ import { roles, user } from '@/db/schema';
 import { tenants } from '@/db/schema/tenant-schema';
 import type { DrizzleDB } from '@/db/type';
 import { auth } from '@/lib/auth';
-import { Inject, Injectable, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Inject, Injectable } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import type { CreateUserDto } from './dto';
 

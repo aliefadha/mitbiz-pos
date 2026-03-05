@@ -39,7 +39,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useTenant } from '@/contexts/tenant-context';
 import {
   type CreateDiscountDto,
   type Discount,
@@ -47,12 +46,13 @@ import {
   type UpdateDiscountDto,
 } from '@/lib/api/discounts';
 import { outletsApi } from '@/lib/api/outlets';
+import { useSession } from '@/lib/auth-client';
 
 const formSchema = z.object({
   nama: z.string().min(1, 'Nama diskon wajib diisi'),
   rate: z.string().min(1, 'Tarif diskon wajib diisi'),
   scope: z.enum(['product', 'transaction']),
-  taxLevel: z.enum(['tenant', 'outlet']),
+  level: z.enum(['tenant', 'outlet']),
   outletId: z.string().optional(),
   isActive: z.boolean().optional(),
 });
@@ -67,27 +67,26 @@ export function DiscountPage() {
       nama: '',
       rate: '',
       scope: 'transaction',
-      taxLevel: 'tenant',
+      level: 'tenant',
       isActive: true,
     },
   });
 
-  const taxLevelValue = form.watch('taxLevel');
+  const levelValue = form.watch('level');
 
-  const { selectedTenant: contextSelectedTenant } = useTenant();
-
-  const effectiveTenantId = contextSelectedTenant?.id;
+  const { data: session } = useSession();
+  const tenantId = session?.user?.tenantId;
 
   const { data, isLoading } = useQuery({
-    queryKey: ['discounts', effectiveTenantId],
-    queryFn: () => discountsApi.getAll({ tenantId: effectiveTenantId }),
-    enabled: !!effectiveTenantId,
+    queryKey: ['discounts', tenantId],
+    queryFn: () => discountsApi.getAll({ tenantId }),
+    enabled: !!tenantId,
   });
 
   const { data: outletsData } = useQuery({
-    queryKey: ['outlets', effectiveTenantId],
-    queryFn: () => outletsApi.getAll({ tenantId: effectiveTenantId }),
-    enabled: !!effectiveTenantId,
+    queryKey: ['outlets', tenantId],
+    queryFn: () => outletsApi.getAll({ tenantId }),
+    enabled: !!tenantId,
   });
 
   const outlets = outletsData?.data ?? [];
@@ -134,7 +133,7 @@ export function DiscountPage() {
       nama: '',
       rate: '',
       scope: 'transaction',
-      taxLevel: 'tenant',
+      level: 'tenant',
       outletId: undefined,
       isActive: true,
     });
@@ -147,7 +146,7 @@ export function DiscountPage() {
       nama: discount.nama,
       rate: discount.rate,
       scope: discount.scope,
-      taxLevel: discount.isGlobal ? 'tenant' : 'outlet',
+      level: discount.level,
       outletId: discount.outletId || undefined,
       isActive: discount.isActive,
     });
@@ -167,8 +166,8 @@ export function DiscountPage() {
       nama: values.nama,
       rate: values.rate,
       scope: values.scope,
-      isGlobal: values.taxLevel === 'tenant',
-      outletId: values.taxLevel === 'outlet' ? values.outletId : null,
+      level: values.level,
+      outletId: values.level === 'outlet' ? values.outletId : null,
       isActive: values.isActive,
     };
 
@@ -180,7 +179,7 @@ export function DiscountPage() {
     } else {
       createMutation.mutate({
         ...data,
-        tenantId: effectiveTenantId!,
+        tenantId: tenantId!,
       } as CreateDiscountDto);
     }
   });
@@ -247,7 +246,7 @@ export function DiscountPage() {
                     )}
                   </TableCell>
                   <TableCell>
-                    {discount.isGlobal ? (
+                    {discount.level === 'tenant' ? (
                       <span className="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-700">
                         Tenant
                       </span>
@@ -258,7 +257,7 @@ export function DiscountPage() {
                     )}
                   </TableCell>
                   <TableCell>
-                    {discount.isGlobal
+                    {discount.level === 'tenant'
                       ? '-'
                       : outlets.find((o) => o.id === discount.outletId)?.nama || '-'}
                   </TableCell>
@@ -347,9 +346,10 @@ export function DiscountPage() {
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
-                name="taxLevel"
+                name="level"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Level Diskon</FormLabel>
@@ -372,7 +372,7 @@ export function DiscountPage() {
                   </FormItem>
                 )}
               />
-              {taxLevelValue === 'outlet' && (
+              {levelValue === 'outlet' && (
                 <FormField
                   control={form.control}
                   name="outletId"
@@ -420,7 +420,7 @@ export function DiscountPage() {
                 <Button
                   type="submit"
                   disabled={
-                    createMutation.isPending || updateMutation.isPending || !effectiveTenantId
+                    createMutation.isPending || updateMutation.isPending || !tenantId
                   }
                 >
                   {editingDiscount ? 'Simpan' : 'Buat'}

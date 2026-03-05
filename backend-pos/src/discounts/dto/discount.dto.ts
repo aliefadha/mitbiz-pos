@@ -3,22 +3,26 @@ import { z } from 'zod';
 
 export const discountScope = z.enum(['product', 'transaction']);
 
+export const discountLevel = z.enum(['tenant', 'outlet']);
+
 export const CreateDiscountSchema = z.object({
   tenantId: z.string().min(1, 'Tenant ID is required'),
   outletId: z.string().min(1).optional().nullable(),
+  productIds: z.array(z.string().min(1)).optional(),
   nama: z.string().min(1, 'Discount name is required').max(255),
   rate: z.string().min(1, 'Discount rate is required'),
   scope: discountScope.default('transaction'),
-  isGlobal: z.boolean().default(false),
+  level: discountLevel.default('tenant'),
   isActive: z.boolean().default(true),
 });
 
 export const UpdateDiscountSchema = z.object({
   outletId: z.string().min(1).optional().nullable(),
+  productIds: z.array(z.string().min(1)).optional(),
   nama: z.string().min(1).max(255).optional(),
   rate: z.string().min(1).optional(),
   scope: discountScope.optional(),
-  isGlobal: z.boolean().optional(),
+  level: discountLevel.optional(),
   isActive: z.boolean().optional(),
 });
 
