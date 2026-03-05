@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import {
   Dialog,
   DialogContent,
@@ -42,12 +43,7 @@ import {
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { categoriesApi } from '@/lib/api/categories';
-import {
-  type CreateProductDto,
-  type Product,
-  productsApi,
-  type UpdateProductDto,
-} from '@/lib/api/products';
+import { type Product, productsApi, type UpdateProductDto } from '@/lib/api/products';
 import { useSession } from '@/lib/auth-client';
 
 const formSchema = z.object({
@@ -69,7 +65,7 @@ export function ProductPage() {
   const navigate = useNavigate();
   const { data: session } = useSession();
   const tenantId = session?.user?.tenantId;
-  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('');
@@ -110,23 +106,11 @@ export function ProductPage() {
     enabled: !!tenantId,
   });
 
-  const createMutation = useMutation({
-    mutationFn: (data: CreateProductDto) => productsApi.create(data),
-    onSuccess: () => {
-      setCreateModalOpen(false);
-      form.reset();
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-    },
-    onError: (error: Error) => {
-      alert(error.message || 'Failed to create product');
-    },
-  });
-
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateProductDto }) =>
       productsApi.update(id, data),
     onSuccess: () => {
-      setCreateModalOpen(false);
+      setEditModalOpen(false);
       setEditingProduct(null);
       form.reset();
       queryClient.invalidateQueries({ queryKey: ['products'] });
@@ -147,21 +131,7 @@ export function ProductPage() {
   });
 
   const handleCreate = () => {
-    setEditingProduct(null);
-    form.reset({
-      sku: '',
-      barcode: '',
-      nama: '',
-      deskripsi: '',
-      categoryId: '',
-      tipe: 'barang',
-      hargaBeli: '0',
-      hargaJual: '0',
-      unit: 'pcs',
-      minStockLevel: 0,
-      isActive: true,
-    });
-    setCreateModalOpen(true);
+    navigate({ to: '/products/new' });
   };
 
   const handleEdit = (product: Product) => {
@@ -179,7 +149,7 @@ export function ProductPage() {
       minStockLevel: product.minStockLevel || 0,
       isActive: product.isActive,
     });
-    setCreateModalOpen(true);
+    setEditModalOpen(true);
   };
 
   const handleDelete = (id: string) => {
@@ -203,11 +173,6 @@ export function ProductPage() {
         id: editingProduct.id,
         data: productData,
       });
-    } else {
-      createMutation.mutate({
-        ...productData,
-        tenantId: tenantId!,
-      } as CreateProductDto);
     }
   });
 
@@ -460,10 +425,10 @@ export function ProductPage() {
         </Card>
       </div>
 
-      <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
+      <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
         <DialogContent className="max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>{editingProduct ? 'Edit Produk' : 'Tambah Produk'}</DialogTitle>
+            <DialogTitle>Edit Produk</DialogTitle>
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -577,7 +542,11 @@ export function ProductPage() {
                     <FormItem>
                       <FormLabel>Harga Beli</FormLabel>
                       <FormControl>
-                        <Input type="number" placeholder="0" {...field} />
+                        <CurrencyInput
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="Rp 0"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -590,7 +559,11 @@ export function ProductPage() {
                     <FormItem>
                       <FormLabel>Harga Jual</FormLabel>
                       <FormControl>
-                        <Input type="number" placeholder="0" {...field} />
+                        <CurrencyInput
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="Rp 0"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -647,11 +620,8 @@ export function ProductPage() {
                 />
               )}
               <DialogFooter>
-                <Button
-                  type="submit"
-                  disabled={createMutation.isPending || updateMutation.isPending}
-                >
-                  {editingProduct ? 'Simpan' : 'Buat'}
+                <Button type="submit" disabled={updateMutation.isPending}>
+                  Simpan
                 </Button>
               </DialogFooter>
             </form>
