@@ -10,6 +10,8 @@
     "format": "biome format --write",
     "start": "nest start",
     "start:dev": "nest start --watch",
+    "start:expose": "nest start --watch --host 0.0.0.0",
+    "start:expose:3000": "nest start --watch --host 0.0.0.0 --port 3000",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/src/main",
     "lint": "biome lint",

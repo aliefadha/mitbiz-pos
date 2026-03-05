@@ -1,6 +1,6 @@
 import { db } from '@/db';
 import { betterAuth } from 'better-auth';
-import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { customSession, openAPI } from 'better-auth/plugins';
 import { emailService } from './email.service';
 import { findUserRoles } from './user.service';
@@ -48,7 +48,7 @@ export const auth = betterAuth({
       path: '/',
     },
   },
-  trustedOrigins: allowedOrigins,
+  trustedOrigins: ['*'],
   session: {
     cookieCache: {
       enabled: true,
