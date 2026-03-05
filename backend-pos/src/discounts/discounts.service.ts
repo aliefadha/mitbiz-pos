@@ -9,7 +9,7 @@ import { CreateDiscountDto, DiscountQueryDto, UpdateDiscountDto } from './dto';
 
 @Injectable()
 export class DiscountsService {
-  constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) { }
+  constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) {}
 
   async findAll(query: DiscountQueryDto) {
     const { page = 1, limit = 10, search, isActive, tenantId } = query;
@@ -105,10 +105,10 @@ export class DiscountsService {
     // Insert into join table if productIds provided
     if (productIds && productIds.length > 0) {
       await this.db.insert(discountProducts).values(
-        productIds.map(productId => ({
+        productIds.map((productId) => ({
           discountId: discount.id,
           productId,
-        }))
+        })),
       );
     }
 
@@ -146,10 +146,10 @@ export class DiscountsService {
       // Insert new associations
       if (productIds.length > 0) {
         await this.db.insert(discountProducts).values(
-          productIds.map(productId => ({
+          productIds.map((productId) => ({
             discountId: id,
             productId,
-          }))
+          })),
         );
       }
     }

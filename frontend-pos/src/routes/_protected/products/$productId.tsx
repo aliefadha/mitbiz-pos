@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { ProductDetailPage } from '@/components/products/product-detail-page';
 import { ErrorPage } from '@/components/error-page';
 import { ForbiddenPage } from '@/components/forbidden-page';
+import { ProductDetailPage } from '@/components/products/product-detail-page';
 import { checkPermission, ForbiddenError } from '@/lib/permissions';
 
 export const Route = createFileRoute('/_protected/products/$productId')({

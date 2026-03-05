@@ -419,9 +419,7 @@ export function DiscountPage() {
               <DialogFooter>
                 <Button
                   type="submit"
-                  disabled={
-                    createMutation.isPending || updateMutation.isPending || !tenantId
-                  }
+                  disabled={createMutation.isPending || updateMutation.isPending || !tenantId}
                 >
                   {editingDiscount ? 'Simpan' : 'Buat'}
                 </Button>

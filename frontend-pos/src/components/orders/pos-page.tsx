@@ -34,7 +34,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cashShiftsApi } from '@/lib/api/cash-shifts';
 import { categoriesApi } from '@/lib/api/categories';
 import { discountsApi } from '@/lib/api/discounts';
-import { ordersApi, type CreateOrderDto, type DiscountBreakdown } from '@/lib/api/orders';
+import { type CreateOrderDto, type DiscountBreakdown, ordersApi } from '@/lib/api/orders';
 import { paymentMethodsApi } from '@/lib/api/payment-methods';
 
 import { type Product, productsApi } from '@/lib/api/products';
@@ -142,11 +142,12 @@ export function PosPage() {
 
   const { data: discountsData } = useQuery({
     queryKey: ['discounts', tenantId, selectedOutletId],
-    queryFn: () => discountsApi.getAll({
-      tenantId,
-      outletId: selectedOutletId,
-      isActive: true,
-    }),
+    queryFn: () =>
+      discountsApi.getAll({
+        tenantId,
+        outletId: selectedOutletId,
+        isActive: true,
+      }),
     enabled: !!tenantId && !!selectedOutletId,
   });
 
@@ -205,7 +206,8 @@ export function PosPage() {
         jumlahPajak,
         discountBreakdown,
         total,
-        paymentMethod: paymentMethods.find(pm => pm.id === selectedPaymentMethodId)?.nama || 'Unknown',
+        paymentMethod:
+          paymentMethods.find((pm) => pm.id === selectedPaymentMethodId)?.nama || 'Unknown',
         amountPaid: Number(amountPaid),
         change,
         notes,
@@ -694,12 +696,16 @@ export function PosPage() {
                   <span>Total</span>
                   <span>{formatRupiah(total)}</span>
                 </div>
-                {paymentMethods.find(pm => pm.id === selectedPaymentMethodId)?.nama?.toLowerCase() === 'tunai' && amountPaid && change >= 0 && (
-                  <div className="flex justify-between font-bold text-lg text-green-600 bg-green-50 p-3 rounded-lg">
-                    <span>Kembalian</span>
-                    <span>{formatRupiah(change)}</span>
-                  </div>
-                )}
+                {paymentMethods
+                  .find((pm) => pm.id === selectedPaymentMethodId)
+                  ?.nama?.toLowerCase() === 'tunai' &&
+                  amountPaid &&
+                  change >= 0 && (
+                    <div className="flex justify-between font-bold text-lg text-green-600 bg-green-50 p-3 rounded-lg">
+                      <span>Kembalian</span>
+                      <span>{formatRupiah(change)}</span>
+                    </div>
+                  )}
               </div>
             </div>
 
@@ -757,7 +763,9 @@ export function PosPage() {
                 </Select>
               </div>
 
-              {paymentMethods.find(pm => pm.id === selectedPaymentMethodId)?.nama?.toLowerCase() === 'tunai' && (
+              {paymentMethods
+                .find((pm) => pm.id === selectedPaymentMethodId)
+                ?.nama?.toLowerCase() === 'tunai' && (
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Jumlah Bayar</label>
                   <Input
@@ -812,7 +820,11 @@ export function PosPage() {
             <Button
               onClick={handleCheckout}
               disabled={
-                createOrderMutation.isPending || (paymentMethods.find(pm => pm.id === selectedPaymentMethodId)?.nama?.toLowerCase() === 'tunai' && amountPaidNum < total)
+                createOrderMutation.isPending ||
+                (paymentMethods
+                  .find((pm) => pm.id === selectedPaymentMethodId)
+                  ?.nama?.toLowerCase() === 'tunai' &&
+                  amountPaidNum < total)
               }
             >
               {createOrderMutation.isPending ? 'Memproses...' : 'Simpan Pesanan'}

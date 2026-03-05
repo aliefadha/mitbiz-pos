@@ -247,10 +247,10 @@ export class ProductsService {
       // Insert new associations
       if (discountIds.length > 0) {
         await this.db.insert(discountProducts).values(
-          discountIds.map(discountId => ({
+          discountIds.map((discountId) => ({
             discountId,
             productId: id,
-          }))
+          })),
         );
       }
     }
