@@ -119,6 +119,11 @@ export class ProductsService {
       with: {
         tenant: true,
         category: true,
+        discountProducts: {
+          with: {
+            discount: true,
+          },
+        },
       },
     });
 

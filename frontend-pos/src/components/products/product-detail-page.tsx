@@ -45,10 +45,12 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTenant } from '@/contexts/tenant-context';
 import { categoriesApi } from '@/lib/api/categories';
+import { discountsApi } from '@/lib/api/discounts';
 import { productsApi, type UpdateProductDto } from '@/lib/api/products';
 import { stockAdjustmentsApi } from '@/lib/api/stock-adjustments';
 import { stocksApi } from '@/lib/api/stocks';
 import { useSession } from '@/lib/auth-client';
+import { Textarea } from '../ui/textarea';
 
 function formatRupiah(value: number | string): string {
   const num = typeof value === 'string' ? parseFloat(value) : value;
@@ -72,6 +74,7 @@ const editFormSchema = z.object({
   minStockLevel: z.number(),
   unit: z.string(),
   isActive: z.boolean(),
+  discountIds: z.array(z.string()).optional(),
 });
 
 export function ProductDetailPage() {
@@ -80,7 +83,7 @@ export function ProductDetailPage() {
   const queryClient = useQueryClient();
   const { selectedTenant, selectedOutlet } = useTenant();
   const { data: session } = useSession();
-  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [createStockModalOpen, setCreateStockModalOpen] = useState(false);
   const [createStockQuantity, setCreateStockQuantity] = useState(0);
   const [adjustmentReason, setAdjustmentReason] = useState('');
@@ -99,6 +102,7 @@ export function ProductDetailPage() {
       minStockLevel: 0,
       unit: 'pcs',
       isActive: true,
+      discountIds: [],
     },
   });
 
@@ -127,13 +131,28 @@ export function ProductDetailPage() {
     enabled: !!product?.tenantId,
   });
 
+  const { data: discountsData, isLoading: discountsLoading } = useQuery({
+    queryKey: ['discounts', product?.tenantId, 'product-scope'],
+    queryFn: () =>
+      discountsApi.getAll({
+        tenantId: product?.tenantId,
+        isActive: true,
+      }),
+    enabled: !!product?.tenantId,
+    select: (data) => ({
+      ...data,
+      data: data.data.filter((d) => d.scope === 'product'),
+    }),
+  });
+
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateProductDto }) =>
       productsApi.update(id, data),
     onSuccess: () => {
-      setEditModalOpen(false);
+      setIsEditing(false);
       editForm.reset();
       queryClient.invalidateQueries({ queryKey: ['product', productId] });
+      toast.success('Produk berhasil diupdate');
     },
     onError: (error: Error) => {
       toast.error(error.message);
@@ -174,7 +193,7 @@ export function ProductDetailPage() {
     },
   });
 
-  const isLoading = productLoading || stocksLoading || adjustmentsLoading;
+  const isLoading = productLoading || stocksLoading || adjustmentsLoading || discountsLoading;
 
   if (isLoading) {
     return (
@@ -199,6 +218,7 @@ export function ProductDetailPage() {
   const stocks = stocksData?.data || [];
   const adjustments = adjustmentsData?.data || [];
   const categories = categoriesData?.data || [];
+  const discounts = discountsData?.data || [];
 
   const handleEdit = () => {
     editForm.reset({
@@ -213,8 +233,14 @@ export function ProductDetailPage() {
       minStockLevel: product.minStockLevel || 0,
       unit: product.unit,
       isActive: product.isActive,
+      discountIds: product.discountProducts?.map((dp) => dp.discountId) || [],
     });
-    setEditModalOpen(true);
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    editForm.reset();
+    setIsEditing(false);
   };
 
   const getStockColor = (quantity: number) => {
@@ -245,68 +271,350 @@ export function ProductDetailPage() {
 
       <Card className="mb-6">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Detail Produk</CardTitle>
-          <Button variant="outline" onClick={handleEdit}>
-            <Edit2 className="mr-2 h-4 w-4" />
-            Ubah
-          </Button>
+          <CardTitle>{isEditing ? 'Edit Produk' : 'Detail Produk'}</CardTitle>
+          {!isEditing && (
+            <Button variant="outline" onClick={handleEdit}>
+              <Edit2 className="mr-2 h-4 w-4" />
+              Ubah
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <span className="text-gray-500">SKU:</span>{' '}
-              <code className="bg-gray-100 px-2 py-1 rounded">{product.sku}</code>
-            </div>
-            <div>
-              <span className="text-gray-500">Barcode:</span> {product.barcode || '-'}
-            </div>
-            <div>
-              <span className="text-gray-500">Nama:</span> {product.nama}
-            </div>
-            <div>
-              <span className="text-gray-500">Tipe:</span>{' '}
-              <span
-                className={`px-2 py-1 rounded text-xs capitalize ${getTypeColor(product.tipe)}`}
+          {isEditing ? (
+            <Form {...editForm}>
+              <form
+                onSubmit={editForm.handleSubmit((v) =>
+                  updateMutation.mutate({
+                    id: productId,
+                    data: {
+                      ...v,
+                      hargaBeli: v.hargaBeli || '0',
+                      hargaJual: v.hargaJual || '0',
+                      categoryId: v.categoryId ? v.categoryId : undefined,
+                    } as UpdateProductDto,
+                  })
+                )}
+                className="space-y-4"
               >
-                {product.tipe}
-              </span>
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={editForm.control}
+                    name="sku"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>SKU</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="barcode"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Barcode</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="nama"
+                    render={({ field }) => (
+                      <FormItem className="col-span-2">
+                        <FormLabel>Nama</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="categoryId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Kategori</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Pilih kategori" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {categories.map((cat) => (
+                              <SelectItem key={cat.id} value={cat.id.toString()}>
+                                {cat.nama}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="tipe"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tipe</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Pilih tipe" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="barang">Barang</SelectItem>
+                            <SelectItem value="jasa">Jasa</SelectItem>
+                            <SelectItem value="digital">Digital</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="hargaBeli"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Harga Beli</FormLabel>
+                        <FormControl>
+                          <CurrencyInput
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder="Rp 0"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="hargaJual"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Harga Jual</FormLabel>
+                        <FormControl>
+                          <CurrencyInput
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder="Rp 0"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="minStockLevel"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Minimum Stok</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            {...field}
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="unit"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Satuan</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="isActive"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 col-span-2">
+                        <div className="space-y-0.5">
+                          <FormLabel>Status Aktif</FormLabel>
+                        </div>
+                        <FormControl>
+                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="deskripsi"
+                    render={({ field }) => (
+                      <FormItem className="col-span-2">
+                        <FormLabel>Deskripsi</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} value={field.value || ''} rows={4} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="discountIds"
+                    render={({ field }) => (
+                      <FormItem className="col-span-2">
+                        <FormLabel>Diskon Produk</FormLabel>
+                        <div className="grid grid-cols-2 gap-3 mt-2">
+                          {discounts.length === 0 ? (
+                            <p className="text-sm text-gray-500 col-span-2">
+                              Tidak ada diskon produk tersedia
+                            </p>
+                          ) : (
+                            discounts.map((discount) => {
+                              const isSelected = field.value?.includes(discount.id);
+                              return (
+                                <div
+                                  key={discount.id}
+                                  onClick={() => {
+                                    const currentIds = field.value || [];
+                                    if (isSelected) {
+                                      field.onChange(currentIds.filter((id) => id !== discount.id));
+                                    } else {
+                                      field.onChange([...currentIds, discount.id]);
+                                    }
+                                  }}
+                                  className={`
+                                    relative p-4 rounded-lg border-2 cursor-pointer transition-all
+                                    ${
+                                      isSelected
+                                        ? 'border-gray-900 bg-gray-100'
+                                        : 'border-gray-200 bg-white hover:border-gray-400'
+                                    }
+                                  `}
+                                >
+                                  <div className="flex items-start justify-between">
+                                    <p className="font-semibold text-sm">{discount.nama}</p>
+                                    <div
+                                      className={`
+                                        w-6 h-6 rounded-full flex items-center justify-center
+                                        ${isSelected ? 'bg-gray-800 text-white' : 'bg-gray-200'}
+                                      `}
+                                    >
+                                      {isSelected ? (
+                                        <svg
+                                          className="w-4 h-4"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          viewBox="0 0 24 24"
+                                          aria-label="Selected"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M5 13l4 4L19 7"
+                                          />
+                                        </svg>
+                                      ) : null}
+                                    </div>
+                                  </div>
+                                  <div className="mt-3">
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-800">
+                                      {discount.rate}%
+                                    </span>
+                                  </div>
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="flex justify-end gap-2 pt-4">
+                  <Button type="button" variant="outline" onClick={handleCancelEdit}>
+                    Batal
+                  </Button>
+                  <Button type="submit" disabled={updateMutation.isPending}>
+                    Simpan
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          ) : (
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="text-gray-500">SKU:</span>{' '}
+                <code className="bg-gray-100 px-2 py-1 rounded">{product.sku}</code>
+              </div>
+              <div>
+                <span className="text-gray-500">Barcode:</span> {product.barcode || '-'}
+              </div>
+              <div>
+                <span className="text-gray-500">Nama:</span> {product.nama}
+              </div>
+              <div>
+                <span className="text-gray-500">Tipe:</span>{' '}
+                <span
+                  className={`px-2 py-1 rounded text-xs capitalize ${getTypeColor(product.tipe)}`}
+                >
+                  {product.tipe}
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-500">Kategori:</span> {product.category?.nama || '-'}
+              </div>
+              <div>
+                <span className="text-gray-500">Satuan:</span> {product.unit || '-'}
+              </div>
+              <div>
+                <span className="text-gray-500">Harga Beli:</span>{' '}
+                {product.hargaBeli ? formatRupiah(product.hargaBeli) : '-'}
+              </div>
+              <div>
+                <span className="text-gray-500">Harga Jual:</span> {formatRupiah(product.hargaJual)}
+              </div>
+              <div>
+                <span className="text-gray-500">Minimum Stok:</span> {product.minStockLevel}
+              </div>
+              <div>
+                <span className="text-gray-500">Status:</span>{' '}
+                <span
+                  className={`px-2 py-1 rounded text-xs ${product.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
+                >
+                  {product.isActive ? 'Aktif' : 'Nonaktif'}
+                </span>
+              </div>
+              <div className="col-span-2">
+                <span className="text-gray-500">Deskripsi:</span> {product.deskripsi || '-'}
+              </div>
+              <div>
+                <span className="text-gray-500">Dibuat:</span>{' '}
+                {new Date(product.createdAt).toLocaleString('id-ID')}
+              </div>
+              <div>
+                <span className="text-gray-500">Diupdate:</span>{' '}
+                {new Date(product.updatedAt).toLocaleString('id-ID')}
+              </div>
             </div>
-            <div>
-              <span className="text-gray-500">Kategori:</span> {product.category?.nama || '-'}
-            </div>
-            <div>
-              <span className="text-gray-500">Satuan:</span> {product.unit || '-'}
-            </div>
-            <div>
-              <span className="text-gray-500">Harga Beli:</span>{' '}
-              {product.hargaBeli ? formatRupiah(product.hargaBeli) : '-'}
-            </div>
-            <div>
-              <span className="text-gray-500">Harga Jual:</span> {formatRupiah(product.hargaJual)}
-            </div>
-            <div>
-              <span className="text-gray-500">Minimum Stok:</span> {product.minStockLevel}
-            </div>
-            <div>
-              <span className="text-gray-500">Status:</span>{' '}
-              <span
-                className={`px-2 py-1 rounded text-xs ${product.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
-              >
-                {product.isActive ? 'Aktif' : 'Nonaktif'}
-              </span>
-            </div>
-            <div className="col-span-2">
-              <span className="text-gray-500">Deskripsi:</span> {product.deskripsi || '-'}
-            </div>
-            <div>
-              <span className="text-gray-500">Dibuat:</span>{' '}
-              {new Date(product.createdAt).toLocaleString('id-ID')}
-            </div>
-            <div>
-              <span className="text-gray-500">Diupdate:</span>{' '}
-              {new Date(product.updatedAt).toLocaleString('id-ID')}
-            </div>
-          </div>
+          )}
         </CardContent>
       </Card>
 
@@ -354,6 +662,31 @@ export function ProductDetailPage() {
           </div>
         </CardContent>
       </Card>
+
+      {product.discountProducts && product.discountProducts.length > 0 && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Diskon</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {product.discountProducts.map((dp) => (
+                <div
+                  key={dp.id}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                >
+                  <div>
+                    <p className="font-medium">{dp.discount.nama}</p>
+                  </div>
+                  <span className="px-2 py-1 rounded-full text-xs bg-gray-200 text-gray-800">
+                    {dp.discount.rate}%
+                  </span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="relative">
         <CardContent>
@@ -473,198 +806,6 @@ export function ProductDetailPage() {
           )}
         </CardContent>
       </Card>
-
-      <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
-        <DialogContent className="max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Edit Produk</DialogTitle>
-          </DialogHeader>
-          <Form {...editForm}>
-            <div className="grid grid-cols-2 gap-4 py-4">
-              <FormField
-                control={editForm.control}
-                name="sku"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>SKU</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="barcode"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Barcode</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="nama"
-                render={({ field }) => (
-                  <FormItem className="col-span-2">
-                    <FormLabel>Nama</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="categoryId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Kategori</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Pilih kategori" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {categories.map((cat) => (
-                          <SelectItem key={cat.id} value={cat.id.toString()}>
-                            {cat.nama}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="tipe"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tipe</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Pilih tipe" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="barang">Barang</SelectItem>
-                        <SelectItem value="jasa">Jasa</SelectItem>
-                        <SelectItem value="digital">Digital</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="hargaBeli"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Harga Beli</FormLabel>
-                    <FormControl>
-                      <CurrencyInput
-                        value={field.value}
-                        onChange={field.onChange}
-                        placeholder="Rp 0"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="hargaJual"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Harga Jual</FormLabel>
-                    <FormControl>
-                      <CurrencyInput
-                        value={field.value}
-                        onChange={field.onChange}
-                        placeholder="Rp 0"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="minStockLevel"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Minimum Stok</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="unit"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Satuan</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="isActive"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between">
-                    <FormLabel>Status</FormLabel>
-                    <FormControl>
-                      <Switch checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </div>
-            <DialogFooter>
-              <Button
-                type="button"
-                onClick={editForm.handleSubmit((v) =>
-                  updateMutation.mutate({
-                    id: productId,
-                    data: {
-                      ...v,
-                      hargaBeli: v.hargaBeli || '0',
-                      hargaJual: v.hargaJual || '0',
-                      categoryId: v.categoryId ? v.categoryId : undefined,
-                    } as UpdateProductDto,
-                  })
-                )}
-                disabled={updateMutation.isPending}
-              >
-                Simpan
-              </Button>
-            </DialogFooter>
-          </Form>
-        </DialogContent>
-      </Dialog>
 
       <Dialog open={createStockModalOpen} onOpenChange={setCreateStockModalOpen}>
         <DialogContent className="max-[400px]">

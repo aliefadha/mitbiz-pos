@@ -9,6 +9,20 @@ export interface Category {
   updatedAt: Date;
 }
 
+export interface ProductDiscount {
+  id: string;
+  discountId: string;
+  productId: string;
+  discount: {
+    id: string;
+    nama: string;
+    rate: string;
+    scope: 'product' | 'transaction';
+    level: 'tenant' | 'outlet';
+    isActive: boolean;
+  };
+}
+
 export interface Product {
   id: string;
   tenantId: string;
@@ -28,6 +42,7 @@ export interface Product {
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+  discountProducts?: ProductDiscount[];
 }
 
 export interface CreateProductDto {
@@ -58,6 +73,7 @@ export interface UpdateProductDto {
   minStockLevel?: number;
   unit?: string;
   isActive?: boolean;
+  discountIds?: string[];
 }
 
 export interface AdjustStockDto {
