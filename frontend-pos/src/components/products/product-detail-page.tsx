@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import {
   Dialog,
   DialogContent,
@@ -572,7 +573,11 @@ export function ProductDetailPage() {
                   <FormItem>
                     <FormLabel>Harga Beli</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <CurrencyInput
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Rp 0"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -585,7 +590,11 @@ export function ProductDetailPage() {
                   <FormItem>
                     <FormLabel>Harga Jual</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <CurrencyInput
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Rp 0"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

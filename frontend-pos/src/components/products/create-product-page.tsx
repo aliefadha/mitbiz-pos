@@ -292,10 +292,6 @@ export function CreateProductPage() {
                 />
               </div>
               <div className="flex gap-4 pt-4">
-                <Button type="submit" disabled={createMutation.isPending}>
-                  <Save className="mr-2 h-4 w-4" />
-                  {createMutation.isPending ? 'Menyimpan...' : 'Simpan Produk'}
-                </Button>
                 <Button
                   variant="outline"
                   type="button"
@@ -303,6 +299,10 @@ export function CreateProductPage() {
                 >
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Kembali
+                </Button>
+                <Button type="submit" disabled={createMutation.isPending}>
+                  <Save className="mr-2 h-4 w-4" />
+                  {createMutation.isPending ? 'Menyimpan...' : 'Simpan Produk'}
                 </Button>
               </div>
             </form>

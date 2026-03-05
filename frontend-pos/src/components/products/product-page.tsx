@@ -1,28 +1,9 @@
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { ChevronLeft, ChevronRight, Pencil, Plus, Search, Store, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Eye, Plus, Search, Store, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CurrencyInput } from '@/components/ui/currency-input';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -32,7 +13,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Switch } from '@/components/ui/switch';
 import {
   Table,
   TableBody,
@@ -41,52 +21,19 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Textarea } from '@/components/ui/textarea';
 import { categoriesApi } from '@/lib/api/categories';
-import { type Product, productsApi, type UpdateProductDto } from '@/lib/api/products';
+import { productsApi } from '@/lib/api/products';
 import { useSession } from '@/lib/auth-client';
-
-const formSchema = z.object({
-  sku: z.string().min(1, 'SKU wajib diisi'),
-  barcode: z.string().optional(),
-  nama: z.string().min(1, 'Nama produk wajib diisi'),
-  deskripsi: z.string().optional(),
-  categoryId: z.string().optional(),
-  tipe: z.enum(['barang', 'jasa', 'digital']),
-  hargaBeli: z.string(),
-  hargaJual: z.string().min(1, 'Harga jual wajib diisi'),
-  unit: z.string(),
-  minStockLevel: z.number(),
-  isActive: z.boolean().optional(),
-});
 
 export function ProductPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { data: session } = useSession();
   const tenantId = session?.user?.tenantId;
-  const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      sku: '',
-      barcode: '',
-      nama: '',
-      deskripsi: '',
-      categoryId: '',
-      tipe: 'barang',
-      hargaBeli: '0',
-      hargaJual: '0',
-      unit: 'pcs',
-      minStockLevel: 0,
-      isActive: true,
-    },
-  });
   const { data: productsData, isLoading: productsLoading } = useQuery({
     queryKey: ['products', tenantId, searchQuery, categoryFilter, currentPage, pageSize],
     queryFn: () =>
@@ -106,20 +53,6 @@ export function ProductPage() {
     enabled: !!tenantId,
   });
 
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateProductDto }) =>
-      productsApi.update(id, data),
-    onSuccess: () => {
-      setEditModalOpen(false);
-      setEditingProduct(null);
-      form.reset();
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-    },
-    onError: (error: Error) => {
-      alert(error.message || 'Failed to update product');
-    },
-  });
-
   const deleteMutation = useMutation({
     mutationFn: productsApi.delete,
     onSuccess: () => {
@@ -134,24 +67,6 @@ export function ProductPage() {
     navigate({ to: '/products/new' });
   };
 
-  const handleEdit = (product: Product) => {
-    setEditingProduct(product);
-    form.reset({
-      sku: product.sku,
-      barcode: product.barcode || '',
-      nama: product.nama,
-      deskripsi: product.deskripsi || '',
-      categoryId: product.categoryId?.toString() || '',
-      tipe: product.tipe,
-      hargaBeli: product.hargaBeli || '0',
-      hargaJual: product.hargaJual,
-      unit: product.unit,
-      minStockLevel: product.minStockLevel || 0,
-      isActive: product.isActive,
-    });
-    setEditModalOpen(true);
-  };
-
   const handleDelete = (id: string) => {
     if (
       confirm('Apakah Anda yakin ingin menghapus produk ini? Tindakan ini tidak dapat dibatalkan.')
@@ -159,22 +74,6 @@ export function ProductPage() {
       deleteMutation.mutate(id);
     }
   };
-
-  const handleSubmit = form.handleSubmit((values) => {
-    const productData = {
-      ...values,
-      categoryId: values.categoryId ? values.categoryId : undefined,
-      hargaBeli: values.hargaBeli || '0',
-      hargaJual: values.hargaJual,
-    };
-
-    if (editingProduct) {
-      updateMutation.mutate({
-        id: editingProduct.id,
-        data: productData,
-      });
-    }
-  });
 
   const displayedProducts = productsData?.data ?? [];
   const categories = categoriesData?.data ?? [];
@@ -315,8 +214,17 @@ export function ProductPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1">
-                          <Button variant="ghost" size="icon" onClick={() => handleEdit(product)}>
-                            <Pencil className="h-4 w-4" />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() =>
+                              navigate({
+                                to: '/products/$productId',
+                                params: { productId: String(product.id) },
+                              })
+                            }
+                          >
+                            <Eye className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
@@ -424,210 +332,6 @@ export function ProductPage() {
           </CardContent>
         </Card>
       </div>
-
-      <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
-        <DialogContent className="max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Edit Produk</DialogTitle>
-          </DialogHeader>
-          <Form {...form}>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="sku"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>SKU</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Masukkan SKU" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="barcode"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Barcode</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Masukkan barcode (opsional)" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <FormField
-                control={form.control}
-                name="nama"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nama Produk</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Masukkan nama produk" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="deskripsi"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Deskripsi</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="Masukkan deskripsi (opsional)" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="categoryId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Kategori</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Pilih kategori" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {categories.map((cat) => (
-                            <SelectItem key={cat.id} value={cat.id.toString()}>
-                              {cat.nama}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="tipe"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tipe</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Pilih tipe" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="barang">Barang</SelectItem>
-                          <SelectItem value="jasa">Jasa</SelectItem>
-                          <SelectItem value="digital">Digital</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="hargaBeli"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Harga Beli</FormLabel>
-                      <FormControl>
-                        <CurrencyInput
-                          value={field.value}
-                          onChange={field.onChange}
-                          placeholder="Rp 0"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="hargaJual"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Harga Jual</FormLabel>
-                      <FormControl>
-                        <CurrencyInput
-                          value={field.value}
-                          onChange={field.onChange}
-                          placeholder="Rp 0"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="unit"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Satuan</FormLabel>
-                      <FormControl>
-                        <Input placeholder="pcs" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="minStockLevel"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Minimum Stok</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="0"
-                          {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              {editingProduct && (
-                <FormField
-                  control={form.control}
-                  name="isActive"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">Status Aktif</FormLabel>
-                      </div>
-                      <FormControl>
-                        <Switch checked={field.value} onCheckedChange={field.onChange} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              )}
-              <DialogFooter>
-                <Button type="submit" disabled={updateMutation.isPending}>
-                  Simpan
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }
