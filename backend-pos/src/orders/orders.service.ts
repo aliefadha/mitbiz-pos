@@ -1,24 +1,35 @@
 import { randomUUID } from 'node:crypto';
-import type { CurrentUserType } from '@/common/decorators/current-user.decorator';
+import type { CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
 import { DB_CONNECTION } from '@/db/db.module';
 import { cashShifts } from '@/db/schema/cash-shift-schema';
 import { orderItems } from '@/db/schema/order-item-schema';
 import { orders } from '@/db/schema/order-schema';
 import { outlets } from '@/db/schema/outlet-schema';
 import { productStocks } from '@/db/schema/stock-schema';
-import { tenants } from '@/db/schema/tenant-schema';
 import type { DrizzleDB } from '@/db/type';
+import { TenantAuthService } from '@/rbac/services/tenant-auth.service';
 import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { SQL, and, desc, eq, like, sql } from 'drizzle-orm';
 import { CreateOrderDto, OrderQueryDto, UpdateOrderDto } from './dto';
 
 @Injectable()
 export class OrdersService {
-  constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) {}
+  constructor(
+    @Inject(DB_CONNECTION) private db: DrizzleDB,
+    private readonly tenantAuth: TenantAuthService,
+  ) {}
 
-  async findAll(query: OrderQueryDto) {
+  async findAll(query: OrderQueryDto, user: CurrentUserWithRole) {
     const { page = 1, limit = 10, search, status, tenantId, outletId, cashShiftId } = query;
     const offset = (page - 1) * limit;
+
+    // Validate that query tenantId matches user's allowed tenant
+    if (tenantId) {
+      await this.tenantAuth.validateQueryTenantId(user, tenantId);
+    }
+
+    // Get effective tenant ID for the user (for filtering if no tenantId provided)
+    const effectiveTenantId = await this.tenantAuth.getEffectiveTenantId(user);
 
     const conditions: SQL<unknown>[] = [];
 
@@ -26,8 +37,10 @@ export class OrdersService {
       conditions.push(eq(orders.status, status));
     }
 
-    if (tenantId) {
-      conditions.push(eq(orders.tenantId, tenantId));
+    // Use query tenantId if provided, otherwise use effective tenant (for non-global roles)
+    const filterTenantId = tenantId || effectiveTenantId;
+    if (filterTenantId) {
+      conditions.push(eq(orders.tenantId, filterTenantId));
     }
 
     if (outletId) {
@@ -87,7 +100,7 @@ export class OrdersService {
     };
   }
 
-  async findById(id: string, user: CurrentUserType) {
+  async findById(id: string, user: CurrentUserWithRole) {
     const order = await this.db.query.orders.findFirst({
       where: eq(orders.id, id),
       with: {
@@ -104,49 +117,30 @@ export class OrdersService {
       throw new NotFoundException(`Order with ID ${id} not found`);
     }
 
-    if (user.role === 'owner' || user.role === 'cashier') {
-      const userTenants = await this.db.query.tenants.findMany({
-        where: eq(tenants.userId, user.id),
-      });
-      const userTenantIds = userTenants.map((t) => t.id);
-      if (userTenantIds.length > 0 && !userTenantIds.includes(order.tenantId)) {
-        throw new ForbiddenException('You do not have access to this order');
-      }
+    // Check tenant access (permission already checked by guard)
+    const hasAccess = await this.tenantAuth.canAccessTenant(user, order.tenantId);
+    if (!hasAccess) {
+      throw new ForbiddenException('You do not have access to this order');
     }
 
     return order;
   }
 
-  async create(data: CreateOrderDto, user: CurrentUserType) {
-    if (user.role === 'owner') {
-      const userTenants = await this.db.query.tenants.findMany({
-        where: eq(tenants.userId, user.id),
-      });
-      const userTenantIds = userTenants.map((t) => t.id);
-      if (!userTenantIds.includes(data.tenantId)) {
-        throw new ForbiddenException('You do not have permission to create orders in this tenant');
-      }
-    }
+  async create(data: CreateOrderDto, user: CurrentUserWithRole) {
+    // Validate tenant access for creating order
+    await this.tenantAuth.validateTenantOperation(user, data.tenantId);
 
-    if (user.role === 'cashier' && user.outletId) {
-      const userOutlet = await this.db.query.outlets.findFirst({
-        where: eq(outlets.id, user.outletId),
-      });
-      if (!userOutlet || userOutlet.tenantId !== data.tenantId) {
-        throw new ForbiddenException('You do not have permission to create orders in this tenant');
-      }
-    }
-
-    const tenant = await this.db.query.tenants.findFirst({
-      where: eq(tenants.id, data.tenantId),
-    });
-
+    // Verify outlet belongs to the same tenant
     const outlet = await this.db.query.outlets.findFirst({
       where: eq(outlets.id, data.outletId),
     });
 
-    if (!tenant || !outlet) {
-      throw new NotFoundException('Tenant or Outlet not found');
+    if (!outlet) {
+      throw new NotFoundException('Outlet not found');
+    }
+
+    if (outlet.tenantId !== data.tenantId) {
+      throw new ForbiddenException('Outlet does not belong to the specified tenant');
     }
 
     const openShift = await this.db.query.cashShifts.findFirst({
@@ -165,7 +159,7 @@ export class OrdersService {
     const dd = String(today.getDate()).padStart(2, '0');
     const dateStr = `${yyyy}${mm}${dd}`;
     const uuid = randomUUID().split('-')[0].toUpperCase();
-    const orderNumber = `ORD-${tenant.slug}-${outlet.kode}-${dateStr}-${uuid}`;
+    const orderNumber = `ORD-${outlet.kode}-${dateStr}-${uuid}`;
 
     return await this.db.transaction(async (tx) => {
       const [order] = await tx
@@ -229,7 +223,8 @@ export class OrdersService {
     });
   }
 
-  async update(id: string, data: UpdateOrderDto, user: CurrentUserType) {
+  async update(id: string, data: UpdateOrderDto, user: CurrentUserWithRole) {
+    // findById already validates tenant access
     const existingOrder = await this.findById(id, user);
 
     if (data.outletId && data.outletId !== existingOrder.outletId) {
@@ -259,7 +254,8 @@ export class OrdersService {
     return order;
   }
 
-  async remove(id: string, user: CurrentUserType) {
+  async remove(id: string, user: CurrentUserWithRole) {
+    // findById already validates tenant access
     await this.findById(id, user);
 
     const [order] = await this.db.delete(orders).where(eq(orders.id, id)).returning();

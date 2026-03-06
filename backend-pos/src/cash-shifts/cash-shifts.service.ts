@@ -1,22 +1,33 @@
-import type { CurrentUserType } from '@/common/decorators/current-user.decorator';
+import type { CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
 import { DB_CONNECTION } from '@/db/db.module';
-import { user } from '@/db/schema/auth-schema';
+import { user as userTable } from '@/db/schema/auth-schema';
 import { cashShifts } from '@/db/schema/cash-shift-schema';
 import { orders } from '@/db/schema/order-schema';
 import { outlets } from '@/db/schema/outlet-schema';
-import { tenants } from '@/db/schema/tenant-schema';
 import type { DrizzleDB } from '@/db/type';
+import { TenantAuthService } from '@/rbac/services/tenant-auth.service';
 import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { SQL, and, desc, eq, like, sql } from 'drizzle-orm';
 import { CashShiftQueryDto, CreateCashShiftDto, UpdateCashShiftDto } from './dto';
 
 @Injectable()
 export class CashShiftsService {
-  constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) {}
+  constructor(
+    @Inject(DB_CONNECTION) private db: DrizzleDB,
+    private readonly tenantAuth: TenantAuthService,
+  ) {}
 
-  async findAll(query: CashShiftQueryDto) {
+  async findAll(query: CashShiftQueryDto, user: CurrentUserWithRole) {
     const { page = 1, limit = 10, search, status, tenantId, outletId } = query;
     const offset = (page - 1) * limit;
+
+    // Validate that query tenantId matches user's allowed tenant
+    if (tenantId) {
+      await this.tenantAuth.validateQueryTenantId(user, tenantId);
+    }
+
+    // Get effective tenant ID for the user (for filtering if no tenantId provided)
+    const effectiveTenantId = await this.tenantAuth.getEffectiveTenantId(user);
 
     const conditions: SQL<unknown>[] = [];
 
@@ -24,8 +35,10 @@ export class CashShiftsService {
       conditions.push(eq(cashShifts.status, status));
     }
 
-    if (tenantId) {
-      conditions.push(eq(cashShifts.tenantId, tenantId));
+    // Use query tenantId if provided, otherwise use effective tenant (for non-global roles)
+    const filterTenantId = tenantId || effectiveTenantId;
+    if (filterTenantId) {
+      conditions.push(eq(cashShifts.tenantId, filterTenantId));
     }
 
     if (outletId) {
@@ -37,7 +50,7 @@ export class CashShiftsService {
         .select()
         .from(cashShifts)
         .leftJoin(outlets, eq(cashShifts.outletId, outlets.id))
-        .leftJoin(user, eq(cashShifts.cashierId, user.id))
+        .leftJoin(userTable, eq(cashShifts.cashierId, userTable.id))
         .where(conditions.length > 0 ? and(...conditions) : undefined)
         .limit(limit)
         .offset(offset)
@@ -82,7 +95,7 @@ export class CashShiftsService {
     };
   }
 
-  async findById(id: string, user: CurrentUserType) {
+  async findById(id: string, user: CurrentUserWithRole) {
     const cashShift = await this.db.query.cashShifts.findFirst({
       where: eq(cashShifts.id, id),
       with: {
@@ -95,20 +108,30 @@ export class CashShiftsService {
       throw new NotFoundException(`Cash Shift with ID ${id} not found`);
     }
 
-    if (user.role === 'owner' || user.role === 'cashier') {
-      const userTenants = await this.db.query.tenants.findMany({
-        where: eq(tenants.userId, user.id),
-      });
-      const userTenantIds = userTenants.map((t) => t.id);
-      if (userTenantIds.length > 0 && !userTenantIds.includes(cashShift.tenantId)) {
-        throw new ForbiddenException('You do not have access to this cash shift');
-      }
+    // Check tenant access (permission already checked by guard)
+    const hasAccess = await this.tenantAuth.canAccessTenant(user, cashShift.tenantId);
+    if (!hasAccess) {
+      throw new ForbiddenException('You do not have access to this cash shift');
     }
 
     return cashShift;
   }
 
-  async findOpenShift(outletId: string, user: CurrentUserType) {
+  async findOpenShift(outletId: string, user: CurrentUserWithRole) {
+    // Check if user has access to this outlet's tenant
+    const outlet = await this.db.query.outlets.findFirst({
+      where: eq(outlets.id, outletId),
+    });
+
+    if (!outlet) {
+      throw new NotFoundException(`Outlet with ID ${outletId} not found`);
+    }
+
+    const hasAccess = await this.tenantAuth.canAccessTenant(user, outlet.tenantId);
+    if (!hasAccess) {
+      throw new ForbiddenException('You do not have access to this outlet');
+    }
+
     const cashShift = await this.db.query.cashShifts.findFirst({
       where: and(eq(cashShifts.outletId, outletId), eq(cashShifts.status, 'buka')),
       with: {
@@ -120,40 +143,21 @@ export class CashShiftsService {
     return cashShift || null;
   }
 
-  async create(data: CreateCashShiftDto, user: CurrentUserType) {
-    if (user.role === 'owner') {
-      const userTenants = await this.db.query.tenants.findMany({
-        where: eq(tenants.userId, user.id),
-      });
-      const userTenantIds = userTenants.map((t) => t.id);
-      if (!userTenantIds.includes(data.tenantId)) {
-        throw new ForbiddenException(
-          'You do not have permission to create cash shifts in this tenant',
-        );
-      }
-    }
+  async create(data: CreateCashShiftDto, user: CurrentUserWithRole) {
+    // Validate tenant access for creating cash shift
+    await this.tenantAuth.validateTenantOperation(user, data.tenantId);
 
-    if (user.role === 'cashier' && user.outletId) {
-      const userOutlet = await this.db.query.outlets.findFirst({
-        where: eq(outlets.id, user.outletId),
-      });
-      if (!userOutlet || userOutlet.tenantId !== data.tenantId) {
-        throw new ForbiddenException(
-          'You do not have permission to create cash shifts in this tenant',
-        );
-      }
-    }
-
-    const tenant = await this.db.query.tenants.findFirst({
-      where: eq(tenants.id, data.tenantId),
-    });
-
+    // Verify outlet belongs to the same tenant
     const outlet = await this.db.query.outlets.findFirst({
       where: eq(outlets.id, data.outletId),
     });
 
-    if (!tenant || !outlet) {
-      throw new NotFoundException('Tenant or Outlet not found');
+    if (!outlet) {
+      throw new NotFoundException('Outlet not found');
+    }
+
+    if (outlet.tenantId !== data.tenantId) {
+      throw new ForbiddenException('Outlet does not belong to the specified tenant');
     }
 
     const openShift = await this.db.query.cashShifts.findFirst({
@@ -178,7 +182,8 @@ export class CashShiftsService {
     return cashShift;
   }
 
-  async update(id: string, data: UpdateCashShiftDto, user: CurrentUserType) {
+  async update(id: string, data: UpdateCashShiftDto, user: CurrentUserWithRole) {
+    // findById already validates tenant access
     const existingCashShift = await this.findById(id, user);
 
     if (existingCashShift.status === 'tutup') {
@@ -224,7 +229,8 @@ export class CashShiftsService {
     return cashShift;
   }
 
-  async remove(id: string, user: CurrentUserType) {
+  async remove(id: string, user: CurrentUserWithRole) {
+    // findById already validates tenant access
     const existingCashShift = await this.findById(id, user);
 
     if (existingCashShift.status === 'buka') {

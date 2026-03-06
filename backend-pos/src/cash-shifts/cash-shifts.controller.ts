@@ -1,4 +1,4 @@
-import { CurrentUser, type CurrentUserType } from '@/common/decorators/current-user.decorator';
+import { CurrentUser, type CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
 import { Action, Permission, PermissionGuard, ScopeGuard, TenantScope } from '@/rbac';
@@ -38,14 +38,14 @@ export class CashShiftsController {
   @ApiOperation({ summary: 'Get all cash shifts' })
   @UsePipes(new ZodValidationPipe(CashShiftQuerySchema, 'query'))
   @Permission('cashShifts', [Action.READ])
-  findAll(@Query() query: CashShiftQueryDto) {
-    return this.cashShiftsService.findAll(query);
+  findAll(@Query() query: CashShiftQueryDto, @CurrentUser() user: CurrentUserWithRole) {
+    return this.cashShiftsService.findAll(query, user);
   }
 
   @Get('open')
   @ApiOperation({ summary: 'Get open cash shift for current user outlet' })
   @Permission('cashShifts', [Action.READ])
-  findOpen(@CurrentUser() user: CurrentUserType, @Query('outletId') outletId?: string) {
+  findOpen(@CurrentUser() user: CurrentUserWithRole, @Query('outletId') outletId?: string) {
     const targetOutletId = outletId || user.outletId;
     if (!targetOutletId) {
       return null;
@@ -57,7 +57,7 @@ export class CashShiftsController {
   @ApiOperation({ summary: 'Get cash shift by ID' })
   @UsePipes(new ZodValidationPipe(CashShiftIdSchema, 'params'))
   @Permission('cashShifts', [Action.READ])
-  findById(@Param() { id }: CashShiftIdDto, @CurrentUser() user: CurrentUserType) {
+  findById(@Param() { id }: CashShiftIdDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.cashShiftsService.findById(id, user);
   }
 
@@ -65,7 +65,7 @@ export class CashShiftsController {
   @ApiOperation({ summary: 'Open a new cash shift' })
   @UsePipes(new ZodValidationPipe(CreateCashShiftSchema))
   @Permission('cashShifts', [Action.CREATE])
-  create(@Body() data: CreateCashShiftDto, @CurrentUser() user: CurrentUserType) {
+  create(@Body() data: CreateCashShiftDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.cashShiftsService.create(data, user);
   }
 
@@ -77,7 +77,7 @@ export class CashShiftsController {
   update(
     @Param() { id }: CashShiftIdDto,
     @Body() data: UpdateCashShiftDto,
-    @CurrentUser() user: CurrentUserType,
+    @CurrentUser() user: CurrentUserWithRole,
   ) {
     return this.cashShiftsService.update(id, data, user);
   }
@@ -86,7 +86,7 @@ export class CashShiftsController {
   @ApiOperation({ summary: 'Delete a cash shift' })
   @UsePipes(new ZodValidationPipe(CashShiftIdSchema, 'params'))
   @Permission('cashShifts', [Action.DELETE])
-  remove(@Param() { id }: CashShiftIdDto, @CurrentUser() user: CurrentUserType) {
+  remove(@Param() { id }: CashShiftIdDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.cashShiftsService.remove(id, user);
   }
 }

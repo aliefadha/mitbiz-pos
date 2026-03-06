@@ -4,11 +4,19 @@ import type { Request } from 'express';
 export interface CurrentUserType {
   id: string;
   email: string;
-  role?: string;
   roleId?: string | null;
   tenantId?: string | null;
   outletId?: string | null;
   isSubscribed?: boolean;
+}
+
+export interface CurrentUserWithRole extends CurrentUserType {
+  role?: {
+    id: string;
+    name: string;
+    scope: 'global' | 'tenant';
+    tenantId: string | null;
+  };
 }
 
 interface RequestWithUser extends Request {

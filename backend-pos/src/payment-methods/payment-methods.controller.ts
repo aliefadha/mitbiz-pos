@@ -1,4 +1,4 @@
-import { CurrentUser, type CurrentUserType } from '@/common/decorators/current-user.decorator';
+import { CurrentUser, type CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
 import { Action, Permission, PermissionGuard, ScopeGuard, TenantScope } from '@/rbac';
@@ -38,15 +38,15 @@ export class PaymentMethodsController {
   @ApiOperation({ summary: 'Get all payment methods' })
   @UsePipes(new ZodValidationPipe(PaymentMethodQuerySchema, 'query'))
   @Permission('paymentMethods', [Action.READ])
-  findAll(@Query() query: PaymentMethodQueryDto) {
-    return this.paymentMethodsService.findAll(query);
+  findAll(@Query() query: PaymentMethodQueryDto, @CurrentUser() user: CurrentUserWithRole) {
+    return this.paymentMethodsService.findAll(query, user);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get payment method by ID' })
   @UsePipes(new ZodValidationPipe(PaymentMethodIdSchema, 'params'))
   @Permission('paymentMethods', [Action.READ])
-  findById(@Param() { id }: PaymentMethodIdDto, @CurrentUser() user: CurrentUserType) {
+  findById(@Param() { id }: PaymentMethodIdDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.paymentMethodsService.findById(id, user);
   }
 
@@ -54,7 +54,7 @@ export class PaymentMethodsController {
   @ApiOperation({ summary: 'Create a new payment method' })
   @UsePipes(new ZodValidationPipe(CreatePaymentMethodSchema))
   @Permission('paymentMethods', [Action.CREATE])
-  create(@Body() data: CreatePaymentMethodDto, @CurrentUser() user: CurrentUserType) {
+  create(@Body() data: CreatePaymentMethodDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.paymentMethodsService.create(data, user);
   }
 
@@ -66,7 +66,7 @@ export class PaymentMethodsController {
   update(
     @Param() { id }: PaymentMethodIdDto,
     @Body() data: UpdatePaymentMethodDto,
-    @CurrentUser() user: CurrentUserType,
+    @CurrentUser() user: CurrentUserWithRole,
   ) {
     return this.paymentMethodsService.update(id, data, user);
   }
@@ -75,7 +75,7 @@ export class PaymentMethodsController {
   @ApiOperation({ summary: 'Delete a payment method' })
   @UsePipes(new ZodValidationPipe(PaymentMethodIdSchema, 'params'))
   @Permission('paymentMethods', [Action.DELETE])
-  remove(@Param() { id }: PaymentMethodIdDto, @CurrentUser() user: CurrentUserType) {
+  remove(@Param() { id }: PaymentMethodIdDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.paymentMethodsService.remove(id, user);
   }
 }

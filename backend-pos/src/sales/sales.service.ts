@@ -1,19 +1,22 @@
-import type { CurrentUserType } from '@/common/decorators/current-user.decorator';
+import type { CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
 import { DB_CONNECTION } from '@/db/db.module';
 import { categories } from '@/db/schema/category-schema';
 import { orderItems } from '@/db/schema/order-item-schema';
 import { orders } from '@/db/schema/order-schema';
 import { outlets } from '@/db/schema/outlet-schema';
 import { products } from '@/db/schema/product-schema';
-import { tenants } from '@/db/schema/tenant-schema';
 import type { DrizzleDB } from '@/db/type';
+import { TenantAuthService } from '@/rbac/services/tenant-auth.service';
 import { Inject, Injectable } from '@nestjs/common';
 import { and, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm';
 import { SalesQueryDto } from './dto';
 
 @Injectable()
 export class SalesService {
-  constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) {}
+  constructor(
+    @Inject(DB_CONNECTION) private db: DrizzleDB,
+    private readonly tenantAuth: TenantAuthService,
+  ) {}
 
   private buildDateConditions(startDate?: string, endDate?: string) {
     const conditions: any[] = [];
@@ -28,25 +31,24 @@ export class SalesService {
     return conditions.length > 0 ? and(...conditions) : undefined;
   }
 
-  private async getTenantCondition(user: CurrentUserType, tenantId?: string) {
+  private async getTenantCondition(user: CurrentUserWithRole, tenantId?: string) {
+    // Validate that query tenantId matches user's allowed tenant
     if (tenantId) {
+      await this.tenantAuth.validateQueryTenantId(user, tenantId);
       return eq(orders.tenantId, tenantId);
     }
 
-    if (user.role === 'owner') {
-      const userTenants = await this.db.query.tenants.findMany({
-        where: eq(tenants.userId, user.id),
-      });
-      if (userTenants.length > 0) {
-        const userTenantIds = userTenants.map((t) => t.id);
-        return inArray(orders.tenantId, userTenantIds);
-      }
+    // Get effective tenant ID for the user
+    const effectiveTenantId = await this.tenantAuth.getEffectiveTenantId(user);
+
+    if (effectiveTenantId) {
+      return eq(orders.tenantId, effectiveTenantId);
     }
 
     return undefined;
   }
 
-  async getTopProducts(query: SalesQueryDto, user: CurrentUserType, limit = 10) {
+  async getTopProducts(query: SalesQueryDto, user: CurrentUserWithRole, limit = 10) {
     const dateConditions = this.buildDateConditions(query.startDate, query.endDate);
     const tenantCondition = await this.getTenantCondition(user, query.tenantId);
     const outletCondition = query.outletId ? eq(orders.outletId, query.outletId) : undefined;
@@ -91,7 +93,7 @@ export class SalesService {
     }));
   }
 
-  async getSalesByCategory(query: SalesQueryDto, user: CurrentUserType) {
+  async getSalesByCategory(query: SalesQueryDto, user: CurrentUserWithRole) {
     const dateConditions = this.buildDateConditions(query.startDate, query.endDate);
     const tenantCondition = await this.getTenantCondition(user, query.tenantId);
     const outletCondition = query.outletId ? eq(orders.outletId, query.outletId) : undefined;
@@ -123,7 +125,7 @@ export class SalesService {
     }));
   }
 
-  async getSalesByProduct(query: SalesQueryDto, user: CurrentUserType) {
+  async getSalesByProduct(query: SalesQueryDto, user: CurrentUserWithRole) {
     const dateConditions = this.buildDateConditions(query.startDate, query.endDate);
     const tenantCondition = await this.getTenantCondition(user, query.tenantId);
     const outletCondition = query.outletId ? eq(orders.outletId, query.outletId) : undefined;

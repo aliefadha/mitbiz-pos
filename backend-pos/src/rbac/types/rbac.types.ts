@@ -46,6 +46,7 @@ export interface RoleWithPermissions {
   name: string;
   scope: ScopeType;
   tenantId: string | null;
+  isActive: boolean;
   permissions: Permission[];
 }
 

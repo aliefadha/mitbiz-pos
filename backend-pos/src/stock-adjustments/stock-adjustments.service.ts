@@ -1,33 +1,28 @@
-import type { CurrentUserType } from '@/common/decorators/current-user.decorator';
+import type { CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
 import { DB_CONNECTION } from '@/db/db.module';
 import { outlets } from '@/db/schema/outlet-schema';
 import { products } from '@/db/schema/product-schema';
 import { stockAdjustments } from '@/db/schema/stock-adjustment-schema';
 import { productStocks } from '@/db/schema/stock-schema';
-import { tenants } from '@/db/schema/tenant-schema';
 import type { DrizzleDB } from '@/db/type';
+import { TenantAuthService } from '@/rbac/services/tenant-auth.service';
 import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { SQL, and, desc, eq, sql } from 'drizzle-orm';
 import { CreateStockAdjustmentDto, StockAdjustmentQueryDto } from './dto';
 
 @Injectable()
 export class StockAdjustmentsService {
-  constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) {}
+  constructor(
+    @Inject(DB_CONNECTION) private db: DrizzleDB,
+    private readonly tenantAuth: TenantAuthService,
+  ) {}
 
-  async findAll(query: StockAdjustmentQueryDto, user: CurrentUserType) {
+  async findAll(query: StockAdjustmentQueryDto, user: CurrentUserWithRole) {
     const { page = 1, limit = 10, productId, outletId, adjustedBy } = query;
     const offset = (page - 1) * limit;
 
-    // Get user's tenant ID if owner or cashier
-    let effectiveTenantId: string | undefined;
-    if (user.role === 'owner' || user.role === 'cashier') {
-      const userTenant = await this.db.query.tenants.findFirst({
-        where: eq(tenants.userId, user.id),
-      });
-      if (userTenant) {
-        effectiveTenantId = userTenant.id;
-      }
-    }
+    // Get effective tenant ID for the user
+    const effectiveTenantId = await this.tenantAuth.getEffectiveTenantId(user);
 
     const conditions: SQL<unknown>[] = [];
 
@@ -43,7 +38,7 @@ export class StockAdjustmentsService {
       conditions.push(eq(stockAdjustments.adjustedBy, adjustedBy));
     }
 
-    // If owner/cashier, filter by tenant via outlet
+    // Filter by tenant via outlet for non-global roles
     if (effectiveTenantId) {
       const outletIdsInTenant = await this.db
         .select({ id: outlets.id })
@@ -102,7 +97,7 @@ export class StockAdjustmentsService {
     };
   }
 
-  async findById(id: string, user: CurrentUserType) {
+  async findById(id: string, user: CurrentUserWithRole) {
     const adjustment = await this.db.query.stockAdjustments.findFirst({
       where: eq(stockAdjustments.id, id),
       with: {
@@ -116,21 +111,17 @@ export class StockAdjustmentsService {
       throw new NotFoundException(`Stock adjustment with ID ${id} not found`);
     }
 
-    // Check ownership for owner/cashier via outlet's tenant
-    if (user.role === 'owner' || user.role === 'cashier') {
-      const userTenant = await this.db.query.tenants.findFirst({
-        where: eq(tenants.userId, user.id),
-      });
-      if (userTenant && adjustment.outlet.tenantId !== userTenant.id) {
-        throw new ForbiddenException('You do not have access to this stock adjustment');
-      }
+    // Check tenant access via outlet's tenant (permission already checked by guard)
+    const hasAccess = await this.tenantAuth.canAccessTenant(user, adjustment.outlet.tenantId);
+    if (!hasAccess) {
+      throw new ForbiddenException('You do not have access to this stock adjustment');
     }
 
     return adjustment;
   }
 
-  async create(data: CreateStockAdjustmentDto, user: CurrentUserType) {
-    // Verify product exists and user has access
+  async create(data: CreateStockAdjustmentDto, user: CurrentUserWithRole) {
+    // Verify product exists
     const product = await this.db.query.products.findFirst({
       where: eq(products.id, data.productId),
     });
@@ -148,17 +139,8 @@ export class StockAdjustmentsService {
       throw new NotFoundException(`Outlet with ID ${data.outletId} not found`);
     }
 
-    // Check ownership for owner
-    if (user.role === 'owner') {
-      const userTenant = await this.db.query.tenants.findFirst({
-        where: eq(tenants.userId, user.id),
-      });
-      if (userTenant && outlet.tenantId !== userTenant.id) {
-        throw new ForbiddenException(
-          'You do not have permission to create stock adjustments in this tenant',
-        );
-      }
-    }
+    // Validate tenant access via outlet (permission already checked by guard)
+    await this.tenantAuth.validateTenantOperation(user, outlet.tenantId);
 
     // Verify outlet and product belong to same tenant
     if (outlet.tenantId !== product.tenantId) {

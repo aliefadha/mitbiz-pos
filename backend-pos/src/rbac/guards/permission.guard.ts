@@ -47,12 +47,27 @@ export class PermissionGuard implements CanActivate {
       return true;
     }
 
-    const permissions = await this.rbacService.getRolePermissions(roleId);
-    const hasPermission = this.rbacService.hasPermission(permissions, resource, action);
+    const role = await this.rbacService.getRoleWithPermissions(roleId);
+    if (!role) {
+      throw new ForbiddenException('Role not found or inactive');
+    }
+
+    const hasPermission = this.rbacService.hasPermission(role.permissions, resource, action);
 
     if (!hasPermission) {
       throw new ForbiddenException(`You don't have permission to ${action} ${resource}`);
     }
+
+    // Attach role info to request for caching
+    request.user = {
+      ...session.user,
+      role: {
+        id: role.id,
+        name: role.name,
+        scope: role.scope,
+        tenantId: role.tenantId,
+      },
+    } as unknown as typeof request.user;
 
     return true;
   }

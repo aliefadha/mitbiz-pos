@@ -1,4 +1,4 @@
-import { CurrentUser, type CurrentUserType } from '@/common/decorators/current-user.decorator';
+import { CurrentUser, type CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
 import { Action, Permission, PermissionGuard, ScopeGuard, TenantScope } from '@/rbac';
@@ -38,15 +38,15 @@ export class OrderItemsController {
   @ApiOperation({ summary: 'Get all order items' })
   @UsePipes(new ZodValidationPipe(OrderItemQuerySchema, 'query'))
   @Permission('orderItems', [Action.READ])
-  findAll(@Query() query: OrderItemQueryDto) {
-    return this.orderItemsService.findAll(query);
+  findAll(@Query() query: OrderItemQueryDto, @CurrentUser() user: CurrentUserWithRole) {
+    return this.orderItemsService.findAll(query, user);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get order item by ID' })
   @UsePipes(new ZodValidationPipe(OrderItemIdSchema, 'params'))
   @Permission('orderItems', [Action.READ])
-  findById(@Param() { id }: OrderItemIdDto, @CurrentUser() user: CurrentUserType) {
+  findById(@Param() { id }: OrderItemIdDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.orderItemsService.findById(id, user);
   }
 
@@ -54,7 +54,7 @@ export class OrderItemsController {
   @ApiOperation({ summary: 'Create a new order item' })
   @UsePipes(new ZodValidationPipe(CreateOrderItemSchema))
   @Permission('orderItems', [Action.CREATE])
-  create(@Body() data: CreateOrderItemDto, @CurrentUser() user: CurrentUserType) {
+  create(@Body() data: CreateOrderItemDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.orderItemsService.create(data, user);
   }
 
@@ -66,7 +66,7 @@ export class OrderItemsController {
   update(
     @Param() { id }: OrderItemIdDto,
     @Body() data: UpdateOrderItemDto,
-    @CurrentUser() user: CurrentUserType,
+    @CurrentUser() user: CurrentUserWithRole,
   ) {
     return this.orderItemsService.update(id, data, user);
   }
@@ -75,7 +75,7 @@ export class OrderItemsController {
   @ApiOperation({ summary: 'Delete an order item' })
   @UsePipes(new ZodValidationPipe(OrderItemIdSchema, 'params'))
   @Permission('orderItems', [Action.DELETE])
-  remove(@Param() { id }: OrderItemIdDto, @CurrentUser() user: CurrentUserType) {
+  remove(@Param() { id }: OrderItemIdDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.orderItemsService.remove(id, user);
   }
 }

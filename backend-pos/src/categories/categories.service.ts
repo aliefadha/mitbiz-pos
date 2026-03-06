@@ -1,20 +1,31 @@
-import type { CurrentUserType } from '@/common/decorators/current-user.decorator';
+import type { CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
 import { DB_CONNECTION } from '@/db/db.module';
 import { categories } from '@/db/schema/category-schema';
 import { products } from '@/db/schema/product-schema';
-import { tenants } from '@/db/schema/tenant-schema';
 import type { DrizzleDB } from '@/db/type';
+import { TenantAuthService } from '@/rbac/services/tenant-auth.service';
 import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { SQL, and, count, desc, eq, inArray, like, sql } from 'drizzle-orm';
 import { CategoryQueryDto, CreateCategoryDto, UpdateCategoryDto } from './dto';
 
 @Injectable()
 export class CategoriesService {
-  constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) {}
+  constructor(
+    @Inject(DB_CONNECTION) private db: DrizzleDB,
+    private readonly tenantAuth: TenantAuthService,
+  ) {}
 
-  async findAll(query: CategoryQueryDto) {
+  async findAll(query: CategoryQueryDto, user: CurrentUserWithRole) {
     const { page = 1, limit = 10, search, isActive, tenantId } = query;
     const offset = (page - 1) * limit;
+
+    // Validate that query tenantId matches user's allowed tenant
+    if (tenantId) {
+      await this.tenantAuth.validateQueryTenantId(user, tenantId);
+    }
+
+    // Get effective tenant ID for the user (for filtering if no tenantId provided)
+    const effectiveTenantId = await this.tenantAuth.getEffectiveTenantId(user);
 
     const conditions: SQL<unknown>[] = [];
 
@@ -22,8 +33,10 @@ export class CategoriesService {
       conditions.push(eq(categories.isActive, isActive));
     }
 
-    if (tenantId) {
-      conditions.push(eq(categories.tenantId, tenantId));
+    // Use query tenantId if provided, otherwise use effective tenant (for non-global roles)
+    const filterTenantId = tenantId || effectiveTenantId;
+    if (filterTenantId) {
+      conditions.push(eq(categories.tenantId, filterTenantId));
     }
 
     if (search) {
@@ -78,7 +91,7 @@ export class CategoriesService {
     };
   }
 
-  async findById(id: string, user: CurrentUserType) {
+  async findById(id: string, user: CurrentUserWithRole) {
     const category = await this.db.query.categories.findFirst({
       where: eq(categories.id, id),
       with: {
@@ -90,55 +103,27 @@ export class CategoriesService {
       throw new NotFoundException(`Category with ID ${id} not found`);
     }
 
-    // Check ownership for owner/cashier
-    if (user.role === 'owner' || user.role === 'cashier') {
-      const userTenants = await this.db.query.tenants.findMany({
-        where: eq(tenants.userId, user.id),
-      });
-      const userTenantIds = userTenants.map((t) => t.id);
-      if (userTenantIds.length > 0 && !userTenantIds.includes(category.tenantId)) {
-        throw new ForbiddenException('You do not have access to this category');
-      }
+    // Check tenant access (permission already checked by guard)
+    const hasAccess = await this.tenantAuth.canAccessTenant(user, category.tenantId);
+    if (!hasAccess) {
+      throw new ForbiddenException('You do not have access to this category');
     }
 
     return category;
   }
 
-  async create(data: CreateCategoryDto, user: CurrentUserType) {
-    // Verify tenant exists and user has access
-    const tenant = await this.db.query.tenants.findFirst({
-      where: eq(tenants.id, data.tenantId),
-    });
-
-    if (!tenant) {
-      throw new NotFoundException(`Tenant with ID ${data.tenantId} not found`);
-    }
-
-    // Check ownership for owner
-    if (user.role === 'owner' && tenant.userId !== user.id) {
-      throw new ForbiddenException(
-        'You do not have permission to create categories in this tenant',
-      );
-    }
+  async create(data: CreateCategoryDto, user: CurrentUserWithRole) {
+    // Validate tenant access (permission already checked by guard)
+    await this.tenantAuth.validateTenantOperation(user, data.tenantId);
 
     const [category] = await this.db.insert(categories).values(data).returning();
 
     return category;
   }
 
-  async update(id: string, data: UpdateCategoryDto, user: CurrentUserType) {
+  async update(id: string, data: UpdateCategoryDto, user: CurrentUserWithRole) {
+    // findById already validates tenant access
     const existingCategory = await this.findById(id, user);
-
-    // Verify ownership again
-    if (user.role === 'owner') {
-      const userTenants = await this.db.query.tenants.findMany({
-        where: eq(tenants.userId, user.id),
-      });
-      const userTenantIds = userTenants.map((t) => t.id);
-      if (userTenantIds.length > 0 && !userTenantIds.includes(existingCategory.tenantId)) {
-        throw new ForbiddenException('You do not have permission to update this category');
-      }
-    }
 
     const [category] = await this.db
       .update(categories)
@@ -152,19 +137,9 @@ export class CategoriesService {
     return category;
   }
 
-  async remove(id: string, user: CurrentUserType) {
-    const category = await this.findById(id, user);
-
-    // Verify ownership
-    if (user.role === 'owner') {
-      const userTenants = await this.db.query.tenants.findMany({
-        where: eq(tenants.userId, user.id),
-      });
-      const userTenantIds = userTenants.map((t) => t.id);
-      if (userTenantIds.length > 0 && !userTenantIds.includes(category.tenantId)) {
-        throw new ForbiddenException('You do not have permission to delete this category');
-      }
-    }
+  async remove(id: string, user: CurrentUserWithRole) {
+    // findById already validates tenant access
+    await this.findById(id, user);
 
     const [deletedCategory] = await this.db
       .delete(categories)

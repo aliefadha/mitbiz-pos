@@ -1,4 +1,4 @@
-import { CurrentUser, type CurrentUserType } from '@/common/decorators/current-user.decorator';
+import { CurrentUser, type CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
 import { Action, Permission, PermissionGuard, ScopeGuard, TenantScope } from '@/rbac';
@@ -38,7 +38,7 @@ export class OutletsController {
   @ApiOperation({ summary: 'Get all outlets' })
   @UsePipes(new ZodValidationPipe(OutletQuerySchema, 'query'))
   @Permission('outlets', [Action.READ])
-  findAll(@Query() query: OutletQueryDto, @CurrentUser() user: CurrentUserType) {
+  findAll(@Query() query: OutletQueryDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.outletsService.findAll(query, user);
   }
 
@@ -46,7 +46,7 @@ export class OutletsController {
   @ApiOperation({ summary: 'Get outlet by ID' })
   @UsePipes(new ZodValidationPipe(OutletIdSchema, 'params'))
   @Permission('outlets', [Action.READ])
-  findById(@Param() { id }: OutletIdDto, @CurrentUser() user: CurrentUserType) {
+  findById(@Param() { id }: OutletIdDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.outletsService.findById(id, user);
   }
 
@@ -54,7 +54,7 @@ export class OutletsController {
   @ApiOperation({ summary: 'Create a new outlet' })
   @UsePipes(new ZodValidationPipe(CreateOutletSchema))
   @Permission('outlets', [Action.CREATE])
-  create(@Body() data: CreateOutletDto, @CurrentUser() user: CurrentUserType) {
+  create(@Body() data: CreateOutletDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.outletsService.create(data, user);
   }
 
@@ -66,7 +66,7 @@ export class OutletsController {
   update(
     @Param() { id }: OutletIdDto,
     @Body() data: UpdateOutletDto,
-    @CurrentUser() user: CurrentUserType,
+    @CurrentUser() user: CurrentUserWithRole,
   ) {
     return this.outletsService.update(id, data, user);
   }
@@ -75,7 +75,7 @@ export class OutletsController {
   @ApiOperation({ summary: 'Delete an outlet' })
   @UsePipes(new ZodValidationPipe(OutletIdSchema, 'params'))
   @Permission('outlets', [Action.DELETE])
-  remove(@Param() { id }: OutletIdDto, @CurrentUser() user: CurrentUserType) {
+  remove(@Param() { id }: OutletIdDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.outletsService.remove(id, user);
   }
 }

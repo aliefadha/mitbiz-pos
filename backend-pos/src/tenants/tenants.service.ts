@@ -1,4 +1,4 @@
-import type { CurrentUserType } from '@/common/decorators/current-user.decorator';
+import type { CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
 import { DB_CONNECTION } from '@/db/db.module';
 import { tenants } from '@/db/schema';
 import { user as userSchema } from '@/db/schema';
@@ -6,6 +6,7 @@ import { categories } from '@/db/schema/category-schema';
 import { outlets } from '@/db/schema/outlet-schema';
 import { products } from '@/db/schema/product-schema';
 import type { DrizzleDB } from '@/db/type';
+import { TenantAuthService } from '@/rbac/services/tenant-auth.service';
 import {
   ConflictException,
   ForbiddenException,
@@ -18,9 +19,12 @@ import { CreateTenantDto, TenantQueryDto, UpdateTenantDto } from './dto';
 
 @Injectable()
 export class TenantsService {
-  constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) {}
+  constructor(
+    @Inject(DB_CONNECTION) private db: DrizzleDB,
+    private readonly tenantAuth: TenantAuthService,
+  ) {}
 
-  async findAll(query: TenantQueryDto, user: CurrentUserType) {
+  async findAll(query: TenantQueryDto, user: CurrentUserWithRole) {
     const { page = 1, limit = 10, search, isActive } = query;
     const offset = (page - 1) * limit;
 
@@ -34,19 +38,14 @@ export class TenantsService {
       conditions.push(like(tenants.nama, `%${search}%`));
     }
 
-    // Role-based filtering
-    if (user.role === 'owner') {
-      conditions.push(eq(tenants.userId, user.id));
-    } else if (user.role === 'cashier' && user.outletId) {
-      const userOutlets = await this.db.query.outlets.findMany({
-        where: eq(outlets.id, user.outletId),
-      });
-      const tenantIds = [...new Set(userOutlets.map((o) => o.tenantId))];
-      if (tenantIds.length > 0) {
-        conditions.push(inArray(tenants.id, tenantIds));
-      }
+    // Get effective tenant ID for the user
+    const effectiveTenantId = await this.tenantAuth.getEffectiveTenantId(user);
+
+    // For tenant-scoped roles, filter by their assigned tenant
+    if (effectiveTenantId) {
+      conditions.push(eq(tenants.id, effectiveTenantId));
     }
-    // Admin: no filter, sees all tenants
+    // For global roles (admin), no filter - they see all tenants
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
@@ -76,7 +75,7 @@ export class TenantsService {
     };
   }
 
-  async findBySlug(slug: string, user: CurrentUserType) {
+  async findBySlug(slug: string, user: CurrentUserWithRole) {
     const tenant = await this.db.query.tenants.findFirst({
       where: eq(tenants.slug, slug),
       with: {
@@ -93,15 +92,16 @@ export class TenantsService {
       throw new NotFoundException(`Tenant tidak ditemukan`);
     }
 
-    // Check ownership for owner role
-    if (user.role === 'owner' && tenant.userId !== user.id) {
+    // Check tenant access (permission already checked by guard)
+    const hasAccess = await this.tenantAuth.canAccessTenant(user, tenant.id);
+    if (!hasAccess) {
       throw new ForbiddenException('You do not have access to this tenant');
     }
 
     return tenant;
   }
 
-  async create(data: CreateTenantDto, user: CurrentUserType) {
+  async create(data: CreateTenantDto, user: CurrentUserWithRole) {
     if (data.userId) {
       const userExists = await this.db.query.user.findFirst({
         where: eq(userSchema.id, data.userId),
@@ -128,9 +128,9 @@ export class TenantsService {
       throw new ConflictException(`Nama tenant sudah digunakan`);
     }
 
-    // If owner, force userId to be their own id
+    // If user is creating their own tenant (not admin assigning), force userId to be their own id
     let finalUserId = data.userId;
-    if (user.role === 'owner') {
+    if (!user.role || user.role.scope !== 'global') {
       finalUserId = user.id;
     }
 
@@ -150,13 +150,8 @@ export class TenantsService {
     return tenant;
   }
 
-  async update(slug: string, data: UpdateTenantDto, user: CurrentUserType) {
+  async update(slug: string, data: UpdateTenantDto, user: CurrentUserWithRole) {
     const existingTenant = await this.findBySlug(slug, user);
-
-    // Verify ownership again
-    if (user.role === 'owner' && existingTenant.userId !== user.id) {
-      throw new ForbiddenException('You do not have permission to update this tenant');
-    }
 
     if (data.slug && data.slug !== slug) {
       const slugExists = await this.db.query.tenants.findFirst({
@@ -190,20 +185,16 @@ export class TenantsService {
     return tenant;
   }
 
-  async remove(slug: string, user: CurrentUserType) {
-    const tenant = await this.findBySlug(slug, user);
-
-    // Verify ownership
-    if (user.role === 'owner' && tenant.userId !== user.id) {
-      throw new ForbiddenException('You do not have permission to delete this tenant');
-    }
+  async remove(slug: string, user: CurrentUserWithRole) {
+    // findBySlug already validates tenant access
+    await this.findBySlug(slug, user);
 
     const [deletedTenant] = await this.db.delete(tenants).where(eq(tenants.slug, slug)).returning();
 
     return deletedTenant;
   }
 
-  async getSummary(slug: string, user: CurrentUserType) {
+  async getSummary(slug: string, user: CurrentUserWithRole) {
     const tenant = await this.findBySlug(slug, user);
 
     const [outletsResult, categoriesResult, productsResult] = await Promise.all([
@@ -228,26 +219,8 @@ export class TenantsService {
     return tenant?.id || null;
   }
 
-  async findUsers(slug: string, user: CurrentUserType) {
-    const tenant = await this.db.query.tenants.findFirst({
-      where: eq(tenants.slug, slug),
-      with: {
-        user: true,
-        outlets: {
-          with: {
-            cashiers: true,
-          },
-        },
-      },
-    });
-
-    if (!tenant) {
-      throw new NotFoundException(`Tenant tidak ditemukan`);
-    }
-
-    if (user.role === 'owner' && tenant.userId !== user.id) {
-      throw new ForbiddenException('You do not have access to this tenant');
-    }
+  async findUsers(slug: string, user: CurrentUserWithRole) {
+    const tenant = await this.findBySlug(slug, user);
 
     const allUsers: (typeof tenant.user)[] = [];
     if (tenant.user) {
@@ -266,25 +239,8 @@ export class TenantsService {
     return { data: allUsers };
   }
 
-  async findOutlets(slug: string, user: CurrentUserType) {
-    const tenant = await this.db.query.tenants.findFirst({
-      where: eq(tenants.slug, slug),
-      with: {
-        outlets: {
-          with: {
-            cashiers: true,
-          },
-        },
-      },
-    });
-
-    if (!tenant) {
-      throw new NotFoundException(`Tenant tidak ditemukan`);
-    }
-
-    if (user.role === 'owner' && tenant.userId !== user.id) {
-      throw new ForbiddenException('You do not have access to this tenant');
-    }
+  async findOutlets(slug: string, user: CurrentUserWithRole) {
+    const tenant = await this.findBySlug(slug, user);
 
     return { data: tenant.outlets };
   }

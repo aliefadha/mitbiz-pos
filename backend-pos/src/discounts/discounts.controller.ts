@@ -1,4 +1,4 @@
-import { CurrentUser, type CurrentUserType } from '@/common/decorators/current-user.decorator';
+import { CurrentUser, type CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
 import { Action, Permission, PermissionGuard, ScopeGuard, TenantScope } from '@/rbac';
@@ -38,15 +38,15 @@ export class DiscountsController {
   @ApiOperation({ summary: 'Get all discounts' })
   @UsePipes(new ZodValidationPipe(DiscountQuerySchema, 'query'))
   @Permission('discounts', [Action.READ])
-  findAll(@Query() query: DiscountQueryDto) {
-    return this.discountsService.findAll(query);
+  findAll(@Query() query: DiscountQueryDto, @CurrentUser() user: CurrentUserWithRole) {
+    return this.discountsService.findAll(query, user);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get discount by ID' })
   @UsePipes(new ZodValidationPipe(DiscountIdSchema, 'params'))
   @Permission('discounts', [Action.READ])
-  findById(@Param() { id }: DiscountIdDto, @CurrentUser() user: CurrentUserType) {
+  findById(@Param() { id }: DiscountIdDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.discountsService.findById(id, user);
   }
 
@@ -54,7 +54,7 @@ export class DiscountsController {
   @ApiOperation({ summary: 'Create a new discount' })
   @UsePipes(new ZodValidationPipe(CreateDiscountSchema))
   @Permission('discounts', [Action.CREATE])
-  create(@Body() data: CreateDiscountDto, @CurrentUser() user: CurrentUserType) {
+  create(@Body() data: CreateDiscountDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.discountsService.create(data, user);
   }
 
@@ -66,7 +66,7 @@ export class DiscountsController {
   update(
     @Param() { id }: DiscountIdDto,
     @Body() data: UpdateDiscountDto,
-    @CurrentUser() user: CurrentUserType,
+    @CurrentUser() user: CurrentUserWithRole,
   ) {
     return this.discountsService.update(id, data, user);
   }
@@ -75,7 +75,7 @@ export class DiscountsController {
   @ApiOperation({ summary: 'Delete a discount' })
   @UsePipes(new ZodValidationPipe(DiscountIdSchema, 'params'))
   @Permission('discounts', [Action.DELETE])
-  remove(@Param() { id }: DiscountIdDto, @CurrentUser() user: CurrentUserType) {
+  remove(@Param() { id }: DiscountIdDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.discountsService.remove(id, user);
   }
 }

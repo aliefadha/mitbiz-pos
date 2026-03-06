@@ -1,4 +1,5 @@
 import { DB_CONNECTION } from '@/db/db.module';
+import * as schema from '@/db/index';
 import { Module } from '@nestjs/common';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
@@ -25,6 +26,7 @@ const authProvider = {
       secret: process.env.BETTER_AUTH_SECRET,
       database: drizzleAdapter(db, {
         provider: 'pg',
+        schema,
       }),
       emailAndPassword: { enabled: true },
       trustedOrigins: getAllowedOrigins(),

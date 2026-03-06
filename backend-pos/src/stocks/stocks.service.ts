@@ -1,11 +1,11 @@
-import type { CurrentUserType } from '@/common/decorators/current-user.decorator';
+import type { CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
 import { getProductIdsByTenant } from '@/common/utils/tenant-filter';
 import { DB_CONNECTION } from '@/db/db.module';
 import { outlets } from '@/db/schema/outlet-schema';
 import { products } from '@/db/schema/product-schema';
 import { productStocks } from '@/db/schema/stock-schema';
-import { tenants } from '@/db/schema/tenant-schema';
 import type { DrizzleDB } from '@/db/type';
+import { TenantAuthService } from '@/rbac/services/tenant-auth.service';
 import {
   ConflictException,
   ForbiddenException,
@@ -18,11 +18,22 @@ import { CreateStockDto, StockQueryDto, UpdateStockDto } from './dto';
 
 @Injectable()
 export class StocksService {
-  constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) {}
+  constructor(
+    @Inject(DB_CONNECTION) private db: DrizzleDB,
+    private readonly tenantAuth: TenantAuthService,
+  ) {}
 
-  async findAll(query: StockQueryDto, user: CurrentUserType) {
+  async findAll(query: StockQueryDto, user: CurrentUserWithRole) {
     const { page = 1, limit = 10, productId, outletId, tenantId } = query;
     const offset = (page - 1) * limit;
+
+    // Validate that query tenantId matches user's allowed tenant
+    if (tenantId) {
+      await this.tenantAuth.validateQueryTenantId(user, tenantId);
+    }
+
+    // Get effective tenant ID for the user (for filtering if no tenantId provided)
+    const effectiveTenantId = await this.tenantAuth.getEffectiveTenantId(user);
 
     const conditions: SQL<unknown>[] = [];
 
@@ -34,8 +45,10 @@ export class StocksService {
       conditions.push(eq(productStocks.outletId, outletId));
     }
 
-    if (tenantId) {
-      const productIdList = await getProductIdsByTenant(this.db, tenantId);
+    // Filter by tenant - use query tenantId if provided, otherwise use effective tenant
+    const filterTenantId = tenantId || effectiveTenantId;
+    if (filterTenantId) {
+      const productIdList = await getProductIdsByTenant(this.db, filterTenantId);
 
       if (productIdList.length === 0) {
         return {
@@ -85,7 +98,7 @@ export class StocksService {
     };
   }
 
-  async findById(id: string, user: CurrentUserType) {
+  async findById(id: string, user: CurrentUserWithRole) {
     const stock = await this.db.query.productStocks.findFirst({
       where: eq(productStocks.id, id),
       with: {
@@ -98,14 +111,10 @@ export class StocksService {
       throw new NotFoundException(`Stock with ID ${id} not found`);
     }
 
-    // Check ownership for owner/cashier via product's tenant
-    if (user.role === 'owner' || user.role === 'cashier') {
-      const userTenant = await this.db.query.tenants.findFirst({
-        where: eq(tenants.userId, user.id),
-      });
-      if (userTenant && stock.product.tenantId !== userTenant.id) {
-        throw new ForbiddenException('You do not have access to this stock');
-      }
+    // Check tenant access via product's tenant (permission already checked by guard)
+    const hasAccess = await this.tenantAuth.canAccessTenant(user, stock.product.tenantId);
+    if (!hasAccess) {
+      throw new ForbiddenException('You do not have access to this stock');
     }
 
     return stock;
@@ -123,8 +132,8 @@ export class StocksService {
     return stock;
   }
 
-  async create(data: CreateStockDto, user: CurrentUserType) {
-    // Verify product exists and user has access
+  async create(data: CreateStockDto, user: CurrentUserWithRole) {
+    // Verify product exists
     const product = await this.db.query.products.findFirst({
       where: eq(products.id, data.productId),
     });
@@ -133,15 +142,8 @@ export class StocksService {
       throw new NotFoundException(`Product with ID ${data.productId} not found`);
     }
 
-    // Check ownership for owner
-    if (user.role === 'owner') {
-      const userTenant = await this.db.query.tenants.findFirst({
-        where: eq(tenants.userId, user.id),
-      });
-      if (userTenant && product.tenantId !== userTenant.id) {
-        throw new ForbiddenException('You do not have permission to create stock for this product');
-      }
-    }
+    // Validate tenant access via product's tenant (permission already checked by guard)
+    await this.tenantAuth.validateTenantOperation(user, product.tenantId);
 
     // Verify outlet exists and belongs to same tenant
     const outlet = await this.db.query.outlets.findFirst({
@@ -167,18 +169,9 @@ export class StocksService {
     return stock;
   }
 
-  async update(id: string, data: UpdateStockDto, user: CurrentUserType) {
-    const existingStock = await this.findById(id, user);
-
-    // Verify ownership again
-    if (user.role === 'owner') {
-      const userTenant = await this.db.query.tenants.findFirst({
-        where: eq(tenants.userId, user.id),
-      });
-      if (userTenant && existingStock.product.tenantId !== userTenant.id) {
-        throw new ForbiddenException('You do not have permission to update this stock');
-      }
-    }
+  async update(id: string, data: UpdateStockDto, user: CurrentUserWithRole) {
+    // findById already validates tenant access via product's tenant
+    await this.findById(id, user);
 
     const [stock] = await this.db
       .update(productStocks)
@@ -192,18 +185,9 @@ export class StocksService {
     return stock;
   }
 
-  async remove(id: string, user: CurrentUserType) {
-    const stock = await this.findById(id, user);
-
-    // Verify ownership
-    if (user.role === 'owner') {
-      const userTenant = await this.db.query.tenants.findFirst({
-        where: eq(tenants.userId, user.id),
-      });
-      if (userTenant && stock.product.tenantId !== userTenant.id) {
-        throw new ForbiddenException('You do not have permission to delete this stock');
-      }
-    }
+  async remove(id: string, user: CurrentUserWithRole) {
+    // findById already validates tenant access via product's tenant
+    await this.findById(id, user);
 
     const [deletedStock] = await this.db
       .delete(productStocks)
@@ -213,22 +197,13 @@ export class StocksService {
     return deletedStock;
   }
 
-  async adjustQuantity(id: string, adjustment: number, user: CurrentUserType) {
+  async adjustQuantity(id: string, adjustment: number, user: CurrentUserWithRole) {
+    // findById already validates tenant access via product's tenant
     const stock = await this.findById(id, user);
     const newQuantity = stock.quantity + adjustment;
 
     if (newQuantity < 0) {
       throw new Error('Insufficient stock');
-    }
-
-    // Verify ownership for owner
-    if (user.role === 'owner') {
-      const userTenant = await this.db.query.tenants.findFirst({
-        where: eq(tenants.userId, user.id),
-      });
-      if (userTenant && stock.product.tenantId !== userTenant.id) {
-        throw new ForbiddenException('You do not have permission to adjust this stock');
-      }
     }
 
     const [updatedStock] = await this.db

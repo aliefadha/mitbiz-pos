@@ -1,4 +1,4 @@
-import type { CurrentUserType } from '@/common/decorators/current-user.decorator';
+import type { CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
 import { DB_CONNECTION } from '@/db/db.module';
 import { roles } from '@/db/schema';
 import { user as usersTable } from '@/db/schema/auth-schema';
@@ -6,15 +6,18 @@ import { orders } from '@/db/schema/order-schema';
 import { outlets } from '@/db/schema/outlet-schema';
 import { paymentMethods } from '@/db/schema/payment-method-schema';
 import { products } from '@/db/schema/product-schema';
-import { tenants } from '@/db/schema/tenant-schema';
 import type { DrizzleDB } from '@/db/type';
-import { Inject, Injectable } from '@nestjs/common';
-import { and, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm';
+import { TenantAuthService } from '@/rbac/services/tenant-auth.service';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { and, desc, eq, gte, lte, sql } from 'drizzle-orm';
 import { DashboardQueryDto } from './dto';
 
 @Injectable()
 export class DashboardService {
-  constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) {}
+  constructor(
+    @Inject(DB_CONNECTION) private db: DrizzleDB,
+    private readonly tenantAuth: TenantAuthService,
+  ) {}
 
   private buildDateConditions(startDate?: string, endDate?: string) {
     const conditions: any[] = [];
@@ -29,13 +32,28 @@ export class DashboardService {
     return conditions.length > 0 ? and(...conditions) : undefined;
   }
 
-  async getStats(query: DashboardQueryDto, user: CurrentUserType) {
-    const dateConditions = this.buildDateConditions(query.startDate, query.endDate);
-    const tenantCondition = await this.getTenantCondition(user, query.tenantId);
+  async getStats(query: DashboardQueryDto, user: CurrentUserWithRole) {
+    // Validate tenantId if provided
+    if (query.tenantId) {
+      await this.tenantAuth.validateQueryTenantId(user, query.tenantId);
+    }
 
+    // Get effective tenant ID (single tenant per user)
+    const effectiveTenantId = await this.tenantAuth.getEffectiveTenantId(user);
+
+    // Admin must provide tenantId parameter
+    if (!effectiveTenantId) {
+      throw new BadRequestException('Admin must provide tenantId parameter');
+    }
+
+    const dateConditions = this.buildDateConditions(query.startDate, query.endDate);
     const outletCondition = query.outletId ? eq(orders.outletId, query.outletId) : undefined;
 
-    const whereCondition = and(dateConditions, tenantCondition, outletCondition);
+    const whereCondition = and(
+      dateConditions,
+      eq(orders.tenantId, effectiveTenantId),
+      outletCondition,
+    );
 
     const result = await this.db
       .select({
@@ -48,65 +66,61 @@ export class DashboardService {
       .from(orders)
       .where(and(whereCondition, eq(orders.status, 'complete')));
 
-    const tenantIds = await this.getTenantIds(user, query.tenantId);
+    // Get stats for the single tenant
+    const outletsResult = await this.db
+      .select({ count: sql<number>`count(*)` })
+      .from(outlets)
+      .where(and(eq(outlets.tenantId, effectiveTenantId), eq(outlets.isActive, true)));
+    const activeOutlets = Number(outletsResult[0]?.count || 0);
 
-    let activeOutlets = 0;
-    let activeProducts = 0;
+    const totalOutletsResult = await this.db
+      .select({ count: sql<number>`count(*)` })
+      .from(outlets)
+      .where(eq(outlets.tenantId, effectiveTenantId));
+    const totalOutlets = Number(totalOutletsResult[0]?.count || 0);
+
+    const productsResult = await this.db
+      .select({ count: sql<number>`count(*)` })
+      .from(products)
+      .where(and(eq(products.tenantId, effectiveTenantId), eq(products.isActive, true)));
+    const activeProducts = Number(productsResult[0]?.count || 0);
+
+    const totalProductsResult = await this.db
+      .select({ count: sql<number>`count(*)` })
+      .from(products)
+      .where(eq(products.tenantId, effectiveTenantId));
+    const totalProducts = Number(totalProductsResult[0]?.count || 0);
+
+    // Count active cashiers
     let activeCashiers = 0;
-    let totalOutlets = 0;
-    let totalProducts = 0;
+    const outletsForTenant = await this.db
+      .select({ id: outlets.id })
+      .from(outlets)
+      .where(eq(outlets.tenantId, effectiveTenantId));
+    const outletIds = outletsForTenant.map((o) => o.id);
 
-    if (tenantIds.length > 0) {
-      const outletsResult = await this.db
-        .select({ count: sql<number>`count(*)` })
-        .from(outlets)
-        .where(and(inArray(outlets.tenantId, tenantIds), eq(outlets.isActive, true)));
-      activeOutlets = Number(outletsResult[0]?.count || 0);
+    if (outletIds.length > 0) {
+      const [cashierRole] = await this.db
+        .select({ id: roles.id })
+        .from(roles)
+        .where(eq(roles.name, 'cashier'))
+        .limit(1);
 
-      const totalOutletsResult = await this.db
-        .select({ count: sql<number>`count(*)` })
-        .from(outlets)
-        .where(inArray(outlets.tenantId, tenantIds));
-      totalOutlets = Number(totalOutletsResult[0]?.count || 0);
-
-      const productsResult = await this.db
-        .select({ count: sql<number>`count(*)` })
-        .from(products)
-        .where(and(inArray(products.tenantId, tenantIds), eq(products.isActive, true)));
-      activeProducts = Number(productsResult[0]?.count || 0);
-
-      const totalProductsResult = await this.db
-        .select({ count: sql<number>`count(*)` })
-        .from(products)
-        .where(inArray(products.tenantId, tenantIds));
-      totalProducts = Number(totalProductsResult[0]?.count || 0);
-
-      const outletsForTenant = await this.db
-        .select({ id: outlets.id })
-        .from(outlets)
-        .where(inArray(outlets.tenantId, tenantIds));
-      const outletIds = outletsForTenant.map((o) => o.id);
-
-      if (outletIds.length > 0) {
-        const [cashierRole] = await this.db
-          .select({ id: roles.id })
-          .from(roles)
-          .where(eq(roles.name, 'cashier'))
-          .limit(1);
-
-        if (cashierRole) {
-          const cashiersResult = await this.db
-            .select({ count: sql<number>`count(*)` })
-            .from(usersTable)
-            .where(
-              and(
-                inArray(usersTable.outletId, outletIds),
-                eq(usersTable.roleId, cashierRole.id),
-                eq(usersTable.banned, false),
-              ),
-            );
-          activeCashiers = Number(cashiersResult[0]?.count || 0);
-        }
+      if (cashierRole) {
+        const cashiersResult = await this.db
+          .select({ count: sql<number>`count(*)` })
+          .from(usersTable)
+          .where(
+            and(
+              sql`${usersTable.outletId} IN (${sql.join(
+                outletIds.map((id) => sql`${id}`),
+                sql`, `,
+              )})`,
+              eq(usersTable.roleId, cashierRole.id),
+              eq(usersTable.banned, false),
+            ),
+          );
+        activeCashiers = Number(cashiersResult[0]?.count || 0);
       }
     }
 
@@ -124,35 +138,28 @@ export class DashboardService {
     };
   }
 
-  private async getTenantIds(user: CurrentUserType, tenantId?: string): Promise<string[]> {
-    if (tenantId) {
-      return [tenantId];
+  async getSalesTrend(query: DashboardQueryDto, user: CurrentUserWithRole) {
+    // Validate tenantId if provided
+    if (query.tenantId) {
+      await this.tenantAuth.validateQueryTenantId(user, query.tenantId);
     }
 
-    const userTenantId = (user as unknown as { tenantId?: string }).tenantId;
-    if (userTenantId) {
-      return [userTenantId];
+    // Get effective tenant ID (single tenant per user)
+    const effectiveTenantId = await this.tenantAuth.getEffectiveTenantId(user);
+
+    // Admin must provide tenantId parameter
+    if (!effectiveTenantId) {
+      throw new BadRequestException('Admin must provide tenantId parameter');
     }
 
-    const userRole = (user as unknown as { role?: string }).role;
-    if (userRole === 'owner') {
-      const userTenants = await this.db.query.tenants.findMany({
-        where: eq(tenants.userId, user.id),
-      });
-      if (userTenants.length > 0) {
-        return userTenants.map((t) => t.id);
-      }
-    }
-
-    return [];
-  }
-
-  async getSalesTrend(query: DashboardQueryDto, user: CurrentUserType) {
     const dateConditions = this.buildDateConditions(query.startDate, query.endDate);
-    const tenantCondition = await this.getTenantCondition(user, query.tenantId);
     const outletCondition = query.outletId ? eq(orders.outletId, query.outletId) : undefined;
 
-    const whereCondition = and(dateConditions, tenantCondition, outletCondition);
+    const whereCondition = and(
+      dateConditions,
+      eq(orders.tenantId, effectiveTenantId),
+      outletCondition,
+    );
 
     const result = await this.db
       .select({
@@ -172,12 +179,28 @@ export class DashboardService {
     }));
   }
 
-  async getSalesByBranch(query: DashboardQueryDto, user: CurrentUserType) {
+  async getSalesByBranch(query: DashboardQueryDto, user: CurrentUserWithRole) {
+    // Validate tenantId if provided
+    if (query.tenantId) {
+      await this.tenantAuth.validateQueryTenantId(user, query.tenantId);
+    }
+
+    // Get effective tenant ID (single tenant per user)
+    const effectiveTenantId = await this.tenantAuth.getEffectiveTenantId(user);
+
+    // Admin must provide tenantId parameter
+    if (!effectiveTenantId) {
+      throw new BadRequestException('Admin must provide tenantId parameter');
+    }
+
     const dateConditions = this.buildDateConditions(query.startDate, query.endDate);
-    const tenantCondition = await this.getTenantCondition(user, query.tenantId);
     const outletCondition = query.outletId ? eq(orders.outletId, query.outletId) : undefined;
 
-    const whereCondition = and(dateConditions, tenantCondition, outletCondition);
+    const whereCondition = and(
+      dateConditions,
+      eq(orders.tenantId, effectiveTenantId),
+      outletCondition,
+    );
 
     const result = await this.db
       .select({
@@ -200,12 +223,28 @@ export class DashboardService {
     }));
   }
 
-  async getSalesByPaymentMethod(query: DashboardQueryDto, user: CurrentUserType) {
+  async getSalesByPaymentMethod(query: DashboardQueryDto, user: CurrentUserWithRole) {
+    // Validate tenantId if provided
+    if (query.tenantId) {
+      await this.tenantAuth.validateQueryTenantId(user, query.tenantId);
+    }
+
+    // Get effective tenant ID (single tenant per user)
+    const effectiveTenantId = await this.tenantAuth.getEffectiveTenantId(user);
+
+    // Admin must provide tenantId parameter
+    if (!effectiveTenantId) {
+      throw new BadRequestException('Admin must provide tenantId parameter');
+    }
+
     const dateConditions = this.buildDateConditions(query.startDate, query.endDate);
-    const tenantCondition = await this.getTenantCondition(user, query.tenantId);
     const outletCondition = query.outletId ? eq(orders.outletId, query.outletId) : undefined;
 
-    const whereCondition = and(dateConditions, tenantCondition, outletCondition);
+    const whereCondition = and(
+      dateConditions,
+      eq(orders.tenantId, effectiveTenantId),
+      outletCondition,
+    );
 
     const result = await this.db
       .select({
@@ -226,29 +265,5 @@ export class DashboardService {
       revenue: Number(row.totalRevenue),
       orders: Number(row.totalOrders),
     }));
-  }
-
-  private async getTenantCondition(user: CurrentUserType, tenantId?: string) {
-    if (tenantId) {
-      return eq(orders.tenantId, tenantId);
-    }
-
-    const userTenantId = (user as unknown as { tenantId?: string }).tenantId;
-    if (userTenantId) {
-      return eq(orders.tenantId, userTenantId);
-    }
-
-    const userRole = (user as unknown as { role?: string }).role;
-    if (userRole === 'owner') {
-      const userTenants = await this.db.query.tenants.findMany({
-        where: eq(tenants.userId, user.id),
-      });
-      if (userTenants.length > 0) {
-        const userTenantIds = userTenants.map((t) => t.id);
-        return inArray(orders.tenantId, userTenantIds);
-      }
-    }
-
-    return undefined;
   }
 }

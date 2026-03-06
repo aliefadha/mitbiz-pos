@@ -1,4 +1,4 @@
-import { CurrentUser, type CurrentUserType } from '@/common/decorators/current-user.decorator';
+import { CurrentUser, type CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
 import { Action, Permission, PermissionGuard, ScopeGuard, TenantScope } from '@/rbac';
@@ -18,7 +18,7 @@ export class DashboardController {
   @ApiOperation({ summary: 'Get dashboard statistics' })
   @UsePipes(new ZodValidationPipe(DashboardQuerySchema, 'query'))
   @Permission('dashboard', [Action.READ])
-  getStats(@Query() query: DashboardQueryDto, @CurrentUser() user: CurrentUserType) {
+  getStats(@Query() query: DashboardQueryDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.dashboardService.getStats(query, user);
   }
 
@@ -26,7 +26,7 @@ export class DashboardController {
   @ApiOperation({ summary: 'Get sales trend over time' })
   @UsePipes(new ZodValidationPipe(DashboardQuerySchema, 'query'))
   @Permission('dashboard', [Action.READ])
-  getSalesTrend(@Query() query: DashboardQueryDto, @CurrentUser() user: CurrentUserType) {
+  getSalesTrend(@Query() query: DashboardQueryDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.dashboardService.getSalesTrend(query, user);
   }
 
@@ -34,7 +34,7 @@ export class DashboardController {
   @ApiOperation({ summary: 'Get sales by branch/outlet' })
   @UsePipes(new ZodValidationPipe(DashboardQuerySchema, 'query'))
   @Permission('dashboard', [Action.READ])
-  getSalesByBranch(@Query() query: DashboardQueryDto, @CurrentUser() user: CurrentUserType) {
+  getSalesByBranch(@Query() query: DashboardQueryDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.dashboardService.getSalesByBranch(query, user);
   }
 
@@ -42,7 +42,10 @@ export class DashboardController {
   @ApiOperation({ summary: 'Get sales by payment method' })
   @UsePipes(new ZodValidationPipe(DashboardQuerySchema, 'query'))
   @Permission('dashboard', [Action.READ])
-  getSalesByPaymentMethod(@Query() query: DashboardQueryDto, @CurrentUser() user: CurrentUserType) {
+  getSalesByPaymentMethod(
+    @Query() query: DashboardQueryDto,
+    @CurrentUser() user: CurrentUserWithRole,
+  ) {
     return this.dashboardService.getSalesByPaymentMethod(query, user);
   }
 }

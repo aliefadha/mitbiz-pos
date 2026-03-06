@@ -1,4 +1,4 @@
-import { CurrentUser, type CurrentUserType } from '@/common/decorators/current-user.decorator';
+import { CurrentUser, type CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
 import { Action, Permission, PermissionGuard, ScopeGuard, TenantScope } from '@/rbac';
@@ -18,7 +18,7 @@ export class SalesController {
   @ApiOperation({ summary: 'Get top selling products' })
   @UsePipes(new ZodValidationPipe(SalesQuerySchema, 'query'))
   @Permission('sales', [Action.READ])
-  getTopProducts(@Query() query: SalesQueryDto, @CurrentUser() user: CurrentUserType) {
+  getTopProducts(@Query() query: SalesQueryDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.salesService.getTopProducts(query, user, query.limit ?? 10);
   }
 
@@ -26,7 +26,7 @@ export class SalesController {
   @ApiOperation({ summary: 'Get sales by category' })
   @UsePipes(new ZodValidationPipe(SalesQuerySchema, 'query'))
   @Permission('sales', [Action.READ])
-  getSalesByCategory(@Query() query: SalesQueryDto, @CurrentUser() user: CurrentUserType) {
+  getSalesByCategory(@Query() query: SalesQueryDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.salesService.getSalesByCategory(query, user);
   }
 
@@ -34,7 +34,7 @@ export class SalesController {
   @ApiOperation({ summary: 'Get sales by product' })
   @UsePipes(new ZodValidationPipe(SalesQuerySchema, 'query'))
   @Permission('sales', [Action.READ])
-  getSalesByProduct(@Query() query: SalesQueryDto, @CurrentUser() user: CurrentUserType) {
+  getSalesByProduct(@Query() query: SalesQueryDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.salesService.getSalesByProduct(query, user);
   }
 }

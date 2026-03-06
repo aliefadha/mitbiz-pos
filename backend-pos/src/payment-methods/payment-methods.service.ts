@@ -1,19 +1,30 @@
-import type { CurrentUserType } from '@/common/decorators/current-user.decorator';
+import type { CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
 import { DB_CONNECTION } from '@/db/db.module';
 import { paymentMethods } from '@/db/schema/payment-method-schema';
-import { tenants } from '@/db/schema/tenant-schema';
 import type { DrizzleDB } from '@/db/type';
+import { TenantAuthService } from '@/rbac/services/tenant-auth.service';
 import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { SQL, and, desc, eq, like, sql } from 'drizzle-orm';
 import { CreatePaymentMethodDto, PaymentMethodQueryDto, UpdatePaymentMethodDto } from './dto';
 
 @Injectable()
 export class PaymentMethodsService {
-  constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) {}
+  constructor(
+    @Inject(DB_CONNECTION) private db: DrizzleDB,
+    private readonly tenantAuth: TenantAuthService,
+  ) {}
 
-  async findAll(query: PaymentMethodQueryDto) {
+  async findAll(query: PaymentMethodQueryDto, user: CurrentUserWithRole) {
     const { page = 1, limit = 10, search, isActive, tenantId } = query;
     const offset = (page - 1) * limit;
+
+    // Validate that query tenantId matches user's allowed tenant
+    if (tenantId) {
+      await this.tenantAuth.validateQueryTenantId(user, tenantId);
+    }
+
+    // Get effective tenant ID for the user (for filtering if no tenantId provided)
+    const effectiveTenantId = await this.tenantAuth.getEffectiveTenantId(user);
 
     const conditions: SQL<unknown>[] = [];
 
@@ -21,8 +32,10 @@ export class PaymentMethodsService {
       conditions.push(eq(paymentMethods.isActive, isActive));
     }
 
-    if (tenantId) {
-      conditions.push(eq(paymentMethods.tenantId, tenantId));
+    // Use query tenantId if provided, otherwise use effective tenant (for non-global roles)
+    const filterTenantId = tenantId || effectiveTenantId;
+    if (filterTenantId) {
+      conditions.push(eq(paymentMethods.tenantId, filterTenantId));
     }
 
     if (search) {
@@ -55,7 +68,7 @@ export class PaymentMethodsService {
     };
   }
 
-  async findById(id: string, user: CurrentUserType) {
+  async findById(id: string, user: CurrentUserWithRole) {
     const paymentMethod = await this.db.query.paymentMethods.findFirst({
       where: eq(paymentMethods.id, id),
       with: {
@@ -67,51 +80,27 @@ export class PaymentMethodsService {
       throw new NotFoundException(`Payment method with ID ${id} not found`);
     }
 
-    if (user.role === 'owner' || user.role === 'cashier') {
-      const userTenants = await this.db.query.tenants.findMany({
-        where: eq(tenants.userId, user.id),
-      });
-      const userTenantIds = userTenants.map((t) => t.id);
-      if (userTenantIds.length > 0 && !userTenantIds.includes(paymentMethod.tenantId)) {
-        throw new ForbiddenException('You do not have access to this payment method');
-      }
+    // Check tenant access (permission already checked by guard)
+    const hasAccess = await this.tenantAuth.canAccessTenant(user, paymentMethod.tenantId);
+    if (!hasAccess) {
+      throw new ForbiddenException('You do not have access to this payment method');
     }
 
     return paymentMethod;
   }
 
-  async create(data: CreatePaymentMethodDto, user: CurrentUserType) {
-    const tenant = await this.db.query.tenants.findFirst({
-      where: eq(tenants.id, data.tenantId),
-    });
-
-    if (!tenant) {
-      throw new NotFoundException(`Tenant with ID ${data.tenantId} not found`);
-    }
-
-    if (user.role === 'owner' && tenant.userId !== user.id) {
-      throw new ForbiddenException(
-        'You do not have permission to create payment methods in this tenant',
-      );
-    }
+  async create(data: CreatePaymentMethodDto, user: CurrentUserWithRole) {
+    // Validate tenant access (permission already checked by guard)
+    await this.tenantAuth.validateTenantOperation(user, data.tenantId);
 
     const [paymentMethod] = await this.db.insert(paymentMethods).values(data).returning();
 
     return paymentMethod;
   }
 
-  async update(id: string, data: UpdatePaymentMethodDto, user: CurrentUserType) {
-    const existingPaymentMethod = await this.findById(id, user);
-
-    if (user.role === 'owner') {
-      const userTenants = await this.db.query.tenants.findMany({
-        where: eq(tenants.userId, user.id),
-      });
-      const userTenantIds = userTenants.map((t) => t.id);
-      if (userTenantIds.length > 0 && !userTenantIds.includes(existingPaymentMethod.tenantId)) {
-        throw new ForbiddenException('You do not have permission to update this payment method');
-      }
-    }
+  async update(id: string, data: UpdatePaymentMethodDto, user: CurrentUserWithRole) {
+    // findById already validates tenant access
+    await this.findById(id, user);
 
     const [paymentMethod] = await this.db
       .update(paymentMethods)
@@ -125,18 +114,9 @@ export class PaymentMethodsService {
     return paymentMethod;
   }
 
-  async remove(id: string, user: CurrentUserType) {
-    const paymentMethod = await this.findById(id, user);
-
-    if (user.role === 'owner') {
-      const userTenants = await this.db.query.tenants.findMany({
-        where: eq(tenants.userId, user.id),
-      });
-      const userTenantIds = userTenants.map((t) => t.id);
-      if (userTenantIds.length > 0 && !userTenantIds.includes(paymentMethod.tenantId)) {
-        throw new ForbiddenException('You do not have permission to delete this payment method');
-      }
-    }
+  async remove(id: string, user: CurrentUserWithRole) {
+    // findById already validates tenant access
+    await this.findById(id, user);
 
     const [deletedPaymentMethod] = await this.db
       .delete(paymentMethods)

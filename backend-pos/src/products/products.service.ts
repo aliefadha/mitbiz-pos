@@ -1,12 +1,11 @@
-import type { CurrentUserType } from '@/common/decorators/current-user.decorator';
+import type { CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
 import { DB_CONNECTION } from '@/db/db.module';
 import { categories } from '@/db/schema/category-schema';
 import { discountProducts } from '@/db/schema/discount-schema';
-import { outlets } from '@/db/schema/outlet-schema';
 import { products } from '@/db/schema/product-schema';
 import { productStocks } from '@/db/schema/stock-schema';
-import { tenants } from '@/db/schema/tenant-schema';
 import type { DrizzleDB } from '@/db/type';
+import { TenantAuthService } from '@/rbac/services/tenant-auth.service';
 import {
   ConflictException,
   ForbiddenException,
@@ -19,11 +18,22 @@ import { CreateProductDto, ProductQueryDto, UpdateProductDto } from './dto';
 
 @Injectable()
 export class ProductsService {
-  constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) {}
+  constructor(
+    @Inject(DB_CONNECTION) private db: DrizzleDB,
+    private readonly tenantAuth: TenantAuthService,
+  ) {}
 
-  async findAll(query: ProductQueryDto) {
+  async findAll(query: ProductQueryDto, user: CurrentUserWithRole) {
     const { page = 1, limit = 10, search, isActive, tenantId, categoryId, tipe, outletId } = query;
     const offset = (page - 1) * limit;
+
+    // Validate that query tenantId matches user's allowed tenant
+    if (tenantId) {
+      await this.tenantAuth.validateQueryTenantId(user, tenantId);
+    }
+
+    // Get effective tenant ID for the user (for filtering if no tenantId provided)
+    const effectiveTenantId = await this.tenantAuth.getEffectiveTenantId(user);
 
     const conditions: SQL<unknown>[] = [];
 
@@ -31,8 +41,10 @@ export class ProductsService {
       conditions.push(eq(products.isActive, isActive));
     }
 
-    if (tenantId) {
-      conditions.push(eq(products.tenantId, tenantId));
+    // Use query tenantId if provided, otherwise use effective tenant (for non-global roles)
+    const filterTenantId = tenantId || effectiveTenantId;
+    if (filterTenantId) {
+      conditions.push(eq(products.tenantId, filterTenantId));
     }
 
     if (categoryId) {
@@ -50,7 +62,7 @@ export class ProductsService {
 
     const stockCondition = outletId ? eq(productStocks.outletId, outletId) : undefined;
 
-    const tenantCondition = tenantId ? eq(products.tenantId, tenantId) : undefined;
+    const tenantCondition = filterTenantId ? eq(products.tenantId, filterTenantId) : undefined;
 
     const [data, totalResult, statsResult] = await Promise.all([
       this.db
@@ -113,7 +125,7 @@ export class ProductsService {
     };
   }
 
-  async findById(id: string, user: CurrentUserType) {
+  async findById(id: string, user: CurrentUserWithRole) {
     const product = await this.db.query.products.findFirst({
       where: eq(products.id, id),
       with: {
@@ -131,46 +143,18 @@ export class ProductsService {
       throw new NotFoundException(`Product with ID ${id} not found`);
     }
 
-    // Check ownership for owner/cashier
-    if (user.role === 'owner' || user.role === 'cashier') {
-      const userTenants = await this.db.query.tenants.findMany({
-        where: eq(tenants.userId, user.id),
-      });
-      const userTenantIds = userTenants.map((t) => t.id);
-      if (userTenantIds.length > 0 && !userTenantIds.includes(product.tenantId)) {
-        throw new ForbiddenException('You do not have access to this product');
-      }
+    // Check tenant access (permission already checked by guard)
+    const hasAccess = await this.tenantAuth.canAccessTenant(user, product.tenantId);
+    if (!hasAccess) {
+      throw new ForbiddenException('You do not have access to this product');
     }
 
     return product;
   }
 
-  async create(data: CreateProductDto, user: CurrentUserType) {
-    // Verify tenant exists and user has access
-    const tenant = await this.db.query.tenants.findFirst({
-      where: eq(tenants.id, data.tenantId),
-    });
-
-    if (!tenant) {
-      throw new NotFoundException(`Tenant with ID ${data.tenantId} not found`);
-    }
-
-    // Check ownership for owner
-    if (user.role === 'owner' && tenant.userId !== user.id) {
-      throw new ForbiddenException('You do not have permission to create products in this tenant');
-    }
-
-    // Check access for cashier
-    if (user.role === 'cashier') {
-      const userOutlet = await this.db.query.outlets.findFirst({
-        where: eq(outlets.id, user.outletId!),
-      });
-      if (!userOutlet || userOutlet.tenantId !== data.tenantId) {
-        throw new ForbiddenException(
-          'You do not have permission to create products in this tenant',
-        );
-      }
-    }
+  async create(data: CreateProductDto, user: CurrentUserWithRole) {
+    // Validate tenant access (permission already checked by guard)
+    await this.tenantAuth.validateTenantOperation(user, data.tenantId);
 
     if (data.categoryId) {
       const category = await this.db.query.categories.findFirst({
@@ -195,18 +179,12 @@ export class ProductsService {
       throw new ConflictException(`Product with SKU ${data.sku} already exists`);
     }
 
-    const [product] = await this.db
-      .insert(products)
-      .values({
-        ...data,
-        hargaJual: data.hargaJual,
-      })
-      .returning();
+    const [product] = await this.db.insert(products).values(data).returning();
 
     return product;
   }
 
-  async update(id: string, data: UpdateProductDto, user: CurrentUserType) {
+  async update(id: string, data: UpdateProductDto, user: CurrentUserWithRole) {
     const { discountIds, ...productData } = data;
     const existingProduct = await this.findById(id, user);
 
@@ -263,7 +241,7 @@ export class ProductsService {
     return product;
   }
 
-  async remove(id: string, user: CurrentUserType) {
+  async remove(id: string, user: CurrentUserWithRole) {
     await this.findById(id, user);
 
     const [product] = await this.db.delete(products).where(eq(products.id, id)).returning();

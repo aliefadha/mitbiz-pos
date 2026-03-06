@@ -1,23 +1,31 @@
+import type { CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
 import { DB_CONNECTION } from '@/db/db.module';
 import { roles, user } from '@/db/schema';
-import { tenants } from '@/db/schema/tenant-schema';
 import type { DrizzleDB } from '@/db/type';
 import { auth } from '@/lib/auth';
+import { TenantAuthService } from '@/rbac/services/tenant-auth.service';
 import { BadRequestException, ForbiddenException, Inject, Injectable } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import type { CreateUserDto } from './dto';
 
 @Injectable()
 export class UserService {
-  constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) {}
+  constructor(
+    @Inject(DB_CONNECTION) private db: DrizzleDB,
+    private readonly tenantAuth: TenantAuthService,
+  ) {}
 
-  async getAllUsers(currentUserId: string, tenantId?: string) {
-    // First check if user is admin
-    const userRole = await this.findUserRoles(currentUserId);
-    const isAdmin = userRole?.name === 'admin';
+  async getAllUsers(currentUser: CurrentUserWithRole, tenantId?: string) {
+    // If query tenantId provided, validate access
+    if (tenantId) {
+      await this.tenantAuth.validateQueryTenantId(currentUser, tenantId);
+    }
 
-    if (isAdmin) {
-      // Admin sees all users, optionally filtered by tenantId
+    // Get effective tenant ID for the user
+    const effectiveTenantId = await this.tenantAuth.getEffectiveTenantId(currentUser);
+
+    // Global roles can see all users, optionally filtered by tenantId
+    if (!effectiveTenantId) {
       const users = await this.db.query.user.findMany({
         where: tenantId ? eq(user.tenantId, tenantId) : undefined,
         with: {
@@ -29,37 +37,10 @@ export class UserService {
       return { users, total: users.length };
     }
 
-    // Non-admin users: check tenant ownership
-    const ownedTenants = await this.db.query.tenants.findMany({
-      where: eq(tenants.userId, currentUserId),
-    });
-
-    if (ownedTenants.length === 0) {
-      return { users: [], total: 0 };
-    }
-
-    const ownedTenantIds = ownedTenants.map((t) => t.id);
-
-    // If tenantId is provided, verify ownership
-    if (tenantId) {
-      if (!ownedTenantIds.includes(tenantId)) {
-        return { users: [], total: 0 };
-      }
-
-      const users = await this.db.query.user.findMany({
-        where: eq(user.tenantId, tenantId),
-        with: {
-          role: true,
-          tenant: true,
-          outlet: true,
-        },
-      });
-      return { users, total: users.length };
-    }
-
-    // No tenantId provided, return users from all owned tenants
+    // Tenant-scoped roles can only see users in their tenant
+    const filterTenantId = tenantId || effectiveTenantId;
     const users = await this.db.query.user.findMany({
-      where: (user, { inArray }) => inArray(user.tenantId, ownedTenantIds),
+      where: eq(user.tenantId, filterTenantId),
       with: {
         role: true,
         tenant: true,
@@ -84,21 +65,10 @@ export class UserService {
     return userWithRole[0] || null;
   }
 
-  async createUser(data: CreateUserDto, currentUserId: string) {
-    // Check current user's role
-    const creatorRole = await this.findUserRoles(currentUserId);
-    const isAdmin = creatorRole?.name === 'admin';
-
-    // If not admin, verify they own the target tenant
-    if (!isAdmin && data.tenantId) {
-      const ownedTenants = await this.db.query.tenants.findMany({
-        where: eq(tenants.userId, currentUserId),
-      });
-
-      const ownedTenantIds = ownedTenants.map((t) => t.id);
-      if (!ownedTenantIds.includes(data.tenantId)) {
-        throw new ForbiddenException('You do not have permission to create users in this tenant');
-      }
+  async createUser(data: CreateUserDto, currentUser: CurrentUserWithRole) {
+    // Validate tenant access for creating user
+    if (data.tenantId) {
+      await this.tenantAuth.validateTenantOperation(currentUser, data.tenantId);
     }
 
     // Get role ID from role name

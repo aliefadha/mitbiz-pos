@@ -1,22 +1,28 @@
-import type { CurrentUserType } from '@/common/decorators/current-user.decorator';
+import type { CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
 import { DB_CONNECTION } from '@/db/db.module';
 import { orderItems } from '@/db/schema/order-item-schema';
 import { orders } from '@/db/schema/order-schema';
 import { outlets } from '@/db/schema/outlet-schema';
 import { products } from '@/db/schema/product-schema';
-import { tenants } from '@/db/schema/tenant-schema';
 import type { DrizzleDB } from '@/db/type';
+import { TenantAuthService } from '@/rbac/services/tenant-auth.service';
 import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { SQL, and, eq, sql } from 'drizzle-orm';
 import { CreateOrderItemDto, OrderItemQueryDto, UpdateOrderItemDto } from './dto';
 
 @Injectable()
 export class OrderItemsService {
-  constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) {}
+  constructor(
+    @Inject(DB_CONNECTION) private db: DrizzleDB,
+    private readonly tenantAuth: TenantAuthService,
+  ) {}
 
-  async findAll(query: OrderItemQueryDto) {
+  async findAll(query: OrderItemQueryDto, user: CurrentUserWithRole) {
     const { page = 1, limit = 10, orderId, productId, outletId } = query;
     const offset = (page - 1) * limit;
+
+    // Get effective tenant ID for the user
+    const effectiveTenantId = await this.tenantAuth.getEffectiveTenantId(user);
 
     const conditions: SQL<unknown>[] = [];
 
@@ -30,6 +36,25 @@ export class OrderItemsService {
 
     if (outletId) {
       conditions.push(eq(orderItems.outletId, outletId));
+    }
+
+    // If user has a specific tenant, filter by outlet's tenant
+    if (effectiveTenantId) {
+      const outletIdsInTenant = await this.db
+        .select({ id: outlets.id })
+        .from(outlets)
+        .where(eq(outlets.tenantId, effectiveTenantId));
+
+      const outletIdList = outletIdsInTenant.map((o) => o.id);
+
+      if (outletIdList.length > 0) {
+        conditions.push(
+          sql`${orderItems.outletId} IN (${sql.join(
+            outletIdList.map((id) => sql`${id}`),
+            sql`, `,
+          )})`,
+        );
+      }
     }
 
     const [data, totalResult] = await Promise.all([
@@ -71,7 +96,7 @@ export class OrderItemsService {
     };
   }
 
-  async findById(id: string, user: CurrentUserType) {
+  async findById(id: string, user: CurrentUserWithRole) {
     const orderItem = await this.db.query.orderItems.findFirst({
       where: eq(orderItems.id, id),
       with: {
@@ -85,20 +110,16 @@ export class OrderItemsService {
       throw new NotFoundException(`Order item with ID ${id} not found`);
     }
 
-    if (user.role === 'owner' || user.role === 'cashier') {
-      const userTenants = await this.db.query.tenants.findMany({
-        where: eq(tenants.userId, user.id),
-      });
-      const userTenantIds = userTenants.map((t) => t.id);
-      if (userTenantIds.length > 0 && !userTenantIds.includes(orderItem.outlet.tenantId)) {
-        throw new ForbiddenException('You do not have access to this order item');
-      }
+    // Check tenant access via outlet's tenant (permission already checked by guard)
+    const hasAccess = await this.tenantAuth.canAccessTenant(user, orderItem.outlet.tenantId);
+    if (!hasAccess) {
+      throw new ForbiddenException('You do not have access to this order item');
     }
 
     return orderItem;
   }
 
-  async create(data: CreateOrderItemDto, user: CurrentUserType) {
+  async create(data: CreateOrderItemDto, user: CurrentUserWithRole) {
     const outlet = await this.db.query.outlets.findFirst({
       where: eq(outlets.id, data.outletId),
     });
@@ -107,16 +128,8 @@ export class OrderItemsService {
       throw new NotFoundException(`Outlet with ID ${data.outletId} not found`);
     }
 
-    if (user.role === 'owner') {
-      const tenant = await this.db.query.tenants.findFirst({
-        where: eq(tenants.id, outlet.tenantId),
-      });
-      if (!tenant || tenant.userId !== user.id) {
-        throw new ForbiddenException(
-          'You do not have permission to create order items in this outlet',
-        );
-      }
-    }
+    // Validate tenant access via outlet (permission already checked by guard)
+    await this.tenantAuth.validateTenantOperation(user, outlet.tenantId);
 
     const order = await this.db.query.orders.findFirst({
       where: eq(orders.id, data.orderId),
@@ -158,7 +171,8 @@ export class OrderItemsService {
     return orderItem;
   }
 
-  async update(id: string, data: UpdateOrderItemDto, user: CurrentUserType) {
+  async update(id: string, data: UpdateOrderItemDto, user: CurrentUserWithRole) {
+    // findById already validates tenant access
     const existingOrderItem = await this.findById(id, user);
 
     if (data.productId && data.productId !== existingOrderItem.productId) {
@@ -184,7 +198,8 @@ export class OrderItemsService {
     return orderItem;
   }
 
-  async remove(id: string, user: CurrentUserType) {
+  async remove(id: string, user: CurrentUserWithRole) {
+    // findById already validates tenant access
     await this.findById(id, user);
 
     const [orderItem] = await this.db.delete(orderItems).where(eq(orderItems.id, id)).returning();

@@ -1,4 +1,4 @@
-import { CurrentUser, type CurrentUserType } from '@/common/decorators/current-user.decorator';
+import { CurrentUser, type CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
 import { Action, Permission, PermissionGuard, ScopeGuard, TenantScope } from '@/rbac';
@@ -38,7 +38,7 @@ export class StocksController {
   @ApiOperation({ summary: 'Get all stocks' })
   @UsePipes(new ZodValidationPipe(StockQuerySchema, 'query'))
   @Permission('stocks', [Action.READ])
-  findAll(@Query() query: StockQueryDto, @CurrentUser() user: CurrentUserType) {
+  findAll(@Query() query: StockQueryDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.stocksService.findAll(query, user);
   }
 
@@ -46,7 +46,7 @@ export class StocksController {
   @ApiOperation({ summary: 'Get stock by ID' })
   @UsePipes(new ZodValidationPipe(StockIdSchema, 'params'))
   @Permission('stocks', [Action.READ])
-  findById(@Param() { id }: StockIdDto, @CurrentUser() user: CurrentUserType) {
+  findById(@Param() { id }: StockIdDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.stocksService.findById(id, user);
   }
 
@@ -54,7 +54,7 @@ export class StocksController {
   @ApiOperation({ summary: 'Create a new stock' })
   @UsePipes(new ZodValidationPipe(CreateStockSchema))
   @Permission('stocks', [Action.CREATE])
-  create(@Body() data: CreateStockDto, @CurrentUser() user: CurrentUserType) {
+  create(@Body() data: CreateStockDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.stocksService.create(data, user);
   }
 
@@ -66,7 +66,7 @@ export class StocksController {
   update(
     @Param() { id }: StockIdDto,
     @Body() data: UpdateStockDto,
-    @CurrentUser() user: CurrentUserType,
+    @CurrentUser() user: CurrentUserWithRole,
   ) {
     return this.stocksService.update(id, data, user);
   }
@@ -75,7 +75,7 @@ export class StocksController {
   @ApiOperation({ summary: 'Delete a stock' })
   @UsePipes(new ZodValidationPipe(StockIdSchema, 'params'))
   @Permission('stocks', [Action.DELETE])
-  remove(@Param() { id }: StockIdDto, @CurrentUser() user: CurrentUserType) {
+  remove(@Param() { id }: StockIdDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.stocksService.remove(id, user);
   }
 }

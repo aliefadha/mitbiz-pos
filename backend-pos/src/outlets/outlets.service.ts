@@ -1,8 +1,8 @@
-import type { CurrentUserType } from '@/common/decorators/current-user.decorator';
+import type { CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
 import { DB_CONNECTION } from '@/db/db.module';
 import { outlets } from '@/db/schema';
-import { tenants } from '@/db/schema';
 import type { DrizzleDB } from '@/db/type';
+import { TenantAuthService } from '@/rbac/services/tenant-auth.service';
 import {
   ConflictException,
   ForbiddenException,
@@ -15,21 +15,22 @@ import { CreateOutletDto, OutletQueryDto, UpdateOutletDto } from './dto';
 
 @Injectable()
 export class OutletsService {
-  constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) {}
+  constructor(
+    @Inject(DB_CONNECTION) private db: DrizzleDB,
+    private readonly tenantAuth: TenantAuthService,
+  ) {}
 
-  async findAll(query: OutletQueryDto, user: CurrentUserType) {
+  async findAll(query: OutletQueryDto, user: CurrentUserWithRole) {
     const { page = 1, limit = 10, search, isActive, tenantId } = query;
     const offset = (page - 1) * limit;
 
-    let effectiveTenantId = tenantId;
-    if (!effectiveTenantId && (user.role === 'owner' || user.role === 'cashier')) {
-      const userTenant = await this.db.query.tenants.findFirst({
-        where: eq(tenants.userId, user.id),
-      });
-      if (userTenant) {
-        effectiveTenantId = userTenant.id;
-      }
+    // Validate that query tenantId matches user's allowed tenant
+    if (tenantId) {
+      await this.tenantAuth.validateQueryTenantId(user, tenantId);
     }
+
+    // Get effective tenant ID for the user (for filtering if no tenantId provided)
+    const effectiveTenantId = await this.tenantAuth.getEffectiveTenantId(user);
 
     const conditions: SQL<unknown>[] = [];
 
@@ -37,15 +38,17 @@ export class OutletsService {
       conditions.push(eq(outlets.isActive, isActive));
     }
 
-    if (effectiveTenantId) {
-      conditions.push(eq(outlets.tenantId, effectiveTenantId));
+    // Use query tenantId if provided, otherwise use effective tenant (for non-global roles)
+    const filterTenantId = tenantId || effectiveTenantId;
+    if (filterTenantId) {
+      conditions.push(eq(outlets.tenantId, filterTenantId));
     }
 
     if (search) {
       conditions.push(like(outlets.nama, `%${search}%`));
     }
 
-    const tenantCondition = effectiveTenantId ? eq(outlets.tenantId, effectiveTenantId) : undefined;
+    const tenantCondition = filterTenantId ? eq(outlets.tenantId, filterTenantId) : undefined;
 
     const [data, totalResult, statsResult] = await Promise.all([
       this.db
@@ -88,7 +91,7 @@ export class OutletsService {
     };
   }
 
-  async findById(id: string, user: CurrentUserType) {
+  async findById(id: string, user: CurrentUserWithRole) {
     const outlet = await this.db.query.outlets.findFirst({
       where: eq(outlets.id, id),
       with: {
@@ -100,33 +103,18 @@ export class OutletsService {
       throw new NotFoundException(`Outlet with ID ${id} not found`);
     }
 
-    // Check ownership for owner/cashier
-    if (user.role === 'owner' || user.role === 'cashier') {
-      const userTenant = await this.db.query.tenants.findFirst({
-        where: eq(tenants.userId, user.id),
-      });
-      if (userTenant && outlet.tenantId !== userTenant.id) {
-        throw new ForbiddenException('You do not have access to this outlet');
-      }
+    // Check tenant access (permission already checked by guard)
+    const hasAccess = await this.tenantAuth.canAccessTenant(user, outlet.tenantId);
+    if (!hasAccess) {
+      throw new ForbiddenException('You do not have access to this outlet');
     }
 
     return outlet;
   }
 
-  async create(data: CreateOutletDto, user: CurrentUserType) {
-    // Verify tenant exists and user has access
-    const tenant = await this.db.query.tenants.findFirst({
-      where: eq(tenants.id, data.tenantId),
-    });
-
-    if (!tenant) {
-      throw new NotFoundException(`Tenant with ID ${data.tenantId} not found`);
-    }
-
-    // Check ownership for owner
-    if (user.role === 'owner' && tenant.userId !== user.id) {
-      throw new ForbiddenException('You do not have permission to create outlets in this tenant');
-    }
+  async create(data: CreateOutletDto, user: CurrentUserWithRole) {
+    // Validate tenant access (permission already checked by guard)
+    await this.tenantAuth.validateTenantOperation(user, data.tenantId);
 
     const existing = await this.db.query.outlets.findFirst({
       where: eq(outlets.kode, data.kode),
@@ -141,18 +129,9 @@ export class OutletsService {
     return outlet;
   }
 
-  async update(id: string, data: UpdateOutletDto, user: CurrentUserType) {
+  async update(id: string, data: UpdateOutletDto, user: CurrentUserWithRole) {
+    // findById already validates tenant access
     const existingOutlet = await this.findById(id, user);
-
-    // Verify ownership again
-    if (user.role === 'owner') {
-      const userTenant = await this.db.query.tenants.findFirst({
-        where: eq(tenants.userId, user.id),
-      });
-      if (userTenant && existingOutlet.tenantId !== userTenant.id) {
-        throw new ForbiddenException('You do not have permission to update this outlet');
-      }
-    }
 
     if (data.kode && data.kode !== existingOutlet.kode) {
       const kodeExists = await this.db.query.outlets.findFirst({
@@ -176,18 +155,9 @@ export class OutletsService {
     return outlet;
   }
 
-  async remove(id: string, user: CurrentUserType) {
-    const outlet = await this.findById(id, user);
-
-    // Verify ownership
-    if (user.role === 'owner') {
-      const userTenant = await this.db.query.tenants.findFirst({
-        where: eq(tenants.userId, user.id),
-      });
-      if (userTenant && outlet.tenantId !== userTenant.id) {
-        throw new ForbiddenException('You do not have permission to delete this outlet');
-      }
-    }
+  async remove(id: string, user: CurrentUserWithRole) {
+    // findById already validates tenant access
+    await this.findById(id, user);
 
     const [deletedOutlet] = await this.db.delete(outlets).where(eq(outlets.id, id)).returning();
 

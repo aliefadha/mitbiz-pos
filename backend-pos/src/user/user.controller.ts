@@ -1,3 +1,4 @@
+import { CurrentUser, type CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
 import { auth } from '@/lib/auth';
@@ -34,15 +35,12 @@ export class UserController {
   @Get()
   @UsePipes(new ZodValidationPipe(UserQuerySchema, 'query'))
   @Permission('user', [Action.READ])
-  async getUsers(@Query() query: UserQueryDto, @Request() req: ExpressRequest) {
-    const headers = fromNodeHeaders(req.headers);
-    const session = await this.authService.api.getSession({ headers });
-
-    if (!session?.user?.id) {
+  async getUsers(@Query() query: UserQueryDto, @CurrentUser() currentUser: CurrentUserWithRole) {
+    if (!currentUser?.id) {
       return { users: [], total: 0 };
     }
 
-    return this.userService.getAllUsers(session.user.id, query.tenantId);
+    return this.userService.getAllUsers(currentUser, query.tenantId);
   }
 
   @Get('me')
@@ -60,15 +58,12 @@ export class UserController {
   @Post()
   @UsePipes(new ZodValidationPipe(CreateUserSchema))
   @Permission('user', [Action.CREATE])
-  async createUser(@Body() body: CreateUserDto, @Request() req: ExpressRequest) {
-    const headers = fromNodeHeaders(req.headers);
-    const session = await this.authService.api.getSession({ headers });
-
-    if (!session?.user?.id) {
+  async createUser(@Body() body: CreateUserDto, @CurrentUser() currentUser: CurrentUserWithRole) {
+    if (!currentUser?.id) {
       return { error: 'No session found' };
     }
 
-    const createdUser = await this.userService.createUser(body, session.user.id);
+    const createdUser = await this.userService.createUser(body, currentUser);
     return { user: createdUser };
   }
 }

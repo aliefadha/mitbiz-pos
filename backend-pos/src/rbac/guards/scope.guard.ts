@@ -48,9 +48,26 @@ export class ScopeGuard implements CanActivate {
       throw new UnauthorizedException('No role assigned to user');
     }
 
-    const role = await this.rbacService.getRoleWithPermissions(roleId);
+    // Check if role already attached by PermissionGuard
+    let role = (request.user as any)?.role;
+
     if (!role) {
-      throw new ForbiddenException('Role not found or inactive');
+      const roleData = await this.rbacService.getRoleWithPermissions(roleId);
+      if (!roleData) {
+        throw new ForbiddenException('Role not found or inactive');
+      }
+      role = roleData;
+
+      // Attach role info to request for caching
+      request.user = {
+        ...session.user,
+        role: {
+          id: role.id,
+          name: role.name,
+          scope: role.scope,
+          tenantId: role.tenantId,
+        },
+      } as unknown as typeof request.user;
     }
 
     if (scope === ScopeType.GLOBAL && role.scope === ScopeType.TENANT) {
@@ -62,19 +79,18 @@ export class ScopeGuard implements CanActivate {
 
     if (scope === ScopeType.TENANT) {
       if (role.scope === ScopeType.GLOBAL) {
+        // Global users can access any tenant, use query param or user preference
+        const userTenantId = await this.rbacService.getUserTenantId(outletId ?? null);
+        request.tenantId = userTenantId || role.tenantId;
         return true;
       }
 
-      const userTenantId = await this.rbacService.getUserTenantId(outletId ?? null);
-      if (!userTenantId) {
-        throw new ForbiddenException('No tenant associated with user');
+      // Tenant-scoped roles are restricted to their assigned tenant
+      if (!role.tenantId) {
+        throw new ForbiddenException('No tenant associated with role');
       }
 
-      if (role.tenantId && role.tenantId !== userTenantId) {
-        throw new ForbiddenException('Access denied: tenant mismatch');
-      }
-
-      request.tenantId = userTenantId;
+      request.tenantId = role.tenantId;
     }
 
     return true;

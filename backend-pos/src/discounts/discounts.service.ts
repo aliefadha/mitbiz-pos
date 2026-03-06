@@ -1,19 +1,30 @@
-import type { CurrentUserType } from '@/common/decorators/current-user.decorator';
+import type { CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
 import { DB_CONNECTION } from '@/db/db.module';
 import { discountProducts, discounts } from '@/db/schema/discount-schema';
-import { tenants } from '@/db/schema/tenant-schema';
 import type { DrizzleDB } from '@/db/type';
+import { TenantAuthService } from '@/rbac/services/tenant-auth.service';
 import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { SQL, and, asc, eq, inArray, like, or, sql } from 'drizzle-orm';
 import { CreateDiscountDto, DiscountQueryDto, UpdateDiscountDto } from './dto';
 
 @Injectable()
 export class DiscountsService {
-  constructor(@Inject(DB_CONNECTION) private db: DrizzleDB) {}
+  constructor(
+    @Inject(DB_CONNECTION) private db: DrizzleDB,
+    private readonly tenantAuth: TenantAuthService,
+  ) {}
 
-  async findAll(query: DiscountQueryDto) {
+  async findAll(query: DiscountQueryDto, user: CurrentUserWithRole) {
     const { page = 1, limit = 10, search, isActive, tenantId } = query;
     const offset = (page - 1) * limit;
+
+    // Validate that query tenantId matches user's allowed tenant
+    if (tenantId) {
+      await this.tenantAuth.validateQueryTenantId(user, tenantId);
+    }
+
+    // Get effective tenant ID for the user (for filtering if no tenantId provided)
+    const effectiveTenantId = await this.tenantAuth.getEffectiveTenantId(user);
 
     const conditions: SQL<unknown>[] = [];
 
@@ -21,8 +32,10 @@ export class DiscountsService {
       conditions.push(eq(discounts.isActive, isActive));
     }
 
-    if (tenantId) {
-      conditions.push(eq(discounts.tenantId, tenantId));
+    // Use query tenantId if provided, otherwise use effective tenant (for non-global roles)
+    const filterTenantId = tenantId || effectiveTenantId;
+    if (filterTenantId) {
+      conditions.push(eq(discounts.tenantId, filterTenantId));
     }
 
     if (search) {
@@ -55,7 +68,7 @@ export class DiscountsService {
     };
   }
 
-  async findById(id: string, user: CurrentUserType) {
+  async findById(id: string, user: CurrentUserWithRole) {
     const discount = await this.db.query.discounts.findFirst({
       where: eq(discounts.id, id),
       with: {
@@ -72,33 +85,20 @@ export class DiscountsService {
       throw new NotFoundException(`Discount with ID ${id} not found`);
     }
 
-    if (user.role === 'owner' || user.role === 'cashier') {
-      const userTenants = await this.db.query.tenants.findMany({
-        where: eq(tenants.userId, user.id),
-      });
-      const userTenantIds = userTenants.map((t) => t.id);
-      if (userTenantIds.length > 0 && !userTenantIds.includes(discount.tenantId)) {
-        throw new ForbiddenException('You do not have access to this discount');
-      }
+    // Check tenant access (permission already checked by guard)
+    const hasAccess = await this.tenantAuth.canAccessTenant(user, discount.tenantId);
+    if (!hasAccess) {
+      throw new ForbiddenException('You do not have access to this discount');
     }
 
     return discount;
   }
 
-  async create(data: CreateDiscountDto, user: CurrentUserType) {
+  async create(data: CreateDiscountDto, user: CurrentUserWithRole) {
     const { productIds, ...discountData } = data;
 
-    const tenant = await this.db.query.tenants.findFirst({
-      where: eq(tenants.id, data.tenantId),
-    });
-
-    if (!tenant) {
-      throw new NotFoundException(`Tenant with ID ${data.tenantId} not found`);
-    }
-
-    if (user.role === 'owner' && tenant.userId !== user.id) {
-      throw new ForbiddenException('You do not have permission to create discounts in this tenant');
-    }
+    // Validate tenant access (permission already checked by guard)
+    await this.tenantAuth.validateTenantOperation(user, data.tenantId);
 
     const [discount] = await this.db.insert(discounts).values(discountData).returning();
 
@@ -115,19 +115,10 @@ export class DiscountsService {
     return discount;
   }
 
-  async update(id: string, data: UpdateDiscountDto, user: CurrentUserType) {
+  async update(id: string, data: UpdateDiscountDto, user: CurrentUserWithRole) {
     const { productIds, ...discountData } = data;
+    // findById already validates tenant access
     const existingDiscount = await this.findById(id, user);
-
-    if (user.role === 'owner') {
-      const userTenants = await this.db.query.tenants.findMany({
-        where: eq(tenants.userId, user.id),
-      });
-      const userTenantIds = userTenants.map((t) => t.id);
-      if (userTenantIds.length > 0 && !userTenantIds.includes(existingDiscount.tenantId)) {
-        throw new ForbiddenException('You do not have permission to update this discount');
-      }
-    }
 
     const [discount] = await this.db
       .update(discounts)
@@ -157,18 +148,9 @@ export class DiscountsService {
     return discount;
   }
 
-  async remove(id: string, user: CurrentUserType) {
-    const discount = await this.findById(id, user);
-
-    if (user.role === 'owner') {
-      const userTenants = await this.db.query.tenants.findMany({
-        where: eq(tenants.userId, user.id),
-      });
-      const userTenantIds = userTenants.map((t) => t.id);
-      if (userTenantIds.length > 0 && !userTenantIds.includes(discount.tenantId)) {
-        throw new ForbiddenException('You do not have permission to delete this discount');
-      }
-    }
+  async remove(id: string, user: CurrentUserWithRole) {
+    // findById already validates tenant access
+    await this.findById(id, user);
 
     const [deletedDiscount] = await this.db
       .delete(discounts)

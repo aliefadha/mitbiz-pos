@@ -1,4 +1,4 @@
-import { CurrentUser, type CurrentUserType } from '@/common/decorators/current-user.decorator';
+import { CurrentUser, type CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
 import { Action, Permission, PermissionGuard, ScopeGuard, TenantScope } from '@/rbac';
@@ -23,14 +23,14 @@ export class StockAdjustmentsController {
   @ApiOperation({ summary: 'Get all stock adjustments' })
   @UsePipes(new ZodValidationPipe(StockAdjustmentQuerySchema, 'query'))
   @Permission('stockAdjustments', [Action.READ])
-  findAll(@Query() query: StockAdjustmentQueryDto, @CurrentUser() user: CurrentUserType) {
+  findAll(@Query() query: StockAdjustmentQueryDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.stockAdjustmentsService.findAll(query, user);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get stock adjustment by ID' })
   @Permission('stockAdjustments', [Action.READ])
-  findById(@Param('id') id: string, @CurrentUser() user: CurrentUserType) {
+  findById(@Param('id') id: string, @CurrentUser() user: CurrentUserWithRole) {
     return this.stockAdjustmentsService.findById(id, user);
   }
 
@@ -38,7 +38,7 @@ export class StockAdjustmentsController {
   @ApiOperation({ summary: 'Create a new stock adjustment' })
   @UsePipes(new ZodValidationPipe(CreateStockAdjustmentSchema))
   @Permission('stockAdjustments', [Action.CREATE])
-  create(@Body() data: CreateStockAdjustmentDto, @CurrentUser() user: CurrentUserType) {
+  create(@Body() data: CreateStockAdjustmentDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.stockAdjustmentsService.create(data, user);
   }
 }

@@ -1,4 +1,4 @@
-import { CurrentUser, type CurrentUserType } from '@/common/decorators/current-user.decorator';
+import { CurrentUser, type CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
 import { Action, Permission, PermissionGuard, ScopeGuard, TenantScope } from '@/rbac';
@@ -38,15 +38,15 @@ export class ProductsController {
   @ApiOperation({ summary: 'Get all products' })
   @Permission('products', [Action.READ])
   @UsePipes(new ZodValidationPipe(ProductQuerySchema, 'query'))
-  findAll(@Query() query: ProductQueryDto) {
-    return this.productsService.findAll(query);
+  findAll(@Query() query: ProductQueryDto, @CurrentUser() user: CurrentUserWithRole) {
+    return this.productsService.findAll(query, user);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get product by ID' })
   @Permission('products', [Action.READ])
   @UsePipes(new ZodValidationPipe(ProductIdSchema, 'params'))
-  findById(@Param() { id }: ProductIdDto, @CurrentUser() user: CurrentUserType) {
+  findById(@Param() { id }: ProductIdDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.productsService.findById(id, user);
   }
 
@@ -54,7 +54,7 @@ export class ProductsController {
   @ApiOperation({ summary: 'Create a new product' })
   @Permission('products', [Action.CREATE])
   @UsePipes(new ZodValidationPipe(CreateProductSchema))
-  create(@Body() data: CreateProductDto, @CurrentUser() user: CurrentUserType) {
+  create(@Body() data: CreateProductDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.productsService.create(data, user);
   }
 
@@ -66,7 +66,7 @@ export class ProductsController {
   update(
     @Param() { id }: ProductIdDto,
     @Body() data: UpdateProductDto,
-    @CurrentUser() user: CurrentUserType,
+    @CurrentUser() user: CurrentUserWithRole,
   ) {
     return this.productsService.update(id, data, user);
   }
@@ -75,7 +75,7 @@ export class ProductsController {
   @ApiOperation({ summary: 'Delete a product' })
   @Permission('products', [Action.DELETE])
   @UsePipes(new ZodValidationPipe(ProductIdSchema, 'params'))
-  remove(@Param() { id }: ProductIdDto, @CurrentUser() user: CurrentUserType) {
+  remove(@Param() { id }: ProductIdDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.productsService.remove(id, user);
   }
 }
