@@ -35,11 +35,7 @@ export function StatCardsLaporan({
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <Card className="bg-[#0B6CE6] text-white border-0 shadow-sm relative overflow-hidden">
         <div className="absolute -bottom-4 -right-1">
-          <img
-            src="/images/mitbiz-white.png"
-            alt="Logo"
-            className="w-24 h-24 object-contain opacity-20"
-          />
+          <img src="/images/mitbiz-white.png" alt="Logo" className="w-24 h-24 object-contain" />
         </div>
 
         <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0 relative z-10">

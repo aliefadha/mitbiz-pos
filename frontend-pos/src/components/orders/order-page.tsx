@@ -1,30 +1,12 @@
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { Eye, Search } from 'lucide-react';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
 import { StatCardsLaporan } from '@/components/dashboard/stat-cards-laporan';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+
 import {
   Select,
   SelectContent,
@@ -41,31 +23,15 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { type Order, ordersApi, type UpdateOrderDto } from '@/lib/api/orders';
+import { ordersApi } from '@/lib/api/orders';
 import { outletsApi } from '@/lib/api/outlets';
 import { useSession } from '@/lib/auth-client';
 
-const formSchema = z.object({
-  status: z.enum(['complete', 'cancel', 'refunded']).optional(),
-  notes: z.string().optional(),
-});
-
 export function OrderPage() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [outletFilter, setOutletFilter] = useState<string>('all');
-  const [editingOrder, setEditingOrder] = useState<Order | null>(null);
-  const [editModalOpen, setEditModalOpen] = useState(false);
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      status: 'complete',
-      notes: '',
-    },
-  });
 
   const { data: session } = useSession();
   const tenantId = session?.user?.tenantId;
@@ -98,32 +64,9 @@ export function OrderPage() {
     enabled: !!tenantId,
   });
 
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateOrderDto }) => ordersApi.update(id, data),
-    onSuccess: () => {
-      setEditModalOpen(false);
-      setEditingOrder(null);
-      form.reset();
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
-    },
-    onError: (error: Error) => {
-      alert(error.message || 'Failed to update order');
-    },
-  });
-
   const handleView = (orderId: string) => {
     navigate({ to: '/orders/$orderId', params: { orderId } });
   };
-
-  const handleSubmit = form.handleSubmit((values) => {
-    if (editingOrder) {
-      updateMutation.mutate({
-        id: editingOrder.id,
-        data: values,
-      });
-    }
-  });
-
   const displayedOrders = ordersData?.data ?? [];
 
   const formatRupiah = (value: string | number): string => {
@@ -150,8 +93,8 @@ export function OrderPage() {
   return (
     <div className="flex flex-col gap-6 w-full">
       <div>
-        <h4 className="text-lg font-semibold m-0">Pesanan</h4>
-        <p className="text-sm text-gray-500 m-0">Kelola semua pesanan dalam sistem</p>
+        <h4 className="text-lg font-semibold m-0">Riwayat Transaksi</h4>
+        <p className="text-sm text-gray-500 m-0">Lihat semua transaksi yang telah dilakukan</p>
       </div>
 
       <StatCardsLaporan
@@ -162,10 +105,10 @@ export function OrderPage() {
       />
 
       <Card className="shadow-sm border-gray-200">
-        <CardContent className="p-4 flex flex-col gap-y-6">
+        <CardContent className="flex flex-col gap-y-6">
+          <h1 className="font-semibold">Daftar Transaksi</h1>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="space-y-2">
-              <Label className="text-sm font-semibold text-gray-700">Cari</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
@@ -178,7 +121,6 @@ export function OrderPage() {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-sm font-semibold text-gray-700">Dari Tanggal</Label>
               <Input
                 type="date"
                 value={startDate}
@@ -188,7 +130,6 @@ export function OrderPage() {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-sm font-semibold text-gray-700">Sampai Tanggal</Label>
               <Input
                 type="date"
                 value={endDate}
@@ -198,7 +139,6 @@ export function OrderPage() {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-sm font-semibold text-gray-700">Outlet</Label>
               <Select value={outletFilter} onValueChange={setOutletFilter}>
                 <SelectTrigger className="w-full bg-gray-50/50 border-gray-200 rounded-lg h-10 text-gray-600">
                   <SelectValue placeholder="Semua Outlet" />
@@ -215,7 +155,6 @@ export function OrderPage() {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-sm font-semibold text-gray-700">Status</Label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-full bg-gray-50/50 border-gray-200 rounded-lg h-10 text-gray-600">
                   <SelectValue placeholder="Semua Status" />
@@ -299,58 +238,6 @@ export function OrderPage() {
           )}
         </CardContent>
       </Card>
-
-      <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
-        <DialogContent className="max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Edit Pesanan</DialogTitle>
-          </DialogHeader>
-          <Form {...form}>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Pilih status" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="complete">Selesai</SelectItem>
-                        <SelectItem value="cancel">Dibatalkan</SelectItem>
-                        <SelectItem value="refunded">Dikembalikan</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="notes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Catatan</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Masukkan catatan (opsional)" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <DialogFooter>
-                <Button type="submit" disabled={updateMutation.isPending || !tenantId}>
-                  Simpan
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
