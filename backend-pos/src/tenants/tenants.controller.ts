@@ -18,6 +18,8 @@ import { AuthGuard, OptionalAuth } from '@thallesp/nestjs-better-auth';
 import {
   CreateTenantDto,
   CreateTenantSchema,
+  TenantIdDto,
+  TenantIdSchema,
   TenantQueryDto,
   TenantQuerySchema,
   TenantSlugDto,
@@ -42,6 +44,14 @@ export class TenantsController {
   @Permission('tenants', [Action.READ])
   findAll(@Query() query: TenantQueryDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.tenantsService.findAll(query, user);
+  }
+
+  @Get('id/:id')
+  @ApiOperation({ summary: 'Get tenant by ID' })
+  @UsePipes(new ZodValidationPipe(TenantIdSchema, 'params'))
+  @Permission('tenants', [Action.READ])
+  findById(@Param() { id }: TenantIdDto, @CurrentUser() user: CurrentUserWithRole) {
+    return this.tenantsService.findById(id, user);
   }
 
   @Get(':slug')

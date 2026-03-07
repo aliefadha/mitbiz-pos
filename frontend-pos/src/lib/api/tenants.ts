@@ -97,6 +97,10 @@ export const tenantsApi = {
     return fetchApi<Tenant>(`/tenants/${slug}`);
   },
 
+  getById: async (id: string): Promise<Tenant> => {
+    return fetchApi<Tenant>(`/tenants/id/${id}`);
+  },
+
   create: async (
     data: {
       nama: string;

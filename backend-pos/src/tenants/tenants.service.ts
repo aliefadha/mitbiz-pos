@@ -75,6 +75,32 @@ export class TenantsService {
     };
   }
 
+  async findById(id: string, user: CurrentUserWithRole) {
+    const tenant = await this.db.query.tenants.findFirst({
+      where: eq(tenants.id, id),
+      with: {
+        user: true,
+        outlets: {
+          with: {
+            cashiers: true,
+          },
+        },
+      },
+    });
+
+    if (!tenant) {
+      throw new NotFoundException(`Tenant tidak ditemukan`);
+    }
+
+    // Check tenant access (permission already checked by guard)
+    const hasAccess = await this.tenantAuth.canAccessTenant(user, tenant.id);
+    if (!hasAccess) {
+      throw new ForbiddenException('You do not have access to this tenant');
+    }
+
+    return tenant;
+  }
+
   async findBySlug(slug: string, user: CurrentUserWithRole) {
     const tenant = await this.db.query.tenants.findFirst({
       where: eq(tenants.slug, slug),
