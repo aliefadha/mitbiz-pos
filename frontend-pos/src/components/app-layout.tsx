@@ -3,11 +3,13 @@ import {
   CreditCard,
   FileText,
   Folder,
+  History,
   LayoutDashboard,
   LogOut,
   Package,
   Percent,
   Receipt,
+  Settings,
   ShoppingCart,
   Store,
   User,
@@ -66,12 +68,12 @@ const menuConfig: MenuGroup[] = [
   {
     group: 'Transaksi',
     items: [
-      {
-        key: '/pos',
-        icon: ShoppingCart,
-        label: 'Kasir',
-        permission: { resource: 'orders', actions: ['create'] },
-      },
+      // {
+      //   key: '/pos',
+      //   icon: ShoppingCart,
+      //   label: 'Kasir',
+      //   permission: { resource: 'orders', actions: ['create'] },
+      // },
       {
         key: '/orders',
         icon: Receipt,
@@ -93,7 +95,7 @@ const menuConfig: MenuGroup[] = [
         key: '/tenants',
         icon: Users,
         label: 'Tenant',
-        permission: { resource: 'tenants', actions: ['read'] },
+        permission: { resource: 'tenants', actions: ['create'] },
       },
       {
         key: '/outlets',
@@ -136,6 +138,23 @@ const menuConfig: MenuGroup[] = [
         icon: CreditCard,
         label: 'Metode Pembayaran',
         permission: { resource: 'paymentMethods', actions: ['read'] },
+      },
+    ],
+  },
+  {
+    group: 'Pengaturan',
+    items: [
+      {
+        key: '/settings',
+        icon: Settings,
+        label: 'Pengaturan',
+        permission: { resource: 'tenants', actions: ['read', 'update'] },
+      },
+      {
+        key: '/history',
+        icon: History,
+        label: 'Riwayat Transaksi',
+        permission: { resource: 'order', actions: ['read'] },
       },
     ],
   },
@@ -192,8 +211,8 @@ function AppSidebar() {
                     }
                     className="cursor-pointer"
                   >
-                    {item.icon && <item.icon className="h-4 w-4" />}
-                    <span>{item.label}</span>
+                    {item.icon && <item.icon className="h-2 w-2" />}
+                    <span className='text-[14px]'>{item.label}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
