@@ -45,6 +45,11 @@ export interface Order {
     nama: string;
   };
   orderItems?: OrderItem[];
+  cashier?: {
+    id: string;
+    name: string;
+    email: string;
+  };
 }
 
 export interface OrderItem {

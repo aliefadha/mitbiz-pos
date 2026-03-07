@@ -1,10 +1,12 @@
 import { randomUUID } from 'node:crypto';
 import type { CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
 import { DB_CONNECTION } from '@/db/db.module';
+import { user as userTable } from '@/db/schema/auth-schema';
 import { cashShifts } from '@/db/schema/cash-shift-schema';
 import { orderItems } from '@/db/schema/order-item-schema';
 import { orders } from '@/db/schema/order-schema';
 import { outlets } from '@/db/schema/outlet-schema';
+import { paymentMethods } from '@/db/schema/payment-method-schema';
 import { productStocks } from '@/db/schema/stock-schema';
 import type { DrizzleDB } from '@/db/type';
 import { TenantAuthService } from '@/rbac/services/tenant-auth.service';
@@ -63,6 +65,8 @@ export class OrdersService {
         .select()
         .from(orders)
         .leftJoin(outlets, eq(orders.outletId, outlets.id))
+        .leftJoin(userTable, eq(orders.cashierId, userTable.id))
+        .leftJoin(paymentMethods, eq(orders.paymentMethodId, paymentMethods.id))
         .where(conditions.length > 0 ? and(...conditions) : undefined)
         .limit(limit)
         .offset(offset)
@@ -73,16 +77,25 @@ export class OrdersService {
         .where(conditions.length > 0 ? and(...conditions) : undefined),
     ]);
 
-    const ordersWithOutlet = data.map((row) => ({
+    const ordersWithRelations = data.map((row) => ({
       ...row.orders,
       outlet: row.outlets
         ? {
             id: row.outlets.id,
             nama: row.outlets.nama,
-            alamat: row.outlets.alamat,
-            isActive: row.outlets.isActive,
-            createdAt: row.outlets.createdAt,
-            updatedAt: row.outlets.updatedAt,
+          }
+        : null,
+      cashier: row.user
+        ? {
+            id: row.user.id,
+            name: row.user.name,
+            email: row.user.email,
+          }
+        : null,
+      paymentMethod: row.payment_methods
+        ? {
+            id: row.payment_methods.id,
+            nama: row.payment_methods.nama,
           }
         : null,
     }));
@@ -90,7 +103,7 @@ export class OrdersService {
     const total = Number(totalResult[0]?.count || 0);
 
     return {
-      data: ordersWithOutlet,
+      data: ordersWithRelations,
       meta: {
         page,
         limit,
@@ -104,10 +117,34 @@ export class OrdersService {
     const order = await this.db.query.orders.findFirst({
       where: eq(orders.id, id),
       with: {
-        outlet: true,
+        outlet: {
+          columns: {
+            id: true,
+            nama: true,
+          },
+        },
+        cashier: {
+          columns: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        paymentMethod: {
+          columns: {
+            id: true,
+            nama: true,
+          },
+        },
         orderItems: {
           with: {
-            product: true,
+            product: {
+              columns: {
+                id: true,
+                sku: true,
+                nama: true,
+              },
+            },
           },
         },
       },

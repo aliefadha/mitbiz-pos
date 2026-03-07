@@ -54,6 +54,10 @@ export const ordersRelations = relations(orders, ({ one, many }) => ({
     fields: [orders.outletId],
     references: [outlets.id],
   }),
+  cashier: one(user, {
+    fields: [orders.cashierId],
+    references: [user.id],
+  }),
   paymentMethod: one(paymentMethods, {
     fields: [orders.paymentMethodId],
     references: [paymentMethods.id],

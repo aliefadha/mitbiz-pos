@@ -1,8 +1,23 @@
 import { useQuery } from '@tanstack/react-query';
-import { useParams } from '@tanstack/react-router';
-import { ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Link, useParams } from '@tanstack/react-router';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
+import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { type Order, type OrderItem, ordersApi } from '@/lib/api/orders';
 
 interface OrderDetail extends Order {
@@ -21,57 +36,31 @@ export function OrderDetailPage() {
 
   const formatRupiah = (value: string | number): string => {
     const num = typeof value === 'string' ? parseFloat(value) : value;
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
+    return `Rp ${new Intl.NumberFormat('id-ID', {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(num);
+    }).format(num)}`;
   };
 
   const formatDate = (date: Date | string): string => {
     const d = new Date(date);
-    return new Intl.DateTimeFormat('id-ID', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(d);
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'complete':
-        return 'bg-green-100 text-green-700';
-      case 'cancel':
-        return 'bg-red-100 text-red-700';
-      case 'refunded':
-        return 'bg-yellow-100 text-yellow-700';
-      default:
-        return 'bg-gray-100 text-gray-700';
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'complete':
-        return 'Selesai';
-      case 'cancel':
-        return 'Dibatalkan';
-      case 'refunded':
-        return 'Dikembalikan';
-      default:
-        return status;
-    }
+    const day = d.getDate();
+    const month = d.getMonth() + 1;
+    const year = d.getFullYear();
+    const hours = d.getHours().toString().padStart(2, '0');
+    const minutes = d.getMinutes().toString().padStart(2, '0');
+    const seconds = d.getSeconds().toString().padStart(2, '0');
+    return `${day}/${month}/${year}, ${hours}.${minutes}.${seconds}`;
   };
 
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-64 w-full" />
-        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-5 w-64" />
+        <div className="flex gap-6 mt-6">
+          <Skeleton className="h-[500px] flex-1" />
+          <Skeleton className="h-[200px] w-[280px]" />
+        </div>
       </div>
     );
   }
@@ -80,125 +69,129 @@ export function OrderDetailPage() {
     return <div>Order not found</div>;
   }
 
+  const subtotal = parseFloat(order.subtotal) || 0;
+  const totalDiskon = parseFloat(order.jumlahDiskon) || 0;
+  const totalPajak = parseFloat(order.jumlahPajak) || 0;
+  const total = parseFloat(order.total) || 0;
+
   return (
     <div>
-      <div className="flex items-center gap-4 mb-6">
-        <Button variant="ghost" size="icon" onClick={() => window.history.back()}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div>
-          <h4 className="text-lg font-semibold m-0">Detail Pesanan</h4>
-          <p className="text-sm text-gray-500 m-0">Lihat detail pesanan</p>
-        </div>
-      </div>
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link to="/orders">Riwayat Transaksi</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Detail Transaksi</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <div className="rounded-lg border bg-white p-6">
-          <h5 className="font-semibold mb-4">Informasi Pesanan</h5>
+      {/* Main Content */}
+      <div className="flex gap-6 mt-6 items-start">
+        {/* Left Card - Transaction Details */}
+        <div className="flex-1 rounded-lg border border-gray-200 bg-white p-6">
+          {/* Kasir & Tanggal */}
+          <div className="flex gap-16 mb-6">
+            <div>
+              <p className=" text-gray-500 mb-1">Kasir</p>
+              <p className="font-semibold ">{order.cashier?.name || '-'}</p>
+            </div>
+            <div>
+              <p className=" text-gray-500 mb-1">Tanggal & Waktu</p>
+              <p className="font-semibold ">{formatDate(order.createdAt)}</p>
+            </div>
+            <div>
+              <p className=" text-gray-500 mb-1">Nomor Antrian</p>
+              <p className="font-semibold ">{order.nomorAntrian || '-'}</p>
+            </div>
+          </div>
+
+          {/* Item Transaksi */}
+          <div className="mb-6">
+            <p className=" font-medium mb-3">Item Transaksi</p>
+            <div className="overflow-hidden rounded-t-lg">
+              <Table>
+                <TableHeader className="[&_tr]:border-b-0">
+                  <TableRow className="bg-gray-100 hover:bg-gray-100 border-b-0">
+                    <TableHead className="text-sm text-gray-800 font-medium rounded-tl-lg rounded-bl-lg">
+                      Produk
+                    </TableHead>
+                    <TableHead className="text-sm text-gray-800 font-medium">Qty</TableHead>
+                    <TableHead className="text-sm text-gray-800 font-medium">Harga</TableHead>
+                    <TableHead className="text-sm text-gray-800 font-medium">Diskon</TableHead>
+                    <TableHead className="text-sm text-gray-800 font-medium rounded-tr-lg rounded-br-lg">
+                      Subtotal
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {order.orderItems && order.orderItems.length > 0 ? (
+                    order.orderItems.map((item) => {
+                      const itemDiskon = parseFloat(item.jumlahDiskon) || 0;
+                      return (
+                        <TableRow key={item.id} className="border-b last:border-0 hover:bg-white">
+                          <TableCell className=" py-3">{item.product?.nama || 'Product'}</TableCell>
+                          <TableCell className=" py-3">{item.quantity}</TableCell>
+                          <TableCell className=" py-3">{formatRupiah(item.hargaSatuan)}</TableCell>
+                          <TableCell className=" py-3">{formatRupiah(itemDiskon)}</TableCell>
+                          <TableCell className=" py-3">{formatRupiah(item.total)}</TableCell>
+                        </TableRow>
+                      );
+                    })
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center text-gray-500 py-4">
+                        Tidak ada item
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+
+          {/* Summary */}
           <div className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-gray-500">Nomor Pesanan</span>
-              <span className="font-medium">{order.orderNumber}</span>
+            <Separator />
+            <div className="flex justify-between items-center pt-1">
+              <span className=" text-gray-700">Subtotal:</span>
+              <span className="">{formatRupiah(subtotal)}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Status</span>
-              <span
-                className={`px-2 py-1 rounded-full text-xs capitalize ${getStatusColor(
-                  order.status
-                )}`}
-              >
-                {getStatusLabel(order.status)}
-              </span>
+            <div className="flex justify-between items-center">
+              <span className=" text-red-500 font-medium">Diskon :</span>
+              <span className=" text-red-500 font-medium">-{formatRupiah(totalDiskon)}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Outlet</span>
-              <span className="font-medium">{order.outlet?.nama || '-'}</span>
+            <div className="flex justify-between items-center">
+              <span className=" text-gray-700">Pajak :</span>
+              <span className="">{formatRupiah(totalPajak)}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Tanggal</span>
-              <span className="font-medium">{formatDate(order.createdAt)}</span>
+            <Separator className="my-1" />
+            <div className="flex justify-between items-center pt-2">
+              <span className="text-base font-bold">Total:</span>
+              <span className="text-base font-bold">{formatRupiah(total)}</span>
             </div>
-            {order.notes && (
-              <div>
-                <span className="text-gray-500">Catatan</span>
-                <p className="font-medium mt-1">{order.notes}</p>
-              </div>
-            )}
           </div>
         </div>
 
-        <div className="rounded-lg border bg-white p-6">
-          <h5 className="font-semibold mb-4">Ringkasan Pembayaran</h5>
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-gray-500">Subtotal</span>
-              <span>{formatRupiah(order.subtotal)}</span>
-            </div>
-            {order.pajakBreakdown && order.pajakBreakdown.length > 0 && (
-              <>
-                {order.pajakBreakdown.map((tax) => (
-                  <div key={tax.taxId} className="flex justify-between">
-                    <span className="text-gray-500">
-                      {tax.nama} ({tax.rate}%)
-                    </span>
-                    <span>{formatRupiah(tax.amount)}</span>
-                  </div>
-                ))}
-              </>
-            )}
-            {order.diskonBreakdown && order.diskonBreakdown.length > 0 && (
-              <>
-                {order.diskonBreakdown.map((discount) => (
-                  <div key={discount.discountId} className="flex justify-between">
-                    <span className="text-gray-500">
-                      {discount.nama} ({discount.rate}%)
-                    </span>
-                    <span>-{formatRupiah(discount.amount)}</span>
-                  </div>
-                ))}
-              </>
-            )}
-            {order.paymentMethod && (
-              <div className="flex justify-between">
-                <span className="text-gray-500">Metode Pembayaran</span>
-                <span>{order.paymentMethod.nama}</span>
-              </div>
-            )}
-            <div className="flex justify-between font-bold text-lg border-t pt-3 mt-3">
-              <span>Total</span>
-              <span>{formatRupiah(order.total)}</span>
-            </div>
+        {/* Right Card - Invoice Info */}
+        <div className="w-[280px] shrink-0 rounded-lg border border-gray-200 bg-white p-6 space-y-5">
+          <div>
+            <p className=" text-gray-500 mb-1">No. Invoice</p>
+            <p className=" font-semibold">{order.orderNumber}</p>
+          </div>
+          <div>
+            <p className=" text-gray-500 mb-1">Cabang</p>
+            <p className=" font-semibold">{order.outlet?.nama || '-'}</p>
+          </div>
+          <div>
+            <p className=" text-gray-500 mb-1">Metode Pembayaran</p>
+            <p className=" font-semibold">{order.paymentMethod?.nama || '-'}</p>
           </div>
         </div>
-      </div>
-
-      <div className="mt-6 rounded-lg border bg-white p-6">
-        <h5 className="font-semibold mb-4">Item Pesanan</h5>
-        {order.orderItems && order.orderItems.length > 0 ? (
-          <div className="space-y-3">
-            {order.orderItems.map((item) => (
-              <div
-                key={item.id}
-                className="flex justify-between items-center py-2 border-b last:border-0"
-              >
-                <div>
-                  <p className="font-medium">{item.product?.nama || 'Product'}</p>
-                  <p className="text-sm text-gray-500">
-                    {item.quantity} x {formatRupiah(item.hargaSatuan)}
-                    {item.jumlahDiskon && item.jumlahDiskon !== '0' && (
-                      <span className="ml-2 text-green-600">
-                        (-{formatRupiah(item.jumlahDiskon)})
-                      </span>
-                    )}
-                  </p>
-                </div>
-                <span className="font-medium">{formatRupiah(item.total)}</span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-gray-500">Tidak ada item</p>
-        )}
       </div>
     </div>
   );

@@ -1,11 +1,13 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { Eye, Pencil, Search, Trash2 } from 'lucide-react';
+import { Eye, Search } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { StatCardsLaporan } from '@/components/dashboard/stat-cards-laporan';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -22,6 +24,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -67,6 +70,15 @@ export function OrderPage() {
   const { data: session } = useSession();
   const tenantId = session?.user?.tenantId;
 
+  const [startDate, setStartDate] = useState<string>(() => {
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    return thirtyDaysAgo.toISOString().split('T')[0];
+  });
+  const [endDate, setEndDate] = useState<string>(() => {
+    return new Date().toISOString().split('T')[0];
+  });
+
   const { data: outletsData } = useQuery({
     queryKey: ['outlets', tenantId],
     queryFn: () => outletsApi.getAll({ tenantId }),
@@ -99,35 +111,8 @@ export function OrderPage() {
     },
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: ordersApi.delete,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
-    },
-    onError: (error: Error) => {
-      alert(error.message || 'Failed to delete order');
-    },
-  });
-
-  const handleEdit = (order: Order) => {
-    setEditingOrder(order);
-    form.reset({
-      status: order.status,
-      notes: order.notes || '',
-    });
-    setEditModalOpen(true);
-  };
-
   const handleView = (orderId: string) => {
     navigate({ to: '/orders/$orderId', params: { orderId } });
-  };
-
-  const handleDelete = (id: string) => {
-    if (
-      confirm('Apakah Anda yakin ingin menghapus pesanan ini? Tindakan ini tidak dapat dibatalkan.')
-    ) {
-      deleteMutation.mutate(id);
-    }
   };
 
   const handleSubmit = form.handleSubmit((values) => {
@@ -162,140 +147,158 @@ export function OrderPage() {
     }).format(d);
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'complete':
-        return 'bg-green-100 text-green-700';
-      case 'cancel':
-        return 'bg-red-100 text-red-700';
-      case 'refunded':
-        return 'bg-yellow-100 text-yellow-700';
-      default:
-        return 'bg-gray-100 text-gray-700';
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'complete':
-        return 'Selesai';
-      case 'cancel':
-        return 'Dibatalkan';
-      case 'refunded':
-        return 'Dikembalikan';
-      default:
-        return status;
-    }
-  };
-
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h4 className="text-lg font-semibold m-0">Pesanan</h4>
-          <p className="text-sm text-gray-500 m-0">Kelola semua pesanan dalam sistem</p>
-        </div>
-        <div className="flex gap-2">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Cari pesanan..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 w-64"
-            />
-          </div>
-          <Select value={outletFilter} onValueChange={setOutletFilter}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Semua Outlet" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Semua Outlet</SelectItem>
-              {outletsData?.data?.map((outlet) => (
-                <SelectItem key={outlet.id} value={outlet.id}>
-                  {outlet.nama}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Semua Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Semua Status</SelectItem>
-              <SelectItem value="complete">Selesai</SelectItem>
-              <SelectItem value="cancel">Dibatalkan</SelectItem>
-              <SelectItem value="refunded">Dikembalikan</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+    <div className="flex flex-col gap-6 w-full">
+      <div>
+        <h4 className="text-lg font-semibold m-0">Pesanan</h4>
+        <p className="text-sm text-gray-500 m-0">Kelola semua pesanan dalam sistem</p>
       </div>
 
-      {ordersLoading ? (
-        <div className="p-6 space-y-2">
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-10 w-full" />
-        </div>
-      ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[80px]">No</TableHead>
-              <TableHead>Nomor Pesanan</TableHead>
-              <TableHead>Outlet</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Total</TableHead>
-              <TableHead>Tanggal</TableHead>
-              <TableHead className="w-[120px]">Aksi</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {displayedOrders.map((order, index) => (
-              <TableRow key={order.id}>
-                <TableCell>{index + 1}</TableCell>
-                <TableCell>
-                  <code className="bg-gray-100 px-2 py-1 rounded text-xs">{order.orderNumber}</code>
-                </TableCell>
-                <TableCell>{order.outlet?.nama || '-'}</TableCell>
-                <TableCell>
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs capitalize ${getStatusColor(
-                      order.status
-                    )}`}
-                  >
-                    {getStatusLabel(order.status)}
-                  </span>
-                </TableCell>
-                <TableCell className="font-medium">{formatRupiah(order.total)}</TableCell>
-                <TableCell>{formatDate(order.createdAt)}</TableCell>
-                <TableCell>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => handleView(order.id)}>
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleEdit(order)}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(order.id)}>
-                      <Trash2 className="h-4 w-4 text-red-500" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      )}
+      <StatCardsLaporan
+        tenantId={tenantId}
+        outletId={outletFilter !== 'all' ? outletFilter : undefined}
+        startDate={startDate}
+        endDate={endDate}
+      />
 
-      {!ordersLoading && ordersData?.meta && (
-        <div className="flex items-center justify-between mt-4">
-          <p className="text-sm text-gray-500">
-            Menampilkan {displayedOrders.length} dari {ordersData.meta.total} pesanan
-          </p>
-        </div>
-      )}
+      <Card className="shadow-sm border-gray-200">
+        <CardContent className="p-4 flex flex-col gap-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-gray-700">Cari</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Cari pesanan..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 w-full bg-gray-50/50 border-gray-200 rounded-lg h-10 text-gray-600"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-gray-700">Dari Tanggal</Label>
+              <Input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full bg-gray-50/50 border-gray-200 rounded-lg h-10 text-gray-600"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-gray-700">Sampai Tanggal</Label>
+              <Input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full bg-gray-50/50 border-gray-200 rounded-lg h-10 text-gray-600"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-gray-700">Outlet</Label>
+              <Select value={outletFilter} onValueChange={setOutletFilter}>
+                <SelectTrigger className="w-full bg-gray-50/50 border-gray-200 rounded-lg h-10 text-gray-600">
+                  <SelectValue placeholder="Semua Outlet" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Outlet</SelectItem>
+                  {outletsData?.data?.map((outlet) => (
+                    <SelectItem key={outlet.id} value={outlet.id}>
+                      {outlet.nama}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-gray-700">Status</Label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full bg-gray-50/50 border-gray-200 rounded-lg h-10 text-gray-600">
+                  <SelectValue placeholder="Semua Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Status</SelectItem>
+                  <SelectItem value="complete">Selesai</SelectItem>
+                  <SelectItem value="cancel">Dibatalkan</SelectItem>
+                  <SelectItem value="refunded">Dikembalikan</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {ordersLoading ? (
+            <div className="p-6 space-y-2">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          ) : (
+            <Table>
+              <TableHeader className="[&_tr]:border-b-0">
+                <TableRow className="bg-gray-100 hover:bg-gray-100 border-b-0">
+                  <TableHead className=" text-gray-800 font-medium rounded-tl-lg rounded-bl-lg">
+                    Nomor Pesanan
+                  </TableHead>
+                  <TableHead className=" text-gray-800 font-medium">Tanggal</TableHead>
+                  <TableHead className=" text-gray-800 font-medium">Outlet</TableHead>
+                  <TableHead className=" text-gray-800 font-medium">Kasir</TableHead>
+                  <TableHead className=" text-gray-800 font-medium">Metode Pembayaran</TableHead>
+                  <TableHead className=" text-gray-800 font-medium">Total</TableHead>
+                  <TableHead className=" text-gray-800 font-medium w-[120px] rounded-tr-lg rounded-br-lg">
+                    Aksi
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {displayedOrders.map((order) => (
+                  <TableRow key={order.id} className="hover:bg-white">
+                    <TableCell>
+                      <span className="truncate max-w-[120px] block text-gray-900 font-medium ">
+                        {order.orderNumber}
+                      </span>
+                    </TableCell>
+                    <TableCell>{formatDate(order.createdAt)}</TableCell>
+                    <TableCell>{order.outlet?.nama || '-'}</TableCell>
+                    <TableCell>{order.cashier?.name || '-'}</TableCell>
+                    <TableCell>
+                      {order.paymentMethod?.nama ? (
+                        <span className="border border-black/90 rounded-md px-2 py-1 text-sm">
+                          {order.paymentMethod.nama}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>{formatRupiah(order.total)}</TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleView(order.id)}
+                        className="border"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+
+          {!ordersLoading && ordersData?.meta && (
+            <div className="flex items-center justify-between mt-4">
+              <p className="text-sm text-gray-500">
+                Menampilkan {displayedOrders.length} dari {ordersData.meta.total} pesanan
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
         <DialogContent className="max-w-[600px]">
