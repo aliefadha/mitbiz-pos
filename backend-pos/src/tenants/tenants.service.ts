@@ -6,6 +6,7 @@ import { categories } from '@/db/schema/category-schema';
 import { outlets } from '@/db/schema/outlet-schema';
 import { products } from '@/db/schema/product-schema';
 import type { DrizzleDB } from '@/db/type';
+import { OutletsService } from '@/outlets/outlets.service';
 import { TenantAuthService } from '@/rbac/services/tenant-auth.service';
 import {
   ConflictException,
@@ -22,6 +23,7 @@ export class TenantsService {
   constructor(
     @Inject(DB_CONNECTION) private db: DrizzleDB,
     private readonly tenantAuth: TenantAuthService,
+    private readonly outletsService: OutletsService,
   ) {}
 
   async findAll(query: TenantQueryDto, user: CurrentUserWithRole) {
@@ -165,13 +167,20 @@ export class TenantsService {
       .values({
         ...data,
         userId: finalUserId,
-        settings: data.settings || {
-          currency: 'IDR',
-          timezone: 'Asia/Jakarta',
-          taxRate: 0,
-        },
+        settings: data.settings,
       })
       .returning();
+
+    // Create default outlet "Outlet Utama"
+    await this.outletsService.create(
+      {
+        tenantId: tenant.id,
+        nama: 'Outlet Utama',
+        kode: `OUT-001`,
+        isActive: true,
+      },
+      user,
+    );
 
     return tenant;
   }

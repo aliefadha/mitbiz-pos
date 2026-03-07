@@ -13,12 +13,13 @@ export const tenants = pgTable('tenants', {
   userId: text('user_id').references(() => user.id, { onDelete: 'cascade' }),
   settings: jsonb('settings')
     .$type<{
-      currency: string;
-      timezone: string;
       taxRate: number;
-      receiptFooter?: string;
+      receiptFooter: string;
     }>()
-    .default({ currency: 'IDR', timezone: 'Asia/Jakarta', taxRate: 0 }),
+    .default({
+      taxRate: 0,
+      receiptFooter: 'Terima kasih telah berbelanja',
+    }),
   image: text('image'),
   alamat: text('alamat'),
   noHp: text('no_hp'),

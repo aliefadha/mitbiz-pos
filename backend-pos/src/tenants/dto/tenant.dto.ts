@@ -8,10 +8,8 @@ import { z } from 'zod';
 
 // Settings schema for tenant
 const TenantSettingsSchema = z.object({
-  currency: z.string().default('IDR'),
-  timezone: z.string().default('Asia/Jakarta'),
   taxRate: z.number().min(0).max(100).default(0),
-  receiptFooter: z.string().optional(),
+  receiptFooter: z.string().default('Terima kasih telah berbelanja'),
 });
 
 // Tenant creation schema
