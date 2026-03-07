@@ -37,10 +37,14 @@ export const stockAdjustmentsApi = {
   getAll: async (filters?: {
     productId?: string;
     outletId?: string;
+    page?: number;
+    limit?: number;
   }): Promise<{ data: StockAdjustment[]; meta: any }> => {
     const params = new URLSearchParams();
     if (filters?.productId) params.append('productId', filters.productId.toString());
     if (filters?.outletId) params.append('outletId', filters.outletId.toString());
+    if (filters?.page) params.append('page', filters.page.toString());
+    if (filters?.limit) params.append('limit', filters.limit.toString());
     const query = params.toString();
     return fetchApi<{ data: StockAdjustment[]; meta: any }>(
       `/stock-adjustments${query ? `?${query}` : ''}`

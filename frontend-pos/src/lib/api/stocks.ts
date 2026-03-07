@@ -10,6 +10,11 @@ export interface Stock {
     id: string;
     nama: string;
     sku: string;
+    minStockLevel: number;
+    category?: {
+      id: string;
+      nama: string;
+    };
   };
   outlet?: {
     id: string;
@@ -30,12 +35,18 @@ export interface UpdateStockDto {
 
 export const stocksApi = {
   getAll: async (filters?: {
+    tenantId?: string;
     productId?: string;
     outletId?: string;
+    page?: number;
+    limit?: number;
   }): Promise<{ data: Stock[]; meta: any }> => {
     const params = new URLSearchParams();
+    if (filters?.tenantId) params.append('tenantId', filters.tenantId.toString());
     if (filters?.productId) params.append('productId', filters.productId.toString());
     if (filters?.outletId) params.append('outletId', filters.outletId.toString());
+    if (filters?.page) params.append('page', filters.page.toString());
+    if (filters?.limit) params.append('limit', filters.limit.toString());
     const query = params.toString();
     return fetchApi<{ data: Stock[]; meta: any }>(`/stocks${query ? `?${query}` : ''}`);
   },

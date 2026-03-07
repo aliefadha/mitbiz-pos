@@ -1,6 +1,7 @@
 import type { CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
 import { getProductIdsByTenant } from '@/common/utils/tenant-filter';
 import { DB_CONNECTION } from '@/db/db.module';
+import { categories } from '@/db/schema/category-schema';
 import { outlets } from '@/db/schema/outlet-schema';
 import { products } from '@/db/schema/product-schema';
 import { productStocks } from '@/db/schema/stock-schema';
@@ -72,23 +73,47 @@ export class StocksService {
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-    const queryResult = await Promise.all([
-      this.db.query.productStocks.findMany({
-        where: whereClause,
-        limit,
-        offset,
-        orderBy: [desc(productStocks.updatedAt)],
-        with: {
-          outlet: true,
-        },
-      }),
+    const [data, totalResult] = await Promise.all([
+      this.db
+        .select()
+        .from(productStocks)
+        .leftJoin(products, eq(productStocks.productId, products.id))
+        .leftJoin(categories, eq(products.categoryId, categories.id))
+        .leftJoin(outlets, eq(productStocks.outletId, outlets.id))
+        .where(whereClause)
+        .limit(limit)
+        .offset(offset)
+        .orderBy(desc(productStocks.updatedAt)),
       this.db.select({ count: sql<number>`count(*)` }).from(productStocks).where(whereClause),
     ]);
 
-    const total = Number(queryResult[1][0]?.count || 0);
+    const stocksWithRelations = data.map((row) => ({
+      ...row.product_stocks,
+      product: row.products
+        ? {
+            id: row.products.id,
+            nama: row.products.nama,
+            minStockLevel: row.products.minStockLevel,
+            category: row.categories
+              ? {
+                  id: row.categories.id,
+                  nama: row.categories.nama,
+                }
+              : null,
+          }
+        : null,
+      outlet: row.outlets
+        ? {
+            id: row.outlets.id,
+            nama: row.outlets.nama,
+          }
+        : null,
+    }));
+
+    const total = Number(totalResult[0]?.count || 0);
 
     return {
-      data: queryResult[0],
+      data: stocksWithRelations,
       meta: {
         page,
         limit,
@@ -99,19 +124,51 @@ export class StocksService {
   }
 
   async findById(id: string, user: CurrentUserWithRole) {
-    const stock = await this.db.query.productStocks.findFirst({
-      where: eq(productStocks.id, id),
-      with: {
-        product: true,
-        outlet: true,
-      },
-    });
+    const result = await this.db
+      .select()
+      .from(productStocks)
+      .leftJoin(products, eq(productStocks.productId, products.id))
+      .leftJoin(categories, eq(products.categoryId, categories.id))
+      .leftJoin(outlets, eq(productStocks.outletId, outlets.id))
+      .where(eq(productStocks.id, id))
+      .limit(1);
 
-    if (!stock) {
+    const row = result[0];
+
+    if (!row) {
       throw new NotFoundException(`Stock with ID ${id} not found`);
     }
 
+    const stock = {
+      ...row.product_stocks,
+      product: row.products
+        ? {
+            id: row.products.id,
+            nama: row.products.nama,
+            sku: row.products.sku,
+            minStockLevel: row.products.minStockLevel,
+            tenantId: row.products.tenantId,
+            category: row.categories
+              ? {
+                  id: row.categories.id,
+                  nama: row.categories.nama,
+                }
+              : null,
+          }
+        : null,
+      outlet: row.outlets
+        ? {
+            id: row.outlets.id,
+            nama: row.outlets.nama,
+            kode: row.outlets.kode,
+          }
+        : null,
+    };
+
     // Check tenant access via product's tenant (permission already checked by guard)
+    if (!stock.product) {
+      throw new NotFoundException('Product not found for this stock');
+    }
     const hasAccess = await this.tenantAuth.canAccessTenant(user, stock.product.tenantId);
     if (!hasAccess) {
       throw new ForbiddenException('You do not have access to this stock');
@@ -121,15 +178,46 @@ export class StocksService {
   }
 
   async findByProductAndOutlet(productId: string, outletId: string) {
-    const stock = await this.db.query.productStocks.findFirst({
-      where: and(eq(productStocks.productId, productId), eq(productStocks.outletId, outletId)),
-      with: {
-        product: true,
-        outlet: true,
-      },
-    });
+    const result = await this.db
+      .select()
+      .from(productStocks)
+      .leftJoin(products, eq(productStocks.productId, products.id))
+      .leftJoin(categories, eq(products.categoryId, categories.id))
+      .leftJoin(outlets, eq(productStocks.outletId, outlets.id))
+      .where(and(eq(productStocks.productId, productId), eq(productStocks.outletId, outletId)))
+      .limit(1);
 
-    return stock;
+    const row = result[0];
+
+    if (!row) {
+      return null;
+    }
+
+    return {
+      ...row.product_stocks,
+      product: row.products
+        ? {
+            id: row.products.id,
+            nama: row.products.nama,
+            sku: row.products.sku,
+            minStockLevel: row.products.minStockLevel,
+            tenantId: row.products.tenantId,
+            category: row.categories
+              ? {
+                  id: row.categories.id,
+                  nama: row.categories.nama,
+                }
+              : null,
+          }
+        : null,
+      outlet: row.outlets
+        ? {
+            id: row.outlets.id,
+            nama: row.outlets.nama,
+            kode: row.outlets.kode,
+          }
+        : null,
+    };
   }
 
   async create(data: CreateStockDto, user: CurrentUserWithRole) {

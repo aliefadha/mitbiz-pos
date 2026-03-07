@@ -20,6 +20,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProtectedLaporanRouteImport } from './routes/_protected/laporan'
 import { Route as ProtectedDashboardRouteImport } from './routes/_protected/dashboard'
 import { Route as ProtectedTenantsIndexRouteImport } from './routes/_protected/tenants/index'
+import { Route as ProtectedStocksIndexRouteImport } from './routes/_protected/stocks/index'
+import { Route as ProtectedStockAdjustmentIndexRouteImport } from './routes/_protected/stock-adjustment/index'
 import { Route as ProtectedSettingsIndexRouteImport } from './routes/_protected/settings/index'
 import { Route as ProtectedProductsIndexRouteImport } from './routes/_protected/products/index'
 import { Route as ProtectedPosIndexRouteImport } from './routes/_protected/pos/index'
@@ -101,6 +103,17 @@ const ProtectedTenantsIndexRoute = ProtectedTenantsIndexRouteImport.update({
   path: '/tenants/',
   getParentRoute: () => ProtectedRoute,
 } as any)
+const ProtectedStocksIndexRoute = ProtectedStocksIndexRouteImport.update({
+  id: '/stocks/',
+  path: '/stocks/',
+  getParentRoute: () => ProtectedRoute,
+} as any)
+const ProtectedStockAdjustmentIndexRoute =
+  ProtectedStockAdjustmentIndexRouteImport.update({
+    id: '/stock-adjustment/',
+    path: '/stock-adjustment/',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
 const ProtectedSettingsIndexRoute = ProtectedSettingsIndexRouteImport.update({
   id: '/settings/',
   path: '/settings/',
@@ -275,6 +288,8 @@ export interface FileRoutesByFullPath {
   '/pos/': typeof ProtectedPosIndexRoute
   '/products/': typeof ProtectedProductsIndexRoute
   '/settings/': typeof ProtectedSettingsIndexRoute
+  '/stock-adjustment/': typeof ProtectedStockAdjustmentIndexRoute
+  '/stocks/': typeof ProtectedStocksIndexRoute
   '/tenants/': typeof ProtectedTenantsIndexRoute
   '/tenants/$slug/': typeof ProtectedTenantsSlugIndexRoute
   '/tenants/$slug/outlets/$outletId': typeof ProtectedTenantsSlugOutletsOutletIdRoute
@@ -313,6 +328,8 @@ export interface FileRoutesByTo {
   '/pos': typeof ProtectedPosIndexRoute
   '/products': typeof ProtectedProductsIndexRoute
   '/settings': typeof ProtectedSettingsIndexRoute
+  '/stock-adjustment': typeof ProtectedStockAdjustmentIndexRoute
+  '/stocks': typeof ProtectedStocksIndexRoute
   '/tenants': typeof ProtectedTenantsIndexRoute
   '/tenants/$slug': typeof ProtectedTenantsSlugIndexRoute
   '/tenants/$slug/outlets/$outletId': typeof ProtectedTenantsSlugOutletsOutletIdRoute
@@ -353,6 +370,8 @@ export interface FileRoutesById {
   '/_protected/pos/': typeof ProtectedPosIndexRoute
   '/_protected/products/': typeof ProtectedProductsIndexRoute
   '/_protected/settings/': typeof ProtectedSettingsIndexRoute
+  '/_protected/stock-adjustment/': typeof ProtectedStockAdjustmentIndexRoute
+  '/_protected/stocks/': typeof ProtectedStocksIndexRoute
   '/_protected/tenants/': typeof ProtectedTenantsIndexRoute
   '/_protected/tenants/$slug/': typeof ProtectedTenantsSlugIndexRoute
   '/_protected/tenants/$slug/outlets/$outletId': typeof ProtectedTenantsSlugOutletsOutletIdRoute
@@ -393,6 +412,8 @@ export interface FileRouteTypes {
     | '/pos/'
     | '/products/'
     | '/settings/'
+    | '/stock-adjustment/'
+    | '/stocks/'
     | '/tenants/'
     | '/tenants/$slug/'
     | '/tenants/$slug/outlets/$outletId'
@@ -431,6 +452,8 @@ export interface FileRouteTypes {
     | '/pos'
     | '/products'
     | '/settings'
+    | '/stock-adjustment'
+    | '/stocks'
     | '/tenants'
     | '/tenants/$slug'
     | '/tenants/$slug/outlets/$outletId'
@@ -470,6 +493,8 @@ export interface FileRouteTypes {
     | '/_protected/pos/'
     | '/_protected/products/'
     | '/_protected/settings/'
+    | '/_protected/stock-adjustment/'
+    | '/_protected/stocks/'
     | '/_protected/tenants/'
     | '/_protected/tenants/$slug/'
     | '/_protected/tenants/$slug/outlets/$outletId'
@@ -569,6 +594,20 @@ declare module '@tanstack/react-router' {
       path: '/tenants'
       fullPath: '/tenants/'
       preLoaderRoute: typeof ProtectedTenantsIndexRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/stocks/': {
+      id: '/_protected/stocks/'
+      path: '/stocks'
+      fullPath: '/stocks/'
+      preLoaderRoute: typeof ProtectedStocksIndexRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/stock-adjustment/': {
+      id: '/_protected/stock-adjustment/'
+      path: '/stock-adjustment'
+      fullPath: '/stock-adjustment/'
+      preLoaderRoute: typeof ProtectedStockAdjustmentIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
     '/_protected/settings/': {
@@ -777,6 +816,8 @@ interface ProtectedRouteChildren {
   ProtectedPosIndexRoute: typeof ProtectedPosIndexRoute
   ProtectedProductsIndexRoute: typeof ProtectedProductsIndexRoute
   ProtectedSettingsIndexRoute: typeof ProtectedSettingsIndexRoute
+  ProtectedStockAdjustmentIndexRoute: typeof ProtectedStockAdjustmentIndexRoute
+  ProtectedStocksIndexRoute: typeof ProtectedStocksIndexRoute
   ProtectedTenantsIndexRoute: typeof ProtectedTenantsIndexRoute
   ProtectedTenantsSlugIndexRoute: typeof ProtectedTenantsSlugIndexRoute
   ProtectedTenantsSlugOutletsOutletIdRoute: typeof ProtectedTenantsSlugOutletsOutletIdRoute
@@ -809,6 +850,8 @@ const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedPosIndexRoute: ProtectedPosIndexRoute,
   ProtectedProductsIndexRoute: ProtectedProductsIndexRoute,
   ProtectedSettingsIndexRoute: ProtectedSettingsIndexRoute,
+  ProtectedStockAdjustmentIndexRoute: ProtectedStockAdjustmentIndexRoute,
+  ProtectedStocksIndexRoute: ProtectedStocksIndexRoute,
   ProtectedTenantsIndexRoute: ProtectedTenantsIndexRoute,
   ProtectedTenantsSlugIndexRoute: ProtectedTenantsSlugIndexRoute,
   ProtectedTenantsSlugOutletsOutletIdRoute:

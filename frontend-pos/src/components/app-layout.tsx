@@ -1,5 +1,6 @@
 import { Outlet, useLocation, useNavigate } from '@tanstack/react-router';
 import {
+  ChartBar,
   Clock4,
   CreditCard,
   FileText,
@@ -8,6 +9,7 @@ import {
   LayoutDashboard,
   LogOut,
   Package,
+  Package2,
   Percent,
   Settings,
   Store,
@@ -84,12 +86,6 @@ const menuConfig: MenuGroup[] = [
         label: 'Outlet',
         permission: { resource: 'outlets', actions: ['read'] },
       },
-      // {
-      //   key: '/account',
-      //   icon: User,
-      //   label: 'Akun',
-      //   permission: { resource: 'user', actions: ['read'] },
-      // },
       {
         key: '/kasir',
         icon: Users,
@@ -119,6 +115,23 @@ const menuConfig: MenuGroup[] = [
         icon: CreditCard,
         label: 'Metode Pembayaran',
         permission: { resource: 'paymentMethods', actions: ['read'] },
+      },
+    ],
+  },
+  {
+    group: 'Inventory',
+    items: [
+      {
+        key: '/stocks',
+        icon: Package2,
+        label: 'Stok',
+        permission: { resource: 'tenants', actions: ['read', 'update'] },
+      },
+      {
+        key: '/stock-adjustment',
+        icon: ChartBar,
+        label: 'Penyesuaian Stok',
+        permission: { resource: 'order', actions: ['read'] },
       },
     ],
   },
