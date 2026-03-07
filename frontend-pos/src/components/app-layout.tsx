@@ -10,7 +10,6 @@ import {
   Percent,
   Receipt,
   Settings,
-  ShoppingCart,
   Store,
   User,
   Users,
@@ -212,7 +211,7 @@ function AppSidebar() {
                     className="cursor-pointer"
                   >
                     {item.icon && <item.icon className="h-2 w-2" />}
-                    <span className='text-[14px]'>{item.label}</span>
+                    <span className="text-[14px]">{item.label}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
