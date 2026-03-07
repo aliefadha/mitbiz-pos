@@ -152,18 +152,22 @@ export function KasirPage() {
               </div>
             ) : (
               <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[80px]">No</TableHead>
-                    <TableHead>Nama</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Verified</TableHead>
-                    <TableHead className="w-[180px]">Dibuat</TableHead>
+                <TableHeader className="[&_tr]:border-b-0">
+                  <TableRow className="bg-gray-100 hover:bg-gray-100 border-b-0">
+                    <TableHead className="text-gray-800 font-medium w-[80px] rounded-tl-lg rounded-bl-lg">
+                      No
+                    </TableHead>
+                    <TableHead className="text-gray-800 font-medium">Nama</TableHead>
+                    <TableHead className="text-gray-800 font-medium">Email</TableHead>
+                    <TableHead className="text-gray-800 font-medium">Verified</TableHead>
+                    <TableHead className="text-gray-800 font-medium w-[180px] rounded-tr-lg rounded-br-lg">
+                      Dibuat
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {displayedUsersPaged.map((user, index) => (
-                    <TableRow key={user.id}>
+                    <TableRow key={user.id} className="hover:bg-white">
                       <TableCell>{(currentPage - 1) * pageSize + index + 1}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">

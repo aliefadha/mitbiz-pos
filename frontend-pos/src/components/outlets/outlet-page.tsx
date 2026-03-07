@@ -242,19 +242,23 @@ export function OutletPage() {
               </div>
             ) : (
               <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Kode</TableHead>
-                    <TableHead>Nama</TableHead>
-                    <TableHead>Alamat</TableHead>
-                    <TableHead>No. HP</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="w-[120px]">Aksi</TableHead>
+                <TableHeader className="[&_tr]:border-b-0">
+                  <TableRow className="bg-gray-100 hover:bg-gray-100 border-b-0">
+                    <TableHead className="text-gray-800 font-medium rounded-tl-lg rounded-bl-lg">
+                      Kode
+                    </TableHead>
+                    <TableHead className="text-gray-800 font-medium">Nama</TableHead>
+                    <TableHead className="text-gray-800 font-medium">Alamat</TableHead>
+                    <TableHead className="text-gray-800 font-medium">No. HP</TableHead>
+                    <TableHead className="text-gray-800 font-medium">Status</TableHead>
+                    <TableHead className="text-gray-800 font-medium w-[120px] rounded-tr-lg rounded-br-lg">
+                      Aksi
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {displayedOutlets.map((outlet) => (
-                    <TableRow key={outlet.id}>
+                    <TableRow key={outlet.id} className="hover:bg-white">
                       <TableCell>
                         <div className="flex items-center gap-2">{outlet.kode}</div>
                       </TableCell>

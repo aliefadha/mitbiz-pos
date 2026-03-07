@@ -276,21 +276,25 @@ export function CashShiftPage() {
         </div>
       ) : (
         <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[80px]">No</TableHead>
-              <TableHead>Outlet</TableHead>
-              <TableHead>Kasir</TableHead>
-              <TableHead>Jumlah Buka</TableHead>
-              <TableHead>Jumlah Tutup</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Tanggal</TableHead>
-              <TableHead className="w-[80px]">Aksi</TableHead>
+          <TableHeader className="[&_tr]:border-b-0">
+            <TableRow className="bg-gray-100 hover:bg-gray-100 border-b-0">
+              <TableHead className="text-gray-800 font-medium w-[80px] rounded-tl-lg rounded-bl-lg">
+                No
+              </TableHead>
+              <TableHead className="text-gray-800 font-medium">Outlet</TableHead>
+              <TableHead className="text-gray-800 font-medium">Kasir</TableHead>
+              <TableHead className="text-gray-800 font-medium">Jumlah Buka</TableHead>
+              <TableHead className="text-gray-800 font-medium">Jumlah Tutup</TableHead>
+              <TableHead className="text-gray-800 font-medium">Status</TableHead>
+              <TableHead className="text-gray-800 font-medium">Tanggal</TableHead>
+              <TableHead className="text-gray-800 font-medium w-[80px] rounded-tr-lg rounded-br-lg">
+                Aksi
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {displayedShifts.map((shift: CashShift, index: number) => (
-              <TableRow key={shift.id}>
+              <TableRow key={shift.id} className="hover:bg-white">
                 <TableCell>{index + 1}</TableCell>
                 <TableCell>{shift.outlet?.nama || '-'}</TableCell>
                 <TableCell>{shift.cashier?.name || '-'}</TableCell>

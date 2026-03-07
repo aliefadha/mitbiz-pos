@@ -119,34 +119,41 @@ export function CategoryDetailPage() {
           </Card>
         ) : (
           <Card>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[80px]">No</TableHead>
-                  <TableHead>Nama Produk</TableHead>
-                  <TableHead>SKU</TableHead>
-                  <TableHead>Harga</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {products.map((product, index) => (
-                  <TableRow key={product.id}>
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell className="font-medium">
-                      <Link
-                        to="/products/$productId"
-                        params={{ productId: product.id.toString() }}
-                        className="hover:underline"
-                      >
-                        {product.nama}
-                      </Link>
-                    </TableCell>
-                    <TableCell>{product.sku}</TableCell>
-                    <TableCell>{formatCurrency(product.hargaJual)}</TableCell>
+            <CardContent>
+              <h4 className="text-base font-semibold mb-6">Daftar Produk</h4>
+              <Table>
+                <TableHeader className="[&_tr]:border-b-0">
+                  <TableRow className="bg-gray-100 hover:bg-gray-100 border-b-0">
+                    <TableHead className="text-gray-800 font-medium w-[80px] rounded-tl-lg rounded-bl-lg">
+                      No
+                    </TableHead>
+                    <TableHead className="text-gray-800 font-medium">Nama Produk</TableHead>
+                    <TableHead className="text-gray-800 font-medium">SKU</TableHead>
+                    <TableHead className="text-gray-800 font-medium rounded-tr-lg rounded-br-lg">
+                      Harga
+                    </TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {products.map((product, index) => (
+                    <TableRow key={product.id} className="hover:bg-white">
+                      <TableCell>{index + 1}</TableCell>
+                      <TableCell className="font-medium">
+                        <Link
+                          to="/products/$productId"
+                          params={{ productId: product.id.toString() }}
+                          className="hover:underline"
+                        >
+                          {product.nama}
+                        </Link>
+                      </TableCell>
+                      <TableCell>{product.sku}</TableCell>
+                      <TableCell>{formatCurrency(product.hargaJual)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
           </Card>
         )}
       </div>

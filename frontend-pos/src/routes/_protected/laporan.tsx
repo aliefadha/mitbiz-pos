@@ -177,74 +177,63 @@ function TopProductsTable({
   formatCurrency: (value: number) => string;
 }) {
   return (
-    <Card className="shadow-sm border-gray-200 overflow-hidden">
-      <div className="p-6 pb-4 bg-white">
-        <h3 className="text-sm font-bold text-gray-900">10 Produk Terlaris</h3>
-      </div>
-      <div className="relative w-full overflow-x-auto px-4 pb-4">
-        <div className="rounded-lg overflow-hidden bg-white">
-          <table className="w-full caption-bottom text-sm border-collapse">
-            <thead>
-              <tr className="bg-[#F1F2F4]">
-                <th className="h-11 px-4 text-left align-middle font-semibold text-gray-700 w-24 rounded-tl-lg">
-                  Peringkat
-                </th>
-                <th className="h-11 px-4 text-left align-middle font-semibold text-gray-700">
-                  Produk
-                </th>
-                <th className="h-11 px-4 text-left align-middle font-semibold text-gray-700">
-                  Jumlah Produk
-                </th>
-                <th className="h-11 px-4 text-left align-middle font-semibold text-gray-700 rounded-tr-lg">
-                  Total Pendapatan
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white">
-              {isLoading ? (
-                <tr>
-                  <td
-                    colSpan={4}
-                    className="h-24 text-center text-gray-500 border-b border-gray-100"
-                  >
-                    Memuat...
-                  </td>
+    <Card>
+      <CardContent>
+        <h4 className="text-base font-semibold mb-6">10 Produk Terlaris</h4>
+        <div className="relative w-full overflow-x-auto ">
+          <div className="rounded-lg overflow-hidden bg-white">
+            <table className="w-full caption-bottom text-sm border-collapse">
+              <thead className="[&_tr]:border-b-0">
+                <tr className="bg-gray-100 border-b-0">
+                  <th className="h-11 px-4 text-left  font-medium text-gray-800 w-24 rounded-tl-lg rounded-bl-lg">
+                    Peringkat
+                  </th>
+                  <th className="h-11 px-4 text-left  font-medium text-gray-800">Produk</th>
+                  <th className="h-11 px-4 text-left  font-medium text-gray-800">Jumlah Produk</th>
+                  <th className="h-11 px-4 text-left  font-medium text-gray-800 rounded-tr-lg rounded-br-lg">
+                    Total Pendapatan
+                  </th>
                 </tr>
-              ) : data?.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={4}
-                    className="h-24 text-center text-gray-500 border-b border-gray-100"
-                  >
-                    Tidak ada data
-                  </td>
-                </tr>
-              ) : (
-                data?.map((product, index) => (
-                  <tr
-                    key={product.productId}
-                    className="border-b border-gray-100/60 transition-colors hover:bg-gray-50/50"
-                  >
-                    <td className="py-4 px-4 align-middle text-gray-500">{index + 1}</td>
-                    <td className="py-4 px-4 align-middle font-medium text-gray-600">
-                      {product.productName}
-                      {product.productSku && (
-                        <span className="text-gray-400 text-xs ml-1">({product.productSku})</span>
-                      )}
-                    </td>
-                    <td className="py-4 px-4 align-middle text-gray-500">
-                      {product.totalQuantity}
-                    </td>
-                    <td className="py-4 px-4 align-middle font-medium text-gray-600">
-                      {formatCurrency(product.totalRevenue)}
+              </thead>
+              <tbody className="bg-white">
+                {isLoading ? (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="h-24 text-center text-gray-500 border-b border-gray-100"
+                    >
+                      Memuat...
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : data?.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="h-24 text-center text-gray-500 border-b border-gray-100"
+                    >
+                      Tidak ada data
+                    </td>
+                  </tr>
+                ) : (
+                  data?.map((product, index) => (
+                    <tr
+                      key={product.productId}
+                      className="border-b border-gray-100/60 transition-colors hover:bg-white"
+                    >
+                      <td className="py-4 px-4 ">{index + 1}</td>
+                      <td className="py-4 px-4  font-medium">{product.productName}</td>
+                      <td className="py-4 px-4 ">{product.totalQuantity}</td>
+                      <td className="py-4 px-4  font-medium">
+                        {formatCurrency(product.totalRevenue)}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      </CardContent>
     </Card>
   );
 }

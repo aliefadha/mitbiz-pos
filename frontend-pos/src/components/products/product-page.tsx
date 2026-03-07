@@ -174,22 +174,24 @@ export function ProductPage() {
               </div>
             ) : (
               <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>SKU</TableHead>
-                    <TableHead>Nama</TableHead>
-                    <TableHead>Kategori</TableHead>
-                    <TableHead>Harga</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="w-[120px]">Aksi</TableHead>
+                <TableHeader className="[&_tr]:border-b-0">
+                  <TableRow className="bg-gray-100 hover:bg-gray-100 border-b-0">
+                    <TableHead className="text-gray-800 font-medium rounded-tl-lg rounded-bl-lg">
+                      SKU
+                    </TableHead>
+                    <TableHead className="text-gray-800 font-medium">Nama</TableHead>
+                    <TableHead className="text-gray-800 font-medium">Kategori</TableHead>
+                    <TableHead className="text-gray-800 font-medium">Harga</TableHead>
+                    <TableHead className="text-gray-800 font-medium">Status</TableHead>
+                    <TableHead className="text-gray-800 font-medium w-[120px] rounded-tr-lg rounded-br-lg">
+                      Aksi
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {displayedProducts.map((product) => (
-                    <TableRow key={product.id}>
-                      <TableCell>
-                        <code className="bg-gray-100 px-2 py-1 rounded text-xs">{product.sku}</code>
-                      </TableCell>
+                    <TableRow key={product.id} className="hover:bg-white">
+                      <TableCell>{product.sku}</TableCell>
                       <TableCell>
                         <button
                           onClick={() =>

@@ -223,14 +223,10 @@ export function StockPage() {
                     filteredStocks.map((stock) => (
                       <TableRow className="hover:bg-white" key={stock.id}>
                         <TableCell>
-                          <span className="font-medium">
-                            {stock.product?.nama || 'Unknown Product'}
-                          </span>
+                          <span>{stock.product?.nama || 'Unknown Product'}</span>
                         </TableCell>
                         <TableCell>
-                          <span className="text-gray-600">
-                            {stock.product?.category?.nama || '-'}
-                          </span>
+                          <span>{stock.product?.category?.nama || '-'}</span>
                         </TableCell>
                         <TableCell>{stock.outlet?.nama || '-'}</TableCell>
                         <TableCell>

@@ -216,21 +216,25 @@ export function DiscountPage() {
           </div>
         ) : (
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[80px]">No</TableHead>
-                <TableHead>Nama</TableHead>
-                <TableHead>Tarif (%)</TableHead>
-                <TableHead>Scope</TableHead>
-                <TableHead>Level</TableHead>
-                <TableHead>Outlet</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-[120px]">Aksi</TableHead>
+            <TableHeader className="[&_tr]:border-b-0">
+              <TableRow className="bg-gray-100 hover:bg-gray-100 border-b-0">
+                <TableHead className="text-gray-800 font-medium w-[80px] rounded-tl-lg rounded-bl-lg">
+                  No
+                </TableHead>
+                <TableHead className="text-gray-800 font-medium">Nama</TableHead>
+                <TableHead className="text-gray-800 font-medium">Tarif (%)</TableHead>
+                <TableHead className="text-gray-800 font-medium">Scope</TableHead>
+                <TableHead className="text-gray-800 font-medium">Level</TableHead>
+                <TableHead className="text-gray-800 font-medium">Outlet</TableHead>
+                <TableHead className="text-gray-800 font-medium">Status</TableHead>
+                <TableHead className="text-gray-800 font-medium w-[120px] rounded-tr-lg rounded-br-lg">
+                  Aksi
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {displayedDiscounts.map((discount, index) => (
-                <TableRow key={discount.id}>
+                <TableRow key={discount.id} className="hover:bg-white">
                   <TableCell>{index + 1}</TableCell>
                   <TableCell>{discount.nama}</TableCell>
                   <TableCell>{discount.rate}%</TableCell>

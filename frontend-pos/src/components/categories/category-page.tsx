@@ -222,18 +222,22 @@ export function CategoryPage() {
               </div>
             ) : (
               <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[80px]">No</TableHead>
-                    <TableHead>Nama</TableHead>
-                    <TableHead>Jumlah Produk</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="w-[120px]">Aksi</TableHead>
+                <TableHeader className="[&_tr]:border-b-0">
+                  <TableRow className="bg-gray-100 hover:bg-gray-100 border-b-0">
+                    <TableHead className="text-gray-800 font-medium w-[80px] rounded-tl-lg rounded-bl-lg">
+                      No
+                    </TableHead>
+                    <TableHead className="text-gray-800 font-medium">Nama</TableHead>
+                    <TableHead className="text-gray-800 font-medium">Jumlah Produk</TableHead>
+                    <TableHead className="text-gray-800 font-medium">Status</TableHead>
+                    <TableHead className="text-gray-800 font-medium w-[120px] rounded-tr-lg rounded-br-lg">
+                      Aksi
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {displayedCategories.map((category, index) => (
-                    <TableRow key={category.id}>
+                    <TableRow key={category.id} className="hover:bg-white">
                       <TableCell>{index + 1}</TableCell>
                       <TableCell>
                         <button
