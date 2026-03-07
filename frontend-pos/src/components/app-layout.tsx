@@ -1,5 +1,6 @@
 import { Outlet, useLocation, useNavigate } from '@tanstack/react-router';
 import {
+  Clock4,
   CreditCard,
   FileText,
   Folder,
@@ -8,12 +9,10 @@ import {
   LogOut,
   Package,
   Percent,
-  Receipt,
   Settings,
   Store,
   User,
   Users,
-  Wallet,
 } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
@@ -62,26 +61,9 @@ const menuConfig: MenuGroup[] = [
         label: 'Laporan',
         permission: { resource: 'report', actions: ['read'] },
       },
-    ],
-  },
-  {
-    group: 'Transaksi',
-    items: [
-      // {
-      //   key: '/pos',
-      //   icon: ShoppingCart,
-      //   label: 'Kasir',
-      //   permission: { resource: 'orders', actions: ['create'] },
-      // },
-      {
-        key: '/orders',
-        icon: Receipt,
-        label: 'Pesanan',
-        permission: { resource: 'orders', actions: ['read'] },
-      },
       {
         key: '/cash-shifts',
-        icon: Wallet,
+        icon: Clock4,
         label: 'Shift Kasir',
         permission: { resource: 'cashShifts', actions: ['read'] },
       },
@@ -150,7 +132,7 @@ const menuConfig: MenuGroup[] = [
         permission: { resource: 'tenants', actions: ['read', 'update'] },
       },
       {
-        key: '/history',
+        key: '/orders',
         icon: History,
         label: 'Riwayat Transaksi',
         permission: { resource: 'order', actions: ['read'] },
