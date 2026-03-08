@@ -64,14 +64,13 @@ function formatRupiah(value: number | string): string {
 
 const editFormSchema = z.object({
   sku: z.string(),
-  barcode: z.string().optional(),
   nama: z.string(),
   deskripsi: z.string().optional(),
   categoryId: z.string().optional(),
-  tipe: z.enum(['barang', 'jasa', 'digital']),
   hargaBeli: z.string(),
   hargaJual: z.string(),
   minStockLevel: z.number(),
+  enableMinStock: z.boolean(),
   unit: z.string(),
   isActive: z.boolean(),
   discountIds: z.array(z.string()).optional(),
@@ -92,19 +91,20 @@ export function ProductDetailPage() {
     resolver: zodResolver(editFormSchema),
     defaultValues: {
       sku: '',
-      barcode: '',
       nama: '',
       deskripsi: '',
-      categoryId: '',
-      tipe: 'barang',
+      categoryId: 'none',
       hargaBeli: '0',
       hargaJual: '0',
-      minStockLevel: 0,
       unit: 'pcs',
+      minStockLevel: 0,
+      enableMinStock: false,
       isActive: true,
       discountIds: [],
     },
   });
+
+  const enableMinStock = editForm.watch('enableMinStock');
 
   const { data: product, isLoading: productLoading } = useQuery({
     queryKey: ['product', productId],
@@ -223,14 +223,13 @@ export function ProductDetailPage() {
   const handleEdit = () => {
     editForm.reset({
       sku: product.sku,
-      barcode: product.barcode || '',
       nama: product.nama,
       deskripsi: product.deskripsi || '',
-      categoryId: product.categoryId?.toString() || '',
-      tipe: product.tipe,
+      categoryId: product.categoryId?.toString() || 'none',
       hargaBeli: product.hargaBeli || '0',
       hargaJual: product.hargaJual || '0',
       minStockLevel: product.minStockLevel || 0,
+      enableMinStock: product.enableMinStock || false,
       unit: product.unit,
       isActive: product.isActive,
       discountIds: product.discountProducts?.map((dp) => dp.discountId) || [],
@@ -247,19 +246,6 @@ export function ProductDetailPage() {
     if (quantity <= 0) return 'bg-red-100 text-red-700';
     if (quantity <= product.minStockLevel) return 'bg-orange-100 text-orange-700';
     return 'bg-green-100 text-green-700';
-  };
-
-  const getTypeColor = (tipe: string) => {
-    switch (tipe) {
-      case 'barang':
-        return 'bg-blue-100 text-blue-700';
-      case 'jasa':
-        return 'bg-purple-100 text-purple-700';
-      case 'digital':
-        return 'bg-cyan-100 text-cyan-700';
-      default:
-        return 'bg-gray-100 text-gray-700';
-    }
   };
 
   return (
@@ -290,98 +276,77 @@ export function ProductDetailPage() {
                       ...v,
                       hargaBeli: v.hargaBeli || '0',
                       hargaJual: v.hargaJual || '0',
-                      categoryId: v.categoryId ? v.categoryId : undefined,
+                      categoryId: v.categoryId && v.categoryId !== 'none' ? v.categoryId : null,
                     } as UpdateProductDto,
                   })
                 )}
                 className="space-y-4"
               >
+                <FormField
+                  control={editForm.control}
+                  name="sku"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>SKU</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editForm.control}
+                  name="nama"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nama Produk</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editForm.control}
+                  name="deskripsi"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Deskripsi</FormLabel>
+                      <FormControl>
+                        <Textarea {...field} value={field.value || ''} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editForm.control}
+                  name="categoryId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Kategori</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Pilih kategori" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="none">Tidak ada kategori</SelectItem>
+                          {categories.map((cat) => (
+                            <SelectItem key={cat.id} value={cat.id.toString()}>
+                              {cat.nama}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={editForm.control}
-                    name="sku"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>SKU</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={editForm.control}
-                    name="barcode"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Barcode</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={editForm.control}
-                    name="nama"
-                    render={({ field }) => (
-                      <FormItem className="col-span-2">
-                        <FormLabel>Nama</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={editForm.control}
-                    name="categoryId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Kategori</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Pilih kategori" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {categories.map((cat) => (
-                              <SelectItem key={cat.id} value={cat.id.toString()}>
-                                {cat.nama}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={editForm.control}
-                    name="tipe"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Tipe</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Pilih tipe" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="barang">Barang</SelectItem>
-                            <SelectItem value="jasa">Jasa</SelectItem>
-                            <SelectItem value="digital">Digital</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
                   <FormField
                     control={editForm.control}
                     name="hargaBeli"
@@ -416,41 +381,62 @@ export function ProductDetailPage() {
                       </FormItem>
                     )}
                   />
+                </div>
+                <div className="space-y-4">
                   <FormField
                     control={editForm.control}
-                    name="minStockLevel"
+                    name="enableMinStock"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Minimum Stok</FormLabel>
+                      <FormItem className="flex flex-row items-center justify-between rounded-md border px-4 py-3">
+                        <div className="space-y-0.5">
+                          <FormLabel>Notifikasi Minimum Stok</FormLabel>
+                        </div>
                         <FormControl>
-                          <Input
-                            type="number"
-                            {...field}
-                            onChange={(e) => field.onChange(Number(e.target.value))}
-                          />
+                          <Switch checked={field.value} onCheckedChange={field.onChange} />
                         </FormControl>
-                        <FormMessage />
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={editForm.control}
-                    name="unit"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Satuan</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  {enableMinStock && (
+                    <FormField
+                      control={editForm.control}
+                      name="minStockLevel"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Batas Minimum Stok</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="Masukkan batas minimum stok"
+                              {...field}
+                              onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                </div>
+                <FormField
+                  control={editForm.control}
+                  name="unit"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Satuan</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="space-y-4">
                   <FormField
                     control={editForm.control}
                     name="isActive"
                     render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 col-span-2">
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
                         <div className="space-y-0.5">
                           <FormLabel>Status Aktif</FormLabel>
                         </div>
@@ -460,94 +446,81 @@ export function ProductDetailPage() {
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={editForm.control}
-                    name="deskripsi"
-                    render={({ field }) => (
-                      <FormItem className="col-span-2">
-                        <FormLabel>Deskripsi</FormLabel>
-                        <FormControl>
-                          <Textarea {...field} value={field.value || ''} rows={4} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={editForm.control}
-                    name="discountIds"
-                    render={({ field }) => (
-                      <FormItem className="col-span-2">
-                        <FormLabel>Diskon Produk</FormLabel>
-                        <div className="grid grid-cols-2 gap-3 mt-2">
-                          {discounts.length === 0 ? (
-                            <p className="text-sm text-gray-500 col-span-2">
-                              Tidak ada diskon produk tersedia
-                            </p>
-                          ) : (
-                            discounts.map((discount) => {
-                              const isSelected = field.value?.includes(discount.id);
-                              return (
-                                <div
-                                  key={discount.id}
-                                  onClick={() => {
-                                    const currentIds = field.value || [];
-                                    if (isSelected) {
-                                      field.onChange(currentIds.filter((id) => id !== discount.id));
-                                    } else {
-                                      field.onChange([...currentIds, discount.id]);
-                                    }
-                                  }}
-                                  className={`
-                                    relative p-4 rounded-lg border-2 cursor-pointer transition-all
-                                    ${
-                                      isSelected
-                                        ? 'border-gray-900 bg-gray-100'
-                                        : 'border-gray-200 bg-white hover:border-gray-400'
-                                    }
-                                  `}
-                                >
-                                  <div className="flex items-start justify-between">
-                                    <p className="font-semibold text-sm">{discount.nama}</p>
-                                    <div
-                                      className={`
-                                        w-6 h-6 rounded-full flex items-center justify-center
-                                        ${isSelected ? 'bg-gray-800 text-white' : 'bg-gray-200'}
-                                      `}
-                                    >
-                                      {isSelected ? (
-                                        <svg
-                                          className="w-4 h-4"
-                                          fill="none"
-                                          stroke="currentColor"
-                                          viewBox="0 0 24 24"
-                                          aria-label="Selected"
-                                        >
-                                          <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M5 13l4 4L19 7"
-                                          />
-                                        </svg>
-                                      ) : null}
-                                    </div>
-                                  </div>
-                                  <div className="mt-3">
-                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-800">
-                                      {discount.rate}%
-                                    </span>
+                </div>
+                <FormField
+                  control={editForm.control}
+                  name="discountIds"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Diskon Produk</FormLabel>
+                      <div className="grid grid-cols-2 gap-3 mt-2">
+                        {discounts.length === 0 ? (
+                          <p className="text-sm text-gray-500 col-span-2">
+                            Tidak ada diskon produk tersedia
+                          </p>
+                        ) : (
+                          discounts.map((discount) => {
+                            const isSelected = field.value?.includes(discount.id);
+                            return (
+                              <div
+                                key={discount.id}
+                                onClick={() => {
+                                  const currentIds = field.value || [];
+                                  if (isSelected) {
+                                    field.onChange(currentIds.filter((id) => id !== discount.id));
+                                  } else {
+                                    field.onChange([...currentIds, discount.id]);
+                                  }
+                                }}
+                                className={`
+                                  relative p-4 rounded-lg border-2 cursor-pointer transition-all
+                                  ${
+                                    isSelected
+                                      ? 'border-gray-900 bg-gray-100'
+                                      : 'border-gray-200 bg-white hover:border-gray-400'
+                                  }
+                                `}
+                              >
+                                <div className="flex items-start justify-between">
+                                  <p className="font-semibold text-sm">{discount.nama}</p>
+                                  <div
+                                    className={`
+                                      w-6 h-6 rounded-full flex items-center justify-center
+                                      ${isSelected ? 'bg-gray-800 text-white' : 'bg-gray-200'}
+                                    `}
+                                  >
+                                    {isSelected ? (
+                                      <svg
+                                        className="w-4 h-4"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                        aria-label="Selected"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M5 13l4 4L19 7"
+                                        />
+                                      </svg>
+                                    ) : null}
                                   </div>
                                 </div>
-                              );
-                            })
-                          )}
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                                <div className="mt-3">
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-800">
+                                    {discount.rate}%
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <div className="flex justify-end gap-2 pt-4">
                   <Button type="button" variant="outline" onClick={handleCancelEdit}>
                     Batal
@@ -565,18 +538,7 @@ export function ProductDetailPage() {
                 <code className="bg-gray-100 px-2 py-1 rounded">{product.sku}</code>
               </div>
               <div>
-                <span className="text-gray-500">Barcode:</span> {product.barcode || '-'}
-              </div>
-              <div>
                 <span className="text-gray-500">Nama:</span> {product.nama}
-              </div>
-              <div>
-                <span className="text-gray-500">Tipe:</span>{' '}
-                <span
-                  className={`px-2 py-1 rounded text-xs capitalize ${getTypeColor(product.tipe)}`}
-                >
-                  {product.tipe}
-                </span>
               </div>
               <div>
                 <span className="text-gray-500">Kategori:</span> {product.category?.nama || '-'}

@@ -266,7 +266,8 @@ export function PosPage() {
     const maxStock = cartItem.product.stock ?? 0;
     const newQuantity = cartItem.quantity + delta;
 
-    if (newQuantity < 1 || newQuantity > maxStock) return;
+    if (newQuantity < 1) return;
+    if (cartItem.product.enableMinStock && newQuantity > maxStock) return;
 
     setCart(
       cart
@@ -460,40 +461,43 @@ export function PosPage() {
         ) : (
           <div className="relative">
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto flex-1 py-4">
-              {products.map((product) => (
-                <div
-                  key={product.id}
-                  onClick={() => (product.stock ?? 0) > 0 && addToCart(product)}
-                  className={`relative border rounded-lg p-4 cursor-pointer hover:shadow-md transition-all h-48 flex flex-col ${
-                    (product.stock ?? 0) > 0 && (product.stock ?? 0) < product.minStockLevel
-                      ? 'bg-red-50 border-red-200'
-                      : ''
-                  } ${(product.stock ?? 0) === 0 ? 'bg-gray-100 border-gray-200 opacity-60 cursor-not-allowed' : 'hover:border-primary'}`}
-                >
+              {products.map((product) => {
+                const stock = product.stock ?? 0;
+                const isOutOfStock = product.enableMinStock && stock === 0;
+                const isLowStock =
+                  product.enableMinStock && stock > 0 && stock < product.minStockLevel;
+
+                return (
                   <div
-                    className={`absolute -top-3 -right-3 flex items-center justify-center h-8 min-w-8 px-2 rounded-full text-xs font-bold shadow-sm border-2 border-white ${
-                      (product.stock ?? 0) === 0
-                        ? 'bg-gray-400 text-white'
-                        : (product.stock ?? 0) < product.minStockLevel
-                          ? 'bg-red-500 text-white'
-                          : 'bg-primary text-primary-foreground'
-                    }`}
+                    key={product.id}
+                    onClick={() => !isOutOfStock && addToCart(product)}
+                    className={`relative border rounded-lg p-4 cursor-pointer hover:shadow-md transition-all h-48 flex flex-col ${
+                      isLowStock ? 'bg-red-50 border-red-200' : ''
+                    } ${isOutOfStock ? 'bg-gray-100 border-gray-200 opacity-60 cursor-not-allowed' : 'hover:border-primary'}`}
                   >
-                    {product.stock ?? 0}
+                    <div
+                      className={`absolute -top-3 -right-3 flex items-center justify-center h-8 min-w-8 px-2 rounded-full text-xs font-bold shadow-sm border-2 border-white ${
+                        isOutOfStock
+                          ? 'bg-gray-400 text-white'
+                          : isLowStock
+                            ? 'bg-red-500 text-white'
+                            : 'bg-primary text-primary-foreground'
+                      }`}
+                    >
+                      {stock}
+                    </div>
+                    <div className="h-20 bg-gray-100 rounded-md mb-3 flex items-center justify-center">
+                      <Receipt className="h-8 w-8 text-gray-400" />
+                    </div>
+                    <h5 className="font-medium text-sm truncate">{product.nama}</h5>
+                    <p className="text-xs text-gray-500">{product.sku}</p>
+                    <div className="flex justify-between items-end mt-auto">
+                      <p className="font-bold text-primary">{formatRupiah(product.hargaJual)}</p>
+                      {isOutOfStock && <p className="text-xs font-medium text-gray-500">Habis</p>}
+                    </div>
                   </div>
-                  <div className="h-20 bg-gray-100 rounded-md mb-3 flex items-center justify-center">
-                    <Receipt className="h-8 w-8 text-gray-400" />
-                  </div>
-                  <h5 className="font-medium text-sm truncate">{product.nama}</h5>
-                  <p className="text-xs text-gray-500">{product.sku}</p>
-                  <div className="flex justify-between items-end mt-auto">
-                    <p className="font-bold text-primary">{formatRupiah(product.hargaJual)}</p>
-                    {(product.stock ?? 0) === 0 && (
-                      <p className="text-xs font-medium text-gray-500">Habis</p>
-                    )}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
             {productsData?.meta && productsData.meta.totalPages > 1 && (
               <div className="flex items-center justify-center gap-2 py-2">
@@ -613,7 +617,9 @@ export function PosPage() {
                       variant="outline"
                       size="icon"
                       className="h-7 w-7"
-                      disabled={item.quantity >= (item.product.stock ?? 0)}
+                      disabled={
+                        item.product.enableMinStock && item.quantity >= (item.product.stock ?? 0)
+                      }
                       onClick={() => updateQuantity(item.product.id, 1)}
                     >
                       <Plus className="h-3 w-3" />

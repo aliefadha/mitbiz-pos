@@ -87,15 +87,14 @@ export async function seedProduct(tenantId: string) {
     generatedProducts.push({
       tenantId,
       sku: `SKU-${String(i + 1).padStart(4, '0')}`,
-      barcode: faker.string.numeric(13),
       nama: name,
       deskripsi: faker.lorem.sentence(),
       categoryId: categoryIds.length > 0 ? faker.helpers.arrayElement(categoryIds) : null,
-      tipe: 'barang' as const,
       hargaBeli: buyPrice.toString(),
       hargaJual: sellPrice.toString(),
       unit: 'pcs',
       minStockLevel: faker.number.int({ min: 5, max: 20 }),
+      enableMinStock: false,
       isActive: true,
     });
   }

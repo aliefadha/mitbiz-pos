@@ -27,17 +27,16 @@ export interface Product {
   id: string;
   tenantId: string;
   sku: string;
-  barcode: string | null;
   nama: string;
   deskripsi: string | null;
   categoryId: string | null;
   category: Category | null;
-  tipe: 'barang' | 'jasa' | 'digital';
   hargaBeli: string | null;
   hargaJual: string;
   stock: number;
   stockQuantity: number;
   minStockLevel: number;
+  enableMinStock: boolean;
   unit: string;
   isActive: boolean;
   createdAt: Date;
@@ -48,29 +47,27 @@ export interface Product {
 export interface CreateProductDto {
   tenantId: string;
   sku: string;
-  barcode?: string;
   nama: string;
   deskripsi?: string;
   categoryId?: string;
-  tipe?: 'barang' | 'jasa' | 'digital';
   hargaBeli?: string;
   hargaJual: string;
   stockQuantity?: number;
   minStockLevel?: number;
+  enableMinStock?: boolean;
   unit?: string;
   isActive?: boolean;
 }
 
 export interface UpdateProductDto {
   sku?: string;
-  barcode?: string;
   nama?: string;
   deskripsi?: string;
   categoryId?: string;
-  tipe?: 'barang' | 'jasa' | 'digital';
   hargaBeli?: string;
   hargaJual?: string;
   minStockLevel?: number;
+  enableMinStock?: boolean;
   unit?: string;
   isActive?: boolean;
   discountIds?: string[];

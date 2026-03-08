@@ -25,6 +25,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { categoriesApi } from '@/lib/api/categories';
 import { type CreateProductDto, productsApi } from '@/lib/api/products';
@@ -32,15 +33,14 @@ import { useSession } from '@/lib/auth-client';
 
 const formSchema = z.object({
   sku: z.string().min(1, 'SKU wajib diisi'),
-  barcode: z.string().optional(),
   nama: z.string().min(1, 'Nama produk wajib diisi'),
   deskripsi: z.string().optional(),
   categoryId: z.string().optional(),
-  tipe: z.enum(['barang', 'jasa', 'digital']),
   hargaBeli: z.string(),
   hargaJual: z.string().min(1, 'Harga jual wajib diisi'),
   unit: z.string(),
   minStockLevel: z.number(),
+  enableMinStock: z.boolean(),
 });
 
 export function CreateProductPage() {
@@ -53,15 +53,14 @@ export function CreateProductPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       sku: '',
-      barcode: '',
       nama: '',
       deskripsi: '',
-      categoryId: '',
-      tipe: 'barang',
+      categoryId: 'none',
       hargaBeli: '0',
       hargaJual: '0',
       unit: 'pcs',
       minStockLevel: 0,
+      enableMinStock: false,
     },
   });
 
@@ -86,17 +85,19 @@ export function CreateProductPage() {
   const handleSubmit = form.handleSubmit((values) => {
     const productData = {
       ...values,
-      categoryId: values.categoryId ? values.categoryId : undefined,
+      categoryId: values.categoryId && values.categoryId !== 'none' ? values.categoryId : null,
       hargaBeli: values.hargaBeli || '0',
       hargaJual: values.hargaJual,
       tenantId: tenantId!,
       isActive: true,
+      enableMinStock: values.enableMinStock,
     };
 
     createMutation.mutate(productData as CreateProductDto);
   });
 
   const categories = categoriesData?.data ?? [];
+  const enableMinStock = form.watch('enableMinStock');
 
   if (categoriesLoading) {
     return (
@@ -120,34 +121,19 @@ export function CreateProductPage() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="sku"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>SKU</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Masukkan SKU" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="barcode"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Barcode</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Masukkan barcode (opsional)" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="sku"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>SKU</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Masukkan SKU" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="nama"
@@ -174,7 +160,7 @@ export function CreateProductPage() {
                   </FormItem>
                 )}
               />
-              <div className="grid grid-cols-2 gap-4">
+              <div>
                 <FormField
                   control={form.control}
                   name="categoryId"
@@ -188,33 +174,12 @@ export function CreateProductPage() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
+                          <SelectItem value="none">Tidak ada kategori</SelectItem>
                           {categories.map((cat) => (
                             <SelectItem key={cat.id} value={cat.id.toString()}>
                               {cat.nama}
                             </SelectItem>
                           ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="tipe"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tipe</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Pilih tipe" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="barang">Barang</SelectItem>
-                          <SelectItem value="jasa">Jasa</SelectItem>
-                          <SelectItem value="digital">Digital</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -258,39 +223,56 @@ export function CreateProductPage() {
                   )}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-4">
                 <FormField
                   control={form.control}
-                  name="unit"
+                  name="enableMinStock"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Satuan</FormLabel>
+                    <FormItem className="flex flex-row items-center justify-between rounded-md border px-4 py-3">
+                      <div className="space-y-0.5">
+                        <FormLabel>Notifikasi Minimum Stok</FormLabel>
+                      </div>
                       <FormControl>
-                        <Input placeholder="pcs" {...field} />
+                        <Switch checked={field.value} onCheckedChange={field.onChange} />
                       </FormControl>
-                      <FormMessage />
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="minStockLevel"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Minimum Stok</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="0"
-                          {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {enableMinStock && (
+                  <FormField
+                    control={form.control}
+                    name="minStockLevel"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Batas Minimum Stok</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="Masukkan batas minimum stok"
+                            {...field}
+                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
               </div>
+              <FormField
+                control={form.control}
+                name="unit"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Satuan</FormLabel>
+                    <FormControl>
+                      <Input placeholder="pcs" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <div className="flex gap-4 pt-4">
                 <Button
                   variant="outline"

@@ -1,5 +1,5 @@
 import { relations, sql } from 'drizzle-orm';
-import { boolean, decimal, integer, pgEnum, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, decimal, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 import { categories } from './category-schema';
 import { discountProducts } from './discount-schema';
 import { orderItems } from './order-item-schema';
@@ -7,19 +7,15 @@ import { stockAdjustments } from './stock-adjustment-schema';
 import { productStocks } from './stock-schema';
 import { tenants } from './tenant-schema';
 
-export const productTypeEnum = pgEnum('product_type', ['barang', 'jasa', 'digital']);
-
 export const products = pgTable('products', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),
   tenantId: text('tenant_id')
     .references(() => tenants.id)
     .notNull(),
   sku: text('sku').notNull(),
-  barcode: text('barcode'),
   nama: text('nama').notNull(),
   deskripsi: text('deskripsi'),
   categoryId: text('category_id').references(() => categories.id),
-  tipe: productTypeEnum('tipe').default('barang').notNull(),
   hargaBeli: decimal('harga_beli', {
     precision: 12,
     scale: 2,
@@ -27,6 +23,7 @@ export const products = pgTable('products', {
   hargaJual: decimal('harga_jual', { precision: 12, scale: 2 }).notNull(),
   unit: text('unit').default('pcs').notNull(),
   minStockLevel: integer('min_stock_level').default(0).notNull(),
+  enableMinStock: boolean('enable_min_stock').default(false).notNull(),
   isActive: boolean('is_active').default(true).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
