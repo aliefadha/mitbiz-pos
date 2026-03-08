@@ -247,9 +247,9 @@ export function AppLayout() {
       <Sidebar variant="inset" collapsible="icon" className="h-dvh">
         <AppSidebar />
       </Sidebar>
-      <SidebarInset className="p-4 h-dvh overflow-hidden">
-        <main className="flex flex-1 flex-col gap-4 h-full overflow-hidden">
-          <div className="relative w-full h-full overflow-y-auto md:scrollbar-hide">
+      <SidebarInset className="h-dvh overflow-y-auto">
+        <main className="flex flex-1 flex-col gap-4 h-full">
+          <div className="relative w-full h-full p-4">
             <Outlet />
           </div>
         </main>
