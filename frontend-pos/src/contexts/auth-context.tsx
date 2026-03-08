@@ -8,7 +8,7 @@ import {
 } from '../lib/api/roles';
 import { signOut as signOutAuth, useSession } from '../lib/auth-client';
 
-export type UserRole = 'admin' | 'owner' | 'cashier' | undefined;
+export type UserRole = string | undefined;
 
 export interface User {
   id: string;

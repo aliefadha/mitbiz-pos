@@ -111,7 +111,8 @@ export class RolesService {
   // ============ RESOURCES ============
 
   async findAllResources() {
-    return this.db.select().from(resources).where(eq(resources.isActive, true));
+    const resource = await this.db.select().from(resources);
+    return resource;
   }
 
   async findResourceById(id: string) {

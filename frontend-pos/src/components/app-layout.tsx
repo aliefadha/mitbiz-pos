@@ -87,9 +87,9 @@ const menuConfig: MenuGroup[] = [
         permission: { resource: 'outlets', actions: ['read'] },
       },
       {
-        key: '/kasir',
+        key: '/users',
         icon: Users,
-        label: 'Kasir',
+        label: 'Pengguna',
         permission: { resource: 'users', actions: ['read', 'create', 'list'] },
       },
       {

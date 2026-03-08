@@ -1,5 +1,6 @@
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
+import { CASHIER_ROLE_ID, OWNER_ROLE_ID } from '../constants/role-ids';
 import { authClient, signIn, signOut } from '../lib/auth-client';
 
 // Re-export the new auth hooks from context
@@ -67,9 +68,6 @@ export function useResetPassword() {
     isError: false,
   };
 }
-
-const CASHIER_ROLE_ID = '00000000-0000-0000-0000-000000000002';
-const OWNER_ROLE_ID = '00000000-0000-0000-0000-000000000001';
 
 export function useLogin() {
   const navigate = useNavigate({ from: '/login' });

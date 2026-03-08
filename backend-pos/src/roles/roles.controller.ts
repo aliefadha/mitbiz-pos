@@ -13,7 +13,7 @@ import {
   UseGuards,
   UsePipes,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
   CreateResourceDto,
   CreateResourceSchema,
@@ -48,6 +48,50 @@ export class RolesController {
   findAll(@Query() query: RoleQueryDto) {
     return this.rolesService.findAll(query.tenantId);
   }
+
+  // ============ RESOURCES ============
+
+  @Get('resources')
+  @ApiOperation({ summary: 'Get all resources' })
+  @ApiResponse({ status: 200, description: 'Returns all resources' })
+  async findAllResources() {
+    return this.rolesService.findAllResources();
+  }
+
+  @Get('resources/:id')
+  @ApiOperation({ summary: 'Get resource by ID' })
+  @UsePipes(new ZodValidationPipe(ResourceIdSchema, 'params'))
+  @Permission('roles', [Action.READ])
+  findResourceById(@Param() { id }: ResourceIdDto) {
+    return this.rolesService.findResourceById(id);
+  }
+
+  @Post('resources')
+  @ApiOperation({ summary: 'Create a new resource' })
+  @UsePipes(new ZodValidationPipe(CreateResourceSchema))
+  @Permission('roles', [Action.CREATE])
+  createResource(@Body() data: CreateResourceDto) {
+    return this.rolesService.createResource(data);
+  }
+
+  @Put('resources/:id')
+  @ApiOperation({ summary: 'Update a resource' })
+  @UsePipes(new ZodValidationPipe(ResourceIdSchema, 'params'))
+  @UsePipes(new ZodValidationPipe(UpdateResourceSchema))
+  @Permission('roles', [Action.UPDATE])
+  updateResource(@Param() { id }: ResourceIdDto, @Body() data: UpdateResourceDto) {
+    return this.rolesService.updateResource(id, data);
+  }
+
+  @Delete('resources/:id')
+  @ApiOperation({ summary: 'Delete a resource' })
+  @UsePipes(new ZodValidationPipe(ResourceIdSchema, 'params'))
+  @Permission('roles', [Action.DELETE])
+  deleteResource(@Param() { id }: ResourceIdDto) {
+    return this.rolesService.deleteResource(id);
+  }
+
+  // ============ ROLES BY ID (must be after static routes) ============
 
   @Get(':id')
   @ApiOperation({ summary: 'Get role by ID' })
@@ -115,45 +159,5 @@ export class RolesController {
   @Permission('roles', [Action.UPDATE])
   removePermission(@Param() { id }: RoleIdDto, @Body() body: PermissionDto) {
     return this.rolesService.removePermission(id, body.resource, body.action);
-  }
-
-  @Get('resources')
-  @ApiOperation({ summary: 'Get all resources' })
-  @Permission('roles', [Action.READ])
-  findAllResources() {
-    return this.rolesService.findAllResources();
-  }
-
-  @Get('resources/:id')
-  @ApiOperation({ summary: 'Get resource by ID' })
-  @UsePipes(new ZodValidationPipe(ResourceIdSchema, 'params'))
-  @Permission('roles', [Action.READ])
-  findResourceById(@Param() { id }: ResourceIdDto) {
-    return this.rolesService.findResourceById(id);
-  }
-
-  @Post('resources')
-  @ApiOperation({ summary: 'Create a new resource' })
-  @UsePipes(new ZodValidationPipe(CreateResourceSchema))
-  @Permission('roles', [Action.CREATE])
-  createResource(@Body() data: CreateResourceDto) {
-    return this.rolesService.createResource(data);
-  }
-
-  @Put('resources/:id')
-  @ApiOperation({ summary: 'Update a resource' })
-  @UsePipes(new ZodValidationPipe(ResourceIdSchema, 'params'))
-  @UsePipes(new ZodValidationPipe(UpdateResourceSchema))
-  @Permission('roles', [Action.UPDATE])
-  updateResource(@Param() { id }: ResourceIdDto, @Body() data: UpdateResourceDto) {
-    return this.rolesService.updateResource(id, data);
-  }
-
-  @Delete('resources/:id')
-  @ApiOperation({ summary: 'Delete a resource' })
-  @UsePipes(new ZodValidationPipe(ResourceIdSchema, 'params'))
-  @Permission('roles', [Action.DELETE])
-  deleteResource(@Param() { id }: ResourceIdDto) {
-    return this.rolesService.deleteResource(id);
   }
 }

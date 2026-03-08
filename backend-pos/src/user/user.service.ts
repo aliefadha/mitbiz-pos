@@ -6,7 +6,7 @@ import { auth } from '@/lib/auth';
 import { TenantAuthService } from '@/rbac/services/tenant-auth.service';
 import { BadRequestException, ForbiddenException, Inject, Injectable } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
-import type { CreateUserDto } from './dto';
+import type { CreateUserDto, UpdateUserDto } from './dto';
 
 @Injectable()
 export class UserService {
@@ -71,15 +71,13 @@ export class UserService {
       await this.tenantAuth.validateTenantOperation(currentUser, data.tenantId);
     }
 
-    // Get role ID from role name
-    let roleId: string | undefined;
-    if (data.role) {
-      const [role] = await this.db.select().from(roles).where(eq(roles.name, data.role)).limit(1);
+    // Validate role exists
+    if (data.roleId) {
+      const [role] = await this.db.select().from(roles).where(eq(roles.id, data.roleId)).limit(1);
 
       if (!role) {
-        throw new BadRequestException(`Role '${data.role}' not found`);
+        throw new BadRequestException(`Role with ID '${data.roleId}' not found`);
       }
-      roleId = role.id;
     }
 
     // Create user using better-auth
@@ -99,7 +97,7 @@ export class UserService {
     await this.db
       .update(user)
       .set({
-        roleId,
+        roleId: data.roleId,
         tenantId: data.tenantId,
         outletId: data.outletId,
         isSubscribed: data.isSubscribed,
@@ -118,5 +116,53 @@ export class UserService {
     });
 
     return createdUser;
+  }
+
+  async updateUser(id: string, data: UpdateUserDto, currentUser: CurrentUserWithRole) {
+    // Check if user exists
+    const existingUser = await this.db.query.user.findFirst({
+      where: eq(user.id, id),
+    });
+
+    if (!existingUser) {
+      throw new BadRequestException('User not found');
+    }
+
+    // Validate tenant access for updating user
+    if (existingUser.tenantId) {
+      await this.tenantAuth.validateTenantOperation(currentUser, existingUser.tenantId);
+    }
+
+    // Validate role exists if roleId is provided
+    if (data.roleId) {
+      const [role] = await this.db.select().from(roles).where(eq(roles.id, data.roleId)).limit(1);
+
+      if (!role) {
+        throw new BadRequestException(`Role with ID '${data.roleId}' not found`);
+      }
+    }
+
+    // Update user
+    await this.db
+      .update(user)
+      .set({
+        name: data.name,
+        email: data.email,
+        roleId: data.roleId,
+        outletId: data.outletId,
+      })
+      .where(eq(user.id, id));
+
+    // Return updated user with relations
+    const updatedUser = await this.db.query.user.findFirst({
+      where: eq(user.id, id),
+      with: {
+        role: true,
+        tenant: true,
+        outlet: true,
+      },
+    });
+
+    return updatedUser;
   }
 }

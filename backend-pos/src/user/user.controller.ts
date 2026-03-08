@@ -7,7 +7,7 @@ import {
   Body,
   Controller,
   Get,
-  Inject,
+  Param,
   Patch,
   Post,
   Query,
@@ -20,7 +20,14 @@ import { AuthService } from '@thallesp/nestjs-better-auth';
 import { fromNodeHeaders } from 'better-auth/node';
 import { asc, eq } from 'drizzle-orm';
 import type { Request as ExpressRequest } from 'express';
-import { CreateUserDto, CreateUserSchema, UserQueryDto, UserQuerySchema } from './dto';
+import {
+  CreateUserDto,
+  CreateUserSchema,
+  UpdateUserDto,
+  UpdateUserSchema,
+  UserQueryDto,
+  UserQuerySchema,
+} from './dto';
 import { UserService } from './user.service';
 
 @Controller('users')
@@ -65,5 +72,21 @@ export class UserController {
 
     const createdUser = await this.userService.createUser(body, currentUser);
     return { user: createdUser };
+  }
+
+  @Patch(':id')
+  @UsePipes(new ZodValidationPipe(UpdateUserSchema))
+  @Permission('user', [Action.UPDATE])
+  async updateUser(
+    @Param('id') id: string,
+    @Body() body: UpdateUserDto,
+    @CurrentUser() currentUser: CurrentUserWithRole,
+  ) {
+    if (!currentUser?.id) {
+      return { error: 'No session found' };
+    }
+
+    const updatedUser = await this.userService.updateUser(id, body, currentUser);
+    return { user: updatedUser };
   }
 }
