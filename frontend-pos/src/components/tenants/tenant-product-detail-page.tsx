@@ -200,11 +200,9 @@ export function TenantProductDetailPage() {
   const handleEdit = () => {
     editForm.reset({
       sku: product.sku,
-      barcode: product.barcode || '',
       nama: product.nama,
       deskripsi: product.deskripsi || '',
       categoryId: product.categoryId?.toString() || '',
-      tipe: product.tipe,
       hargaBeli: product.hargaBeli || '0',
       hargaJual: product.hargaJual || '0',
       minStockLevel: product.minStockLevel || 0,
@@ -220,19 +218,6 @@ export function TenantProductDetailPage() {
     if (quantity <= 0) return 'bg-red-100 text-red-700';
     if (quantity <= product.minStockLevel) return 'bg-orange-100 text-orange-700';
     return 'bg-green-100 text-green-700';
-  };
-
-  const getTypeColor = (tipe: string) => {
-    switch (tipe) {
-      case 'barang':
-        return 'bg-blue-100 text-blue-700';
-      case 'jasa':
-        return 'bg-purple-100 text-purple-700';
-      case 'digital':
-        return 'bg-cyan-100 text-cyan-700';
-      default:
-        return 'bg-gray-100 text-gray-700';
-    }
   };
 
   return (
@@ -267,18 +252,7 @@ export function TenantProductDetailPage() {
               <code className="bg-gray-100 px-2 py-1 rounded">{product.sku}</code>
             </div>
             <div>
-              <span className="text-gray-500">Barcode:</span> {product.barcode || '-'}
-            </div>
-            <div>
               <span className="text-gray-500">Nama:</span> {product.nama}
-            </div>
-            <div>
-              <span className="text-gray-500">Tipe:</span>{' '}
-              <span
-                className={`px-2 py-1 rounded text-xs capitalize ${getTypeColor(product.tipe)}`}
-              >
-                {product.tipe}
-              </span>
             </div>
             <div>
               <span className="text-gray-500">Kategori:</span> {product.category?.nama || '-'}

@@ -214,11 +214,9 @@ export function TenantProductsPage() {
     setEditingProduct(product);
     form.reset({
       sku: product.sku,
-      barcode: product.barcode || '',
       nama: product.nama,
       deskripsi: product.deskripsi || '',
       categoryId: product.categoryId?.toString() || undefined,
-      tipe: product.tipe,
       hargaBeli: product.hargaBeli || '0',
       hargaJual: product.hargaJual || '0',
       stockQuantity: product.stockQuantity?.toString() || '0',
@@ -279,27 +277,13 @@ export function TenantProductsPage() {
   const filteredProducts = products?.data?.filter(
     (prod) =>
       prod.nama.toLowerCase().includes(searchText.toLowerCase()) ||
-      prod.sku.toLowerCase().includes(searchText.toLowerCase()) ||
-      prod.barcode?.toLowerCase().includes(searchText.toLowerCase())
+      prod.sku.toLowerCase().includes(searchText.toLowerCase())
   );
 
   const categoryOptions = categories?.data?.map((cat) => ({
     label: cat.nama,
     value: cat.id.toString(),
   }));
-
-  const getTypeColor = (tipe: string) => {
-    switch (tipe) {
-      case 'barang':
-        return 'bg-blue-100 text-blue-700';
-      case 'jasa':
-        return 'bg-purple-100 text-purple-700';
-      case 'digital':
-        return 'bg-cyan-100 text-cyan-700';
-      default:
-        return 'bg-gray-100 text-gray-700';
-    }
-  };
 
   return (
     <div>
@@ -378,13 +362,6 @@ export function TenantProductsPage() {
                   </TableCell>
                   <TableCell className="font-medium">{product.nama}</TableCell>
                   <TableCell>{product.category?.nama || '-'}</TableCell>
-                  <TableCell>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs capitalize ${getTypeColor(product.tipe)}`}
-                    >
-                      {product.tipe}
-                    </span>
-                  </TableCell>
                   <TableCell>{formatRupiah(product.hargaBeli || '0')}</TableCell>
                   <TableCell>{formatRupiah(product.hargaJual)}</TableCell>
                   <TableCell>
