@@ -9,7 +9,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { AuthService } from '@thallesp/nestjs-better-auth';
 import { fromNodeHeaders } from 'better-auth/node';
-import { PERMISSION_KEY, PermissionMetadata } from '../decorators/permission.decorator';
+import { PERMISSION_KEY, PUBLIC_KEY, PermissionMetadata } from '../decorators/permission.decorator';
 import { RbacService } from '../services/rbac.service';
 import { Action, CONTROLLER_TO_RESOURCE, METHOD_TO_ACTION } from '../types/rbac.types';
 
@@ -22,6 +22,11 @@ export class PermissionGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    const isPublic = this.reflector.get<boolean>(PUBLIC_KEY, context.getHandler());
+    if (isPublic) {
+      return true;
+    }
+
     const request = context.switchToHttp().getRequest();
     const headers = fromNodeHeaders(request.headers);
     const session = await this.authService.api.getSession({ headers });

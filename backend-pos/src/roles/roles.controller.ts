@@ -1,6 +1,6 @@
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
-import { Action, GlobalScope, Permission, PermissionGuard, ScopeGuard } from '@/rbac';
+import { Action, GlobalScope, Permission, PermissionGuard, Public, ScopeGuard } from '@/rbac';
 import {
   Body,
   Controller,
@@ -96,7 +96,10 @@ export class RolesController {
   @Get(':id')
   @ApiOperation({ summary: 'Get role by ID' })
   @UsePipes(new ZodValidationPipe(RoleIdSchema, 'params'))
-  @Permission('roles', [Action.READ])
+  // Disabled due to role checking for frontend
+  // TODO: find restrict way to exposed without user without permission can access
+  // @Permission('roles', [Action.READ])
+  @Public()
   findById(@Param() { id }: RoleIdDto) {
     return this.rolesService.findById(id);
   }
@@ -104,7 +107,10 @@ export class RolesController {
   @Get(':id/permissions')
   @ApiOperation({ summary: 'Get permissions for a role' })
   @UsePipes(new ZodValidationPipe(RoleIdSchema, 'params'))
-  @Permission('roles', [Action.READ])
+  // Disabled due to role checking for frontend
+  // TODO: find restrict way to exposed without user without permission can access
+  // @Permission('roles', [Action.READ])
+  @Public()
   getPermissions(@Param() { id }: RoleIdDto) {
     return this.rolesService.getPermissions(id);
   }
