@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, redirect } from '@tanstack/react-router';
 import { Upload } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { SalesByBranchChart } from '@/components/dashboard/sales-by-branch-chart';
@@ -20,9 +20,16 @@ import { type Category, categoriesApi } from '@/lib/api/categories';
 import { type Outlet, outletsApi } from '@/lib/api/outlets';
 import { salesApi, type TopProduct } from '@/lib/api/sales';
 import { useSession } from '@/lib/auth-client';
+import { checkPermission } from '@/lib/permissions';
 
 export const Route = createFileRoute('/_protected/laporan')({
   component: LaporanPage,
+  beforeLoad: async () => {
+    const { allowed } = await checkPermission('report', 'read');
+    if (!allowed) {
+      throw redirect({ to: '/403' });
+    }
+  },
 });
 
 function LaporanPage() {

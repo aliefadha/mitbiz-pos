@@ -34,6 +34,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { useLogout, usePermissions } from '@/hooks/use-auth';
+import type { UserScope } from '@/lib/permissions';
 import { useAuth } from '../contexts/auth-context';
 
 interface MenuItem {
@@ -41,6 +42,7 @@ interface MenuItem {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   permission: { resource: string; actions: string[] };
+  scope?: UserScope;
 }
 
 interface MenuGroup {
@@ -79,7 +81,8 @@ const menuConfig: MenuGroup[] = [
         key: '/tenants',
         icon: Users,
         label: 'Tenant',
-        permission: { resource: 'tenants', actions: ['create'] },
+        permission: { resource: 'tenants', actions: ['read'] },
+        scope: 'global',
       },
       {
         key: '/outlets',
@@ -126,13 +129,13 @@ const menuConfig: MenuGroup[] = [
         key: '/stocks',
         icon: Package2,
         label: 'Stok',
-        permission: { resource: 'tenants', actions: ['read', 'update'] },
+        permission: { resource: 'stocks', actions: ['read'] },
       },
       {
         key: '/stock-adjustment',
         icon: ChartBar,
         label: 'Penyesuaian Stok',
-        permission: { resource: 'order', actions: ['read'] },
+        permission: { resource: 'stockAdjustments', actions: ['read'] },
       },
     ],
   },
@@ -143,13 +146,13 @@ const menuConfig: MenuGroup[] = [
         key: '/settings',
         icon: Settings,
         label: 'Pengaturan',
-        permission: { resource: 'tenants', actions: ['read', 'update'] },
+        permission: { resource: 'settings', actions: ['read'] },
       },
       {
         key: '/orders',
         icon: History,
         label: 'Riwayat Transaksi',
-        permission: { resource: 'order', actions: ['read'] },
+        permission: { resource: 'orders', actions: ['read'] },
       },
     ],
   },
@@ -167,13 +170,23 @@ function AppSidebar() {
     logoutMutation.mutate();
   };
 
-  // Filter menu based on permissions
+  // Filter menu based on permissions and scope
+  const userScope = user?.roles?.scope;
   const filteredMenuConfig = menuConfig
     .map((group) => ({
       ...group,
-      items: group.items.filter((item) =>
-        hasAnyPermission(item.permission.resource, item.permission.actions)
-      ),
+      items: group.items.filter((item) => {
+        // Check permission
+        const hasPerm = hasAnyPermission(item.permission.resource, item.permission.actions);
+        if (!hasPerm) return false;
+
+        // Check scope requirement
+        if (item.scope && item.scope !== userScope) {
+          return false;
+        }
+
+        return true;
+      }),
     }))
     .filter((group) => group.items.length > 0);
 
@@ -226,7 +239,7 @@ function AppSidebar() {
             </Avatar>
             <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
               <span className="truncate font-semibold">{user?.name || 'User'}</span>
-              <span className="truncate text-xs">{user?.roles?.name || ''}</span>
+              <span className="truncate text-xs">{user?.email || ''}</span>
             </div>
           </div>
           <button

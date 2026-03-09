@@ -8,7 +8,7 @@ import {
 } from '../lib/api/roles';
 import { signOut as signOutAuth, useSession } from '../lib/auth-client';
 
-export type UserRole = string | undefined;
+export type UserScope = 'global' | 'tenant' | undefined;
 
 export interface User {
   id: string;
@@ -25,7 +25,7 @@ export interface User {
   roles?: {
     id: string;
     name: string;
-    scope: string;
+    scope: UserScope;
   };
 }
 
@@ -33,14 +33,13 @@ export interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  role: UserRole;
+  scope: UserScope;
   roleId: string | undefined;
   permissions: Permission[];
   isPermissionsLoading: boolean;
   logout: () => Promise<void>;
   hasPermission: (resource: string, action: string) => boolean;
   hasAnyPermission: (resource: string, actions: string[]) => boolean;
-  isRole: (...roles: UserRole[]) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -100,30 +99,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [hasPermission]
   );
 
-  // Extract role name from first permission (they all have the same roleId)
-  // Note: We don't have role name in the permissions API, so we'll need to get it from elsewhere
-  // For now, we'll use a placeholder or fetch it separately
-  const role = useMemo<UserRole>(() => {
-    // Since the permissions API doesn't return role name, we'll need to either:
-    // 1. Fetch role info separately
-    // 2. Infer from available permissions
-    // 3. Store it in user data
-    // For now, return undefined - the role should come from user data or separate API
-    return undefined;
-  }, []);
+  // Extract scope from user.roles (provided by backend customSession)
+  const scope = useMemo<UserScope>(() => {
+    return user?.roles?.scope;
+  }, [user?.roles?.scope]);
 
   const value: AuthContextType = {
     user: user ?? null,
     isLoading: isSessionLoading,
     isAuthenticated: !!session,
-    role,
+    scope,
     roleId,
     permissions,
     isPermissionsLoading,
     logout,
     hasPermission,
     hasAnyPermission,
-    isRole: () => false, // Temporarily disabled until we have role info
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
