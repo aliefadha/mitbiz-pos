@@ -84,9 +84,9 @@ export function UserList({
   return (
     <Card className="flex-1">
       <CardHeader className="pb-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h3 className="text-lg font-semibold">
+            <h3 className="text-base sm:text-lg font-semibold">
               {selectedRole ? `Pengguna - ${selectedRole.name}` : 'Semua Pengguna'}
             </h3>
             <p className="text-sm text-muted-foreground mt-1">
@@ -122,9 +122,9 @@ export function UserList({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <Button onClick={onCreateUser}>
-                <Plus className="mr-2 h-4 w-4" />
-                Tambah Pengguna
+              <Button onClick={onCreateUser} size="sm">
+                <Plus className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Tambah Pengguna</span>
               </Button>
             </div>
           )}
@@ -156,51 +156,68 @@ export function UserList({
           </div>
         ) : (
           <>
-            <Table>
-              <TableHeader className="[&_tr]:border-b-0">
-                <TableRow className="bg-gray-100 hover:bg-gray-100 border-b-0">
-                  <TableHead className="text-gray-800 font-medium">Nama</TableHead>
-                  <TableHead className="text-gray-800 font-medium">Email</TableHead>
-                  <TableHead className="text-gray-800 font-medium">Cabang</TableHead>
-                  <TableHead className="text-gray-800 font-medium">Role</TableHead>
-                  <TableHead className="text-gray-800 font-medium w-[100px] rounded-tr-lg rounded-br-lg text-right">
-                    Aksi
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {displayedUsers.map((user) => (
-                  <TableRow key={user.id} className="hover:bg-white">
-                    <TableCell>{user.name}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>{user.outlet?.nama || '-'}</TableCell>
-                    <TableCell className="capitalize">{user.role?.name || '-'}</TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => onEditUser(user)}
-                        disabled={user.role?.id === OWNER_ROLE_ID}
-                        title={
-                          user.role?.id === OWNER_ROLE_ID
-                            ? 'Owner role cannot be edited'
-                            : 'Edit user'
-                        }
-                      >
-                        <Edit2 className="h-4 w-4 mr-1" />
-                      </Button>
-                    </TableCell>
+            <div className="overflow-x-auto -mx-4 sm:mx-0">
+              <Table>
+                <TableHeader className="[&_tr]:border-b-0">
+                  <TableRow className="bg-gray-100 hover:bg-gray-100 border-b-0">
+                    <TableHead className="text-gray-800 font-medium">Nama</TableHead>
+                    <TableHead className="text-gray-800 font-medium">Email</TableHead>
+                    <TableHead className="text-gray-800 font-medium hidden md:table-cell">
+                      Cabang
+                    </TableHead>
+                    <TableHead className="text-gray-800 font-medium hidden md:table-cell">
+                      Role
+                    </TableHead>
+                    <TableHead className="text-gray-800 font-medium w-[80px] md:w-[100px] rounded-tr-lg rounded-br-lg text-right">
+                      Aksi
+                    </TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {displayedUsers.map((user) => (
+                    <TableRow key={user.id} className="hover:bg-white">
+                      <TableCell>
+                        <div>{user.name}</div>
+                        <div className="text-xs text-muted-foreground md:hidden">
+                          {user.role?.name || '-'}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="break-all">{user.email}</span>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {user.outlet?.nama || '-'}
+                      </TableCell>
+                      <TableCell className="capitalize hidden md:table-cell">
+                        {user.role?.name || '-'}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => onEditUser(user)}
+                          disabled={user.role?.id === OWNER_ROLE_ID}
+                          title={
+                            user.role?.id === OWNER_ROLE_ID
+                              ? 'Owner role cannot be edited'
+                              : 'Edit user'
+                          }
+                        >
+                          <Edit2 className="h-4 w-4 mr-1" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
 
             {totalPages > 1 && (
-              <div className="flex items-center justify-between px-2 py-4 mt-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-2 py-4 mt-4">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs sm:text-sm text-gray-600">
                     Menampilkan {(currentPage - 1) * pageSize + 1} -{' '}
-                    {Math.min(currentPage * pageSize, totalUsers)} dari {totalUsers} pengguna
+                    {Math.min(currentPage * pageSize, totalUsers)} dari {totalUsers}
                   </span>
                   <Select
                     value={pageSize.toString()}
@@ -220,7 +237,7 @@ export function UserList({
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 sm:gap-2">
                   <Button
                     variant="outline"
                     size="sm"
@@ -236,7 +253,7 @@ export function UserList({
                         variant={currentPage === page ? 'default' : 'outline'}
                         size="sm"
                         onClick={() => onPageChange(page)}
-                        className="w-9"
+                        className="w-8 sm:w-9"
                       >
                         {page}
                       </Button>

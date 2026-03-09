@@ -17,7 +17,7 @@ import {
   Users,
 } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-
+import { Separator } from '@/components/ui/separator';
 import {
   Sidebar,
   SidebarContent,
@@ -30,6 +30,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
+  SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar';
 import { useLogout, usePermissions } from '@/hooks/use-auth';
@@ -194,7 +195,7 @@ function AppSidebar() {
         {filteredMenuConfig.map((group) => (
           <SidebarGroup key={group.group}>
             <SidebarGroupLabel>{group.group}</SidebarGroupLabel>
-            <SidebarMenu>
+            <SidebarMenu className="group-data-[collapsible=icon]:items-center px-2 sm:px-0">
               {group.items.map((item) => (
                 <SidebarMenuItem key={item.key}>
                   <SidebarMenuButton
@@ -205,7 +206,7 @@ function AppSidebar() {
                     }
                     className="cursor-pointer"
                   >
-                    {item.icon && <item.icon className="h-2 w-2" />}
+                    {item.icon && <item.icon className="h-4 w-4" />}
                     <span className="text-[14px]">{item.label}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -248,6 +249,12 @@ export function AppLayout() {
         <AppSidebar />
       </Sidebar>
       <SidebarInset className="h-dvh overflow-y-auto">
+        <header className="flex h-12 shrink-0 items-center gap-2">
+          <div className="flex items-center gap-2 px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Separator orientation="vertical" className="mr-2 h-4" />
+          </div>
+        </header>
         <main className="flex flex-1 flex-col gap-4 h-full">
           <div className="relative w-full h-full p-4">
             <Outlet />

@@ -28,7 +28,7 @@ export function RoleList({
   onCreateRole,
 }: RoleListProps) {
   return (
-    <Card className="w-1/3 min-w-[300px]">
+    <Card className="w-full lg:w-1/3">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">Daftar Role</CardTitle>
         <div className="relative mt-2">
@@ -42,7 +42,7 @@ export function RoleList({
         </div>
       </CardHeader>
       <CardContent className="p-0">
-        <ScrollArea className="h-[500px]">
+        <ScrollArea className="h-[300px] lg:h-[500px]">
           <div className="px-4 pb-4 space-y-2">
             {roles.map((role) => (
               <div

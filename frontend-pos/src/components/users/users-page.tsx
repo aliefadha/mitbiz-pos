@@ -93,9 +93,9 @@ export function UsersPage() {
     return (
       <div className="p-6 space-y-4">
         <Skeleton className="h-10 w-1/3" />
-        <div className="flex gap-4">
-          <Skeleton className="h-[600px] w-1/3" />
-          <Skeleton className="h-[600px] flex-1" />
+        <div className="flex flex-col lg:flex-row gap-4">
+          <Skeleton className="h-[300px] lg:h-[600px] w-full lg:w-1/3" />
+          <Skeleton className="h-[400px] lg:h-[600px] flex-1" />
         </div>
       </div>
     );
@@ -103,7 +103,7 @@ export function UsersPage() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-4 lg:mb-6">
         <div>
           <h4 className="text-lg font-semibold m-0">Manajemen Pengguna</h4>
           <p className="text-sm text-gray-500 m-0">Kelola pengguna dan role</p>
@@ -111,7 +111,7 @@ export function UsersPage() {
       </div>
 
       {/* Main Content */}
-      <div className="flex gap-6">
+      <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
         {/* Left Panel - Role List */}
         <RoleList
           roles={filteredRoles}
