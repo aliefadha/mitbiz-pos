@@ -268,10 +268,10 @@ export function PosPage() {
         cart.map((item) =>
           item.product.id === product.id
             ? {
-              ...item,
-              quantity: item.quantity + 1,
-              total: String(Number(item.hargaSatuan) * (item.quantity + 1)),
-            }
+                ...item,
+                quantity: item.quantity + 1,
+                total: String(Number(item.hargaSatuan) * (item.quantity + 1)),
+              }
             : item
         )
       );
@@ -637,8 +637,9 @@ export function PosPage() {
                   <div
                     key={`${product.id}-${index}`}
                     onClick={() => !isOutOfStock && addToCart(product)}
-                    className={`relative border rounded-lg p-3 lg:p-4 cursor-pointer hover:shadow-md transition-all h-36 sm:h-40 lg:h-48 flex flex-col ${isLowStock ? 'bg-red-50 border-red-200' : ''
-                      } ${isOutOfStock ? 'bg-gray-100 border-gray-200 opacity-60 cursor-not-allowed' : 'hover:border-primary'}`}
+                    className={`relative border rounded-lg p-3 lg:p-4 cursor-pointer hover:shadow-md transition-all h-36 sm:h-40 lg:h-48 flex flex-col ${
+                      isLowStock ? 'bg-red-50 border-red-200' : ''
+                    } ${isOutOfStock ? 'bg-gray-100 border-gray-200 opacity-60 cursor-not-allowed' : 'hover:border-primary'}`}
                   >
                     <div className="h-14 sm:h-16 lg:h-20 bg-gray-100 rounded-md mb-2 lg:mb-3 flex items-center justify-center">
                       <Receipt className="h-6 w-6 lg:h-8 lg:w-8 text-gray-400" />
@@ -655,8 +656,9 @@ export function PosPage() {
                         </p>
                       ) : (
                         <span
-                          className={`text-[10px] lg:text-xs font-bold shrink-0 ${isLowStock ? 'text-red-500' : 'text-gray-600'
-                            }`}
+                          className={`text-[10px] lg:text-xs font-bold shrink-0 ${
+                            isLowStock ? 'text-red-500' : 'text-gray-600'
+                          }`}
                         >
                           Stok: {stock}
                         </span>
@@ -904,33 +906,33 @@ export function PosPage() {
               {paymentMethods
                 .find((pm) => pm.id === selectedPaymentMethodId)
                 ?.nama?.toLowerCase() === 'tunai' && (
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Jumlah Bayar</label>
-                    <Input
-                      type="text"
-                      value={amountPaid ? Number(amountPaid).toLocaleString('id-ID') : ''}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/[^\d]/g, '');
-                        setAmountPaid(value);
-                      }}
-                      placeholder="0"
-                      className="text-lg"
-                    />
-                    <div className="flex flex-wrap gap-2">
-                      {[5000, 10000, 20000, 50000, 100000].map((amount) => (
-                        <Button
-                          key={amount}
-                          variant="outline"
-                          size="default"
-                          onClick={() => setAmountPaid(String(amount))}
-                          className="text-xs flex-1 basis-[calc(50%-0.25rem)] sm:basis-[calc(20%-0.4rem)]"
-                        >
-                          {formatRupiah(amount)}
-                        </Button>
-                      ))}
-                    </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Jumlah Bayar</label>
+                  <Input
+                    type="text"
+                    value={amountPaid ? Number(amountPaid).toLocaleString('id-ID') : ''}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^\d]/g, '');
+                      setAmountPaid(value);
+                    }}
+                    placeholder="0"
+                    className="text-lg"
+                  />
+                  <div className="flex flex-wrap gap-2">
+                    {[5000, 10000, 20000, 50000, 100000].map((amount) => (
+                      <Button
+                        key={amount}
+                        variant="outline"
+                        size="default"
+                        onClick={() => setAmountPaid(String(amount))}
+                        className="text-xs flex-1 basis-[calc(50%-0.25rem)] sm:basis-[calc(20%-0.4rem)]"
+                      >
+                        {formatRupiah(amount)}
+                      </Button>
+                    ))}
                   </div>
-                )}
+                </div>
+              )}
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">Catatan (Opsional)</label>
