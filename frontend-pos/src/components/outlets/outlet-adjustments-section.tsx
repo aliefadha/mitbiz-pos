@@ -1,4 +1,4 @@
-import { useOutletAdjustments } from './hooks/use-outlet-adjustments';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -7,7 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useOutletAdjustments } from './hooks/use-outlet-adjustments';
 
 interface OutletAdjustmentsSectionProps {
   outletId: string;

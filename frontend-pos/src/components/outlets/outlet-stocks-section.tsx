@@ -1,6 +1,5 @@
-import { useMemo, useState } from 'react';
 import { ArrowRightLeft, Edit2, Plus, Trash2 } from 'lucide-react';
-import { useOutletStocks, type ProductStockRow } from './hooks/use-outlet-stocks';
+import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -13,6 +12,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { usePermissions } from '@/hooks/use-auth';
+import { type ProductStockRow, useOutletStocks } from './hooks/use-outlet-stocks';
 
 interface OutletStocksSectionProps {
   outletId: string;
@@ -32,7 +32,8 @@ export function OutletStocksSection({
   const { hasPermission } = usePermissions();
   const [searchText, setSearchText] = useState('');
 
-  const { rows, stocksLoading, productsLoading, totalWithStock, totalProducts } = useOutletStocks(outletId);
+  const { rows, stocksLoading, productsLoading, totalWithStock, totalProducts } =
+    useOutletStocks(outletId);
 
   const canCreate = hasPermission('stocks', 'create');
   const canUpdate = hasPermission('stocks', 'update');

@@ -1,11 +1,11 @@
 import { History, Package } from 'lucide-react';
+import type { UseFormReturn } from 'react-hook-form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePermissions } from '@/hooks/use-auth';
+import type { AdjustStockFormValues, EditStockFormValues } from './hooks/use-outlet-detail-page';
 import type { ProductStockRow } from './hooks/use-outlet-stocks';
-import type { EditStockFormValues, AdjustStockFormValues } from './hooks/use-outlet-detail-page';
-import { OutletStocksSection } from './outlet-stocks-section';
 import { OutletAdjustmentsSection } from './outlet-adjustments-section';
-import type { UseFormReturn } from 'react-hook-form';
+import { OutletStocksSection } from './outlet-stocks-section';
 
 interface OutletDetailTabsProps {
   outletId: string;

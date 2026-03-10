@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
+import type { Product } from '@/lib/api/products';
 import { productsApi } from '@/lib/api/products';
 import { type Stock, stocksApi } from '@/lib/api/stocks';
-import type { Product } from '@/lib/api/products';
 
 export interface ProductStockRow {
   product: Product;
