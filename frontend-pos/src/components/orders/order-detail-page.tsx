@@ -184,7 +184,7 @@ export function OrderDetailPage() {
             <p className=" font-semibold">{order.orderNumber}</p>
           </div>
           <div>
-            <p className=" text-gray-500 mb-1">Cabang</p>
+            <p className=" text-gray-500 mb-1">Outlet</p>
             <p className=" font-semibold">{order.outlet?.nama || '-'}</p>
           </div>
           <div>
