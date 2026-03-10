@@ -1,33 +1,26 @@
 import { History, Package } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePermissions } from '@/hooks/use-auth';
-import type { StockAdjustment } from '@/lib/api/stock-adjustments';
-import { AdjustmentsTab } from './adjustments-tab';
-import type { ProductStockRow } from './hooks/use-outlet-detail-page';
-import { StockTab } from './stock-tab';
+import type { ProductStockRow } from './hooks/use-outlet-stocks';
+import type { EditStockFormValues, AdjustStockFormValues } from './hooks/use-outlet-detail-page';
+import { OutletStocksSection } from './outlet-stocks-section';
+import { OutletAdjustmentsSection } from './outlet-adjustments-section';
+import type { UseFormReturn } from 'react-hook-form';
 
 interface OutletDetailTabsProps {
-  stockRows: ProductStockRow[];
-  adjustments: StockAdjustment[];
-  isLoadingStock: boolean;
-  searchText: string;
-  onSearchChange: (value: string) => void;
-  totalWithStock: number;
-  totalProducts: number;
+  outletId: string;
   onAddStock: (productId: string) => void;
   onEditStock: (row: ProductStockRow) => void;
   onDeleteStock: (stockId: string) => void;
   onAdjustStock: (row: ProductStockRow) => void;
+  editForm: UseFormReturn<EditStockFormValues>;
+  adjustForm: UseFormReturn<AdjustStockFormValues>;
+  onEditSubmit: (values: EditStockFormValues) => void;
+  onAdjustSubmit: (values: AdjustStockFormValues) => void;
 }
 
 export function OutletDetailTabs({
-  stockRows,
-  adjustments,
-  isLoadingStock,
-  searchText,
-  onSearchChange,
-  totalWithStock,
-  totalProducts,
+  outletId,
   onAddStock,
   onEditStock,
   onDeleteStock,
@@ -63,13 +56,8 @@ export function OutletDetailTabs({
 
       {canReadStock && (
         <TabsContent value="stock">
-          <StockTab
-            rows={stockRows}
-            isLoading={isLoadingStock}
-            searchText={searchText}
-            onSearchChange={onSearchChange}
-            totalWithStock={totalWithStock}
-            totalProducts={totalProducts}
+          <OutletStocksSection
+            outletId={outletId}
             onAddStock={onAddStock}
             onEditStock={onEditStock}
             onDeleteStock={onDeleteStock}
@@ -80,7 +68,7 @@ export function OutletDetailTabs({
 
       {canReadAdjustments && (
         <TabsContent value="adjustments">
-          <AdjustmentsTab adjustments={adjustments} />
+          <OutletAdjustmentsSection outletId={outletId} />
         </TabsContent>
       )}
     </Tabs>

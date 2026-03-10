@@ -1,19 +1,14 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { outletsApi } from '@/lib/api/outlets';
-import { type Product, productsApi } from '@/lib/api/products';
 import { stockAdjustmentsApi } from '@/lib/api/stock-adjustments';
-import { type Stock, stocksApi } from '@/lib/api/stocks';
+import { stocksApi } from '@/lib/api/stocks';
 import { useSession } from '@/lib/auth-client';
-
-export interface ProductStockRow {
-  product: Product;
-  stock: Stock | null;
-}
+import type { ProductStockRow } from './use-outlet-stocks';
 
 const editFormSchema = z.object({
   quantity: z.number(),
@@ -52,24 +47,6 @@ export function useOutletDetailPage(outletId: string) {
   const { data: outlet, isLoading: outletLoading } = useQuery({
     queryKey: ['outlet', outletId],
     queryFn: () => outletsApi.getById(outletId),
-  });
-
-  const { data: stocksData, isLoading: stocksLoading } = useQuery({
-    queryKey: ['stocks', { outletId }],
-    queryFn: () => stocksApi.getAll({ outletId }),
-    enabled: !!outletId,
-  });
-
-  const { data: productsData, isLoading: productsLoading } = useQuery({
-    queryKey: ['products', outlet?.tenantId],
-    queryFn: () => productsApi.getAll({ tenantId: outlet!.tenantId }),
-    enabled: !!outlet?.tenantId,
-  });
-
-  const { data: adjustmentsData } = useQuery({
-    queryKey: ['stock-adjustments', { outletId }],
-    queryFn: () => stockAdjustmentsApi.getAll({ outletId }),
-    enabled: !!outletId,
   });
 
   const invalidateAll = () => {
@@ -135,37 +112,6 @@ export function useOutletDetailPage(outletId: string) {
     },
   });
 
-  const stocks = useMemo(() => stocksData?.data || [], [stocksData]);
-  const products = useMemo(() => productsData?.data || [], [productsData]);
-  const adjustments = useMemo(() => adjustmentsData?.data || [], [adjustmentsData]);
-
-  const stockByProductId = useMemo(() => {
-    const map = new Map<string, Stock>();
-    stocks.forEach((s) => map.set(s.productId, s));
-    return map;
-  }, [stocks]);
-
-  const rows: ProductStockRow[] = useMemo(
-    () =>
-      products.map((product) => ({
-        product,
-        stock: stockByProductId.get(product.id) || null,
-      })),
-    [products, stockByProductId]
-  );
-
-  const filteredRows = useMemo(() => {
-    if (!searchText) return rows;
-    const search = searchText.toLowerCase();
-    return rows.filter(
-      (row) =>
-        row.product.nama.toLowerCase().includes(search) ||
-        row.product.sku.toLowerCase().includes(search)
-    );
-  }, [rows, searchText]);
-
-  const totalWithStock = useMemo(() => rows.filter((r) => r.stock !== null).length, [rows]);
-
   const handleAddStock = (productId: string) => {
     createStockMutation.mutate({ productId, outletId, quantity: 0 });
   };
@@ -207,20 +153,7 @@ export function useOutletDetailPage(outletId: string) {
     }
   };
 
-  const closeEditDialog = () => {
-    setIsEditModalOpen(false);
-    setEditingRow(null);
-  };
-
-  const closeAdjustDialog = () => {
-    setIsAdjustModalOpen(false);
-    setAdjustingRow(null);
-  };
-
-  const totalProducts = products.length;
-
   return {
-    outletId,
     searchText,
     setSearchText,
     isEditModalOpen,
@@ -235,13 +168,6 @@ export function useOutletDetailPage(outletId: string) {
 
     outlet,
     isLoading: outletLoading,
-    stocksLoading,
-    productsLoading,
-    filteredRows,
-    totalWithStock,
-    totalProducts,
-    products,
-    adjustments,
 
     createStockMutation,
     updateStockMutation,
@@ -254,9 +180,5 @@ export function useOutletDetailPage(outletId: string) {
     handleAdjustStock,
     handleEditSubmit,
     handleAdjustSubmit,
-    handleUpdateStock: handleEditSubmit,
-    handleCreateAdjustment: handleAdjustSubmit,
-    closeEditDialog,
-    closeAdjustDialog,
   };
 }

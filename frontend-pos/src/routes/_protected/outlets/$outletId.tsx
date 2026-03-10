@@ -15,8 +15,6 @@ export function OutletDetailPage() {
   const navigate = useNavigate();
 
   const {
-    searchText,
-    setSearchText,
     isEditModalOpen,
     setIsEditModalOpen,
     isAdjustModalOpen,
@@ -27,12 +25,6 @@ export function OutletDetailPage() {
     adjustForm,
     outlet,
     isLoading,
-    stocksLoading,
-    productsLoading,
-    filteredRows,
-    totalWithStock,
-    totalProducts,
-    adjustments,
     updateStockMutation,
     createAdjustmentMutation,
     handleAddStock,
@@ -64,17 +56,15 @@ export function OutletDetailPage() {
       <OutletInfoCard outlet={outlet} />
 
       <OutletDetailTabs
-        stockRows={filteredRows}
-        adjustments={adjustments}
-        isLoadingStock={stocksLoading || productsLoading}
-        searchText={searchText}
-        onSearchChange={setSearchText}
-        totalWithStock={totalWithStock}
-        totalProducts={totalProducts}
+        outletId={outletId}
         onAddStock={handleAddStock}
         onEditStock={handleEditStock}
         onDeleteStock={handleDeleteStock}
         onAdjustStock={handleAdjustStock}
+        editForm={editForm}
+        adjustForm={adjustForm}
+        onEditSubmit={handleEditSubmit}
+        onAdjustSubmit={handleAdjustSubmit}
       />
 
       <EditStockDialog
