@@ -41,7 +41,7 @@ export function OutletDetailTabs({
   const defaultValue = canReadStock ? 'stock' : canReadAdjustments ? 'adjustments' : 'stock';
 
   if (!canReadStock && !canReadAdjustments) {
-    return <div className="text-center py-8 text-gray-500">Tidak ada akses</div>;
+    return <div></div>;
   }
 
   return (
