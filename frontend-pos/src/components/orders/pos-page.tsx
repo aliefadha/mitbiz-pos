@@ -137,7 +137,7 @@ export function PosPage() {
     const timer = setTimeout(() => {
       setSearchQuery(searchInput);
       setCurrentPage(1);
-    }, 300);
+    }, 1000);
 
     return () => clearTimeout(timer);
   }, [searchInput]);
@@ -155,7 +155,6 @@ export function PosPage() {
     queryFn: () =>
       productsApi.getAll({
         tenantId,
-        outletId: selectedOutletId,
         categoryId: categoryFilter !== 'all' ? categoryFilter : undefined,
         search: searchQuery || undefined,
         isActive: true,
@@ -269,10 +268,10 @@ export function PosPage() {
         cart.map((item) =>
           item.product.id === product.id
             ? {
-                ...item,
-                quantity: item.quantity + 1,
-                total: String(Number(item.hargaSatuan) * (item.quantity + 1)),
-              }
+              ...item,
+              quantity: item.quantity + 1,
+              total: String(Number(item.hargaSatuan) * (item.quantity + 1)),
+            }
             : item
         )
       );
@@ -628,34 +627,19 @@ export function PosPage() {
           </div>
         ) : (
           <div className="relative flex-1 min-h-0">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4 overflow-y-auto flex-1 py-2 lg:py-4">
-              {products.map((product) => {
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4 overflow-y-auto flex-1 py-2">
+              {products.map((product, index) => {
                 const stock = product.stock ?? 0;
-                const isOutOfStock = product.enableMinStock && stock === 0;
-                const isLowStock =
-                  product.enableMinStock && stock > 0 && stock < product.minStockLevel;
+                const isOutOfStock = stock === 0;
+                const isLowStock = stock > 0 && stock < product.minStockLevel;
 
                 return (
                   <div
-                    key={product.id}
+                    key={`${product.id}-${index}`}
                     onClick={() => !isOutOfStock && addToCart(product)}
-                    className={`relative border rounded-lg p-3 lg:p-4 cursor-pointer hover:shadow-md transition-all h-36 sm:h-40 lg:h-48 flex flex-col ${
-                      product.enableMinStock && isLowStock ? 'bg-red-50 border-red-200' : ''
-                    } ${isOutOfStock ? 'bg-gray-100 border-gray-200 opacity-60 cursor-not-allowed' : 'hover:border-primary'}`}
+                    className={`relative border rounded-lg p-3 lg:p-4 cursor-pointer hover:shadow-md transition-all h-36 sm:h-40 lg:h-48 flex flex-col ${isLowStock ? 'bg-red-50 border-red-200' : ''
+                      } ${isOutOfStock ? 'bg-gray-100 border-gray-200 opacity-60 cursor-not-allowed' : 'hover:border-primary'}`}
                   >
-                    {product.enableMinStock && (
-                      <div
-                        className={`absolute -top-2.5 lg:-top-3 -right-2.5 lg:-right-3 flex items-center justify-center h-6 lg:h-8 min-w-6 lg:min-w-8 px-1.5 lg:px-2 rounded-full text-[10px] lg:text-xs font-bold shadow-sm border-2 border-white ${
-                          isOutOfStock
-                            ? 'bg-gray-400 text-white'
-                            : isLowStock
-                              ? 'bg-red-500 text-white'
-                              : 'bg-primary text-primary-foreground'
-                        }`}
-                      >
-                        {stock}
-                      </div>
-                    )}
                     <div className="h-14 sm:h-16 lg:h-20 bg-gray-100 rounded-md mb-2 lg:mb-3 flex items-center justify-center">
                       <Receipt className="h-6 w-6 lg:h-8 lg:w-8 text-gray-400" />
                     </div>
@@ -665,10 +649,17 @@ export function PosPage() {
                       <p className="font-bold text-xs lg:text-base text-primary truncate">
                         {formatRupiah(product.hargaJual)}
                       </p>
-                      {product.enableMinStock && isOutOfStock && (
+                      {isOutOfStock ? (
                         <p className="text-[10px] lg:text-xs font-medium text-gray-500 shrink-0">
                           Habis
                         </p>
+                      ) : (
+                        <span
+                          className={`text-[10px] lg:text-xs font-bold shrink-0 ${isLowStock ? 'text-red-500' : 'text-gray-600'
+                            }`}
+                        >
+                          Stok: {stock}
+                        </span>
                       )}
                     </div>
                   </div>
@@ -913,33 +904,33 @@ export function PosPage() {
               {paymentMethods
                 .find((pm) => pm.id === selectedPaymentMethodId)
                 ?.nama?.toLowerCase() === 'tunai' && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Jumlah Bayar</label>
-                  <Input
-                    type="text"
-                    value={amountPaid ? Number(amountPaid).toLocaleString('id-ID') : ''}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/[^\d]/g, '');
-                      setAmountPaid(value);
-                    }}
-                    placeholder="0"
-                    className="text-lg"
-                  />
-                  <div className="flex flex-wrap gap-2">
-                    {[5000, 10000, 20000, 50000, 100000].map((amount) => (
-                      <Button
-                        key={amount}
-                        variant="outline"
-                        size="default"
-                        onClick={() => setAmountPaid(String(amount))}
-                        className="text-xs flex-1 basis-[calc(50%-0.25rem)] sm:basis-[calc(20%-0.4rem)]"
-                      >
-                        {formatRupiah(amount)}
-                      </Button>
-                    ))}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Jumlah Bayar</label>
+                    <Input
+                      type="text"
+                      value={amountPaid ? Number(amountPaid).toLocaleString('id-ID') : ''}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/[^\d]/g, '');
+                        setAmountPaid(value);
+                      }}
+                      placeholder="0"
+                      className="text-lg"
+                    />
+                    <div className="flex flex-wrap gap-2">
+                      {[5000, 10000, 20000, 50000, 100000].map((amount) => (
+                        <Button
+                          key={amount}
+                          variant="outline"
+                          size="default"
+                          onClick={() => setAmountPaid(String(amount))}
+                          className="text-xs flex-1 basis-[calc(50%-0.25rem)] sm:basis-[calc(20%-0.4rem)]"
+                        >
+                          {formatRupiah(amount)}
+                        </Button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">Catatan (Opsional)</label>
