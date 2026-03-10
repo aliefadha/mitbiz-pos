@@ -39,6 +39,7 @@ import { type CreateOrderDto, type DiscountBreakdown, ordersApi } from '@/lib/ap
 import { paymentMethodsApi } from '@/lib/api/payment-methods';
 
 import { type Product, productsApi } from '@/lib/api/products';
+import { tenantsApi } from '@/lib/api/tenants';
 import { useSession } from '@/lib/auth-client';
 import { formatRupiah } from '@/lib/utils';
 
@@ -187,6 +188,12 @@ export function PosPage() {
     enabled: !!tenantId,
   });
 
+  const { data: tenantData } = useQuery({
+    queryKey: ['tenant', tenantId],
+    queryFn: () => tenantsApi.getById(tenantId!),
+    enabled: !!tenantId,
+  });
+
   const discounts = discountsData?.data ?? [];
   const paymentMethods = paymentMethodsData?.data ?? [];
 
@@ -318,9 +325,9 @@ export function PosPage() {
   }, [cart]);
 
   const jumlahPajak = useMemo(() => {
-    // Tax rate could be fetched from tenant settings API if needed
-    return 0;
-  }, [subtotal]);
+    const taxRate = tenantData?.settings?.taxRate || 0;
+    return Math.round((subtotal * taxRate) / 100);
+  }, [subtotal, tenantData]);
 
   const discountBreakdown = useMemo<DiscountBreakdown[]>(() => {
     return selectedDiscountIds
@@ -518,7 +525,7 @@ export function PosPage() {
   );
 
   return (
-    <div className="flex h-full gap-0 lg:gap-4">
+    <div className="flex h-full gap-3 lg:gap-4">
       <div className="flex-1 flex flex-col min-w-0">
         <div className="flex flex-col gap-3 mb-4">
           <div className="flex justify-between items-center">
@@ -739,7 +746,7 @@ export function PosPage() {
         )}
       </div>
 
-      <div className="hidden md:flex w-40 lg:w-60 xl:w-80 border-l bg-white flex-col">
+      <div className="hidden md:flex w-40 lg:w-60 xl:w-80 border-l bg-white flex-col h-full">
         <div className="p-2 lg:p-3 xl:p-4 border-b">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1 xl:gap-2 min-w-0">
@@ -793,7 +800,7 @@ export function PosPage() {
 
       {/* ===== CHECKOUT DIALOG ===== */}
       <Dialog open={checkoutOpen} onOpenChange={setCheckoutOpen}>
-        <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[120vw] max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Checkout</DialogTitle>
           </DialogHeader>
@@ -980,7 +987,7 @@ export function PosPage() {
 
       {/* ===== CLOSE SHIFT DIALOG ===== */}
       <Dialog open={closeShiftOpen} onOpenChange={setCloseShiftOpen}>
-        <DialogContent className="w-[95vw] max-w-[400px]">
+        <DialogContent className="w-[95vw] max-w-[400px] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Tutup Shift Kasir</DialogTitle>
           </DialogHeader>
@@ -1035,7 +1042,7 @@ export function PosPage() {
 
       {/* ===== SUCCESS DIALOG ===== */}
       <Dialog open={successOpen} onOpenChange={setSuccessOpen}>
-        <DialogContent className="w-[95vw] max-w-md">
+        <DialogContent className="w-[95vw] max-w-md overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-center">Pesanan Berhasil!</DialogTitle>
           </DialogHeader>
