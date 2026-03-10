@@ -37,7 +37,6 @@
         "noUselessFragments": "off"
       },
       "correctness": {
-        "noUnusedVariables": "off",
         "useParseIntRadix": "off",
         "useExhaustiveDependencies": "off"
       },
