@@ -11,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { usePermissions } from '@/hooks/use-auth';
 import { checkPermission, ForbiddenError } from '@/lib/permissions';
 
-export function ProductPage() {
+function ProductPage() {
   const navigate = useNavigate();
   const { hasPermission } = usePermissions();
 

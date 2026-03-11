@@ -62,7 +62,7 @@ const editFormSchema = z.object({
   discountIds: z.array(z.string()).optional(),
 });
 
-export function ProductDetailPage() {
+function ProductDetailPage() {
   const { productId } = useParams({ from: '/_protected/products/$productId' });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
