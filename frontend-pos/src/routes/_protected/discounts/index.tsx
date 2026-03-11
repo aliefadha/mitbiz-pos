@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { Plus } from 'lucide-react';
-import { DiscountList } from '@/components/discounts/discount-list';
 import { CreateDiscountDialog, DeleteDiscountDialog } from '@/components/discounts/dialogs';
+import { DiscountList } from '@/components/discounts/discount-list';
 import { useDiscountsPage } from '@/components/discounts/hooks/use-discounts-page';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
