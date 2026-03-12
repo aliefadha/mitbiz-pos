@@ -1,4 +1,5 @@
 import { fetchApi } from './client';
+import type { PermissionItem } from './roles';
 
 export type User = {
   id: string;
@@ -18,6 +19,15 @@ export type User = {
     nama: string;
   };
   outletId?: string | null;
+};
+
+export type UserRoleAndPermissions = {
+  role: {
+    id: string;
+    name: string;
+    scope: 'global' | 'tenant';
+  } | null;
+  permissions: PermissionItem[];
 };
 
 export type CreateUserDto = {
@@ -54,6 +64,10 @@ async function getProfile(): Promise<User> {
   return fetchApi('/users/me');
 }
 
+async function getMyRoleAndPermissions(): Promise<UserRoleAndPermissions> {
+  return fetchApi('/users/me/permissions');
+}
+
 async function createUser(data: CreateUserDto): Promise<User> {
   return fetchApi('/users', {
     method: 'POST',
@@ -84,6 +98,7 @@ async function updateProfile(data: { name?: string; image?: string }): Promise<U
 export const usersApi = {
   getUsers,
   getProfile,
+  getMyRoleAndPermissions,
   createUser,
   updateUser,
   deleteUser,

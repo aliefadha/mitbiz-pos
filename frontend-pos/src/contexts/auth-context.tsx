@@ -1,11 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { createContext, type ReactNode, useCallback, useContext, useMemo } from 'react';
-import {
-  getRolePermissions,
-  groupPermissions,
-  type Permission,
-  type PermissionItem,
-} from '../lib/api/roles';
+import { groupPermissions, type Permission, type PermissionItem } from '../lib/api/roles';
+import { usersApi } from '../lib/api/users';
 import { signOut as signOutAuth, useSession } from '../lib/auth-client';
 
 export type UserScope = 'global' | 'tenant' | undefined;
@@ -56,9 +52,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     PermissionItem[] | null
   >({
     queryKey: ['role-permissions', roleId],
-    queryFn: () => {
+    queryFn: async () => {
       if (!roleId) return null;
-      return getRolePermissions(roleId);
+      const result = await usersApi.getMyRoleAndPermissions();
+      return result.permissions;
     },
     enabled: !!roleId && !!user,
     staleTime: 5 * 60 * 1000, // 5 minutes

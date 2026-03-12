@@ -18,7 +18,6 @@ import {
 
 import { AuthService } from '@thallesp/nestjs-better-auth';
 import { fromNodeHeaders } from 'better-auth/node';
-import { asc, eq } from 'drizzle-orm';
 import type { Request as ExpressRequest } from 'express';
 import {
   CreateUserDto,
@@ -28,7 +27,7 @@ import {
   UserQueryDto,
   UserQuerySchema,
 } from './dto';
-import { UserService } from './user.service';
+import { type UserRoleAndPermissions, UserService } from './user.service';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard, PermissionGuard, ScopeGuard)
@@ -60,6 +59,15 @@ export class UserController {
       return { error: 'No session found' };
     }
     return session.user;
+  }
+
+  @Get('me/permissions')
+  @UseGuards(JwtAuthGuard)
+  async getMyPermissions(@CurrentUser() currentUser: CurrentUserWithRole) {
+    if (!currentUser?.id) {
+      return { error: 'No session found' };
+    }
+    return this.userService.getUserRolesAndPermissions(currentUser.id);
   }
 
   @Post()

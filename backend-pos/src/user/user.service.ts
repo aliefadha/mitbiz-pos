@@ -1,12 +1,26 @@
 import type { CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
 import { DB_CONNECTION } from '@/db/db.module';
-import { roles, user } from '@/db/schema';
+import { rolePermissions, roles, user } from '@/db/schema';
 import type { DrizzleDB } from '@/db/type';
 import { auth } from '@/lib/auth';
 import { TenantAuthService } from '@/rbac/services/tenant-auth.service';
 import { BadRequestException, ForbiddenException, Inject, Injectable } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import type { CreateUserDto, UpdateUserDto } from './dto';
+
+export interface UserRoleAndPermissions {
+  role: {
+    id: string;
+    name: string;
+    scope: 'global' | 'tenant';
+  } | null;
+  permissions: {
+    id: string;
+    roleId: string;
+    resource: string;
+    action: string;
+  }[];
+}
 
 @Injectable()
 export class UserService {
@@ -63,6 +77,39 @@ export class UserService {
       .limit(1);
 
     return userWithRole[0] || null;
+  }
+
+  async getUserRolesAndPermissions(userId: string): Promise<UserRoleAndPermissions> {
+    const userWithRole = await this.db
+      .select({
+        id: roles.id,
+        name: roles.name,
+        scope: roles.scope,
+      })
+      .from(user)
+      .leftJoin(roles, eq(user.roleId, roles.id))
+      .where(eq(user.id, userId))
+      .limit(1);
+
+    const userRole = userWithRole[0];
+    const role =
+      userRole?.id && userRole?.name && userRole?.scope
+        ? {
+            id: userRole.id,
+            name: userRole.name,
+            scope: userRole.scope,
+          }
+        : null;
+
+    let permissions: UserRoleAndPermissions['permissions'] = [];
+    if (role?.id) {
+      permissions = await this.db
+        .select()
+        .from(rolePermissions)
+        .where(eq(rolePermissions.roleId, role.id));
+    }
+
+    return { role, permissions };
   }
 
   async createUser(data: CreateUserDto, currentUser: CurrentUserWithRole) {

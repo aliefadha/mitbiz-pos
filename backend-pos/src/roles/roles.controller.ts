@@ -91,14 +91,12 @@ export class RolesController {
     return this.rolesService.deleteResource(id);
   }
 
-  // ============ ROLES BY ID (must be after static routes) ============
+  // ============ ROLES BY ID  ============
 
   @Get(':id')
   @ApiOperation({ summary: 'Get role by ID' })
   @UsePipes(new ZodValidationPipe(RoleIdSchema, 'params'))
-  // Disabled due to role checking for frontend
-  // TODO: find restrict way to exposed without user without permission can access
-  // @Permission('roles', [Action.READ])
+  @Permission('roles', [Action.READ])
   @Public()
   findById(@Param() { id }: RoleIdDto) {
     return this.rolesService.findById(id);
@@ -107,9 +105,7 @@ export class RolesController {
   @Get(':id/permissions')
   @ApiOperation({ summary: 'Get permissions for a role' })
   @UsePipes(new ZodValidationPipe(RoleIdSchema, 'params'))
-  // Disabled due to role checking for frontend
-  // TODO: find restrict way to exposed without user without permission can access
-  // @Permission('roles', [Action.READ])
+  @Permission('roles', [Action.READ])
   @Public()
   getPermissions(@Param() { id }: RoleIdDto) {
     return this.rolesService.getPermissions(id);
