@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { usePermissions } from '@/hooks/use-auth';
 import { type Category, categoriesApi } from '@/lib/api/categories';
 import { type Outlet, outletsApi } from '@/lib/api/outlets';
 import { salesApi, type TopProduct } from '@/lib/api/sales';
@@ -35,6 +36,12 @@ export const Route = createFileRoute('/_protected/laporan')({
 function LaporanPage() {
   const { data: session } = useSession();
   const tenantId = session?.user?.tenantId;
+  const { hasPermission } = usePermissions();
+
+  const canExportReport = hasPermission('report', 'export');
+  const canReadOutlets = hasPermission('outlet', 'read');
+  const canReadCategories = hasPermission('category', 'read');
+  const canReadSales = hasPermission('sales', 'read');
 
   const [startDate, setStartDate] = useState<string>(() => {
     const now = new Date();
@@ -50,13 +57,13 @@ function LaporanPage() {
   const { data: outletsData } = useQuery({
     queryKey: ['outlets', tenantId],
     queryFn: () => outletsApi.getAll({ tenantId }),
-    enabled: !!tenantId,
+    enabled: !!tenantId && canReadOutlets,
   });
 
   const { data: categoriesData } = useQuery({
     queryKey: ['categories', tenantId],
     queryFn: () => categoriesApi.getAll({ tenantId }),
-    enabled: !!tenantId,
+    enabled: !!tenantId && canReadCategories,
   });
 
   const outlets: Outlet[] = outletsData?.data ?? [];
@@ -75,6 +82,7 @@ function LaporanPage() {
   const { data: topProducts, isLoading: loadingTopProducts } = useQuery({
     queryKey: ['sales-top-products', queryParams],
     queryFn: () => salesApi.getTopProducts({ ...queryParams, limit: 10 }),
+    enabled: !!tenantId && canReadSales,
   });
 
   const formatCurrency = (value: number) => {
@@ -93,15 +101,25 @@ function LaporanPage() {
           <h1 className="text-xl font-bold tracking-tight text-gray-900">Laporan Penjualan</h1>
           <p className="text-gray-500 text-sm mt-1">Analisis dan laporan penjualan lengkap</p>
         </div>
-        <Button className="bg-[#0B6CE6] text-white hover:bg-[#0B6CE6]/90 gap-2 rounded-lg">
-          <Upload className="w-4 h-4" />
-          Ekspor Laporan
-        </Button>
+        {canExportReport && (
+          <Button className="bg-[#0B6CE6] text-white hover:bg-[#0B6CE6]/90 gap-2 rounded-lg">
+            <Upload className="w-4 h-4" />
+            Ekspor Laporan
+          </Button>
+        )}
       </div>
 
       <Card className="shadow-sm border-gray-200">
         <CardContent className="p-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div
+            className={`grid gap-6 ${
+              canReadOutlets && canReadCategories
+                ? 'grid-cols-1 md:grid-cols-3'
+                : canReadOutlets || canReadCategories
+                  ? 'grid-cols-1 md:grid-cols-2'
+                  : 'grid-cols-1 md:grid-cols-1'
+            }`}
+          >
             <div className="space-y-2">
               <Label className="text-sm font-semibold text-gray-700">Periode</Label>
               <div className="flex items-center gap-2">
@@ -121,39 +139,43 @@ function LaporanPage() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-sm font-semibold text-gray-700">Cabang</Label>
-              <Select value={selectedOutletId} onValueChange={setSelectedOutletId}>
-                <SelectTrigger className="w-full bg-gray-50/50 border-gray-200 rounded-lg h-10 text-gray-600">
-                  <SelectValue placeholder="Semua Cabang" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Semua Cabang</SelectItem>
-                  {outlets.map((outlet) => (
-                    <SelectItem key={outlet.id} value={outlet.id}>
-                      {outlet.nama}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {canReadOutlets && (
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold text-gray-700">Cabang</Label>
+                <Select value={selectedOutletId} onValueChange={setSelectedOutletId}>
+                  <SelectTrigger className="w-full bg-gray-50/50 border-gray-200 rounded-lg h-10 text-gray-600">
+                    <SelectValue placeholder="Semua Cabang" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Semua Cabang</SelectItem>
+                    {outlets.map((outlet) => (
+                      <SelectItem key={outlet.id} value={outlet.id}>
+                        {outlet.nama}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
-            <div className="space-y-2">
-              <Label className="text-sm font-semibold text-gray-700">Kategori</Label>
-              <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
-                <SelectTrigger className="w-full bg-gray-50/50 border-gray-200 rounded-lg h-10 text-gray-600">
-                  <SelectValue placeholder="Produk Terlaris" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Semua Kategori</SelectItem>
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.nama}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {canReadCategories && (
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold text-gray-700">Kategori</Label>
+                <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
+                  <SelectTrigger className="w-full bg-gray-50/50 border-gray-200 rounded-lg h-10 text-gray-600">
+                    <SelectValue placeholder="Produk Terlaris" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Semua Kategori</SelectItem>
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.nama}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -165,11 +187,13 @@ function LaporanPage() {
         <SalesByBranchChart {...queryParams} />
       </div>
 
-      <TopProductsTable
-        data={topProducts}
-        isLoading={loadingTopProducts}
-        formatCurrency={formatCurrency}
-      />
+      {canReadSales && (
+        <TopProductsTable
+          data={topProducts}
+          isLoading={loadingTopProducts}
+          formatCurrency={formatCurrency}
+        />
+      )}
     </div>
   );
 }
