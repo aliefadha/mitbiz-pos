@@ -4,7 +4,7 @@ import { ForbiddenPage } from '@/components/forbidden-page';
 import { useStocksPage } from '@/components/stocks/hooks/use-stocks-page';
 import { StockList } from '@/components/stocks/stock-list';
 import { StockStats } from '@/components/stocks/stock-stats';
-import { checkPermission, ForbiddenError } from '@/lib/permissions';
+import { checkAllPermissions, ForbiddenError } from '@/lib/permissions';
 
 function StockPage() {
   const {
@@ -69,7 +69,10 @@ function StockPage() {
 export const Route = createFileRoute('/_protected/stocks/')({
   component: StockPage,
   beforeLoad: async () => {
-    const { allowed } = await checkPermission('stocks', 'read');
+    const { allowed } = await checkAllPermissions([
+      { resource: 'stocks', action: 'read' },
+      { resource: 'products', action: 'read' },
+    ]);
     if (!allowed) {
       throw new ForbiddenError('stocks');
     }

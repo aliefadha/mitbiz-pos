@@ -40,6 +40,7 @@ export interface AuthContextType {
   logout: () => Promise<void>;
   hasPermission: (resource: string, action: string) => boolean;
   hasAnyPermission: (resource: string, actions: string[]) => boolean;
+  hasAllPermissions: (checks: { resource: string; actions: string[] }[]) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -99,6 +100,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [hasPermission]
   );
 
+  // Helper to check if user has all of the specified permissions
+  const hasAllPermissions = useCallback(
+    (checks: { resource: string; actions: string[] }[]): boolean => {
+      return checks.every((check) => hasAnyPermission(check.resource, check.actions));
+    },
+    [hasAnyPermission]
+  );
+
   // Extract scope from user.roles (provided by backend customSession)
   const scope = useMemo<UserScope>(() => {
     return user?.roles?.scope;
@@ -115,6 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logout,
     hasPermission,
     hasAnyPermission,
+    hasAllPermissions,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -130,8 +140,9 @@ export function useAuth() {
 
 // Convenience hooks for common use cases
 export function usePermissions() {
-  const { permissions, isPermissionsLoading, hasPermission, hasAnyPermission } = useAuth();
-  return { permissions, isPermissionsLoading, hasPermission, hasAnyPermission };
+  const { permissions, isPermissionsLoading, hasPermission, hasAnyPermission, hasAllPermissions } =
+    useAuth();
+  return { permissions, isPermissionsLoading, hasPermission, hasAnyPermission, hasAllPermissions };
 }
 
 export function useUser() {

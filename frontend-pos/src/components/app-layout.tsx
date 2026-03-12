@@ -41,7 +41,7 @@ interface MenuItem {
   key: string;
   icon: React.ComponentType<{ className?: string }>;
   label: string;
-  permission: { resource: string; actions: string[] };
+  permissions: { resource: string; actions: string[] }[];
   scope?: UserScope;
 }
 
@@ -58,19 +58,19 @@ const menuConfig: MenuGroup[] = [
         key: '/dashboard',
         icon: LayoutDashboard,
         label: 'Dashboard',
-        permission: { resource: 'dashboard', actions: ['read'] },
+        permissions: [{ resource: 'dashboard', actions: ['read'] }],
       },
       {
         key: '/laporan',
         icon: FileText,
         label: 'Laporan',
-        permission: { resource: 'report', actions: ['read'] },
+        permissions: [{ resource: 'report', actions: ['read'] }],
       },
       {
         key: '/cash-shifts',
         icon: Clock4,
         label: 'Shift Kasir',
-        permission: { resource: 'cashShifts', actions: ['read'] },
+        permissions: [{ resource: 'cashShifts', actions: ['read'] }],
       },
     ],
   },
@@ -81,44 +81,44 @@ const menuConfig: MenuGroup[] = [
         key: '/tenants',
         icon: Users,
         label: 'Tenant',
-        permission: { resource: 'tenants', actions: ['read'] },
+        permissions: [{ resource: 'tenants', actions: ['read'] }],
         scope: 'global',
       },
       {
         key: '/outlets',
         icon: Store,
         label: 'Outlet',
-        permission: { resource: 'outlets', actions: ['read'] },
+        permissions: [{ resource: 'outlets', actions: ['read'] }],
       },
       {
         key: '/users',
         icon: Users,
         label: 'Pengguna',
-        permission: { resource: 'users', actions: ['read', 'create', 'list'] },
+        permissions: [{ resource: 'users', actions: ['read', 'create', 'list'] }],
       },
       {
         key: '/categories',
         icon: Folder,
         label: 'Kategori',
-        permission: { resource: 'categories', actions: ['read'] },
+        permissions: [{ resource: 'categories', actions: ['read'] }],
       },
       {
         key: '/products',
         icon: Package,
         label: 'Produk',
-        permission: { resource: 'products', actions: ['read'] },
+        permissions: [{ resource: 'products', actions: ['read'] }],
       },
       {
         key: '/discounts',
         icon: Percent,
         label: 'Diskon',
-        permission: { resource: 'discounts', actions: ['read'] },
+        permissions: [{ resource: 'discounts', actions: ['read'] }],
       },
       {
         key: '/payment-methods',
         icon: CreditCard,
         label: 'Metode Pembayaran',
-        permission: { resource: 'paymentMethods', actions: ['read'] },
+        permissions: [{ resource: 'paymentMethods', actions: ['read'] }],
       },
     ],
   },
@@ -129,13 +129,19 @@ const menuConfig: MenuGroup[] = [
         key: '/stocks',
         icon: Package2,
         label: 'Stok',
-        permission: { resource: 'stocks', actions: ['read'] },
+        permissions: [
+          { resource: 'stocks', actions: ['read'] },
+          { resource: 'products', actions: ['read'] },
+        ],
       },
       {
         key: '/stock-adjustment',
         icon: ChartBar,
         label: 'Penyesuaian Stok',
-        permission: { resource: 'stockAdjustments', actions: ['read'] },
+        permissions: [
+          { resource: 'stockAdjustments', actions: ['read'] },
+          { resource: 'products', actions: ['read'] },
+        ],
       },
     ],
   },
@@ -146,13 +152,13 @@ const menuConfig: MenuGroup[] = [
         key: '/settings',
         icon: Settings,
         label: 'Pengaturan',
-        permission: { resource: 'settings', actions: ['read'] },
+        permissions: [{ resource: 'settings', actions: ['read'] }],
       },
       {
         key: '/orders',
         icon: History,
         label: 'Riwayat Transaksi',
-        permission: { resource: 'orders', actions: ['read'] },
+        permissions: [{ resource: 'orders', actions: ['read'] }],
       },
     ],
   },
@@ -163,7 +169,7 @@ function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { hasAnyPermission } = usePermissions();
+  const { hasAllPermissions } = usePermissions();
   const logoutMutation = useLogout();
 
   const handleLogout = () => {
@@ -176,9 +182,9 @@ function AppSidebar() {
     .map((group) => ({
       ...group,
       items: group.items.filter((item) => {
-        // Check permission
-        const hasPerm = hasAnyPermission(item.permission.resource, item.permission.actions);
-        if (!hasPerm) return false;
+        // Check all permissions (all must pass)
+        const hasAllPerms = hasAllPermissions(item.permissions);
+        if (!hasAllPerms) return false;
 
         // Check scope requirement
         if (item.scope && item.scope !== userScope) {

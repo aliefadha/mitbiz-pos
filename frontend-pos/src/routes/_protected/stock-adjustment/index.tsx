@@ -7,7 +7,7 @@ import { useStockAdjustmentsPage } from '@/components/stock-adjustments/hooks';
 import { StockAdjustmentList } from '@/components/stock-adjustments/stock-adjustment-list';
 import { Button } from '@/components/ui/button';
 import { usePermissions } from '@/hooks/use-auth';
-import { checkPermission, ForbiddenError } from '@/lib/permissions';
+import { checkAllPermissions, ForbiddenError } from '@/lib/permissions';
 
 function StockAdjustmentPage() {
   const { hasPermission } = usePermissions();
@@ -106,7 +106,10 @@ function StockAdjustmentPage() {
 export const Route = createFileRoute('/_protected/stock-adjustment/')({
   component: StockAdjustmentPage,
   beforeLoad: async () => {
-    const { allowed } = await checkPermission('stockAdjustments', 'read');
+    const { allowed } = await checkAllPermissions([
+      { resource: 'stockAdjustments', action: 'read' },
+      { resource: 'products', action: 'read' },
+    ]);
     if (!allowed) {
       throw new ForbiddenError('stockAdjustments');
     }

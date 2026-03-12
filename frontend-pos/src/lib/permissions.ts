@@ -90,6 +90,41 @@ export async function checkAnyPermission(
 }
 
 /**
+ * Check if user has ALL of the specified permissions
+ */
+export async function checkAllPermissions(
+  checks: PermissionCheck[]
+): Promise<{ allowed: boolean; scope?: UserScope }> {
+  const session = await authClient.getSession();
+
+  if (!session.data) {
+    throw redirect({ to: '/login' });
+  }
+
+  const roleId = (session.data.user as unknown as { roleId?: string })?.roleId;
+  const scope = (session.data.user as unknown as { roles?: { scope: UserScope } })?.roles?.scope;
+
+  if (!roleId) {
+    return { allowed: false, scope };
+  }
+
+  const permissionsData = await getRolePermissions(roleId);
+  const groupedPermissions = groupPermissions(permissionsData);
+
+  // Check if user has ALL of the specified permissions
+  const hasAll = checks.every((check) => {
+    const permission = groupedPermissions.find(
+      (p) =>
+        p.resource.toLowerCase() === check.resource.toLowerCase() ||
+        p.resource.toLowerCase() === check.resource.toLowerCase() + 's'
+    );
+    return permission?.actions.some((a) => a.toLowerCase() === check.action.toLowerCase());
+  });
+
+  return { allowed: hasAll, scope };
+}
+
+/**
  * Check permission with optional scope requirement
  * If scope is required and user doesn't have it, redirects to 403
  */
