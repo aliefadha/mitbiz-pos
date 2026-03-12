@@ -2,7 +2,7 @@ import { CurrentUser, type CurrentUserWithRole } from '@/common/decorators/curre
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
 import { auth } from '@/lib/auth';
-import { Action, GlobalScope, Permission, PermissionGuard, ScopeGuard } from '@/rbac';
+import { Action, GlobalScope, Permission, PermissionGuard, Public, ScopeGuard } from '@/rbac';
 import {
   Body,
   Controller,
@@ -62,6 +62,7 @@ export class UserController {
   }
 
   @Get('me/permissions')
+  @Public()
   @UseGuards(JwtAuthGuard)
   async getMyPermissions(@CurrentUser() currentUser: CurrentUserWithRole) {
     if (!currentUser?.id) {

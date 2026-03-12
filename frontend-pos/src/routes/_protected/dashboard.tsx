@@ -6,7 +6,6 @@ import { SalesTrendChart } from '@/components/dashboard/sales-trend-chart';
 import { StatCards } from '@/components/dashboard/stat-cards';
 import { ErrorPage } from '@/components/error-page';
 import { ForbiddenPage } from '@/components/forbidden-page';
-import { useTenant } from '@/contexts/tenant-context';
 import { checkPermission, ForbiddenError } from '@/lib/permissions';
 
 export const Route = createFileRoute('/_protected/dashboard')({
@@ -26,7 +25,6 @@ export const Route = createFileRoute('/_protected/dashboard')({
 });
 
 function DashboardPage() {
-  const { selectedTenant, selectedOutlet } = useTenant();
   const { startDate, endDate } = useMemo(() => {
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
@@ -43,33 +41,13 @@ function DashboardPage() {
         <p className="text-gray-500 text-sm mt-1">Overview dan statistik bisnis</p>
       </div>
 
-      <StatCards
-        tenantId={selectedTenant?.id}
-        outletId={selectedOutlet?.id}
-        startDate={startDate}
-        endDate={endDate}
-      />
+      <StatCards startDate={startDate} endDate={endDate} />
 
-      <SalesTrendChart
-        tenantId={selectedTenant?.id}
-        outletId={selectedOutlet?.id}
-        startDate={startDate}
-        endDate={endDate}
-      />
+      <SalesTrendChart startDate={startDate} endDate={endDate} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <SalesByBranchChart
-          tenantId={selectedTenant?.id}
-          outletId={selectedOutlet?.id}
-          startDate={startDate}
-          endDate={endDate}
-        />
-        <SalesByPaymentMethodChart
-          tenantId={selectedTenant?.id}
-          outletId={selectedOutlet?.id}
-          startDate={startDate}
-          endDate={endDate}
-        />
+        <SalesByBranchChart startDate={startDate} endDate={endDate} />
+        <SalesByPaymentMethodChart startDate={startDate} endDate={endDate} />
       </div>
     </div>
   );

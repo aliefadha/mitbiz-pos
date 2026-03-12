@@ -106,6 +106,7 @@ export class StocksService {
         ? {
             id: row.outlets.id,
             nama: row.outlets.nama,
+            kode: row.outlets.kode,
           }
         : null,
     }));

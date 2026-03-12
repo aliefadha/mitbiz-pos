@@ -31,7 +31,6 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { useTenant } from '@/contexts/tenant-context';
 import { usePermissions } from '@/hooks/use-auth';
 import { categoriesApi } from '@/lib/api/categories';
 import { discountsApi } from '@/lib/api/discounts';
@@ -66,7 +65,6 @@ function ProductDetailPage() {
   const { productId } = useParams({ from: '/_protected/products/$productId' });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { selectedTenant } = useTenant();
   const { hasPermission } = usePermissions();
   const [isEditing, setIsEditing] = useState(false);
 
@@ -139,7 +137,7 @@ function ProductDetailPage() {
     );
   }
 
-  if (!product || (selectedTenant && product.tenantId !== selectedTenant.id)) {
+  if (!product) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px]">
         <p className="text-gray-500">Produk tidak ditemukan</p>
