@@ -1,0 +1,261 @@
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMemo, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { z } from 'zod';
+import {
+  type CashShift,
+  type CreateCashShiftDto,
+  cashShiftsApi,
+  type UpdateCashShiftDto,
+} from '@/lib/api/cash-shifts';
+import { outletsApi } from '@/lib/api/outlets';
+import { usersApi } from '@/lib/api/users';
+import { useSession } from '@/lib/auth-client';
+
+export const openShiftSchema = z.object({
+  outletId: z.string().min(1, 'Outlet wajib dipilih'),
+  cashierId: z.string().optional(),
+  jumlahBuka: z.string().optional(),
+  catatan: z.string().optional(),
+});
+
+export const closeShiftSchema = z.object({
+  jumlahTutup: z.string().min(1, 'Jumlah tutup wajib diisi'),
+  catatan: z.string().optional(),
+});
+
+export type OpenShiftFormValues = z.infer<typeof openShiftSchema>;
+export type CloseShiftFormValues = z.infer<typeof closeShiftSchema>;
+
+export function useCashShiftsPage() {
+  const queryClient = useQueryClient();
+  const { data: session } = useSession();
+  const tenantId = session?.user?.tenantId;
+  const userId = session?.user?.id;
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [closeModalOpen, setCloseModalOpen] = useState(false);
+  const [selectedShift, setSelectedShift] = useState<CashShift | null>(null);
+
+  const openForm = useForm<OpenShiftFormValues>({
+    resolver: zodResolver(openShiftSchema),
+    defaultValues: {
+      outletId: '',
+      cashierId: '',
+      jumlahBuka: '0',
+      catatan: '',
+    },
+  });
+
+  const closeForm = useForm<CloseShiftFormValues>({
+    resolver: zodResolver(closeShiftSchema),
+    defaultValues: {
+      jumlahTutup: '',
+      catatan: '',
+    },
+  });
+
+  const { data: outletsData } = useQuery({
+    queryKey: ['outlets', tenantId],
+    queryFn: () => outletsApi.getAll({ tenantId }),
+    enabled: !!tenantId,
+  });
+
+  const { data: usersData } = useQuery({
+    queryKey: ['users', tenantId],
+    queryFn: () => usersApi.getUsers({ tenantId }),
+    enabled: !!tenantId,
+  });
+
+  const { data: userOpenShiftData, isLoading: userOpenShiftLoading } = useQuery({
+    queryKey: ['cash-shifts', 'user-open', tenantId, userId],
+    queryFn: async () => {
+      const response = await cashShiftsApi.getAll({
+        tenantId,
+        status: 'buka',
+      });
+      return response.data.find((shift) => shift.cashierId === userId) || null;
+    },
+    enabled: !!tenantId && !!userId,
+  });
+
+  const { data: cashShiftsData, isLoading: cashShiftsLoading } = useQuery({
+    queryKey: ['cash-shifts', tenantId, statusFilter],
+    queryFn: () =>
+      cashShiftsApi.getAll({
+        tenantId,
+        status: statusFilter !== 'all' ? (statusFilter as 'buka' | 'tutup') : undefined,
+      }),
+    enabled: !!tenantId,
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (data: CreateCashShiftDto) => cashShiftsApi.create(data),
+    onSuccess: () => {
+      toast.success('Shift berhasil dibuka');
+      setCreateModalOpen(false);
+      openForm.reset();
+      queryClient.invalidateQueries({ queryKey: ['cash-shifts'] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Gagal membuka shift');
+    },
+  });
+
+  const closeMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateCashShiftDto }) =>
+      cashShiftsApi.update(id, data),
+    onSuccess: () => {
+      toast.success('Shift berhasil ditutup');
+      setCloseModalOpen(false);
+      setSelectedShift(null);
+      closeForm.reset();
+      queryClient.invalidateQueries({ queryKey: ['cash-shifts'] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Gagal menutup shift');
+    },
+  });
+
+  const allShifts = useMemo(() => cashShiftsData?.data ?? [], [cashShiftsData]);
+
+  const filteredShifts = useMemo(
+    () =>
+      allShifts.filter(
+        (shift) =>
+          searchQuery === '' ||
+          shift.outlet?.nama?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          shift.cashier?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+      ),
+    [allShifts, searchQuery]
+  );
+
+  const totalShifts = useMemo(() => cashShiftsData?.data?.length ?? 0, [cashShiftsData]);
+  const openShifts = useMemo(
+    () => cashShiftsData?.data?.filter((s) => s.status === 'buka').length ?? 0,
+    [cashShiftsData]
+  );
+  const closedShifts = useMemo(
+    () => cashShiftsData?.data?.filter((s) => s.status === 'tutup').length ?? 0,
+    [cashShiftsData]
+  );
+
+  const totalFiltered = filteredShifts.length;
+  const totalPages = Math.ceil(totalFiltered / pageSize);
+  const displayedShifts = filteredShifts.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  const handleOpenShift = (values: OpenShiftFormValues) => {
+    if (!tenantId || !values.outletId) {
+      toast.error('Silakan pilih outlet terlebih dahulu');
+      return;
+    }
+    createMutation.mutate({
+      tenantId: tenantId,
+      outletId: values.outletId,
+      cashierId: values.cashierId || userId || undefined,
+      jumlahBuka: values.jumlahBuka || '0',
+      status: 'buka',
+      catatan: values.catatan || null,
+    });
+  };
+
+  const handleCloseShift = (values: CloseShiftFormValues) => {
+    if (!selectedShift) return;
+    closeMutation.mutate({
+      id: selectedShift.id,
+      data: {
+        jumlahTutup: values.jumlahTutup,
+        status: 'tutup',
+        catatan: values.catatan || null,
+      },
+    });
+  };
+
+  const handleOpen = () => {
+    openForm.reset({ outletId: '', cashierId: userId || '', jumlahBuka: '0', catatan: '' });
+    setCreateModalOpen(true);
+  };
+
+  const handleClose = () => {
+    if (userOpenShiftData) {
+      setSelectedShift(userOpenShiftData);
+      closeForm.reset({ jumlahTutup: '', catatan: '' });
+      setCloseModalOpen(true);
+    }
+  };
+
+  const handleSelectShiftForClose = (shift: CashShift) => {
+    setSelectedShift(shift);
+    closeForm.reset({ jumlahTutup: '', catatan: '' });
+    setCloseModalOpen(true);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1);
+  };
+
+  return {
+    tenantId,
+    userId,
+
+    searchQuery,
+    setSearchQuery: handleSearchChange,
+    statusFilter,
+    setStatusFilter,
+    currentPage,
+    pageSize,
+    totalFiltered,
+
+    createModalOpen,
+    setCreateModalOpen,
+    closeModalOpen,
+    setCloseModalOpen,
+    selectedShift,
+    setSelectedShift,
+
+    openForm,
+    closeForm,
+    outletsData,
+    usersData,
+
+    isLoading: cashShiftsLoading,
+    userOpenShiftLoading,
+    displayedShifts,
+    totalShifts,
+    openShifts,
+    closedShifts,
+    totalPages,
+    total: totalFiltered,
+    userOpenShiftData,
+
+    createMutation,
+    closeMutation,
+
+    handleOpenShift,
+    handleCloseShift,
+    handleOpen,
+    handleClose,
+    handleSelectShiftForClose,
+    handlePageChange,
+    handlePageSizeChange,
+  };
+}

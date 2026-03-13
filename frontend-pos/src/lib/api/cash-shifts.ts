@@ -31,6 +31,7 @@ export interface CashShift {
 export interface CreateCashShiftDto {
   tenantId: string;
   outletId: string;
+  cashierId?: string;
   jumlahBuka?: string;
   status?: 'buka' | 'tutup';
   catatan?: string | null;
