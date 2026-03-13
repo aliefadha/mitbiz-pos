@@ -5,7 +5,7 @@ import { usePermissions } from '@/hooks/use-auth';
 
 export function useMenuConfig(): MenuGroup[] {
   const { user } = useAuth();
-  const { hasAllPermissions } = usePermissions();
+  const { hasPermission } = usePermissions();
 
   const userScope = user?.roles?.scope;
 
@@ -14,8 +14,10 @@ export function useMenuConfig(): MenuGroup[] {
       .map((group) => ({
         ...group,
         items: group.items.filter((item) => {
-          // Check all permissions (all must pass)
-          const hasAllPerms = hasAllPermissions(item.permissions);
+          // Check all permission actions (ALL must be satisfied)
+          const hasAllPerms = item.permissions.every((perm) =>
+            perm.actions.every((action) => hasPermission(perm.resource, action))
+          );
           if (!hasAllPerms) return false;
 
           // Check scope requirement
@@ -27,7 +29,7 @@ export function useMenuConfig(): MenuGroup[] {
         }),
       }))
       .filter((group) => group.items.length > 0);
-  }, [hasAllPermissions, userScope]);
+  }, [hasPermission, userScope]);
 
   return filteredMenuConfig;
 }
