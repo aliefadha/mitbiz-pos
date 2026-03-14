@@ -19,7 +19,7 @@ import { productsApi } from '@/lib/api/products';
 import { tenantsApi } from '@/lib/api/tenants';
 
 export function NewProductPage() {
-  const { slug } = useParams({ from: '/_protected/tenants/$slug/products/new' });
+  const { slug } = useParams({ from: '/_protected/(tenant)/tenants/$slug/products/new' });
   const navigate = useNavigate();
 
   const { data: tenant, isLoading: tenantLoading } = useQuery({

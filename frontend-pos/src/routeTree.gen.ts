@@ -17,37 +17,37 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as ProtectedRouteImport } from './routes/_protected'
 import { Route as R403RouteImport } from './routes/403'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ProtectedLaporanRouteImport } from './routes/_protected/laporan'
-import { Route as ProtectedDashboardRouteImport } from './routes/_protected/dashboard'
-import { Route as ProtectedUsersIndexRouteImport } from './routes/_protected/users/index'
-import { Route as ProtectedTenantsIndexRouteImport } from './routes/_protected/tenants/index'
-import { Route as ProtectedStocksIndexRouteImport } from './routes/_protected/stocks/index'
-import { Route as ProtectedStockAdjustmentIndexRouteImport } from './routes/_protected/stock-adjustment/index'
-import { Route as ProtectedSettingsIndexRouteImport } from './routes/_protected/settings/index'
-import { Route as ProtectedProductsIndexRouteImport } from './routes/_protected/products/index'
-import { Route as ProtectedPosIndexRouteImport } from './routes/_protected/pos/index'
-import { Route as ProtectedPaymentMethodsIndexRouteImport } from './routes/_protected/payment-methods/index'
-import { Route as ProtectedOutletsIndexRouteImport } from './routes/_protected/outlets/index'
-import { Route as ProtectedOrdersIndexRouteImport } from './routes/_protected/orders/index'
-import { Route as ProtectedDiscountsIndexRouteImport } from './routes/_protected/discounts/index'
-import { Route as ProtectedCategoriesIndexRouteImport } from './routes/_protected/categories/index'
-import { Route as ProtectedCashShiftsIndexRouteImport } from './routes/_protected/cash-shifts/index'
-import { Route as ProtectedAccountIndexRouteImport } from './routes/_protected/account/index'
-import { Route as ProtectedTenantsNewRouteImport } from './routes/_protected/tenants/new'
-import { Route as ProtectedProductsNewRouteImport } from './routes/_protected/products/new'
-import { Route as ProtectedProductsProductIdRouteImport } from './routes/_protected/products/$productId'
-import { Route as ProtectedOutletsOutletIdRouteImport } from './routes/_protected/outlets/$outletId'
-import { Route as ProtectedOrdersOrderIdRouteImport } from './routes/_protected/orders/$orderId'
-import { Route as ProtectedCategoriesCategoryIdRouteImport } from './routes/_protected/categories/$categoryId'
-import { Route as ProtectedCashShiftsCashShiftIdRouteImport } from './routes/_protected/cash-shifts/$cashShiftId'
-import { Route as ProtectedTenantsSlugIndexRouteImport } from './routes/_protected/tenants/$slug/index'
-import { Route as ProtectedTenantsSlugUsersIndexRouteImport } from './routes/_protected/tenants/$slug/users/index'
-import { Route as ProtectedTenantsSlugProductsIndexRouteImport } from './routes/_protected/tenants/$slug/products/index'
-import { Route as ProtectedTenantsSlugOutletsIndexRouteImport } from './routes/_protected/tenants/$slug/outlets/index'
-import { Route as ProtectedTenantsSlugCategoriesIndexRouteImport } from './routes/_protected/tenants/$slug/categories/index'
-import { Route as ProtectedTenantsSlugProductsNewRouteImport } from './routes/_protected/tenants/$slug/products/new'
-import { Route as ProtectedTenantsSlugProductsProductIdRouteImport } from './routes/_protected/tenants/$slug/products/$productId'
-import { Route as ProtectedTenantsSlugOutletsOutletIdRouteImport } from './routes/_protected/tenants/$slug/outlets/$outletId'
+import { Route as ProtectedtenantLaporanRouteImport } from './routes/_protected/(tenant)/laporan'
+import { Route as ProtectedtenantDashboardRouteImport } from './routes/_protected/(tenant)/dashboard'
+import { Route as ProtectedtenantUsersIndexRouteImport } from './routes/_protected/(tenant)/users/index'
+import { Route as ProtectedtenantTenantsIndexRouteImport } from './routes/_protected/(tenant)/tenants/index'
+import { Route as ProtectedtenantStocksIndexRouteImport } from './routes/_protected/(tenant)/stocks/index'
+import { Route as ProtectedtenantStockAdjustmentIndexRouteImport } from './routes/_protected/(tenant)/stock-adjustment/index'
+import { Route as ProtectedtenantSettingsIndexRouteImport } from './routes/_protected/(tenant)/settings/index'
+import { Route as ProtectedtenantProductsIndexRouteImport } from './routes/_protected/(tenant)/products/index'
+import { Route as ProtectedtenantPosIndexRouteImport } from './routes/_protected/(tenant)/pos/index'
+import { Route as ProtectedtenantPaymentMethodsIndexRouteImport } from './routes/_protected/(tenant)/payment-methods/index'
+import { Route as ProtectedtenantOutletsIndexRouteImport } from './routes/_protected/(tenant)/outlets/index'
+import { Route as ProtectedtenantOrdersIndexRouteImport } from './routes/_protected/(tenant)/orders/index'
+import { Route as ProtectedtenantDiscountsIndexRouteImport } from './routes/_protected/(tenant)/discounts/index'
+import { Route as ProtectedtenantCategoriesIndexRouteImport } from './routes/_protected/(tenant)/categories/index'
+import { Route as ProtectedtenantCashShiftsIndexRouteImport } from './routes/_protected/(tenant)/cash-shifts/index'
+import { Route as ProtectedtenantAccountIndexRouteImport } from './routes/_protected/(tenant)/account/index'
+import { Route as ProtectedtenantTenantsNewRouteImport } from './routes/_protected/(tenant)/tenants/new'
+import { Route as ProtectedtenantProductsNewRouteImport } from './routes/_protected/(tenant)/products/new'
+import { Route as ProtectedtenantProductsProductIdRouteImport } from './routes/_protected/(tenant)/products/$productId'
+import { Route as ProtectedtenantOutletsOutletIdRouteImport } from './routes/_protected/(tenant)/outlets/$outletId'
+import { Route as ProtectedtenantOrdersOrderIdRouteImport } from './routes/_protected/(tenant)/orders/$orderId'
+import { Route as ProtectedtenantCategoriesCategoryIdRouteImport } from './routes/_protected/(tenant)/categories/$categoryId'
+import { Route as ProtectedtenantCashShiftsCashShiftIdRouteImport } from './routes/_protected/(tenant)/cash-shifts/$cashShiftId'
+import { Route as ProtectedtenantTenantsSlugIndexRouteImport } from './routes/_protected/(tenant)/tenants/$slug/index'
+import { Route as ProtectedtenantTenantsSlugUsersIndexRouteImport } from './routes/_protected/(tenant)/tenants/$slug/users/index'
+import { Route as ProtectedtenantTenantsSlugProductsIndexRouteImport } from './routes/_protected/(tenant)/tenants/$slug/products/index'
+import { Route as ProtectedtenantTenantsSlugOutletsIndexRouteImport } from './routes/_protected/(tenant)/tenants/$slug/outlets/index'
+import { Route as ProtectedtenantTenantsSlugCategoriesIndexRouteImport } from './routes/_protected/(tenant)/tenants/$slug/categories/index'
+import { Route as ProtectedtenantTenantsSlugProductsNewRouteImport } from './routes/_protected/(tenant)/tenants/$slug/products/new'
+import { Route as ProtectedtenantTenantsSlugProductsProductIdRouteImport } from './routes/_protected/(tenant)/tenants/$slug/products/$productId'
+import { Route as ProtectedtenantTenantsSlugOutletsOutletIdRouteImport } from './routes/_protected/(tenant)/tenants/$slug/outlets/$outletId'
 
 const VerifyEmailRoute = VerifyEmailRouteImport.update({
   id: '/verify-email',
@@ -88,174 +88,187 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProtectedLaporanRoute = ProtectedLaporanRouteImport.update({
-  id: '/laporan',
+const ProtectedtenantLaporanRoute = ProtectedtenantLaporanRouteImport.update({
+  id: '/(tenant)/laporan',
   path: '/laporan',
   getParentRoute: () => ProtectedRoute,
 } as any)
-const ProtectedDashboardRoute = ProtectedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => ProtectedRoute,
-} as any)
-const ProtectedUsersIndexRoute = ProtectedUsersIndexRouteImport.update({
-  id: '/users/',
-  path: '/users/',
-  getParentRoute: () => ProtectedRoute,
-} as any)
-const ProtectedTenantsIndexRoute = ProtectedTenantsIndexRouteImport.update({
-  id: '/tenants/',
-  path: '/tenants/',
-  getParentRoute: () => ProtectedRoute,
-} as any)
-const ProtectedStocksIndexRoute = ProtectedStocksIndexRouteImport.update({
-  id: '/stocks/',
-  path: '/stocks/',
-  getParentRoute: () => ProtectedRoute,
-} as any)
-const ProtectedStockAdjustmentIndexRoute =
-  ProtectedStockAdjustmentIndexRouteImport.update({
-    id: '/stock-adjustment/',
+const ProtectedtenantDashboardRoute =
+  ProtectedtenantDashboardRouteImport.update({
+    id: '/(tenant)/dashboard',
+    path: '/dashboard',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
+const ProtectedtenantUsersIndexRoute =
+  ProtectedtenantUsersIndexRouteImport.update({
+    id: '/(tenant)/users/',
+    path: '/users/',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
+const ProtectedtenantTenantsIndexRoute =
+  ProtectedtenantTenantsIndexRouteImport.update({
+    id: '/(tenant)/tenants/',
+    path: '/tenants/',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
+const ProtectedtenantStocksIndexRoute =
+  ProtectedtenantStocksIndexRouteImport.update({
+    id: '/(tenant)/stocks/',
+    path: '/stocks/',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
+const ProtectedtenantStockAdjustmentIndexRoute =
+  ProtectedtenantStockAdjustmentIndexRouteImport.update({
+    id: '/(tenant)/stock-adjustment/',
     path: '/stock-adjustment/',
     getParentRoute: () => ProtectedRoute,
   } as any)
-const ProtectedSettingsIndexRoute = ProtectedSettingsIndexRouteImport.update({
-  id: '/settings/',
-  path: '/settings/',
-  getParentRoute: () => ProtectedRoute,
-} as any)
-const ProtectedProductsIndexRoute = ProtectedProductsIndexRouteImport.update({
-  id: '/products/',
-  path: '/products/',
-  getParentRoute: () => ProtectedRoute,
-} as any)
-const ProtectedPosIndexRoute = ProtectedPosIndexRouteImport.update({
-  id: '/pos/',
+const ProtectedtenantSettingsIndexRoute =
+  ProtectedtenantSettingsIndexRouteImport.update({
+    id: '/(tenant)/settings/',
+    path: '/settings/',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
+const ProtectedtenantProductsIndexRoute =
+  ProtectedtenantProductsIndexRouteImport.update({
+    id: '/(tenant)/products/',
+    path: '/products/',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
+const ProtectedtenantPosIndexRoute = ProtectedtenantPosIndexRouteImport.update({
+  id: '/(tenant)/pos/',
   path: '/pos/',
   getParentRoute: () => ProtectedRoute,
 } as any)
-const ProtectedPaymentMethodsIndexRoute =
-  ProtectedPaymentMethodsIndexRouteImport.update({
-    id: '/payment-methods/',
+const ProtectedtenantPaymentMethodsIndexRoute =
+  ProtectedtenantPaymentMethodsIndexRouteImport.update({
+    id: '/(tenant)/payment-methods/',
     path: '/payment-methods/',
     getParentRoute: () => ProtectedRoute,
   } as any)
-const ProtectedOutletsIndexRoute = ProtectedOutletsIndexRouteImport.update({
-  id: '/outlets/',
-  path: '/outlets/',
-  getParentRoute: () => ProtectedRoute,
-} as any)
-const ProtectedOrdersIndexRoute = ProtectedOrdersIndexRouteImport.update({
-  id: '/orders/',
-  path: '/orders/',
-  getParentRoute: () => ProtectedRoute,
-} as any)
-const ProtectedDiscountsIndexRoute = ProtectedDiscountsIndexRouteImport.update({
-  id: '/discounts/',
-  path: '/discounts/',
-  getParentRoute: () => ProtectedRoute,
-} as any)
-const ProtectedCategoriesIndexRoute =
-  ProtectedCategoriesIndexRouteImport.update({
-    id: '/categories/',
+const ProtectedtenantOutletsIndexRoute =
+  ProtectedtenantOutletsIndexRouteImport.update({
+    id: '/(tenant)/outlets/',
+    path: '/outlets/',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
+const ProtectedtenantOrdersIndexRoute =
+  ProtectedtenantOrdersIndexRouteImport.update({
+    id: '/(tenant)/orders/',
+    path: '/orders/',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
+const ProtectedtenantDiscountsIndexRoute =
+  ProtectedtenantDiscountsIndexRouteImport.update({
+    id: '/(tenant)/discounts/',
+    path: '/discounts/',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
+const ProtectedtenantCategoriesIndexRoute =
+  ProtectedtenantCategoriesIndexRouteImport.update({
+    id: '/(tenant)/categories/',
     path: '/categories/',
     getParentRoute: () => ProtectedRoute,
   } as any)
-const ProtectedCashShiftsIndexRoute =
-  ProtectedCashShiftsIndexRouteImport.update({
-    id: '/cash-shifts/',
+const ProtectedtenantCashShiftsIndexRoute =
+  ProtectedtenantCashShiftsIndexRouteImport.update({
+    id: '/(tenant)/cash-shifts/',
     path: '/cash-shifts/',
     getParentRoute: () => ProtectedRoute,
   } as any)
-const ProtectedAccountIndexRoute = ProtectedAccountIndexRouteImport.update({
-  id: '/account/',
-  path: '/account/',
-  getParentRoute: () => ProtectedRoute,
-} as any)
-const ProtectedTenantsNewRoute = ProtectedTenantsNewRouteImport.update({
-  id: '/tenants/new',
-  path: '/tenants/new',
-  getParentRoute: () => ProtectedRoute,
-} as any)
-const ProtectedProductsNewRoute = ProtectedProductsNewRouteImport.update({
-  id: '/products/new',
-  path: '/products/new',
-  getParentRoute: () => ProtectedRoute,
-} as any)
-const ProtectedProductsProductIdRoute =
-  ProtectedProductsProductIdRouteImport.update({
-    id: '/products/$productId',
+const ProtectedtenantAccountIndexRoute =
+  ProtectedtenantAccountIndexRouteImport.update({
+    id: '/(tenant)/account/',
+    path: '/account/',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
+const ProtectedtenantTenantsNewRoute =
+  ProtectedtenantTenantsNewRouteImport.update({
+    id: '/(tenant)/tenants/new',
+    path: '/tenants/new',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
+const ProtectedtenantProductsNewRoute =
+  ProtectedtenantProductsNewRouteImport.update({
+    id: '/(tenant)/products/new',
+    path: '/products/new',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
+const ProtectedtenantProductsProductIdRoute =
+  ProtectedtenantProductsProductIdRouteImport.update({
+    id: '/(tenant)/products/$productId',
     path: '/products/$productId',
     getParentRoute: () => ProtectedRoute,
   } as any)
-const ProtectedOutletsOutletIdRoute =
-  ProtectedOutletsOutletIdRouteImport.update({
-    id: '/outlets/$outletId',
+const ProtectedtenantOutletsOutletIdRoute =
+  ProtectedtenantOutletsOutletIdRouteImport.update({
+    id: '/(tenant)/outlets/$outletId',
     path: '/outlets/$outletId',
     getParentRoute: () => ProtectedRoute,
   } as any)
-const ProtectedOrdersOrderIdRoute = ProtectedOrdersOrderIdRouteImport.update({
-  id: '/orders/$orderId',
-  path: '/orders/$orderId',
-  getParentRoute: () => ProtectedRoute,
-} as any)
-const ProtectedCategoriesCategoryIdRoute =
-  ProtectedCategoriesCategoryIdRouteImport.update({
-    id: '/categories/$categoryId',
+const ProtectedtenantOrdersOrderIdRoute =
+  ProtectedtenantOrdersOrderIdRouteImport.update({
+    id: '/(tenant)/orders/$orderId',
+    path: '/orders/$orderId',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
+const ProtectedtenantCategoriesCategoryIdRoute =
+  ProtectedtenantCategoriesCategoryIdRouteImport.update({
+    id: '/(tenant)/categories/$categoryId',
     path: '/categories/$categoryId',
     getParentRoute: () => ProtectedRoute,
   } as any)
-const ProtectedCashShiftsCashShiftIdRoute =
-  ProtectedCashShiftsCashShiftIdRouteImport.update({
-    id: '/cash-shifts/$cashShiftId',
+const ProtectedtenantCashShiftsCashShiftIdRoute =
+  ProtectedtenantCashShiftsCashShiftIdRouteImport.update({
+    id: '/(tenant)/cash-shifts/$cashShiftId',
     path: '/cash-shifts/$cashShiftId',
     getParentRoute: () => ProtectedRoute,
   } as any)
-const ProtectedTenantsSlugIndexRoute =
-  ProtectedTenantsSlugIndexRouteImport.update({
-    id: '/tenants/$slug/',
+const ProtectedtenantTenantsSlugIndexRoute =
+  ProtectedtenantTenantsSlugIndexRouteImport.update({
+    id: '/(tenant)/tenants/$slug/',
     path: '/tenants/$slug/',
     getParentRoute: () => ProtectedRoute,
   } as any)
-const ProtectedTenantsSlugUsersIndexRoute =
-  ProtectedTenantsSlugUsersIndexRouteImport.update({
-    id: '/tenants/$slug/users/',
+const ProtectedtenantTenantsSlugUsersIndexRoute =
+  ProtectedtenantTenantsSlugUsersIndexRouteImport.update({
+    id: '/(tenant)/tenants/$slug/users/',
     path: '/tenants/$slug/users/',
     getParentRoute: () => ProtectedRoute,
   } as any)
-const ProtectedTenantsSlugProductsIndexRoute =
-  ProtectedTenantsSlugProductsIndexRouteImport.update({
-    id: '/tenants/$slug/products/',
+const ProtectedtenantTenantsSlugProductsIndexRoute =
+  ProtectedtenantTenantsSlugProductsIndexRouteImport.update({
+    id: '/(tenant)/tenants/$slug/products/',
     path: '/tenants/$slug/products/',
     getParentRoute: () => ProtectedRoute,
   } as any)
-const ProtectedTenantsSlugOutletsIndexRoute =
-  ProtectedTenantsSlugOutletsIndexRouteImport.update({
-    id: '/tenants/$slug/outlets/',
+const ProtectedtenantTenantsSlugOutletsIndexRoute =
+  ProtectedtenantTenantsSlugOutletsIndexRouteImport.update({
+    id: '/(tenant)/tenants/$slug/outlets/',
     path: '/tenants/$slug/outlets/',
     getParentRoute: () => ProtectedRoute,
   } as any)
-const ProtectedTenantsSlugCategoriesIndexRoute =
-  ProtectedTenantsSlugCategoriesIndexRouteImport.update({
-    id: '/tenants/$slug/categories/',
+const ProtectedtenantTenantsSlugCategoriesIndexRoute =
+  ProtectedtenantTenantsSlugCategoriesIndexRouteImport.update({
+    id: '/(tenant)/tenants/$slug/categories/',
     path: '/tenants/$slug/categories/',
     getParentRoute: () => ProtectedRoute,
   } as any)
-const ProtectedTenantsSlugProductsNewRoute =
-  ProtectedTenantsSlugProductsNewRouteImport.update({
-    id: '/tenants/$slug/products/new',
+const ProtectedtenantTenantsSlugProductsNewRoute =
+  ProtectedtenantTenantsSlugProductsNewRouteImport.update({
+    id: '/(tenant)/tenants/$slug/products/new',
     path: '/tenants/$slug/products/new',
     getParentRoute: () => ProtectedRoute,
   } as any)
-const ProtectedTenantsSlugProductsProductIdRoute =
-  ProtectedTenantsSlugProductsProductIdRouteImport.update({
-    id: '/tenants/$slug/products/$productId',
+const ProtectedtenantTenantsSlugProductsProductIdRoute =
+  ProtectedtenantTenantsSlugProductsProductIdRouteImport.update({
+    id: '/(tenant)/tenants/$slug/products/$productId',
     path: '/tenants/$slug/products/$productId',
     getParentRoute: () => ProtectedRoute,
   } as any)
-const ProtectedTenantsSlugOutletsOutletIdRoute =
-  ProtectedTenantsSlugOutletsOutletIdRouteImport.update({
-    id: '/tenants/$slug/outlets/$outletId',
+const ProtectedtenantTenantsSlugOutletsOutletIdRoute =
+  ProtectedtenantTenantsSlugOutletsOutletIdRouteImport.update({
+    id: '/(tenant)/tenants/$slug/outlets/$outletId',
     path: '/tenants/$slug/outlets/$outletId',
     getParentRoute: () => ProtectedRoute,
   } as any)
@@ -268,37 +281,37 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/verify-email': typeof VerifyEmailRoute
-  '/dashboard': typeof ProtectedDashboardRoute
-  '/laporan': typeof ProtectedLaporanRoute
-  '/cash-shifts/$cashShiftId': typeof ProtectedCashShiftsCashShiftIdRoute
-  '/categories/$categoryId': typeof ProtectedCategoriesCategoryIdRoute
-  '/orders/$orderId': typeof ProtectedOrdersOrderIdRoute
-  '/outlets/$outletId': typeof ProtectedOutletsOutletIdRoute
-  '/products/$productId': typeof ProtectedProductsProductIdRoute
-  '/products/new': typeof ProtectedProductsNewRoute
-  '/tenants/new': typeof ProtectedTenantsNewRoute
-  '/account/': typeof ProtectedAccountIndexRoute
-  '/cash-shifts/': typeof ProtectedCashShiftsIndexRoute
-  '/categories/': typeof ProtectedCategoriesIndexRoute
-  '/discounts/': typeof ProtectedDiscountsIndexRoute
-  '/orders/': typeof ProtectedOrdersIndexRoute
-  '/outlets/': typeof ProtectedOutletsIndexRoute
-  '/payment-methods/': typeof ProtectedPaymentMethodsIndexRoute
-  '/pos/': typeof ProtectedPosIndexRoute
-  '/products/': typeof ProtectedProductsIndexRoute
-  '/settings/': typeof ProtectedSettingsIndexRoute
-  '/stock-adjustment/': typeof ProtectedStockAdjustmentIndexRoute
-  '/stocks/': typeof ProtectedStocksIndexRoute
-  '/tenants/': typeof ProtectedTenantsIndexRoute
-  '/users/': typeof ProtectedUsersIndexRoute
-  '/tenants/$slug/': typeof ProtectedTenantsSlugIndexRoute
-  '/tenants/$slug/outlets/$outletId': typeof ProtectedTenantsSlugOutletsOutletIdRoute
-  '/tenants/$slug/products/$productId': typeof ProtectedTenantsSlugProductsProductIdRoute
-  '/tenants/$slug/products/new': typeof ProtectedTenantsSlugProductsNewRoute
-  '/tenants/$slug/categories/': typeof ProtectedTenantsSlugCategoriesIndexRoute
-  '/tenants/$slug/outlets/': typeof ProtectedTenantsSlugOutletsIndexRoute
-  '/tenants/$slug/products/': typeof ProtectedTenantsSlugProductsIndexRoute
-  '/tenants/$slug/users/': typeof ProtectedTenantsSlugUsersIndexRoute
+  '/dashboard': typeof ProtectedtenantDashboardRoute
+  '/laporan': typeof ProtectedtenantLaporanRoute
+  '/cash-shifts/$cashShiftId': typeof ProtectedtenantCashShiftsCashShiftIdRoute
+  '/categories/$categoryId': typeof ProtectedtenantCategoriesCategoryIdRoute
+  '/orders/$orderId': typeof ProtectedtenantOrdersOrderIdRoute
+  '/outlets/$outletId': typeof ProtectedtenantOutletsOutletIdRoute
+  '/products/$productId': typeof ProtectedtenantProductsProductIdRoute
+  '/products/new': typeof ProtectedtenantProductsNewRoute
+  '/tenants/new': typeof ProtectedtenantTenantsNewRoute
+  '/account/': typeof ProtectedtenantAccountIndexRoute
+  '/cash-shifts/': typeof ProtectedtenantCashShiftsIndexRoute
+  '/categories/': typeof ProtectedtenantCategoriesIndexRoute
+  '/discounts/': typeof ProtectedtenantDiscountsIndexRoute
+  '/orders/': typeof ProtectedtenantOrdersIndexRoute
+  '/outlets/': typeof ProtectedtenantOutletsIndexRoute
+  '/payment-methods/': typeof ProtectedtenantPaymentMethodsIndexRoute
+  '/pos/': typeof ProtectedtenantPosIndexRoute
+  '/products/': typeof ProtectedtenantProductsIndexRoute
+  '/settings/': typeof ProtectedtenantSettingsIndexRoute
+  '/stock-adjustment/': typeof ProtectedtenantStockAdjustmentIndexRoute
+  '/stocks/': typeof ProtectedtenantStocksIndexRoute
+  '/tenants/': typeof ProtectedtenantTenantsIndexRoute
+  '/users/': typeof ProtectedtenantUsersIndexRoute
+  '/tenants/$slug/': typeof ProtectedtenantTenantsSlugIndexRoute
+  '/tenants/$slug/outlets/$outletId': typeof ProtectedtenantTenantsSlugOutletsOutletIdRoute
+  '/tenants/$slug/products/$productId': typeof ProtectedtenantTenantsSlugProductsProductIdRoute
+  '/tenants/$slug/products/new': typeof ProtectedtenantTenantsSlugProductsNewRoute
+  '/tenants/$slug/categories/': typeof ProtectedtenantTenantsSlugCategoriesIndexRoute
+  '/tenants/$slug/outlets/': typeof ProtectedtenantTenantsSlugOutletsIndexRoute
+  '/tenants/$slug/products/': typeof ProtectedtenantTenantsSlugProductsIndexRoute
+  '/tenants/$slug/users/': typeof ProtectedtenantTenantsSlugUsersIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -308,37 +321,37 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/verify-email': typeof VerifyEmailRoute
-  '/dashboard': typeof ProtectedDashboardRoute
-  '/laporan': typeof ProtectedLaporanRoute
-  '/cash-shifts/$cashShiftId': typeof ProtectedCashShiftsCashShiftIdRoute
-  '/categories/$categoryId': typeof ProtectedCategoriesCategoryIdRoute
-  '/orders/$orderId': typeof ProtectedOrdersOrderIdRoute
-  '/outlets/$outletId': typeof ProtectedOutletsOutletIdRoute
-  '/products/$productId': typeof ProtectedProductsProductIdRoute
-  '/products/new': typeof ProtectedProductsNewRoute
-  '/tenants/new': typeof ProtectedTenantsNewRoute
-  '/account': typeof ProtectedAccountIndexRoute
-  '/cash-shifts': typeof ProtectedCashShiftsIndexRoute
-  '/categories': typeof ProtectedCategoriesIndexRoute
-  '/discounts': typeof ProtectedDiscountsIndexRoute
-  '/orders': typeof ProtectedOrdersIndexRoute
-  '/outlets': typeof ProtectedOutletsIndexRoute
-  '/payment-methods': typeof ProtectedPaymentMethodsIndexRoute
-  '/pos': typeof ProtectedPosIndexRoute
-  '/products': typeof ProtectedProductsIndexRoute
-  '/settings': typeof ProtectedSettingsIndexRoute
-  '/stock-adjustment': typeof ProtectedStockAdjustmentIndexRoute
-  '/stocks': typeof ProtectedStocksIndexRoute
-  '/tenants': typeof ProtectedTenantsIndexRoute
-  '/users': typeof ProtectedUsersIndexRoute
-  '/tenants/$slug': typeof ProtectedTenantsSlugIndexRoute
-  '/tenants/$slug/outlets/$outletId': typeof ProtectedTenantsSlugOutletsOutletIdRoute
-  '/tenants/$slug/products/$productId': typeof ProtectedTenantsSlugProductsProductIdRoute
-  '/tenants/$slug/products/new': typeof ProtectedTenantsSlugProductsNewRoute
-  '/tenants/$slug/categories': typeof ProtectedTenantsSlugCategoriesIndexRoute
-  '/tenants/$slug/outlets': typeof ProtectedTenantsSlugOutletsIndexRoute
-  '/tenants/$slug/products': typeof ProtectedTenantsSlugProductsIndexRoute
-  '/tenants/$slug/users': typeof ProtectedTenantsSlugUsersIndexRoute
+  '/dashboard': typeof ProtectedtenantDashboardRoute
+  '/laporan': typeof ProtectedtenantLaporanRoute
+  '/cash-shifts/$cashShiftId': typeof ProtectedtenantCashShiftsCashShiftIdRoute
+  '/categories/$categoryId': typeof ProtectedtenantCategoriesCategoryIdRoute
+  '/orders/$orderId': typeof ProtectedtenantOrdersOrderIdRoute
+  '/outlets/$outletId': typeof ProtectedtenantOutletsOutletIdRoute
+  '/products/$productId': typeof ProtectedtenantProductsProductIdRoute
+  '/products/new': typeof ProtectedtenantProductsNewRoute
+  '/tenants/new': typeof ProtectedtenantTenantsNewRoute
+  '/account': typeof ProtectedtenantAccountIndexRoute
+  '/cash-shifts': typeof ProtectedtenantCashShiftsIndexRoute
+  '/categories': typeof ProtectedtenantCategoriesIndexRoute
+  '/discounts': typeof ProtectedtenantDiscountsIndexRoute
+  '/orders': typeof ProtectedtenantOrdersIndexRoute
+  '/outlets': typeof ProtectedtenantOutletsIndexRoute
+  '/payment-methods': typeof ProtectedtenantPaymentMethodsIndexRoute
+  '/pos': typeof ProtectedtenantPosIndexRoute
+  '/products': typeof ProtectedtenantProductsIndexRoute
+  '/settings': typeof ProtectedtenantSettingsIndexRoute
+  '/stock-adjustment': typeof ProtectedtenantStockAdjustmentIndexRoute
+  '/stocks': typeof ProtectedtenantStocksIndexRoute
+  '/tenants': typeof ProtectedtenantTenantsIndexRoute
+  '/users': typeof ProtectedtenantUsersIndexRoute
+  '/tenants/$slug': typeof ProtectedtenantTenantsSlugIndexRoute
+  '/tenants/$slug/outlets/$outletId': typeof ProtectedtenantTenantsSlugOutletsOutletIdRoute
+  '/tenants/$slug/products/$productId': typeof ProtectedtenantTenantsSlugProductsProductIdRoute
+  '/tenants/$slug/products/new': typeof ProtectedtenantTenantsSlugProductsNewRoute
+  '/tenants/$slug/categories': typeof ProtectedtenantTenantsSlugCategoriesIndexRoute
+  '/tenants/$slug/outlets': typeof ProtectedtenantTenantsSlugOutletsIndexRoute
+  '/tenants/$slug/products': typeof ProtectedtenantTenantsSlugProductsIndexRoute
+  '/tenants/$slug/users': typeof ProtectedtenantTenantsSlugUsersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -350,37 +363,37 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/verify-email': typeof VerifyEmailRoute
-  '/_protected/dashboard': typeof ProtectedDashboardRoute
-  '/_protected/laporan': typeof ProtectedLaporanRoute
-  '/_protected/cash-shifts/$cashShiftId': typeof ProtectedCashShiftsCashShiftIdRoute
-  '/_protected/categories/$categoryId': typeof ProtectedCategoriesCategoryIdRoute
-  '/_protected/orders/$orderId': typeof ProtectedOrdersOrderIdRoute
-  '/_protected/outlets/$outletId': typeof ProtectedOutletsOutletIdRoute
-  '/_protected/products/$productId': typeof ProtectedProductsProductIdRoute
-  '/_protected/products/new': typeof ProtectedProductsNewRoute
-  '/_protected/tenants/new': typeof ProtectedTenantsNewRoute
-  '/_protected/account/': typeof ProtectedAccountIndexRoute
-  '/_protected/cash-shifts/': typeof ProtectedCashShiftsIndexRoute
-  '/_protected/categories/': typeof ProtectedCategoriesIndexRoute
-  '/_protected/discounts/': typeof ProtectedDiscountsIndexRoute
-  '/_protected/orders/': typeof ProtectedOrdersIndexRoute
-  '/_protected/outlets/': typeof ProtectedOutletsIndexRoute
-  '/_protected/payment-methods/': typeof ProtectedPaymentMethodsIndexRoute
-  '/_protected/pos/': typeof ProtectedPosIndexRoute
-  '/_protected/products/': typeof ProtectedProductsIndexRoute
-  '/_protected/settings/': typeof ProtectedSettingsIndexRoute
-  '/_protected/stock-adjustment/': typeof ProtectedStockAdjustmentIndexRoute
-  '/_protected/stocks/': typeof ProtectedStocksIndexRoute
-  '/_protected/tenants/': typeof ProtectedTenantsIndexRoute
-  '/_protected/users/': typeof ProtectedUsersIndexRoute
-  '/_protected/tenants/$slug/': typeof ProtectedTenantsSlugIndexRoute
-  '/_protected/tenants/$slug/outlets/$outletId': typeof ProtectedTenantsSlugOutletsOutletIdRoute
-  '/_protected/tenants/$slug/products/$productId': typeof ProtectedTenantsSlugProductsProductIdRoute
-  '/_protected/tenants/$slug/products/new': typeof ProtectedTenantsSlugProductsNewRoute
-  '/_protected/tenants/$slug/categories/': typeof ProtectedTenantsSlugCategoriesIndexRoute
-  '/_protected/tenants/$slug/outlets/': typeof ProtectedTenantsSlugOutletsIndexRoute
-  '/_protected/tenants/$slug/products/': typeof ProtectedTenantsSlugProductsIndexRoute
-  '/_protected/tenants/$slug/users/': typeof ProtectedTenantsSlugUsersIndexRoute
+  '/_protected/(tenant)/dashboard': typeof ProtectedtenantDashboardRoute
+  '/_protected/(tenant)/laporan': typeof ProtectedtenantLaporanRoute
+  '/_protected/(tenant)/cash-shifts/$cashShiftId': typeof ProtectedtenantCashShiftsCashShiftIdRoute
+  '/_protected/(tenant)/categories/$categoryId': typeof ProtectedtenantCategoriesCategoryIdRoute
+  '/_protected/(tenant)/orders/$orderId': typeof ProtectedtenantOrdersOrderIdRoute
+  '/_protected/(tenant)/outlets/$outletId': typeof ProtectedtenantOutletsOutletIdRoute
+  '/_protected/(tenant)/products/$productId': typeof ProtectedtenantProductsProductIdRoute
+  '/_protected/(tenant)/products/new': typeof ProtectedtenantProductsNewRoute
+  '/_protected/(tenant)/tenants/new': typeof ProtectedtenantTenantsNewRoute
+  '/_protected/(tenant)/account/': typeof ProtectedtenantAccountIndexRoute
+  '/_protected/(tenant)/cash-shifts/': typeof ProtectedtenantCashShiftsIndexRoute
+  '/_protected/(tenant)/categories/': typeof ProtectedtenantCategoriesIndexRoute
+  '/_protected/(tenant)/discounts/': typeof ProtectedtenantDiscountsIndexRoute
+  '/_protected/(tenant)/orders/': typeof ProtectedtenantOrdersIndexRoute
+  '/_protected/(tenant)/outlets/': typeof ProtectedtenantOutletsIndexRoute
+  '/_protected/(tenant)/payment-methods/': typeof ProtectedtenantPaymentMethodsIndexRoute
+  '/_protected/(tenant)/pos/': typeof ProtectedtenantPosIndexRoute
+  '/_protected/(tenant)/products/': typeof ProtectedtenantProductsIndexRoute
+  '/_protected/(tenant)/settings/': typeof ProtectedtenantSettingsIndexRoute
+  '/_protected/(tenant)/stock-adjustment/': typeof ProtectedtenantStockAdjustmentIndexRoute
+  '/_protected/(tenant)/stocks/': typeof ProtectedtenantStocksIndexRoute
+  '/_protected/(tenant)/tenants/': typeof ProtectedtenantTenantsIndexRoute
+  '/_protected/(tenant)/users/': typeof ProtectedtenantUsersIndexRoute
+  '/_protected/(tenant)/tenants/$slug/': typeof ProtectedtenantTenantsSlugIndexRoute
+  '/_protected/(tenant)/tenants/$slug/outlets/$outletId': typeof ProtectedtenantTenantsSlugOutletsOutletIdRoute
+  '/_protected/(tenant)/tenants/$slug/products/$productId': typeof ProtectedtenantTenantsSlugProductsProductIdRoute
+  '/_protected/(tenant)/tenants/$slug/products/new': typeof ProtectedtenantTenantsSlugProductsNewRoute
+  '/_protected/(tenant)/tenants/$slug/categories/': typeof ProtectedtenantTenantsSlugCategoriesIndexRoute
+  '/_protected/(tenant)/tenants/$slug/outlets/': typeof ProtectedtenantTenantsSlugOutletsIndexRoute
+  '/_protected/(tenant)/tenants/$slug/products/': typeof ProtectedtenantTenantsSlugProductsIndexRoute
+  '/_protected/(tenant)/tenants/$slug/users/': typeof ProtectedtenantTenantsSlugUsersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -473,37 +486,37 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/verify-email'
-    | '/_protected/dashboard'
-    | '/_protected/laporan'
-    | '/_protected/cash-shifts/$cashShiftId'
-    | '/_protected/categories/$categoryId'
-    | '/_protected/orders/$orderId'
-    | '/_protected/outlets/$outletId'
-    | '/_protected/products/$productId'
-    | '/_protected/products/new'
-    | '/_protected/tenants/new'
-    | '/_protected/account/'
-    | '/_protected/cash-shifts/'
-    | '/_protected/categories/'
-    | '/_protected/discounts/'
-    | '/_protected/orders/'
-    | '/_protected/outlets/'
-    | '/_protected/payment-methods/'
-    | '/_protected/pos/'
-    | '/_protected/products/'
-    | '/_protected/settings/'
-    | '/_protected/stock-adjustment/'
-    | '/_protected/stocks/'
-    | '/_protected/tenants/'
-    | '/_protected/users/'
-    | '/_protected/tenants/$slug/'
-    | '/_protected/tenants/$slug/outlets/$outletId'
-    | '/_protected/tenants/$slug/products/$productId'
-    | '/_protected/tenants/$slug/products/new'
-    | '/_protected/tenants/$slug/categories/'
-    | '/_protected/tenants/$slug/outlets/'
-    | '/_protected/tenants/$slug/products/'
-    | '/_protected/tenants/$slug/users/'
+    | '/_protected/(tenant)/dashboard'
+    | '/_protected/(tenant)/laporan'
+    | '/_protected/(tenant)/cash-shifts/$cashShiftId'
+    | '/_protected/(tenant)/categories/$categoryId'
+    | '/_protected/(tenant)/orders/$orderId'
+    | '/_protected/(tenant)/outlets/$outletId'
+    | '/_protected/(tenant)/products/$productId'
+    | '/_protected/(tenant)/products/new'
+    | '/_protected/(tenant)/tenants/new'
+    | '/_protected/(tenant)/account/'
+    | '/_protected/(tenant)/cash-shifts/'
+    | '/_protected/(tenant)/categories/'
+    | '/_protected/(tenant)/discounts/'
+    | '/_protected/(tenant)/orders/'
+    | '/_protected/(tenant)/outlets/'
+    | '/_protected/(tenant)/payment-methods/'
+    | '/_protected/(tenant)/pos/'
+    | '/_protected/(tenant)/products/'
+    | '/_protected/(tenant)/settings/'
+    | '/_protected/(tenant)/stock-adjustment/'
+    | '/_protected/(tenant)/stocks/'
+    | '/_protected/(tenant)/tenants/'
+    | '/_protected/(tenant)/users/'
+    | '/_protected/(tenant)/tenants/$slug/'
+    | '/_protected/(tenant)/tenants/$slug/outlets/$outletId'
+    | '/_protected/(tenant)/tenants/$slug/products/$productId'
+    | '/_protected/(tenant)/tenants/$slug/products/new'
+    | '/_protected/(tenant)/tenants/$slug/categories/'
+    | '/_protected/(tenant)/tenants/$slug/outlets/'
+    | '/_protected/(tenant)/tenants/$slug/products/'
+    | '/_protected/(tenant)/tenants/$slug/users/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -575,296 +588,303 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_protected/laporan': {
-      id: '/_protected/laporan'
+    '/_protected/(tenant)/laporan': {
+      id: '/_protected/(tenant)/laporan'
       path: '/laporan'
       fullPath: '/laporan'
-      preLoaderRoute: typeof ProtectedLaporanRouteImport
+      preLoaderRoute: typeof ProtectedtenantLaporanRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/dashboard': {
-      id: '/_protected/dashboard'
+    '/_protected/(tenant)/dashboard': {
+      id: '/_protected/(tenant)/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
-      preLoaderRoute: typeof ProtectedDashboardRouteImport
+      preLoaderRoute: typeof ProtectedtenantDashboardRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/users/': {
-      id: '/_protected/users/'
+    '/_protected/(tenant)/users/': {
+      id: '/_protected/(tenant)/users/'
       path: '/users'
       fullPath: '/users/'
-      preLoaderRoute: typeof ProtectedUsersIndexRouteImport
+      preLoaderRoute: typeof ProtectedtenantUsersIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/tenants/': {
-      id: '/_protected/tenants/'
+    '/_protected/(tenant)/tenants/': {
+      id: '/_protected/(tenant)/tenants/'
       path: '/tenants'
       fullPath: '/tenants/'
-      preLoaderRoute: typeof ProtectedTenantsIndexRouteImport
+      preLoaderRoute: typeof ProtectedtenantTenantsIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/stocks/': {
-      id: '/_protected/stocks/'
+    '/_protected/(tenant)/stocks/': {
+      id: '/_protected/(tenant)/stocks/'
       path: '/stocks'
       fullPath: '/stocks/'
-      preLoaderRoute: typeof ProtectedStocksIndexRouteImport
+      preLoaderRoute: typeof ProtectedtenantStocksIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/stock-adjustment/': {
-      id: '/_protected/stock-adjustment/'
+    '/_protected/(tenant)/stock-adjustment/': {
+      id: '/_protected/(tenant)/stock-adjustment/'
       path: '/stock-adjustment'
       fullPath: '/stock-adjustment/'
-      preLoaderRoute: typeof ProtectedStockAdjustmentIndexRouteImport
+      preLoaderRoute: typeof ProtectedtenantStockAdjustmentIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/settings/': {
-      id: '/_protected/settings/'
+    '/_protected/(tenant)/settings/': {
+      id: '/_protected/(tenant)/settings/'
       path: '/settings'
       fullPath: '/settings/'
-      preLoaderRoute: typeof ProtectedSettingsIndexRouteImport
+      preLoaderRoute: typeof ProtectedtenantSettingsIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/products/': {
-      id: '/_protected/products/'
+    '/_protected/(tenant)/products/': {
+      id: '/_protected/(tenant)/products/'
       path: '/products'
       fullPath: '/products/'
-      preLoaderRoute: typeof ProtectedProductsIndexRouteImport
+      preLoaderRoute: typeof ProtectedtenantProductsIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/pos/': {
-      id: '/_protected/pos/'
+    '/_protected/(tenant)/pos/': {
+      id: '/_protected/(tenant)/pos/'
       path: '/pos'
       fullPath: '/pos/'
-      preLoaderRoute: typeof ProtectedPosIndexRouteImport
+      preLoaderRoute: typeof ProtectedtenantPosIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/payment-methods/': {
-      id: '/_protected/payment-methods/'
+    '/_protected/(tenant)/payment-methods/': {
+      id: '/_protected/(tenant)/payment-methods/'
       path: '/payment-methods'
       fullPath: '/payment-methods/'
-      preLoaderRoute: typeof ProtectedPaymentMethodsIndexRouteImport
+      preLoaderRoute: typeof ProtectedtenantPaymentMethodsIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/outlets/': {
-      id: '/_protected/outlets/'
+    '/_protected/(tenant)/outlets/': {
+      id: '/_protected/(tenant)/outlets/'
       path: '/outlets'
       fullPath: '/outlets/'
-      preLoaderRoute: typeof ProtectedOutletsIndexRouteImport
+      preLoaderRoute: typeof ProtectedtenantOutletsIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/orders/': {
-      id: '/_protected/orders/'
+    '/_protected/(tenant)/orders/': {
+      id: '/_protected/(tenant)/orders/'
       path: '/orders'
       fullPath: '/orders/'
-      preLoaderRoute: typeof ProtectedOrdersIndexRouteImport
+      preLoaderRoute: typeof ProtectedtenantOrdersIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/discounts/': {
-      id: '/_protected/discounts/'
+    '/_protected/(tenant)/discounts/': {
+      id: '/_protected/(tenant)/discounts/'
       path: '/discounts'
       fullPath: '/discounts/'
-      preLoaderRoute: typeof ProtectedDiscountsIndexRouteImport
+      preLoaderRoute: typeof ProtectedtenantDiscountsIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/categories/': {
-      id: '/_protected/categories/'
+    '/_protected/(tenant)/categories/': {
+      id: '/_protected/(tenant)/categories/'
       path: '/categories'
       fullPath: '/categories/'
-      preLoaderRoute: typeof ProtectedCategoriesIndexRouteImport
+      preLoaderRoute: typeof ProtectedtenantCategoriesIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/cash-shifts/': {
-      id: '/_protected/cash-shifts/'
+    '/_protected/(tenant)/cash-shifts/': {
+      id: '/_protected/(tenant)/cash-shifts/'
       path: '/cash-shifts'
       fullPath: '/cash-shifts/'
-      preLoaderRoute: typeof ProtectedCashShiftsIndexRouteImport
+      preLoaderRoute: typeof ProtectedtenantCashShiftsIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/account/': {
-      id: '/_protected/account/'
+    '/_protected/(tenant)/account/': {
+      id: '/_protected/(tenant)/account/'
       path: '/account'
       fullPath: '/account/'
-      preLoaderRoute: typeof ProtectedAccountIndexRouteImport
+      preLoaderRoute: typeof ProtectedtenantAccountIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/tenants/new': {
-      id: '/_protected/tenants/new'
+    '/_protected/(tenant)/tenants/new': {
+      id: '/_protected/(tenant)/tenants/new'
       path: '/tenants/new'
       fullPath: '/tenants/new'
-      preLoaderRoute: typeof ProtectedTenantsNewRouteImport
+      preLoaderRoute: typeof ProtectedtenantTenantsNewRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/products/new': {
-      id: '/_protected/products/new'
+    '/_protected/(tenant)/products/new': {
+      id: '/_protected/(tenant)/products/new'
       path: '/products/new'
       fullPath: '/products/new'
-      preLoaderRoute: typeof ProtectedProductsNewRouteImport
+      preLoaderRoute: typeof ProtectedtenantProductsNewRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/products/$productId': {
-      id: '/_protected/products/$productId'
+    '/_protected/(tenant)/products/$productId': {
+      id: '/_protected/(tenant)/products/$productId'
       path: '/products/$productId'
       fullPath: '/products/$productId'
-      preLoaderRoute: typeof ProtectedProductsProductIdRouteImport
+      preLoaderRoute: typeof ProtectedtenantProductsProductIdRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/outlets/$outletId': {
-      id: '/_protected/outlets/$outletId'
+    '/_protected/(tenant)/outlets/$outletId': {
+      id: '/_protected/(tenant)/outlets/$outletId'
       path: '/outlets/$outletId'
       fullPath: '/outlets/$outletId'
-      preLoaderRoute: typeof ProtectedOutletsOutletIdRouteImport
+      preLoaderRoute: typeof ProtectedtenantOutletsOutletIdRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/orders/$orderId': {
-      id: '/_protected/orders/$orderId'
+    '/_protected/(tenant)/orders/$orderId': {
+      id: '/_protected/(tenant)/orders/$orderId'
       path: '/orders/$orderId'
       fullPath: '/orders/$orderId'
-      preLoaderRoute: typeof ProtectedOrdersOrderIdRouteImport
+      preLoaderRoute: typeof ProtectedtenantOrdersOrderIdRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/categories/$categoryId': {
-      id: '/_protected/categories/$categoryId'
+    '/_protected/(tenant)/categories/$categoryId': {
+      id: '/_protected/(tenant)/categories/$categoryId'
       path: '/categories/$categoryId'
       fullPath: '/categories/$categoryId'
-      preLoaderRoute: typeof ProtectedCategoriesCategoryIdRouteImport
+      preLoaderRoute: typeof ProtectedtenantCategoriesCategoryIdRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/cash-shifts/$cashShiftId': {
-      id: '/_protected/cash-shifts/$cashShiftId'
+    '/_protected/(tenant)/cash-shifts/$cashShiftId': {
+      id: '/_protected/(tenant)/cash-shifts/$cashShiftId'
       path: '/cash-shifts/$cashShiftId'
       fullPath: '/cash-shifts/$cashShiftId'
-      preLoaderRoute: typeof ProtectedCashShiftsCashShiftIdRouteImport
+      preLoaderRoute: typeof ProtectedtenantCashShiftsCashShiftIdRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/tenants/$slug/': {
-      id: '/_protected/tenants/$slug/'
+    '/_protected/(tenant)/tenants/$slug/': {
+      id: '/_protected/(tenant)/tenants/$slug/'
       path: '/tenants/$slug'
       fullPath: '/tenants/$slug/'
-      preLoaderRoute: typeof ProtectedTenantsSlugIndexRouteImport
+      preLoaderRoute: typeof ProtectedtenantTenantsSlugIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/tenants/$slug/users/': {
-      id: '/_protected/tenants/$slug/users/'
+    '/_protected/(tenant)/tenants/$slug/users/': {
+      id: '/_protected/(tenant)/tenants/$slug/users/'
       path: '/tenants/$slug/users'
       fullPath: '/tenants/$slug/users/'
-      preLoaderRoute: typeof ProtectedTenantsSlugUsersIndexRouteImport
+      preLoaderRoute: typeof ProtectedtenantTenantsSlugUsersIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/tenants/$slug/products/': {
-      id: '/_protected/tenants/$slug/products/'
+    '/_protected/(tenant)/tenants/$slug/products/': {
+      id: '/_protected/(tenant)/tenants/$slug/products/'
       path: '/tenants/$slug/products'
       fullPath: '/tenants/$slug/products/'
-      preLoaderRoute: typeof ProtectedTenantsSlugProductsIndexRouteImport
+      preLoaderRoute: typeof ProtectedtenantTenantsSlugProductsIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/tenants/$slug/outlets/': {
-      id: '/_protected/tenants/$slug/outlets/'
+    '/_protected/(tenant)/tenants/$slug/outlets/': {
+      id: '/_protected/(tenant)/tenants/$slug/outlets/'
       path: '/tenants/$slug/outlets'
       fullPath: '/tenants/$slug/outlets/'
-      preLoaderRoute: typeof ProtectedTenantsSlugOutletsIndexRouteImport
+      preLoaderRoute: typeof ProtectedtenantTenantsSlugOutletsIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/tenants/$slug/categories/': {
-      id: '/_protected/tenants/$slug/categories/'
+    '/_protected/(tenant)/tenants/$slug/categories/': {
+      id: '/_protected/(tenant)/tenants/$slug/categories/'
       path: '/tenants/$slug/categories'
       fullPath: '/tenants/$slug/categories/'
-      preLoaderRoute: typeof ProtectedTenantsSlugCategoriesIndexRouteImport
+      preLoaderRoute: typeof ProtectedtenantTenantsSlugCategoriesIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/tenants/$slug/products/new': {
-      id: '/_protected/tenants/$slug/products/new'
+    '/_protected/(tenant)/tenants/$slug/products/new': {
+      id: '/_protected/(tenant)/tenants/$slug/products/new'
       path: '/tenants/$slug/products/new'
       fullPath: '/tenants/$slug/products/new'
-      preLoaderRoute: typeof ProtectedTenantsSlugProductsNewRouteImport
+      preLoaderRoute: typeof ProtectedtenantTenantsSlugProductsNewRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/tenants/$slug/products/$productId': {
-      id: '/_protected/tenants/$slug/products/$productId'
+    '/_protected/(tenant)/tenants/$slug/products/$productId': {
+      id: '/_protected/(tenant)/tenants/$slug/products/$productId'
       path: '/tenants/$slug/products/$productId'
       fullPath: '/tenants/$slug/products/$productId'
-      preLoaderRoute: typeof ProtectedTenantsSlugProductsProductIdRouteImport
+      preLoaderRoute: typeof ProtectedtenantTenantsSlugProductsProductIdRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/tenants/$slug/outlets/$outletId': {
-      id: '/_protected/tenants/$slug/outlets/$outletId'
+    '/_protected/(tenant)/tenants/$slug/outlets/$outletId': {
+      id: '/_protected/(tenant)/tenants/$slug/outlets/$outletId'
       path: '/tenants/$slug/outlets/$outletId'
       fullPath: '/tenants/$slug/outlets/$outletId'
-      preLoaderRoute: typeof ProtectedTenantsSlugOutletsOutletIdRouteImport
+      preLoaderRoute: typeof ProtectedtenantTenantsSlugOutletsOutletIdRouteImport
       parentRoute: typeof ProtectedRoute
     }
   }
 }
 
 interface ProtectedRouteChildren {
-  ProtectedDashboardRoute: typeof ProtectedDashboardRoute
-  ProtectedLaporanRoute: typeof ProtectedLaporanRoute
-  ProtectedCashShiftsCashShiftIdRoute: typeof ProtectedCashShiftsCashShiftIdRoute
-  ProtectedCategoriesCategoryIdRoute: typeof ProtectedCategoriesCategoryIdRoute
-  ProtectedOrdersOrderIdRoute: typeof ProtectedOrdersOrderIdRoute
-  ProtectedOutletsOutletIdRoute: typeof ProtectedOutletsOutletIdRoute
-  ProtectedProductsProductIdRoute: typeof ProtectedProductsProductIdRoute
-  ProtectedProductsNewRoute: typeof ProtectedProductsNewRoute
-  ProtectedTenantsNewRoute: typeof ProtectedTenantsNewRoute
-  ProtectedAccountIndexRoute: typeof ProtectedAccountIndexRoute
-  ProtectedCashShiftsIndexRoute: typeof ProtectedCashShiftsIndexRoute
-  ProtectedCategoriesIndexRoute: typeof ProtectedCategoriesIndexRoute
-  ProtectedDiscountsIndexRoute: typeof ProtectedDiscountsIndexRoute
-  ProtectedOrdersIndexRoute: typeof ProtectedOrdersIndexRoute
-  ProtectedOutletsIndexRoute: typeof ProtectedOutletsIndexRoute
-  ProtectedPaymentMethodsIndexRoute: typeof ProtectedPaymentMethodsIndexRoute
-  ProtectedPosIndexRoute: typeof ProtectedPosIndexRoute
-  ProtectedProductsIndexRoute: typeof ProtectedProductsIndexRoute
-  ProtectedSettingsIndexRoute: typeof ProtectedSettingsIndexRoute
-  ProtectedStockAdjustmentIndexRoute: typeof ProtectedStockAdjustmentIndexRoute
-  ProtectedStocksIndexRoute: typeof ProtectedStocksIndexRoute
-  ProtectedTenantsIndexRoute: typeof ProtectedTenantsIndexRoute
-  ProtectedUsersIndexRoute: typeof ProtectedUsersIndexRoute
-  ProtectedTenantsSlugIndexRoute: typeof ProtectedTenantsSlugIndexRoute
-  ProtectedTenantsSlugOutletsOutletIdRoute: typeof ProtectedTenantsSlugOutletsOutletIdRoute
-  ProtectedTenantsSlugProductsProductIdRoute: typeof ProtectedTenantsSlugProductsProductIdRoute
-  ProtectedTenantsSlugProductsNewRoute: typeof ProtectedTenantsSlugProductsNewRoute
-  ProtectedTenantsSlugCategoriesIndexRoute: typeof ProtectedTenantsSlugCategoriesIndexRoute
-  ProtectedTenantsSlugOutletsIndexRoute: typeof ProtectedTenantsSlugOutletsIndexRoute
-  ProtectedTenantsSlugProductsIndexRoute: typeof ProtectedTenantsSlugProductsIndexRoute
-  ProtectedTenantsSlugUsersIndexRoute: typeof ProtectedTenantsSlugUsersIndexRoute
+  ProtectedtenantDashboardRoute: typeof ProtectedtenantDashboardRoute
+  ProtectedtenantLaporanRoute: typeof ProtectedtenantLaporanRoute
+  ProtectedtenantCashShiftsCashShiftIdRoute: typeof ProtectedtenantCashShiftsCashShiftIdRoute
+  ProtectedtenantCategoriesCategoryIdRoute: typeof ProtectedtenantCategoriesCategoryIdRoute
+  ProtectedtenantOrdersOrderIdRoute: typeof ProtectedtenantOrdersOrderIdRoute
+  ProtectedtenantOutletsOutletIdRoute: typeof ProtectedtenantOutletsOutletIdRoute
+  ProtectedtenantProductsProductIdRoute: typeof ProtectedtenantProductsProductIdRoute
+  ProtectedtenantProductsNewRoute: typeof ProtectedtenantProductsNewRoute
+  ProtectedtenantTenantsNewRoute: typeof ProtectedtenantTenantsNewRoute
+  ProtectedtenantAccountIndexRoute: typeof ProtectedtenantAccountIndexRoute
+  ProtectedtenantCashShiftsIndexRoute: typeof ProtectedtenantCashShiftsIndexRoute
+  ProtectedtenantCategoriesIndexRoute: typeof ProtectedtenantCategoriesIndexRoute
+  ProtectedtenantDiscountsIndexRoute: typeof ProtectedtenantDiscountsIndexRoute
+  ProtectedtenantOrdersIndexRoute: typeof ProtectedtenantOrdersIndexRoute
+  ProtectedtenantOutletsIndexRoute: typeof ProtectedtenantOutletsIndexRoute
+  ProtectedtenantPaymentMethodsIndexRoute: typeof ProtectedtenantPaymentMethodsIndexRoute
+  ProtectedtenantPosIndexRoute: typeof ProtectedtenantPosIndexRoute
+  ProtectedtenantProductsIndexRoute: typeof ProtectedtenantProductsIndexRoute
+  ProtectedtenantSettingsIndexRoute: typeof ProtectedtenantSettingsIndexRoute
+  ProtectedtenantStockAdjustmentIndexRoute: typeof ProtectedtenantStockAdjustmentIndexRoute
+  ProtectedtenantStocksIndexRoute: typeof ProtectedtenantStocksIndexRoute
+  ProtectedtenantTenantsIndexRoute: typeof ProtectedtenantTenantsIndexRoute
+  ProtectedtenantUsersIndexRoute: typeof ProtectedtenantUsersIndexRoute
+  ProtectedtenantTenantsSlugIndexRoute: typeof ProtectedtenantTenantsSlugIndexRoute
+  ProtectedtenantTenantsSlugOutletsOutletIdRoute: typeof ProtectedtenantTenantsSlugOutletsOutletIdRoute
+  ProtectedtenantTenantsSlugProductsProductIdRoute: typeof ProtectedtenantTenantsSlugProductsProductIdRoute
+  ProtectedtenantTenantsSlugProductsNewRoute: typeof ProtectedtenantTenantsSlugProductsNewRoute
+  ProtectedtenantTenantsSlugCategoriesIndexRoute: typeof ProtectedtenantTenantsSlugCategoriesIndexRoute
+  ProtectedtenantTenantsSlugOutletsIndexRoute: typeof ProtectedtenantTenantsSlugOutletsIndexRoute
+  ProtectedtenantTenantsSlugProductsIndexRoute: typeof ProtectedtenantTenantsSlugProductsIndexRoute
+  ProtectedtenantTenantsSlugUsersIndexRoute: typeof ProtectedtenantTenantsSlugUsersIndexRoute
 }
 
 const ProtectedRouteChildren: ProtectedRouteChildren = {
-  ProtectedDashboardRoute: ProtectedDashboardRoute,
-  ProtectedLaporanRoute: ProtectedLaporanRoute,
-  ProtectedCashShiftsCashShiftIdRoute: ProtectedCashShiftsCashShiftIdRoute,
-  ProtectedCategoriesCategoryIdRoute: ProtectedCategoriesCategoryIdRoute,
-  ProtectedOrdersOrderIdRoute: ProtectedOrdersOrderIdRoute,
-  ProtectedOutletsOutletIdRoute: ProtectedOutletsOutletIdRoute,
-  ProtectedProductsProductIdRoute: ProtectedProductsProductIdRoute,
-  ProtectedProductsNewRoute: ProtectedProductsNewRoute,
-  ProtectedTenantsNewRoute: ProtectedTenantsNewRoute,
-  ProtectedAccountIndexRoute: ProtectedAccountIndexRoute,
-  ProtectedCashShiftsIndexRoute: ProtectedCashShiftsIndexRoute,
-  ProtectedCategoriesIndexRoute: ProtectedCategoriesIndexRoute,
-  ProtectedDiscountsIndexRoute: ProtectedDiscountsIndexRoute,
-  ProtectedOrdersIndexRoute: ProtectedOrdersIndexRoute,
-  ProtectedOutletsIndexRoute: ProtectedOutletsIndexRoute,
-  ProtectedPaymentMethodsIndexRoute: ProtectedPaymentMethodsIndexRoute,
-  ProtectedPosIndexRoute: ProtectedPosIndexRoute,
-  ProtectedProductsIndexRoute: ProtectedProductsIndexRoute,
-  ProtectedSettingsIndexRoute: ProtectedSettingsIndexRoute,
-  ProtectedStockAdjustmentIndexRoute: ProtectedStockAdjustmentIndexRoute,
-  ProtectedStocksIndexRoute: ProtectedStocksIndexRoute,
-  ProtectedTenantsIndexRoute: ProtectedTenantsIndexRoute,
-  ProtectedUsersIndexRoute: ProtectedUsersIndexRoute,
-  ProtectedTenantsSlugIndexRoute: ProtectedTenantsSlugIndexRoute,
-  ProtectedTenantsSlugOutletsOutletIdRoute:
-    ProtectedTenantsSlugOutletsOutletIdRoute,
-  ProtectedTenantsSlugProductsProductIdRoute:
-    ProtectedTenantsSlugProductsProductIdRoute,
-  ProtectedTenantsSlugProductsNewRoute: ProtectedTenantsSlugProductsNewRoute,
-  ProtectedTenantsSlugCategoriesIndexRoute:
-    ProtectedTenantsSlugCategoriesIndexRoute,
-  ProtectedTenantsSlugOutletsIndexRoute: ProtectedTenantsSlugOutletsIndexRoute,
-  ProtectedTenantsSlugProductsIndexRoute:
-    ProtectedTenantsSlugProductsIndexRoute,
-  ProtectedTenantsSlugUsersIndexRoute: ProtectedTenantsSlugUsersIndexRoute,
+  ProtectedtenantDashboardRoute: ProtectedtenantDashboardRoute,
+  ProtectedtenantLaporanRoute: ProtectedtenantLaporanRoute,
+  ProtectedtenantCashShiftsCashShiftIdRoute:
+    ProtectedtenantCashShiftsCashShiftIdRoute,
+  ProtectedtenantCategoriesCategoryIdRoute:
+    ProtectedtenantCategoriesCategoryIdRoute,
+  ProtectedtenantOrdersOrderIdRoute: ProtectedtenantOrdersOrderIdRoute,
+  ProtectedtenantOutletsOutletIdRoute: ProtectedtenantOutletsOutletIdRoute,
+  ProtectedtenantProductsProductIdRoute: ProtectedtenantProductsProductIdRoute,
+  ProtectedtenantProductsNewRoute: ProtectedtenantProductsNewRoute,
+  ProtectedtenantTenantsNewRoute: ProtectedtenantTenantsNewRoute,
+  ProtectedtenantAccountIndexRoute: ProtectedtenantAccountIndexRoute,
+  ProtectedtenantCashShiftsIndexRoute: ProtectedtenantCashShiftsIndexRoute,
+  ProtectedtenantCategoriesIndexRoute: ProtectedtenantCategoriesIndexRoute,
+  ProtectedtenantDiscountsIndexRoute: ProtectedtenantDiscountsIndexRoute,
+  ProtectedtenantOrdersIndexRoute: ProtectedtenantOrdersIndexRoute,
+  ProtectedtenantOutletsIndexRoute: ProtectedtenantOutletsIndexRoute,
+  ProtectedtenantPaymentMethodsIndexRoute:
+    ProtectedtenantPaymentMethodsIndexRoute,
+  ProtectedtenantPosIndexRoute: ProtectedtenantPosIndexRoute,
+  ProtectedtenantProductsIndexRoute: ProtectedtenantProductsIndexRoute,
+  ProtectedtenantSettingsIndexRoute: ProtectedtenantSettingsIndexRoute,
+  ProtectedtenantStockAdjustmentIndexRoute:
+    ProtectedtenantStockAdjustmentIndexRoute,
+  ProtectedtenantStocksIndexRoute: ProtectedtenantStocksIndexRoute,
+  ProtectedtenantTenantsIndexRoute: ProtectedtenantTenantsIndexRoute,
+  ProtectedtenantUsersIndexRoute: ProtectedtenantUsersIndexRoute,
+  ProtectedtenantTenantsSlugIndexRoute: ProtectedtenantTenantsSlugIndexRoute,
+  ProtectedtenantTenantsSlugOutletsOutletIdRoute:
+    ProtectedtenantTenantsSlugOutletsOutletIdRoute,
+  ProtectedtenantTenantsSlugProductsProductIdRoute:
+    ProtectedtenantTenantsSlugProductsProductIdRoute,
+  ProtectedtenantTenantsSlugProductsNewRoute:
+    ProtectedtenantTenantsSlugProductsNewRoute,
+  ProtectedtenantTenantsSlugCategoriesIndexRoute:
+    ProtectedtenantTenantsSlugCategoriesIndexRoute,
+  ProtectedtenantTenantsSlugOutletsIndexRoute:
+    ProtectedtenantTenantsSlugOutletsIndexRoute,
+  ProtectedtenantTenantsSlugProductsIndexRoute:
+    ProtectedtenantTenantsSlugProductsIndexRoute,
+  ProtectedtenantTenantsSlugUsersIndexRoute:
+    ProtectedtenantTenantsSlugUsersIndexRoute,
 }
 
 const ProtectedRouteWithChildren = ProtectedRoute._addFileChildren(

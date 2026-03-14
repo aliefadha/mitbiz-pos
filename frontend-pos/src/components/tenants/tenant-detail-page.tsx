@@ -44,7 +44,7 @@ const formSchema = z.object({
 });
 
 export function TenantDetailPage() {
-  const { slug } = useParams({ from: '/_protected/tenants/$slug/' });
+  const { slug } = useParams({ from: '/_protected/(tenant)/tenants/$slug/' });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: session } = useSession();

@@ -1,14 +1,18 @@
-import { useParams } from '@tanstack/react-router';
+import { createFileRoute, useNavigate, useParams } from '@tanstack/react-router';
+import { ArrowLeft } from 'lucide-react';
+import { AdjustStockDialog, EditStockDialog } from '@/components/outlets/dialogs';
+import { useOutletDetailPage } from '@/components/outlets/hooks/use-outlet-detail-page';
+import { OutletDetailTabs } from '@/components/outlets/outlet-detail-tabs';
+import { OutletInfoCard } from '@/components/outlets/outlet-info-card';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AdjustStockDialog, EditStockDialog } from './dialogs';
-import { useOutletDetailPage } from './hooks/use-outlet-detail-page';
-import { OutletDetailTabs } from './outlet-detail-tabs';
-import { OutletInfoCard } from './outlet-info-card';
 
 export function OutletDetailPage() {
   const { outletId } = useParams({
     from: '/_protected/(tenant)/outlets/$outletId',
   });
+
+  const navigate = useNavigate();
 
   const {
     isEditModalOpen,
@@ -45,6 +49,10 @@ export function OutletDetailPage() {
 
   return (
     <div>
+      <Button variant="link" onClick={() => navigate({ to: '/outlets' })} className="mb-4 pl-0">
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Kembali ke outlet
+      </Button>
       <OutletInfoCard outlet={outlet} />
 
       <OutletDetailTabs
@@ -80,3 +88,7 @@ export function OutletDetailPage() {
     </div>
   );
 }
+
+export const Route = createFileRoute('/_protected/(tenant)/outlets/$outletId')({
+  component: OutletDetailPage,
+});

@@ -43,7 +43,7 @@ const formSchema = z.object({
 });
 
 export function TenantOutletsPage() {
-  const { slug } = useParams({ from: '/_protected/tenants/$slug/outlets/' });
+  const { slug } = useParams({ from: '/_protected/(tenant)/tenants/$slug/outlets/' });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);

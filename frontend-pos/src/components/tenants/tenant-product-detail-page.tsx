@@ -80,7 +80,9 @@ const editFormSchema = z.object({
 });
 
 export function TenantProductDetailPage() {
-  const { slug, productId } = useParams({ from: '/_protected/tenants/$slug/products/$productId' });
+  const { slug, productId } = useParams({
+    from: '/_protected/(tenant)/tenants/$slug/products/$productId',
+  });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [adjustmentModalOpen, setAdjustmentModalOpen] = useState(false);

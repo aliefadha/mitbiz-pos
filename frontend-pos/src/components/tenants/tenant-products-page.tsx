@@ -75,7 +75,7 @@ const formSchema = z.object({
 });
 
 export function TenantProductsPage() {
-  const { slug } = useParams({ from: '/_protected/tenants/$slug/products/' });
+  const { slug } = useParams({ from: '/_protected/(tenant)/tenants/$slug/products/' });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 

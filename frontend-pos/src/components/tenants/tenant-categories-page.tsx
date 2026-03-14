@@ -47,7 +47,7 @@ const formSchema = z.object({
 });
 
 export function TenantCategoriesPage() {
-  const { slug } = useParams({ from: '/_protected/tenants/$slug/categories/' });
+  const { slug } = useParams({ from: '/_protected/(tenant)/tenants/$slug/categories/' });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);

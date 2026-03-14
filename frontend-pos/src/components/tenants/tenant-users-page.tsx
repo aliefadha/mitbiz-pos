@@ -50,7 +50,7 @@ const formSchema = z.object({
 });
 
 export function TenantUsersPage() {
-  const { slug } = useParams({ from: '/_protected/tenants/$slug/users/' });
+  const { slug } = useParams({ from: '/_protected/(tenant)/tenants/$slug/users/' });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchText, setSearchText] = useState('');

@@ -1,13 +1,12 @@
+import { authClient } from '../auth-client';
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
-// CI/CD test build - triggered at 2026-03-03
-// Testing image path fix
 interface FetchOptions extends RequestInit {
   data?: unknown;
 }
 
 export async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
-  const { authClient } = await import('../auth-client');
   const session = await authClient.getSession();
 
   const headers: HeadersInit = {

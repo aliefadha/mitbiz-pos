@@ -20,8 +20,9 @@ export function useMenuConfig(): MenuGroup[] {
           );
           if (!hasAllPerms) return false;
 
-          // Check scope requirement
-          if (item.scope && item.scope !== userScope) {
+          // Check scope requirement (default to 'tenant' if not specified)
+          const itemScope = item.scope ?? 'tenant';
+          if (itemScope !== userScope) {
             return false;
           }
 
