@@ -19,9 +19,7 @@ import { Route as R403RouteImport } from './routes/403'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProtectedtenantLaporanRouteImport } from './routes/_protected/(tenant)/laporan'
 import { Route as ProtectedtenantDashboardRouteImport } from './routes/_protected/(tenant)/dashboard'
-import { Route as ProtectedglobalAdminRouteImport } from './routes/_protected/(global)/admin'
 import { Route as ProtectedtenantUsersIndexRouteImport } from './routes/_protected/(tenant)/users/index'
-import { Route as ProtectedtenantTenantsIndexRouteImport } from './routes/_protected/(tenant)/tenants/index'
 import { Route as ProtectedtenantStocksIndexRouteImport } from './routes/_protected/(tenant)/stocks/index'
 import { Route as ProtectedtenantStockAdjustmentIndexRouteImport } from './routes/_protected/(tenant)/stock-adjustment/index'
 import { Route as ProtectedtenantSettingsIndexRouteImport } from './routes/_protected/(tenant)/settings/index'
@@ -34,21 +32,14 @@ import { Route as ProtectedtenantDiscountsIndexRouteImport } from './routes/_pro
 import { Route as ProtectedtenantCategoriesIndexRouteImport } from './routes/_protected/(tenant)/categories/index'
 import { Route as ProtectedtenantCashShiftsIndexRouteImport } from './routes/_protected/(tenant)/cash-shifts/index'
 import { Route as ProtectedtenantAccountIndexRouteImport } from './routes/_protected/(tenant)/account/index'
-import { Route as ProtectedtenantTenantsNewRouteImport } from './routes/_protected/(tenant)/tenants/new'
+import { Route as ProtectedglobalAllUsersIndexRouteImport } from './routes/_protected/(global)/all-users/index'
+import { Route as ProtectedglobalAdminIndexRouteImport } from './routes/_protected/(global)/admin/index'
 import { Route as ProtectedtenantProductsNewRouteImport } from './routes/_protected/(tenant)/products/new'
 import { Route as ProtectedtenantProductsProductIdRouteImport } from './routes/_protected/(tenant)/products/$productId'
 import { Route as ProtectedtenantOutletsOutletIdRouteImport } from './routes/_protected/(tenant)/outlets/$outletId'
 import { Route as ProtectedtenantOrdersOrderIdRouteImport } from './routes/_protected/(tenant)/orders/$orderId'
 import { Route as ProtectedtenantCategoriesCategoryIdRouteImport } from './routes/_protected/(tenant)/categories/$categoryId'
 import { Route as ProtectedtenantCashShiftsCashShiftIdRouteImport } from './routes/_protected/(tenant)/cash-shifts/$cashShiftId'
-import { Route as ProtectedtenantTenantsSlugIndexRouteImport } from './routes/_protected/(tenant)/tenants/$slug/index'
-import { Route as ProtectedtenantTenantsSlugUsersIndexRouteImport } from './routes/_protected/(tenant)/tenants/$slug/users/index'
-import { Route as ProtectedtenantTenantsSlugProductsIndexRouteImport } from './routes/_protected/(tenant)/tenants/$slug/products/index'
-import { Route as ProtectedtenantTenantsSlugOutletsIndexRouteImport } from './routes/_protected/(tenant)/tenants/$slug/outlets/index'
-import { Route as ProtectedtenantTenantsSlugCategoriesIndexRouteImport } from './routes/_protected/(tenant)/tenants/$slug/categories/index'
-import { Route as ProtectedtenantTenantsSlugProductsNewRouteImport } from './routes/_protected/(tenant)/tenants/$slug/products/new'
-import { Route as ProtectedtenantTenantsSlugProductsProductIdRouteImport } from './routes/_protected/(tenant)/tenants/$slug/products/$productId'
-import { Route as ProtectedtenantTenantsSlugOutletsOutletIdRouteImport } from './routes/_protected/(tenant)/tenants/$slug/outlets/$outletId'
 
 const VerifyEmailRoute = VerifyEmailRouteImport.update({
   id: '/verify-email',
@@ -100,21 +91,10 @@ const ProtectedtenantDashboardRoute =
     path: '/dashboard',
     getParentRoute: () => ProtectedRoute,
   } as any)
-const ProtectedglobalAdminRoute = ProtectedglobalAdminRouteImport.update({
-  id: '/(global)/admin',
-  path: '/admin',
-  getParentRoute: () => ProtectedRoute,
-} as any)
 const ProtectedtenantUsersIndexRoute =
   ProtectedtenantUsersIndexRouteImport.update({
     id: '/(tenant)/users/',
     path: '/users/',
-    getParentRoute: () => ProtectedRoute,
-  } as any)
-const ProtectedtenantTenantsIndexRoute =
-  ProtectedtenantTenantsIndexRouteImport.update({
-    id: '/(tenant)/tenants/',
-    path: '/tenants/',
     getParentRoute: () => ProtectedRoute,
   } as any)
 const ProtectedtenantStocksIndexRoute =
@@ -188,10 +168,16 @@ const ProtectedtenantAccountIndexRoute =
     path: '/account/',
     getParentRoute: () => ProtectedRoute,
   } as any)
-const ProtectedtenantTenantsNewRoute =
-  ProtectedtenantTenantsNewRouteImport.update({
-    id: '/(tenant)/tenants/new',
-    path: '/tenants/new',
+const ProtectedglobalAllUsersIndexRoute =
+  ProtectedglobalAllUsersIndexRouteImport.update({
+    id: '/(global)/all-users/',
+    path: '/all-users/',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
+const ProtectedglobalAdminIndexRoute =
+  ProtectedglobalAdminIndexRouteImport.update({
+    id: '/(global)/admin/',
+    path: '/admin/',
     getParentRoute: () => ProtectedRoute,
   } as any)
 const ProtectedtenantProductsNewRoute =
@@ -230,54 +216,6 @@ const ProtectedtenantCashShiftsCashShiftIdRoute =
     path: '/cash-shifts/$cashShiftId',
     getParentRoute: () => ProtectedRoute,
   } as any)
-const ProtectedtenantTenantsSlugIndexRoute =
-  ProtectedtenantTenantsSlugIndexRouteImport.update({
-    id: '/(tenant)/tenants/$slug/',
-    path: '/tenants/$slug/',
-    getParentRoute: () => ProtectedRoute,
-  } as any)
-const ProtectedtenantTenantsSlugUsersIndexRoute =
-  ProtectedtenantTenantsSlugUsersIndexRouteImport.update({
-    id: '/(tenant)/tenants/$slug/users/',
-    path: '/tenants/$slug/users/',
-    getParentRoute: () => ProtectedRoute,
-  } as any)
-const ProtectedtenantTenantsSlugProductsIndexRoute =
-  ProtectedtenantTenantsSlugProductsIndexRouteImport.update({
-    id: '/(tenant)/tenants/$slug/products/',
-    path: '/tenants/$slug/products/',
-    getParentRoute: () => ProtectedRoute,
-  } as any)
-const ProtectedtenantTenantsSlugOutletsIndexRoute =
-  ProtectedtenantTenantsSlugOutletsIndexRouteImport.update({
-    id: '/(tenant)/tenants/$slug/outlets/',
-    path: '/tenants/$slug/outlets/',
-    getParentRoute: () => ProtectedRoute,
-  } as any)
-const ProtectedtenantTenantsSlugCategoriesIndexRoute =
-  ProtectedtenantTenantsSlugCategoriesIndexRouteImport.update({
-    id: '/(tenant)/tenants/$slug/categories/',
-    path: '/tenants/$slug/categories/',
-    getParentRoute: () => ProtectedRoute,
-  } as any)
-const ProtectedtenantTenantsSlugProductsNewRoute =
-  ProtectedtenantTenantsSlugProductsNewRouteImport.update({
-    id: '/(tenant)/tenants/$slug/products/new',
-    path: '/tenants/$slug/products/new',
-    getParentRoute: () => ProtectedRoute,
-  } as any)
-const ProtectedtenantTenantsSlugProductsProductIdRoute =
-  ProtectedtenantTenantsSlugProductsProductIdRouteImport.update({
-    id: '/(tenant)/tenants/$slug/products/$productId',
-    path: '/tenants/$slug/products/$productId',
-    getParentRoute: () => ProtectedRoute,
-  } as any)
-const ProtectedtenantTenantsSlugOutletsOutletIdRoute =
-  ProtectedtenantTenantsSlugOutletsOutletIdRouteImport.update({
-    id: '/(tenant)/tenants/$slug/outlets/$outletId',
-    path: '/tenants/$slug/outlets/$outletId',
-    getParentRoute: () => ProtectedRoute,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -287,7 +225,6 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/verify-email': typeof VerifyEmailRoute
-  '/admin': typeof ProtectedglobalAdminRoute
   '/dashboard': typeof ProtectedtenantDashboardRoute
   '/laporan': typeof ProtectedtenantLaporanRoute
   '/cash-shifts/$cashShiftId': typeof ProtectedtenantCashShiftsCashShiftIdRoute
@@ -296,7 +233,8 @@ export interface FileRoutesByFullPath {
   '/outlets/$outletId': typeof ProtectedtenantOutletsOutletIdRoute
   '/products/$productId': typeof ProtectedtenantProductsProductIdRoute
   '/products/new': typeof ProtectedtenantProductsNewRoute
-  '/tenants/new': typeof ProtectedtenantTenantsNewRoute
+  '/admin/': typeof ProtectedglobalAdminIndexRoute
+  '/all-users/': typeof ProtectedglobalAllUsersIndexRoute
   '/account/': typeof ProtectedtenantAccountIndexRoute
   '/cash-shifts/': typeof ProtectedtenantCashShiftsIndexRoute
   '/categories/': typeof ProtectedtenantCategoriesIndexRoute
@@ -309,16 +247,7 @@ export interface FileRoutesByFullPath {
   '/settings/': typeof ProtectedtenantSettingsIndexRoute
   '/stock-adjustment/': typeof ProtectedtenantStockAdjustmentIndexRoute
   '/stocks/': typeof ProtectedtenantStocksIndexRoute
-  '/tenants/': typeof ProtectedtenantTenantsIndexRoute
   '/users/': typeof ProtectedtenantUsersIndexRoute
-  '/tenants/$slug/': typeof ProtectedtenantTenantsSlugIndexRoute
-  '/tenants/$slug/outlets/$outletId': typeof ProtectedtenantTenantsSlugOutletsOutletIdRoute
-  '/tenants/$slug/products/$productId': typeof ProtectedtenantTenantsSlugProductsProductIdRoute
-  '/tenants/$slug/products/new': typeof ProtectedtenantTenantsSlugProductsNewRoute
-  '/tenants/$slug/categories/': typeof ProtectedtenantTenantsSlugCategoriesIndexRoute
-  '/tenants/$slug/outlets/': typeof ProtectedtenantTenantsSlugOutletsIndexRoute
-  '/tenants/$slug/products/': typeof ProtectedtenantTenantsSlugProductsIndexRoute
-  '/tenants/$slug/users/': typeof ProtectedtenantTenantsSlugUsersIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -328,7 +257,6 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/verify-email': typeof VerifyEmailRoute
-  '/admin': typeof ProtectedglobalAdminRoute
   '/dashboard': typeof ProtectedtenantDashboardRoute
   '/laporan': typeof ProtectedtenantLaporanRoute
   '/cash-shifts/$cashShiftId': typeof ProtectedtenantCashShiftsCashShiftIdRoute
@@ -337,7 +265,8 @@ export interface FileRoutesByTo {
   '/outlets/$outletId': typeof ProtectedtenantOutletsOutletIdRoute
   '/products/$productId': typeof ProtectedtenantProductsProductIdRoute
   '/products/new': typeof ProtectedtenantProductsNewRoute
-  '/tenants/new': typeof ProtectedtenantTenantsNewRoute
+  '/admin': typeof ProtectedglobalAdminIndexRoute
+  '/all-users': typeof ProtectedglobalAllUsersIndexRoute
   '/account': typeof ProtectedtenantAccountIndexRoute
   '/cash-shifts': typeof ProtectedtenantCashShiftsIndexRoute
   '/categories': typeof ProtectedtenantCategoriesIndexRoute
@@ -350,16 +279,7 @@ export interface FileRoutesByTo {
   '/settings': typeof ProtectedtenantSettingsIndexRoute
   '/stock-adjustment': typeof ProtectedtenantStockAdjustmentIndexRoute
   '/stocks': typeof ProtectedtenantStocksIndexRoute
-  '/tenants': typeof ProtectedtenantTenantsIndexRoute
   '/users': typeof ProtectedtenantUsersIndexRoute
-  '/tenants/$slug': typeof ProtectedtenantTenantsSlugIndexRoute
-  '/tenants/$slug/outlets/$outletId': typeof ProtectedtenantTenantsSlugOutletsOutletIdRoute
-  '/tenants/$slug/products/$productId': typeof ProtectedtenantTenantsSlugProductsProductIdRoute
-  '/tenants/$slug/products/new': typeof ProtectedtenantTenantsSlugProductsNewRoute
-  '/tenants/$slug/categories': typeof ProtectedtenantTenantsSlugCategoriesIndexRoute
-  '/tenants/$slug/outlets': typeof ProtectedtenantTenantsSlugOutletsIndexRoute
-  '/tenants/$slug/products': typeof ProtectedtenantTenantsSlugProductsIndexRoute
-  '/tenants/$slug/users': typeof ProtectedtenantTenantsSlugUsersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -371,7 +291,6 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/verify-email': typeof VerifyEmailRoute
-  '/_protected/(global)/admin': typeof ProtectedglobalAdminRoute
   '/_protected/(tenant)/dashboard': typeof ProtectedtenantDashboardRoute
   '/_protected/(tenant)/laporan': typeof ProtectedtenantLaporanRoute
   '/_protected/(tenant)/cash-shifts/$cashShiftId': typeof ProtectedtenantCashShiftsCashShiftIdRoute
@@ -380,7 +299,8 @@ export interface FileRoutesById {
   '/_protected/(tenant)/outlets/$outletId': typeof ProtectedtenantOutletsOutletIdRoute
   '/_protected/(tenant)/products/$productId': typeof ProtectedtenantProductsProductIdRoute
   '/_protected/(tenant)/products/new': typeof ProtectedtenantProductsNewRoute
-  '/_protected/(tenant)/tenants/new': typeof ProtectedtenantTenantsNewRoute
+  '/_protected/(global)/admin/': typeof ProtectedglobalAdminIndexRoute
+  '/_protected/(global)/all-users/': typeof ProtectedglobalAllUsersIndexRoute
   '/_protected/(tenant)/account/': typeof ProtectedtenantAccountIndexRoute
   '/_protected/(tenant)/cash-shifts/': typeof ProtectedtenantCashShiftsIndexRoute
   '/_protected/(tenant)/categories/': typeof ProtectedtenantCategoriesIndexRoute
@@ -393,16 +313,7 @@ export interface FileRoutesById {
   '/_protected/(tenant)/settings/': typeof ProtectedtenantSettingsIndexRoute
   '/_protected/(tenant)/stock-adjustment/': typeof ProtectedtenantStockAdjustmentIndexRoute
   '/_protected/(tenant)/stocks/': typeof ProtectedtenantStocksIndexRoute
-  '/_protected/(tenant)/tenants/': typeof ProtectedtenantTenantsIndexRoute
   '/_protected/(tenant)/users/': typeof ProtectedtenantUsersIndexRoute
-  '/_protected/(tenant)/tenants/$slug/': typeof ProtectedtenantTenantsSlugIndexRoute
-  '/_protected/(tenant)/tenants/$slug/outlets/$outletId': typeof ProtectedtenantTenantsSlugOutletsOutletIdRoute
-  '/_protected/(tenant)/tenants/$slug/products/$productId': typeof ProtectedtenantTenantsSlugProductsProductIdRoute
-  '/_protected/(tenant)/tenants/$slug/products/new': typeof ProtectedtenantTenantsSlugProductsNewRoute
-  '/_protected/(tenant)/tenants/$slug/categories/': typeof ProtectedtenantTenantsSlugCategoriesIndexRoute
-  '/_protected/(tenant)/tenants/$slug/outlets/': typeof ProtectedtenantTenantsSlugOutletsIndexRoute
-  '/_protected/(tenant)/tenants/$slug/products/': typeof ProtectedtenantTenantsSlugProductsIndexRoute
-  '/_protected/(tenant)/tenants/$slug/users/': typeof ProtectedtenantTenantsSlugUsersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -414,7 +325,6 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/verify-email'
-    | '/admin'
     | '/dashboard'
     | '/laporan'
     | '/cash-shifts/$cashShiftId'
@@ -423,7 +333,8 @@ export interface FileRouteTypes {
     | '/outlets/$outletId'
     | '/products/$productId'
     | '/products/new'
-    | '/tenants/new'
+    | '/admin/'
+    | '/all-users/'
     | '/account/'
     | '/cash-shifts/'
     | '/categories/'
@@ -436,16 +347,7 @@ export interface FileRouteTypes {
     | '/settings/'
     | '/stock-adjustment/'
     | '/stocks/'
-    | '/tenants/'
     | '/users/'
-    | '/tenants/$slug/'
-    | '/tenants/$slug/outlets/$outletId'
-    | '/tenants/$slug/products/$productId'
-    | '/tenants/$slug/products/new'
-    | '/tenants/$slug/categories/'
-    | '/tenants/$slug/outlets/'
-    | '/tenants/$slug/products/'
-    | '/tenants/$slug/users/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -455,7 +357,6 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/verify-email'
-    | '/admin'
     | '/dashboard'
     | '/laporan'
     | '/cash-shifts/$cashShiftId'
@@ -464,7 +365,8 @@ export interface FileRouteTypes {
     | '/outlets/$outletId'
     | '/products/$productId'
     | '/products/new'
-    | '/tenants/new'
+    | '/admin'
+    | '/all-users'
     | '/account'
     | '/cash-shifts'
     | '/categories'
@@ -477,16 +379,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/stock-adjustment'
     | '/stocks'
-    | '/tenants'
     | '/users'
-    | '/tenants/$slug'
-    | '/tenants/$slug/outlets/$outletId'
-    | '/tenants/$slug/products/$productId'
-    | '/tenants/$slug/products/new'
-    | '/tenants/$slug/categories'
-    | '/tenants/$slug/outlets'
-    | '/tenants/$slug/products'
-    | '/tenants/$slug/users'
   id:
     | '__root__'
     | '/'
@@ -497,7 +390,6 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/verify-email'
-    | '/_protected/(global)/admin'
     | '/_protected/(tenant)/dashboard'
     | '/_protected/(tenant)/laporan'
     | '/_protected/(tenant)/cash-shifts/$cashShiftId'
@@ -506,7 +398,8 @@ export interface FileRouteTypes {
     | '/_protected/(tenant)/outlets/$outletId'
     | '/_protected/(tenant)/products/$productId'
     | '/_protected/(tenant)/products/new'
-    | '/_protected/(tenant)/tenants/new'
+    | '/_protected/(global)/admin/'
+    | '/_protected/(global)/all-users/'
     | '/_protected/(tenant)/account/'
     | '/_protected/(tenant)/cash-shifts/'
     | '/_protected/(tenant)/categories/'
@@ -519,16 +412,7 @@ export interface FileRouteTypes {
     | '/_protected/(tenant)/settings/'
     | '/_protected/(tenant)/stock-adjustment/'
     | '/_protected/(tenant)/stocks/'
-    | '/_protected/(tenant)/tenants/'
     | '/_protected/(tenant)/users/'
-    | '/_protected/(tenant)/tenants/$slug/'
-    | '/_protected/(tenant)/tenants/$slug/outlets/$outletId'
-    | '/_protected/(tenant)/tenants/$slug/products/$productId'
-    | '/_protected/(tenant)/tenants/$slug/products/new'
-    | '/_protected/(tenant)/tenants/$slug/categories/'
-    | '/_protected/(tenant)/tenants/$slug/outlets/'
-    | '/_protected/(tenant)/tenants/$slug/products/'
-    | '/_protected/(tenant)/tenants/$slug/users/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -614,25 +498,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedtenantDashboardRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/(global)/admin': {
-      id: '/_protected/(global)/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof ProtectedglobalAdminRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
     '/_protected/(tenant)/users/': {
       id: '/_protected/(tenant)/users/'
       path: '/users'
       fullPath: '/users/'
       preLoaderRoute: typeof ProtectedtenantUsersIndexRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
-    '/_protected/(tenant)/tenants/': {
-      id: '/_protected/(tenant)/tenants/'
-      path: '/tenants'
-      fullPath: '/tenants/'
-      preLoaderRoute: typeof ProtectedtenantTenantsIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
     '/_protected/(tenant)/stocks/': {
@@ -719,11 +589,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedtenantAccountIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/(tenant)/tenants/new': {
-      id: '/_protected/(tenant)/tenants/new'
-      path: '/tenants/new'
-      fullPath: '/tenants/new'
-      preLoaderRoute: typeof ProtectedtenantTenantsNewRouteImport
+    '/_protected/(global)/all-users/': {
+      id: '/_protected/(global)/all-users/'
+      path: '/all-users'
+      fullPath: '/all-users/'
+      preLoaderRoute: typeof ProtectedglobalAllUsersIndexRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/(global)/admin/': {
+      id: '/_protected/(global)/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof ProtectedglobalAdminIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
     '/_protected/(tenant)/products/new': {
@@ -768,67 +645,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedtenantCashShiftsCashShiftIdRouteImport
       parentRoute: typeof ProtectedRoute
     }
-    '/_protected/(tenant)/tenants/$slug/': {
-      id: '/_protected/(tenant)/tenants/$slug/'
-      path: '/tenants/$slug'
-      fullPath: '/tenants/$slug/'
-      preLoaderRoute: typeof ProtectedtenantTenantsSlugIndexRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
-    '/_protected/(tenant)/tenants/$slug/users/': {
-      id: '/_protected/(tenant)/tenants/$slug/users/'
-      path: '/tenants/$slug/users'
-      fullPath: '/tenants/$slug/users/'
-      preLoaderRoute: typeof ProtectedtenantTenantsSlugUsersIndexRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
-    '/_protected/(tenant)/tenants/$slug/products/': {
-      id: '/_protected/(tenant)/tenants/$slug/products/'
-      path: '/tenants/$slug/products'
-      fullPath: '/tenants/$slug/products/'
-      preLoaderRoute: typeof ProtectedtenantTenantsSlugProductsIndexRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
-    '/_protected/(tenant)/tenants/$slug/outlets/': {
-      id: '/_protected/(tenant)/tenants/$slug/outlets/'
-      path: '/tenants/$slug/outlets'
-      fullPath: '/tenants/$slug/outlets/'
-      preLoaderRoute: typeof ProtectedtenantTenantsSlugOutletsIndexRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
-    '/_protected/(tenant)/tenants/$slug/categories/': {
-      id: '/_protected/(tenant)/tenants/$slug/categories/'
-      path: '/tenants/$slug/categories'
-      fullPath: '/tenants/$slug/categories/'
-      preLoaderRoute: typeof ProtectedtenantTenantsSlugCategoriesIndexRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
-    '/_protected/(tenant)/tenants/$slug/products/new': {
-      id: '/_protected/(tenant)/tenants/$slug/products/new'
-      path: '/tenants/$slug/products/new'
-      fullPath: '/tenants/$slug/products/new'
-      preLoaderRoute: typeof ProtectedtenantTenantsSlugProductsNewRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
-    '/_protected/(tenant)/tenants/$slug/products/$productId': {
-      id: '/_protected/(tenant)/tenants/$slug/products/$productId'
-      path: '/tenants/$slug/products/$productId'
-      fullPath: '/tenants/$slug/products/$productId'
-      preLoaderRoute: typeof ProtectedtenantTenantsSlugProductsProductIdRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
-    '/_protected/(tenant)/tenants/$slug/outlets/$outletId': {
-      id: '/_protected/(tenant)/tenants/$slug/outlets/$outletId'
-      path: '/tenants/$slug/outlets/$outletId'
-      fullPath: '/tenants/$slug/outlets/$outletId'
-      preLoaderRoute: typeof ProtectedtenantTenantsSlugOutletsOutletIdRouteImport
-      parentRoute: typeof ProtectedRoute
-    }
   }
 }
 
 interface ProtectedRouteChildren {
-  ProtectedglobalAdminRoute: typeof ProtectedglobalAdminRoute
   ProtectedtenantDashboardRoute: typeof ProtectedtenantDashboardRoute
   ProtectedtenantLaporanRoute: typeof ProtectedtenantLaporanRoute
   ProtectedtenantCashShiftsCashShiftIdRoute: typeof ProtectedtenantCashShiftsCashShiftIdRoute
@@ -837,7 +657,8 @@ interface ProtectedRouteChildren {
   ProtectedtenantOutletsOutletIdRoute: typeof ProtectedtenantOutletsOutletIdRoute
   ProtectedtenantProductsProductIdRoute: typeof ProtectedtenantProductsProductIdRoute
   ProtectedtenantProductsNewRoute: typeof ProtectedtenantProductsNewRoute
-  ProtectedtenantTenantsNewRoute: typeof ProtectedtenantTenantsNewRoute
+  ProtectedglobalAdminIndexRoute: typeof ProtectedglobalAdminIndexRoute
+  ProtectedglobalAllUsersIndexRoute: typeof ProtectedglobalAllUsersIndexRoute
   ProtectedtenantAccountIndexRoute: typeof ProtectedtenantAccountIndexRoute
   ProtectedtenantCashShiftsIndexRoute: typeof ProtectedtenantCashShiftsIndexRoute
   ProtectedtenantCategoriesIndexRoute: typeof ProtectedtenantCategoriesIndexRoute
@@ -850,20 +671,10 @@ interface ProtectedRouteChildren {
   ProtectedtenantSettingsIndexRoute: typeof ProtectedtenantSettingsIndexRoute
   ProtectedtenantStockAdjustmentIndexRoute: typeof ProtectedtenantStockAdjustmentIndexRoute
   ProtectedtenantStocksIndexRoute: typeof ProtectedtenantStocksIndexRoute
-  ProtectedtenantTenantsIndexRoute: typeof ProtectedtenantTenantsIndexRoute
   ProtectedtenantUsersIndexRoute: typeof ProtectedtenantUsersIndexRoute
-  ProtectedtenantTenantsSlugIndexRoute: typeof ProtectedtenantTenantsSlugIndexRoute
-  ProtectedtenantTenantsSlugOutletsOutletIdRoute: typeof ProtectedtenantTenantsSlugOutletsOutletIdRoute
-  ProtectedtenantTenantsSlugProductsProductIdRoute: typeof ProtectedtenantTenantsSlugProductsProductIdRoute
-  ProtectedtenantTenantsSlugProductsNewRoute: typeof ProtectedtenantTenantsSlugProductsNewRoute
-  ProtectedtenantTenantsSlugCategoriesIndexRoute: typeof ProtectedtenantTenantsSlugCategoriesIndexRoute
-  ProtectedtenantTenantsSlugOutletsIndexRoute: typeof ProtectedtenantTenantsSlugOutletsIndexRoute
-  ProtectedtenantTenantsSlugProductsIndexRoute: typeof ProtectedtenantTenantsSlugProductsIndexRoute
-  ProtectedtenantTenantsSlugUsersIndexRoute: typeof ProtectedtenantTenantsSlugUsersIndexRoute
 }
 
 const ProtectedRouteChildren: ProtectedRouteChildren = {
-  ProtectedglobalAdminRoute: ProtectedglobalAdminRoute,
   ProtectedtenantDashboardRoute: ProtectedtenantDashboardRoute,
   ProtectedtenantLaporanRoute: ProtectedtenantLaporanRoute,
   ProtectedtenantCashShiftsCashShiftIdRoute:
@@ -874,7 +685,8 @@ const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedtenantOutletsOutletIdRoute: ProtectedtenantOutletsOutletIdRoute,
   ProtectedtenantProductsProductIdRoute: ProtectedtenantProductsProductIdRoute,
   ProtectedtenantProductsNewRoute: ProtectedtenantProductsNewRoute,
-  ProtectedtenantTenantsNewRoute: ProtectedtenantTenantsNewRoute,
+  ProtectedglobalAdminIndexRoute: ProtectedglobalAdminIndexRoute,
+  ProtectedglobalAllUsersIndexRoute: ProtectedglobalAllUsersIndexRoute,
   ProtectedtenantAccountIndexRoute: ProtectedtenantAccountIndexRoute,
   ProtectedtenantCashShiftsIndexRoute: ProtectedtenantCashShiftsIndexRoute,
   ProtectedtenantCategoriesIndexRoute: ProtectedtenantCategoriesIndexRoute,
@@ -889,23 +701,7 @@ const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedtenantStockAdjustmentIndexRoute:
     ProtectedtenantStockAdjustmentIndexRoute,
   ProtectedtenantStocksIndexRoute: ProtectedtenantStocksIndexRoute,
-  ProtectedtenantTenantsIndexRoute: ProtectedtenantTenantsIndexRoute,
   ProtectedtenantUsersIndexRoute: ProtectedtenantUsersIndexRoute,
-  ProtectedtenantTenantsSlugIndexRoute: ProtectedtenantTenantsSlugIndexRoute,
-  ProtectedtenantTenantsSlugOutletsOutletIdRoute:
-    ProtectedtenantTenantsSlugOutletsOutletIdRoute,
-  ProtectedtenantTenantsSlugProductsProductIdRoute:
-    ProtectedtenantTenantsSlugProductsProductIdRoute,
-  ProtectedtenantTenantsSlugProductsNewRoute:
-    ProtectedtenantTenantsSlugProductsNewRoute,
-  ProtectedtenantTenantsSlugCategoriesIndexRoute:
-    ProtectedtenantTenantsSlugCategoriesIndexRoute,
-  ProtectedtenantTenantsSlugOutletsIndexRoute:
-    ProtectedtenantTenantsSlugOutletsIndexRoute,
-  ProtectedtenantTenantsSlugProductsIndexRoute:
-    ProtectedtenantTenantsSlugProductsIndexRoute,
-  ProtectedtenantTenantsSlugUsersIndexRoute:
-    ProtectedtenantTenantsSlugUsersIndexRoute,
 }
 
 const ProtectedRouteWithChildren = ProtectedRoute._addFileChildren(

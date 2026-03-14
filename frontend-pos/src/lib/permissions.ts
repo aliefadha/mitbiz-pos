@@ -240,7 +240,6 @@ export const ROUTE_PERMISSIONS: Record<string, PermissionCheck> = {
   '/pos': { resource: 'orders', action: 'create' },
   '/orders': { resource: 'orders', action: 'read' },
   '/cash-shifts': { resource: 'cashShifts', action: 'read' },
-  '/tenants': { resource: 'tenants', action: 'read' },
   '/outlets': { resource: 'outlets', action: 'read' },
   '/account': { resource: 'users', action: 'read' },
   '/categories': { resource: 'categories', action: 'read' },
