@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createFileRoute, redirect } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import { Plus, User as UserIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -34,7 +34,7 @@ import {
 } from '@/components/ui/table';
 import { type CreateUserDto, usersApi } from '@/lib/api/users';
 import { useSession } from '@/lib/auth-client';
-import { checkPermission } from '@/lib/permissions';
+import { checkPermissionWithScope } from '@/lib/permissions';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -211,9 +211,6 @@ function AccountPage() {
 export const Route = createFileRoute('/_protected/(tenant)/account/')({
   component: AccountPage,
   beforeLoad: async () => {
-    const { allowed } = await checkPermission('users', 'read');
-    if (!allowed) {
-      throw redirect({ to: '/403' });
-    }
+    await checkPermissionWithScope('users', 'read', 'tenant');
   },
 });

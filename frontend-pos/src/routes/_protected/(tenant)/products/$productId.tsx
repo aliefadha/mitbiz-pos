@@ -6,8 +6,6 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { ErrorPage } from '@/components/error-page';
-import { ForbiddenPage } from '@/components/forbidden-page';
 import { ProductStockSection } from '@/components/products/product-stock-section';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,7 +33,7 @@ import { usePermissions } from '@/hooks/use-auth';
 import { categoriesApi } from '@/lib/api/categories';
 import { discountsApi } from '@/lib/api/discounts';
 import { productsApi, type UpdateProductDto } from '@/lib/api/products';
-import { checkPermission, ForbiddenError } from '@/lib/permissions';
+import { checkPermissionWithScope } from '@/lib/permissions';
 
 function formatRupiah(value: number | string): string {
   const num = typeof value === 'string' ? parseFloat(value) : value;
@@ -514,15 +512,6 @@ function ProductDetailPage() {
 export const Route = createFileRoute('/_protected/(tenant)/products/$productId')({
   component: ProductDetailPage,
   beforeLoad: async () => {
-    const { allowed } = await checkPermission('products', 'read');
-    if (!allowed) {
-      throw new ForbiddenError('products');
-    }
-  },
-  errorComponent: ({ error }) => {
-    if (error instanceof ForbiddenError) {
-      return <ForbiddenPage resource={error.resource} />;
-    }
-    return <ErrorPage reset={() => window.location.reload()} />;
+    await checkPermissionWithScope('products', 'read', 'tenant');
   },
 });

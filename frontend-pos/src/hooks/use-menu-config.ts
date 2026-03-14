@@ -7,7 +7,7 @@ export function useMenuConfig(): MenuGroup[] {
   const { user } = useAuth();
   const { hasPermission } = usePermissions();
 
-  const userScope = user?.roles?.scope;
+  const userScope = user?.roleScope;
 
   const filteredMenuConfig = useMemo(() => {
     return menuConfig

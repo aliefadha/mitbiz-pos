@@ -8,7 +8,11 @@ export const Route = createFileRoute('/')({
     if (!session) {
       throw redirect({ to: '/login' });
     } else {
-      throw redirect({ to: '/dashboard' });
+      if (session.user.roleScope === 'global') {
+        throw redirect({ to: '/admin' });
+      } else {
+        throw redirect({ to: '/dashboard' });
+      }
     }
   },
 });

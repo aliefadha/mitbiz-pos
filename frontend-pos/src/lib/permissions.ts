@@ -12,7 +12,7 @@ export interface PermissionCheck {
 export interface RoutePermissionConfig {
   resource: string;
   action: string;
-  scope?: UserScope;
+  scope: UserScope;
 }
 
 /**
@@ -30,7 +30,7 @@ export async function checkPermission(
   }
 
   const roleId = (session.data.user as unknown as { roleId?: string })?.roleId;
-  const scope = (session.data.user as unknown as { roles?: { scope: UserScope } })?.roles?.scope;
+  const scope = (session.data.user as unknown as { roleScope?: UserScope })?.roleScope;
 
   if (!roleId) {
     return { allowed: false, scope };
@@ -67,7 +67,7 @@ export async function checkAnyPermission(
   }
 
   const roleId = (session.data.user as unknown as { roleId?: string })?.roleId;
-  const scope = (session.data.user as unknown as { roles?: { scope: UserScope } })?.roles?.scope;
+  const scope = (session.data.user as unknown as { roleScope?: UserScope })?.roleScope;
 
   if (!roleId) {
     return { allowed: false, scope };
@@ -102,7 +102,7 @@ export async function checkAllPermissions(
   }
 
   const roleId = (session.data.user as unknown as { roleId?: string })?.roleId;
-  const scope = (session.data.user as unknown as { roles?: { scope: UserScope } })?.roles?.scope;
+  const scope = (session.data.user as unknown as { roleScope?: UserScope })?.roleScope;
 
   if (!roleId) {
     return { allowed: false, scope };
@@ -131,7 +131,7 @@ export async function checkAllPermissions(
 export async function checkPermissionWithScope(
   resource: string,
   action: string,
-  requiredScope?: UserScope
+  requiredScope: UserScope
 ): Promise<{ allowed: boolean; scope: UserScope }> {
   const { allowed, scope } = await checkPermission(resource, action);
 
@@ -205,7 +205,7 @@ export function getRoutePermission(pathname: string): RoutePermissionConfig | nu
   }
 
   // Determine scope requirement
-  let scope: UserScope;
+  let scope: UserScope = 'global';
   if (baseSegment === 'tenants') {
     scope = 'global';
   }
@@ -223,6 +223,10 @@ export async function checkRoutePermission(pathname: string): Promise<{ allowed:
   if (!config) {
     // No specific permission required for this route
     return { allowed: true };
+  }
+
+  if (!config.scope) {
+    throw new Error(`Scope is required for route permission check: ${pathname}`);
   }
 
   await checkPermissionWithScope(config.resource, config.action, config.scope);

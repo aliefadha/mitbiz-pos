@@ -1,7 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { Plus } from 'lucide-react';
-import { ErrorPage } from '@/components/error-page';
-import { ForbiddenPage } from '@/components/forbidden-page';
 import { DeleteProductDialog } from '@/components/products/dialogs';
 import { useProductsPage } from '@/components/products/hooks/use-products-page';
 import { ProductList } from '@/components/products/product-list';
@@ -9,7 +7,7 @@ import { ProductStats } from '@/components/products/product-stats';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePermissions } from '@/hooks/use-auth';
-import { checkPermission, ForbiddenError } from '@/lib/permissions';
+import { checkPermissionWithScope } from '@/lib/permissions';
 
 function ProductPage() {
   const navigate = useNavigate();
@@ -108,15 +106,6 @@ function ProductPage() {
 export const Route = createFileRoute('/_protected/(tenant)/products/')({
   component: ProductPage,
   beforeLoad: async () => {
-    const { allowed } = await checkPermission('products', 'read');
-    if (!allowed) {
-      throw new ForbiddenError('products');
-    }
-  },
-  errorComponent: ({ error }) => {
-    if (error instanceof ForbiddenError) {
-      return <ForbiddenPage resource={error.resource} />;
-    }
-    return <ErrorPage reset={() => window.location.reload()} />;
+    await checkPermissionWithScope('products', 'read', 'tenant');
   },
 });

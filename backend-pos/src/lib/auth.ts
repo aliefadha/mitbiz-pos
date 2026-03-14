@@ -75,11 +75,13 @@ export const auth = betterAuth({
   plugins: [
     openAPI(),
     customSession(async ({ user, session }) => {
-      const roles = await findUserRoles(session.userId);
+      const role = await findUserRoles(session.userId);
       return {
         user: {
           ...user,
-          roles,
+          roleId: role?.id ?? null,
+          roleName: role?.name ?? null,
+          roleScope: role?.scope ?? null,
         },
         session,
       };

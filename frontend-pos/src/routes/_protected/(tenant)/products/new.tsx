@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { ArrowLeft, Save } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -30,7 +30,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { categoriesApi } from '@/lib/api/categories';
 import { type CreateProductDto, productsApi } from '@/lib/api/products';
 import { useSession } from '@/lib/auth-client';
-import { checkPermission } from '@/lib/permissions';
+import { checkPermissionWithScope } from '@/lib/permissions';
 
 const formSchema = z.object({
   sku: z.string().min(1, 'SKU wajib diisi'),
@@ -299,9 +299,6 @@ export function CreateProductPage() {
 export const Route = createFileRoute('/_protected/(tenant)/products/new')({
   component: CreateProductPage,
   beforeLoad: async () => {
-    const { allowed } = await checkPermission('products', 'create');
-    if (!allowed) {
-      throw redirect({ to: '/403' });
-    }
+    await checkPermissionWithScope('products', 'create', 'tenant');
   },
 });

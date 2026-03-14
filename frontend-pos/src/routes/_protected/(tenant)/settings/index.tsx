@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { createFileRoute, redirect } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import { Building2, Save, Settings, Upload } from 'lucide-react';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
@@ -21,7 +21,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { usePermissions } from '@/hooks/use-auth';
 import { type TenantSettings, tenantsApi } from '@/lib/api/tenants';
 import { useSession } from '@/lib/auth-client';
-import { checkPermission } from '@/lib/permissions';
+import { checkPermissionWithScope } from '@/lib/permissions';
 
 const settingsFormSchema = z.object({
   nama: z.string().min(1, 'Business name is required'),
@@ -280,9 +280,6 @@ function SettingsPage() {
 export const Route = createFileRoute('/_protected/(tenant)/settings/')({
   component: SettingsPage,
   beforeLoad: async () => {
-    const { allowed } = await checkPermission('tenants', 'read');
-    if (!allowed) {
-      throw redirect({ to: '/403' });
-    }
+    await checkPermissionWithScope('tenants', 'read', 'tenant');
   },
 });

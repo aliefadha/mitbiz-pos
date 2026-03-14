@@ -1,4 +1,4 @@
-import { createFileRoute, redirect } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import { Plus } from 'lucide-react';
 import {
   CreatePaymentMethodDialog,
@@ -10,7 +10,7 @@ import { PaymentMethodStats } from '@/components/payment-methods/payment-method-
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePermissions } from '@/hooks/use-auth';
-import { checkPermission } from '@/lib/permissions';
+import { checkPermissionWithScope } from '@/lib/permissions';
 
 export function PaymentMethodPage() {
   const { hasPermission } = usePermissions();
@@ -125,9 +125,6 @@ export function PaymentMethodPage() {
 export const Route = createFileRoute('/_protected/(tenant)/payment-methods/')({
   component: PaymentMethodPage,
   beforeLoad: async () => {
-    const { allowed } = await checkPermission('paymentMethods', 'read');
-    if (!allowed) {
-      throw redirect({ to: '/403' });
-    }
+    await checkPermissionWithScope('paymentMethods', 'read', 'tenant');
   },
 });

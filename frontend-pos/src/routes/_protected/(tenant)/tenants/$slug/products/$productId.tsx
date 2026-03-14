@@ -5,6 +5,6 @@ import { checkPermissionWithScope } from '@/lib/permissions';
 export const Route = createFileRoute('/_protected/(tenant)/tenants/$slug/products/$productId')({
   component: TenantProductDetailPage,
   beforeLoad: async () => {
-    await checkPermissionWithScope('products', 'read', 'global');
+    await checkPermissionWithScope('products', 'read', 'tenant');
   },
 });

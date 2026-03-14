@@ -5,6 +5,6 @@ import { checkPermissionWithScope } from '@/lib/permissions';
 export const Route = createFileRoute('/_protected/(tenant)/tenants/')({
   component: TenantsPage,
   beforeLoad: async () => {
-    await checkPermissionWithScope('tenants', 'read', 'global');
+    await checkPermissionWithScope('tenants', 'read', 'tenant');
   },
 });

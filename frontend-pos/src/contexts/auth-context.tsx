@@ -12,17 +12,14 @@ export interface User {
   name?: string;
   image?: string;
   roleId?: string;
+  roleName?: string;
+  roleScope?: UserScope;
   tenantId?: string;
   outletId?: string;
   isSubscribed?: boolean;
   emailVerified?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
-  roles?: {
-    id: string;
-    name: string;
-    scope: UserScope;
-  };
 }
 
 export interface AuthContextType {
@@ -105,10 +102,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [hasAnyPermission]
   );
 
-  // Extract scope from user.roles (provided by backend customSession)
+  // Extract scope from user.roleScope (provided by backend customSession)
   const scope = useMemo<UserScope>(() => {
-    return user?.roles?.scope;
-  }, [user?.roles?.scope]);
+    return user?.roleScope;
+  }, [user?.roleScope]);
 
   const value: AuthContextType = {
     user: user ?? null,

@@ -1,4 +1,4 @@
-import { createFileRoute, Link, redirect, useParams } from '@tanstack/react-router';
+import { createFileRoute, Link, useParams } from '@tanstack/react-router';
 import { ArrowLeft, RotateCcw, XCircle } from 'lucide-react';
 import { useState } from 'react';
 import { CancelOrderDialog, RefundOrderDialog } from '@/components/orders/dialogs';
@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePermissions } from '@/hooks/use-auth';
 import { useSession } from '@/lib/auth-client';
-import { checkPermission } from '@/lib/permissions';
+import { checkPermissionWithScope } from '@/lib/permissions';
 
 export function OrderDetailPage() {
   const { orderId } = useParams({ from: '/_protected/(tenant)/orders/$orderId' });
@@ -102,9 +102,6 @@ export function OrderDetailPage() {
 export const Route = createFileRoute('/_protected/(tenant)/orders/$orderId')({
   component: OrderDetailPage,
   beforeLoad: async () => {
-    const { allowed } = await checkPermission('orders', 'read');
-    if (!allowed) {
-      throw redirect({ to: '/403' });
-    }
+    await checkPermissionWithScope('orders', 'read', 'tenant');
   },
 });

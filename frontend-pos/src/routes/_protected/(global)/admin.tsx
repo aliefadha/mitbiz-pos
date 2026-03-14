@@ -6,10 +6,10 @@ import { SalesTrendChart } from '@/components/dashboard/sales-trend-chart';
 import { StatCards } from '@/components/dashboard/stat-cards';
 import { checkPermissionWithScope } from '@/lib/permissions';
 
-export const Route = createFileRoute('/_protected/(tenant)/dashboard')({
+export const Route = createFileRoute('/_protected/(global)/admin')({
   component: DashboardPage,
   beforeLoad: async () => {
-    await checkPermissionWithScope('dashboard', 'read', 'tenant');
+    await checkPermissionWithScope('dashboard', 'read', 'global');
   },
 });
 

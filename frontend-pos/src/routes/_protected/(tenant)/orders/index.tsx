@@ -1,4 +1,4 @@
-import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { StatCardsLaporan } from '@/components/dashboard/stat-cards-laporan';
 import { useOrdersPage } from '@/components/orders/hooks';
 import { OrderFilters } from '@/components/orders/order-filters';
@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePermissions } from '@/hooks/use-auth';
 import { useSession } from '@/lib/auth-client';
-import { checkPermission } from '@/lib/permissions';
+import { checkPermissionWithScope } from '@/lib/permissions';
 
 export function OrdersPage() {
   const navigate = useNavigate();
@@ -90,9 +90,6 @@ export function OrdersPage() {
 export const Route = createFileRoute('/_protected/(tenant)/orders/')({
   component: OrdersPage,
   beforeLoad: async () => {
-    const { allowed } = await checkPermission('orders', 'read');
-    if (!allowed) {
-      throw redirect({ to: '/403' });
-    }
+    await checkPermissionWithScope('orders', 'read', 'tenant');
   },
 });

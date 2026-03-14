@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createFileRoute, redirect } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import {
   CheckCircle,
   ChevronLeft,
@@ -42,7 +42,7 @@ import { paymentMethodsApi } from '@/lib/api/payment-methods';
 import { type Product, productsApi } from '@/lib/api/products';
 import { tenantsApi } from '@/lib/api/tenants';
 import { useSession } from '@/lib/auth-client';
-import { checkPermission } from '@/lib/permissions';
+import { checkPermissionWithScope } from '@/lib/permissions';
 import { formatRupiah } from '@/lib/utils';
 
 function useMediaQuery(query: string): boolean {
@@ -1122,9 +1122,6 @@ function PosPage() {
 export const Route = createFileRoute('/_protected/(tenant)/pos/')({
   component: PosPage,
   beforeLoad: async () => {
-    const { allowed } = await checkPermission('orders', 'create');
-    if (!allowed) {
-      throw redirect({ to: '/403' });
-    }
+    await checkPermissionWithScope('orders', 'create', 'tenant');
   },
 });

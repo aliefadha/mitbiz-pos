@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { AlertCircle, Home, RotateCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from './ui/card';
 
 interface ErrorPageProps {
   reset: () => void;
@@ -19,8 +20,8 @@ export function ErrorPage({ reset }: ErrorPageProps) {
       <div className="pointer-events-none absolute -bottom-24 left-1/4 h-[400px] w-[400px] rounded-full bg-blue-300/8 blur-[100px]" />
 
       {/* Center Panel - Error Display */}
-      <div className="z-10 w-full max-w-md rounded-md bg-white p-10 shadow-sm">
-        <div className="flex flex-col items-center text-center">
+      <Card>
+        <CardContent className="flex flex-col items-center text-center">
           <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-red-100">
             <AlertCircle className="h-10 w-10 text-red-600" />
           </div>
@@ -45,8 +46,8 @@ export function ErrorPage({ reset }: ErrorPageProps) {
               </Button>
             </Link>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

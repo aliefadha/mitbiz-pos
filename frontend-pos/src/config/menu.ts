@@ -29,6 +29,7 @@ export interface MenuGroup {
 }
 
 export const menuConfig: MenuGroup[] = [
+  // ============ TENANT SCOPE ============
   {
     group: 'Dashboard',
     items: [
@@ -55,16 +56,57 @@ export const menuConfig: MenuGroup[] = [
       },
     ],
   },
+  // ============ GLOBAL SCOPE ============
   {
-    group: 'Master Data',
+    group: 'Dashboard',
     items: [
       {
+        key: '/admin',
+        icon: LayoutDashboard,
+        label: 'Dashboard',
+        permissions: [{ resource: 'dashboard', actions: ['read'] }],
+        scope: 'global',
+      },
+      {
         key: '/tenants',
-        icon: Users,
-        label: 'Tenant',
+        icon: Store,
+        label: 'Manajemen Tenant',
         permissions: [{ resource: 'tenants', actions: ['read'] }],
         scope: 'global',
       },
+      {
+        key: '/users',
+        icon: Users,
+        label: 'Manajemen User',
+        permissions: [{ resource: 'users', actions: ['read', 'create', 'list'] }],
+        scope: 'global',
+      },
+      {
+        key: '/subscriptions',
+        icon: CreditCard,
+        label: 'Paket Langganan',
+        permissions: [{ resource: 'users', actions: ['read', 'create', 'list'] }],
+        scope: 'global',
+      },
+      {
+        key: '/reports',
+        icon: History,
+        label: 'Laporan',
+        permissions: [{ resource: 'users', actions: ['read', 'create', 'list'] }],
+        scope: 'global',
+      },
+      {
+        key: '/settings',
+        icon: Settings,
+        label: 'Pengaturan',
+        permissions: [{ resource: 'users', actions: ['read', 'create', 'list'] }],
+        scope: 'global',
+      },
+    ],
+  },
+  {
+    group: 'Master Data',
+    items: [
       {
         key: '/outlets',
         icon: Store,

@@ -19,6 +19,7 @@ import { Route as R403RouteImport } from './routes/403'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProtectedtenantLaporanRouteImport } from './routes/_protected/(tenant)/laporan'
 import { Route as ProtectedtenantDashboardRouteImport } from './routes/_protected/(tenant)/dashboard'
+import { Route as ProtectedglobalAdminRouteImport } from './routes/_protected/(global)/admin'
 import { Route as ProtectedtenantUsersIndexRouteImport } from './routes/_protected/(tenant)/users/index'
 import { Route as ProtectedtenantTenantsIndexRouteImport } from './routes/_protected/(tenant)/tenants/index'
 import { Route as ProtectedtenantStocksIndexRouteImport } from './routes/_protected/(tenant)/stocks/index'
@@ -99,6 +100,11 @@ const ProtectedtenantDashboardRoute =
     path: '/dashboard',
     getParentRoute: () => ProtectedRoute,
   } as any)
+const ProtectedglobalAdminRoute = ProtectedglobalAdminRouteImport.update({
+  id: '/(global)/admin',
+  path: '/admin',
+  getParentRoute: () => ProtectedRoute,
+} as any)
 const ProtectedtenantUsersIndexRoute =
   ProtectedtenantUsersIndexRouteImport.update({
     id: '/(tenant)/users/',
@@ -281,6 +287,7 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/admin': typeof ProtectedglobalAdminRoute
   '/dashboard': typeof ProtectedtenantDashboardRoute
   '/laporan': typeof ProtectedtenantLaporanRoute
   '/cash-shifts/$cashShiftId': typeof ProtectedtenantCashShiftsCashShiftIdRoute
@@ -321,6 +328,7 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/admin': typeof ProtectedglobalAdminRoute
   '/dashboard': typeof ProtectedtenantDashboardRoute
   '/laporan': typeof ProtectedtenantLaporanRoute
   '/cash-shifts/$cashShiftId': typeof ProtectedtenantCashShiftsCashShiftIdRoute
@@ -363,6 +371,7 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/_protected/(global)/admin': typeof ProtectedglobalAdminRoute
   '/_protected/(tenant)/dashboard': typeof ProtectedtenantDashboardRoute
   '/_protected/(tenant)/laporan': typeof ProtectedtenantLaporanRoute
   '/_protected/(tenant)/cash-shifts/$cashShiftId': typeof ProtectedtenantCashShiftsCashShiftIdRoute
@@ -405,6 +414,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/verify-email'
+    | '/admin'
     | '/dashboard'
     | '/laporan'
     | '/cash-shifts/$cashShiftId'
@@ -445,6 +455,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/verify-email'
+    | '/admin'
     | '/dashboard'
     | '/laporan'
     | '/cash-shifts/$cashShiftId'
@@ -486,6 +497,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/verify-email'
+    | '/_protected/(global)/admin'
     | '/_protected/(tenant)/dashboard'
     | '/_protected/(tenant)/laporan'
     | '/_protected/(tenant)/cash-shifts/$cashShiftId'
@@ -600,6 +612,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof ProtectedtenantDashboardRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/(global)/admin': {
+      id: '/_protected/(global)/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof ProtectedglobalAdminRouteImport
       parentRoute: typeof ProtectedRoute
     }
     '/_protected/(tenant)/users/': {
@@ -809,6 +828,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface ProtectedRouteChildren {
+  ProtectedglobalAdminRoute: typeof ProtectedglobalAdminRoute
   ProtectedtenantDashboardRoute: typeof ProtectedtenantDashboardRoute
   ProtectedtenantLaporanRoute: typeof ProtectedtenantLaporanRoute
   ProtectedtenantCashShiftsCashShiftIdRoute: typeof ProtectedtenantCashShiftsCashShiftIdRoute
@@ -843,6 +863,7 @@ interface ProtectedRouteChildren {
 }
 
 const ProtectedRouteChildren: ProtectedRouteChildren = {
+  ProtectedglobalAdminRoute: ProtectedglobalAdminRoute,
   ProtectedtenantDashboardRoute: ProtectedtenantDashboardRoute,
   ProtectedtenantLaporanRoute: ProtectedtenantLaporanRoute,
   ProtectedtenantCashShiftsCashShiftIdRoute:
