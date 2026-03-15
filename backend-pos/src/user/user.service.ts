@@ -43,9 +43,26 @@ export class UserService {
       const users = await this.db.query.user.findMany({
         where: tenantId ? eq(user.tenantId, tenantId) : undefined,
         with: {
-          role: true,
-          tenant: true,
-          outlet: true,
+          role: {
+            columns: {
+              id: true,
+              name: true,
+              scope: true,
+              tenantId: true,
+            },
+          },
+          tenant: {
+            columns: {
+              id: true,
+              nama: true,
+            },
+          },
+          outlet: {
+            columns: {
+              id: true,
+              nama: true,
+            },
+          },
         },
       });
       return { users, total: users.length };
@@ -56,9 +73,26 @@ export class UserService {
     const users = await this.db.query.user.findMany({
       where: eq(user.tenantId, filterTenantId),
       with: {
-        role: true,
-        tenant: true,
-        outlet: true,
+        role: {
+          columns: {
+            id: true,
+            name: true,
+            scope: true,
+            tenantId: true,
+          },
+        },
+        tenant: {
+          columns: {
+            id: true,
+            nama: true,
+          },
+        },
+        outlet: {
+          columns: {
+            id: true,
+            nama: true,
+          },
+        },
       },
     });
     return { users, total: users.length };

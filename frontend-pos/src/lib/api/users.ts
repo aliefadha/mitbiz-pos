@@ -19,6 +19,11 @@ export type User = {
     nama: string;
   };
   outletId?: string | null;
+  tenant?: {
+    id: string;
+    nama: string;
+  };
+  tenantId?: string | null;
 };
 
 export type UserRoleAndPermissions = {

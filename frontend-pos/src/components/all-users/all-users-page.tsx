@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Edit2, Eye, Plus, Search, Settings, Trash2, Users } from 'lucide-react';
+import { Edit2, Plus, Search, Settings, Trash2, Users } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -22,102 +22,32 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { outletsApi } from '@/lib/api/outlets';
-import { rolesApi } from '@/lib/api/roles';
+import { tenantsApi } from '@/lib/api/tenants';
 import { usersApi } from '@/lib/api/users';
-import { useSession } from '@/lib/auth-client';
-
-// Role badge color mapping
-function getRoleBadgeStyle(roleName: string) {
-  const name = roleName.toLowerCase();
-  if (name === 'admin') {
-    return 'bg-blue-500 text-white hover:bg-blue-600';
-  }
-  if (name === 'kasir') {
-    return 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50';
-  }
-  if (name === 'owner') {
-    return 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50';
-  }
-  return 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-50';
-}
-
-// Placeholder customer type (ready to swap for real API type)
-interface Customer {
-  id: string;
-  name: string;
-  email: string;
-  outletName: string;
-  subscription: string;
-  status: 'aktif' | 'nonaktif';
-}
-
-// Placeholder customer data (replace with real API data later)
-const PLACEHOLDER_CUSTOMERS: Customer[] = [
-  {
-    id: '1',
-    name: 'Rudi Hartono',
-    email: 'rudi.hartono@email.com',
-    outletName: 'Cabang Jakarta Pusat',
-    subscription: '1 Paket',
-    status: 'aktif',
-  },
-  {
-    id: '2',
-    name: 'Rudi Hartono',
-    email: 'rudi.hartono@email.com',
-    outletName: 'Cabang Jakarta Pusat',
-    subscription: '1 Paket',
-    status: 'aktif',
-  },
-];
 
 export function AllUsersPage() {
-  const { data: session } = useSession();
-  const tenantId = session?.user?.tenantId;
-
   // Ringkasan tab state
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedRoleFilter, setSelectedRoleFilter] = useState<string>('all');
-  const [selectedOutletFilter, setSelectedOutletFilter] = useState<string>('all');
-
-  // Daftar Pelanggan tab state
-  const [pelangganSearchQuery, setPelangganSearchQuery] = useState('');
-  const [pelangganOutletFilter, setPelangganOutletFilter] = useState<string>('all');
-  const [pelangganStatusFilter, setPelangganStatusFilter] = useState<string>('aktif');
-
-  // Fetch roles
-  const { data: rolesData, isLoading: isLoadingRoles } = useQuery({
-    queryKey: ['roles', tenantId],
-    queryFn: () => rolesApi.getAll({ tenantId, scope: tenantId ? 'tenant' : undefined }),
-    enabled: !!tenantId,
-  });
+  const [selectedTenantFilter, setSelectedTenantFilter] = useState<string>('all');
 
   // Fetch users
   const { data: usersData, isLoading: isLoadingUsers } = useQuery({
-    queryKey: ['users', tenantId],
-    queryFn: () => usersApi.getUsers({ tenantId }),
-    enabled: !!tenantId,
+    queryKey: ['users'],
+    queryFn: () => usersApi.getUsers(),
   });
 
-  // Fetch outlets
-  const { data: outletsData } = useQuery({
-    queryKey: ['outlets', tenantId],
-    queryFn: () => outletsApi.getAll({ tenantId }),
-    enabled: !!tenantId,
+  // Fetch tenants
+  const { data: tenantsData } = useQuery({
+    queryKey: ['tenants'],
+    queryFn: () => tenantsApi.getAll(),
   });
 
   // Summary stats
   const stats = useMemo(() => {
-    if (!usersData?.users || !rolesData) {
-      return { totalAdmin: 0, totalKasir: 0, totalUser: 0 };
-    }
-    const users = usersData.users;
-    const totalAdmin = users.filter((u) => u.role?.name?.toLowerCase() === 'admin').length;
-    const totalKasir = users.filter((u) => u.role?.name?.toLowerCase() === 'kasir').length;
-    const totalUser = users.length;
-    return { totalAdmin, totalKasir, totalUser };
-  }, [usersData, rolesData]);
+    const totalUser = usersData?.users?.length || 0;
+    const totalBisnis = tenantsData?.length || 0;
+    return { totalUser, totalBisnis };
+  }, [usersData, tenantsData]);
 
   // Filtered users (Ringkasan tab)
   const filteredUsers = useMemo(() => {
@@ -131,40 +61,14 @@ export function AllUsersPage() {
       );
     }
 
-    if (selectedRoleFilter !== 'all') {
-      users = users.filter((u) => u.role?.id === selectedRoleFilter);
-    }
-
-    if (selectedOutletFilter !== 'all') {
-      users = users.filter((u) => u.outletId === selectedOutletFilter);
+    if (selectedTenantFilter !== 'all') {
+      users = users.filter((u) => u.tenantId === selectedTenantFilter);
     }
 
     return users;
-  }, [usersData, searchQuery, selectedRoleFilter, selectedOutletFilter]);
+  }, [usersData, searchQuery, selectedTenantFilter]);
 
-  // Filtered customers (Daftar Pelanggan tab)
-  const filteredCustomers = useMemo(() => {
-    let customers = PLACEHOLDER_CUSTOMERS;
-
-    if (pelangganSearchQuery) {
-      const query = pelangganSearchQuery.toLowerCase();
-      customers = customers.filter(
-        (c) => c.name.toLowerCase().includes(query) || c.email.toLowerCase().includes(query)
-      );
-    }
-
-    if (pelangganOutletFilter !== 'all') {
-      customers = customers.filter((c) => c.outletName === pelangganOutletFilter);
-    }
-
-    if (pelangganStatusFilter !== 'all') {
-      customers = customers.filter((c) => c.status === pelangganStatusFilter);
-    }
-
-    return customers;
-  }, [pelangganSearchQuery, pelangganOutletFilter, pelangganStatusFilter]);
-
-  if (isLoadingRoles || isLoadingUsers) {
+  if (isLoadingUsers) {
     return (
       <div className="space-y-6">
         <div className="flex justify-between items-center">
@@ -191,7 +95,7 @@ export function AllUsersPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Manajemen User</h1>
-          <p className="text-sm text-gray-500 mt-1">Kelola admin dan kasir di semua cabang</p>
+          <p className="text-sm text-gray-500 mt-1">Kelola admin dan kasir di semua bisnis</p>
         </div>
         <Button className="gap-2">
           <Plus className="h-4 w-4" />
@@ -208,46 +112,32 @@ export function AllUsersPage() {
 
         <TabsContent value="ringkasan" className="space-y-6 mt-4">
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {/* Total Admin */}
-            <Card className="py-5">
-              <CardContent className="flex flex-col gap-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-600">Total Admin</span>
-                  <Settings className="h-4 w-4 text-gray-400" />
-                </div>
-                <div>
-                  <span className="text-3xl font-bold text-gray-900">{stats.totalAdmin}</span>
-                </div>
-                <span className="text-xs text-gray-400">Aktif di semua cabang</span>
-              </CardContent>
-            </Card>
-
-            {/* Total Kasir */}
-            <Card className="py-5">
-              <CardContent className="flex flex-col gap-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-600">Total Kasir</span>
-                  <Users className="h-4 w-4 text-gray-400" />
-                </div>
-                <div>
-                  <span className="text-3xl font-bold text-gray-900">{stats.totalKasir}</span>
-                </div>
-                <span className="text-xs text-gray-400">Aktif di semua cabang</span>
-              </CardContent>
-            </Card>
-
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Total User */}
             <Card className="py-5">
               <CardContent className="flex flex-col gap-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-600">Total User</span>
-                  <Settings className="h-4 w-4 text-gray-400" />
+                  <Users className="h-4 w-4 text-gray-400" />
                 </div>
                 <div>
                   <span className="text-3xl font-bold text-gray-900">{stats.totalUser}</span>
                 </div>
                 <span className="text-xs text-gray-400">Dari semua role</span>
+              </CardContent>
+            </Card>
+
+            {/* Total Bisnis */}
+            <Card className="py-5">
+              <CardContent className="flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-600">Total Bisnis</span>
+                  <Settings className="h-4 w-4 text-gray-400" />
+                </div>
+                <div>
+                  <span className="text-3xl font-bold text-gray-900">{stats.totalBisnis}</span>
+                </div>
+                <span className="text-xs text-gray-400">Tenant yang terdaftar</span>
               </CardContent>
             </Card>
           </div>
@@ -268,31 +158,16 @@ export function AllUsersPage() {
                   />
                 </div>
 
-                {/* Role Filter */}
-                <Select value={selectedRoleFilter} onValueChange={setSelectedRoleFilter}>
-                  <SelectTrigger className="w-full sm:w-[180px]">
-                    <SelectValue placeholder="Semua role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Semua role</SelectItem>
-                    {rolesData?.map((role) => (
-                      <SelectItem key={role.id} value={role.id}>
-                        {role.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                {/* Outlet/Cabang Filter */}
-                <Select value={selectedOutletFilter} onValueChange={setSelectedOutletFilter}>
+                {/* Tenant/Bisnis Filter */}
+                <Select value={selectedTenantFilter} onValueChange={setSelectedTenantFilter}>
                   <SelectTrigger className="w-full sm:w-[200px]">
-                    <SelectValue placeholder="Semua cabang" />
+                    <SelectValue placeholder="Semua Bisnis" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Semua cabang</SelectItem>
-                    {outletsData?.data?.map((outlet: { id: string; nama: string }) => (
-                      <SelectItem key={outlet.id} value={outlet.id}>
-                        {outlet.nama}
+                    <SelectItem value="all">Semua Bisnis</SelectItem>
+                    {tenantsData?.map((tenant: { id: string; nama: string }) => (
+                      <SelectItem key={tenant.id} value={tenant.id}>
+                        {tenant.nama}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -308,8 +183,7 @@ export function AllUsersPage() {
                         Nama
                       </TableHead>
                       <TableHead className="text-gray-600 font-medium">Username</TableHead>
-                      <TableHead className="text-gray-600 font-medium">Role</TableHead>
-                      <TableHead className="text-gray-600 font-medium">Cabang</TableHead>
+                      <TableHead className="text-gray-600 font-medium">Bisnis</TableHead>
                       <TableHead className="text-gray-600 font-medium">Status</TableHead>
                       <TableHead className="text-gray-600 font-medium rounded-tr-lg rounded-br-lg text-center">
                         Aksi
@@ -329,22 +203,8 @@ export function AllUsersPage() {
                         <TableRow key={user.id} className="hover:bg-gray-50/50">
                           <TableCell className="font-medium text-gray-900">{user.name}</TableCell>
                           <TableCell className="text-gray-600">{user.email}</TableCell>
-                          <TableCell>
-                            {user.role ? (
-                              <Badge
-                                variant="outline"
-                                className={`text-xs font-medium px-2.5 py-0.5 rounded-md ${getRoleBadgeStyle(
-                                  user.role.name
-                                )}`}
-                              >
-                                {user.role.name}
-                              </Badge>
-                            ) : (
-                              <span className="text-gray-400">-</span>
-                            )}
-                          </TableCell>
                           <TableCell className="text-gray-600">
-                            {user.outlet?.nama || '-'}
+                            {user.tenant?.nama || '-'}
                           </TableCell>
                           <TableCell>
                             <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-transparent text-xs font-medium px-2.5 py-0.5">
@@ -391,42 +251,30 @@ export function AllUsersPage() {
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
-                    placeholder="Cari nama, email atau telepon..."
-                    value={pelangganSearchQuery}
-                    onChange={(e) => setPelangganSearchQuery(e.target.value)}
+                    placeholder="Cari nama atau username..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-9"
                   />
                 </div>
 
-                {/* Cabang Filter */}
-                <Select value={pelangganOutletFilter} onValueChange={setPelangganOutletFilter}>
+                {/* Tenant/Bisnis Filter */}
+                <Select value={selectedTenantFilter} onValueChange={setSelectedTenantFilter}>
                   <SelectTrigger className="w-full sm:w-[200px]">
-                    <SelectValue placeholder="Semua Cabang" />
+                    <SelectValue placeholder="Semua Bisnis" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Semua Cabang</SelectItem>
-                    {outletsData?.data?.map((outlet: { id: string; nama: string }) => (
-                      <SelectItem key={outlet.id} value={outlet.nama}>
-                        {outlet.nama}
+                    <SelectItem value="all">Semua Bisnis</SelectItem>
+                    {tenantsData?.map((tenant: { id: string; nama: string }) => (
+                      <SelectItem key={tenant.id} value={tenant.id}>
+                        {tenant.nama}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-
-                {/* Status Filter */}
-                <Select value={pelangganStatusFilter} onValueChange={setPelangganStatusFilter}>
-                  <SelectTrigger className="w-full sm:w-[140px]">
-                    <SelectValue placeholder="Aktif" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="aktif">Aktif</SelectItem>
-                    <SelectItem value="nonaktif">Nonaktif</SelectItem>
-                    <SelectItem value="all">Semua</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
 
-              {/* Customers Table */}
+              {/* Users Table */}
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader className="[&_tr]:border-b-0">
@@ -434,9 +282,8 @@ export function AllUsersPage() {
                       <TableHead className="text-gray-600 font-medium rounded-tl-lg rounded-bl-lg">
                         Nama
                       </TableHead>
-                      <TableHead className="text-gray-600 font-medium">Kontak</TableHead>
-                      <TableHead className="text-gray-600 font-medium">Cabang</TableHead>
-                      <TableHead className="text-gray-600 font-medium">Langganan</TableHead>
+                      <TableHead className="text-gray-600 font-medium">Username</TableHead>
+                      <TableHead className="text-gray-600 font-medium">Bisnis</TableHead>
                       <TableHead className="text-gray-600 font-medium">Status</TableHead>
                       <TableHead className="text-gray-600 font-medium rounded-tr-lg rounded-br-lg text-center">
                         Aksi
@@ -444,42 +291,43 @@ export function AllUsersPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredCustomers.length === 0 ? (
+                    {filteredUsers.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-12 text-gray-400">
+                        <TableCell colSpan={5} className="text-center py-12 text-gray-400">
                           <Users className="h-10 w-10 mx-auto mb-3 opacity-30" />
-                          <p className="text-sm">Belum ada pelanggan yang ditemukan</p>
+                          <p className="text-sm">Belum ada user yang ditemukan</p>
                         </TableCell>
                       </TableRow>
                     ) : (
-                      filteredCustomers.map((customer) => (
-                        <TableRow key={customer.id} className="hover:bg-gray-50/50">
-                          <TableCell className="font-medium text-gray-900">
-                            {customer.name}
+                      filteredUsers.map((user) => (
+                        <TableRow key={user.id} className="hover:bg-gray-50/50">
+                          <TableCell className="font-medium text-gray-900">{user.name}</TableCell>
+                          <TableCell className="text-gray-600">{user.email}</TableCell>
+                          <TableCell className="text-gray-600">
+                            {user.tenant?.nama || '-'}
                           </TableCell>
-                          <TableCell className="text-gray-600">{customer.email}</TableCell>
-                          <TableCell className="text-gray-600">{customer.outletName}</TableCell>
-                          <TableCell className="text-gray-600">{customer.subscription}</TableCell>
                           <TableCell>
-                            <Badge
-                              className={
-                                customer.status === 'aktif'
-                                  ? 'bg-blue-100 text-blue-700 hover:bg-blue-100 border-transparent text-xs font-medium px-2.5 py-0.5'
-                                  : 'bg-gray-100 text-gray-500 hover:bg-gray-100 border-transparent text-xs font-medium px-2.5 py-0.5'
-                              }
-                            >
-                              {customer.status === 'aktif' ? 'Aktif' : 'Nonaktif'}
+                            <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-transparent text-xs font-medium px-2.5 py-0.5">
+                              Aktif
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center justify-center">
+                            <div className="flex items-center justify-center gap-1">
                               <Button
                                 variant="outline"
                                 size="icon-sm"
                                 className="text-gray-500 hover:text-gray-700"
-                                title="Lihat detail"
+                                title="Edit user"
                               >
-                                <Eye className="h-3.5 w-3.5" />
+                                <Edit2 className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="icon-sm"
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50 hover:border-red-200"
+                                title="Hapus user"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
                               </Button>
                             </div>
                           </TableCell>
