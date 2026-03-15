@@ -1,18 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { Plus, Search, X } from 'lucide-react';
+import { AvailableCashiers } from '@/components/cash-shifts/available-cashiers';
 import { CashShiftList } from '@/components/cash-shifts/cash-shift-list';
 import { CashShiftStats } from '@/components/cash-shifts/cash-shift-stats';
 import { CloseShiftDialog, OpenShiftDialog } from '@/components/cash-shifts/dialogs';
 import { useCashShiftsPage } from '@/components/cash-shifts/hooks';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePermissions } from '@/hooks/use-auth';
 
@@ -25,8 +16,6 @@ export function CashShiftPage() {
     userId,
     searchQuery,
     setSearchQuery,
-    statusFilter,
-    setStatusFilter,
     currentPage,
     pageSize,
     totalFiltered,
@@ -44,17 +33,13 @@ export function CashShiftPage() {
     displayedShifts,
     totalShifts,
     openShifts,
-    closedShifts,
     totalPages,
     total,
-    userOpenShiftData,
+    allOpenShifts,
     createMutation,
     closeMutation,
     handleOpenShift,
     handleCloseShift,
-    handleOpen,
-    handleClose,
-    handleSelectShiftForClose,
     handlePageChange,
     handlePageSizeChange,
   } = useCashShiftsPage();
@@ -68,71 +53,48 @@ export function CashShiftPage() {
           <Skeleton className="h-24" />
           <Skeleton className="h-24" />
         </div>
+        <Skeleton className="h-40" />
         <Skeleton className="h-96" />
       </div>
     );
   }
 
+  const handleOpenShiftForCashier = (cashierId: string) => {
+    // Pre-fill the form with the selected cashier and open the dialog
+    const firstOutlet = outletsData?.data?.[0];
+    openForm.reset({
+      outletId: firstOutlet?.id || '',
+      cashierId: cashierId,
+      jumlahBuka: '0',
+      catatan: '',
+    });
+    setCreateModalOpen(true);
+  };
+
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h4 className="text-lg font-semibold m-0">Shift Kasir</h4>
-          <p className="text-sm text-gray-500 m-0">Kelola shift kasir</p>
-        </div>
-        {!userOpenShiftLoading && canCreate && (
-          <>
-            {userOpenShiftData && canUpdate ? (
-              <Button
-                variant="outline"
-                className="border-red-200 text-red-600 hover:bg-red-50"
-                onClick={handleClose}
-              >
-                <X className="h-4 w-4 mr-2" />
-                Tutup Shift
-              </Button>
-            ) : (
-              <Button onClick={handleOpen}>
-                <Plus className="h-4 w-4 mr-2" />
-                Buka Shift
-              </Button>
-            )}
-          </>
-        )}
+      {/* Header */}
+      <div className="mb-6">
+        <h4 className="text-xl font-bold text-gray-900 m-0">Manajemen Shift Kasir</h4>
+        <p className="text-sm text-gray-500 m-0 mt-1">Kelola shift kasir di cabang Anda</p>
       </div>
 
-      <div className="flex gap-2 mb-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            placeholder="Cari shift..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 w-64"
-          />
-        </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="Semua Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Semua Status</SelectItem>
-            <SelectItem value="buka">Buka</SelectItem>
-            <SelectItem value="tutup">Tutup</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      {/* Stats Cards */}
+      <CashShiftStats totalShifts={totalShifts} openShifts={openShifts} />
 
-      <CashShiftStats
-        totalShifts={totalShifts}
-        openShifts={openShifts}
-        closedShifts={closedShifts}
+      {/* Available Cashiers */}
+      <AvailableCashiers
+        users={usersData?.users ?? []}
+        openShifts={allOpenShifts}
+        isLoading={userOpenShiftLoading}
+        canCreate={canCreate}
+        onOpenShift={handleOpenShiftForCashier}
       />
 
+      {/* Shift History Table */}
       <CashShiftList
         displayedShifts={displayedShifts}
         isLoading={isLoading}
-        canUpdate={canUpdate}
         canRead={true}
         currentPage={currentPage}
         pageSize={pageSize}
@@ -142,7 +104,6 @@ export function CashShiftPage() {
         onSearchChange={setSearchQuery}
         onPageChange={handlePageChange}
         onPageSizeChange={handlePageSizeChange}
-        onCloseShift={handleSelectShiftForClose}
       />
 
       {totalPages > 0 && (

@@ -19,6 +19,7 @@ import { Route as R403RouteImport } from './routes/403'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProtectedtenantLaporanRouteImport } from './routes/_protected/(tenant)/laporan'
 import { Route as ProtectedtenantDashboardRouteImport } from './routes/_protected/(tenant)/dashboard'
+import { Route as ProtectedglobalSettingRouteImport } from './routes/_protected/(global)/setting'
 import { Route as ProtectedtenantUsersIndexRouteImport } from './routes/_protected/(tenant)/users/index'
 import { Route as ProtectedtenantStocksIndexRouteImport } from './routes/_protected/(tenant)/stocks/index'
 import { Route as ProtectedtenantStockAdjustmentIndexRouteImport } from './routes/_protected/(tenant)/stock-adjustment/index'
@@ -32,6 +33,8 @@ import { Route as ProtectedtenantDiscountsIndexRouteImport } from './routes/_pro
 import { Route as ProtectedtenantCategoriesIndexRouteImport } from './routes/_protected/(tenant)/categories/index'
 import { Route as ProtectedtenantCashShiftsIndexRouteImport } from './routes/_protected/(tenant)/cash-shifts/index'
 import { Route as ProtectedtenantAccountIndexRouteImport } from './routes/_protected/(tenant)/account/index'
+import { Route as ProtectedglobalSubscriptionsIndexRouteImport } from './routes/_protected/(global)/subscriptions/index'
+import { Route as ProtectedglobalReportsIndexRouteImport } from './routes/_protected/(global)/reports/index'
 import { Route as ProtectedglobalAllUsersIndexRouteImport } from './routes/_protected/(global)/all-users/index'
 import { Route as ProtectedglobalAdminIndexRouteImport } from './routes/_protected/(global)/admin/index'
 import { Route as ProtectedtenantProductsNewRouteImport } from './routes/_protected/(tenant)/products/new'
@@ -91,6 +94,11 @@ const ProtectedtenantDashboardRoute =
     path: '/dashboard',
     getParentRoute: () => ProtectedRoute,
   } as any)
+const ProtectedglobalSettingRoute = ProtectedglobalSettingRouteImport.update({
+  id: '/(global)/setting',
+  path: '/setting',
+  getParentRoute: () => ProtectedRoute,
+} as any)
 const ProtectedtenantUsersIndexRoute =
   ProtectedtenantUsersIndexRouteImport.update({
     id: '/(tenant)/users/',
@@ -168,6 +176,18 @@ const ProtectedtenantAccountIndexRoute =
     path: '/account/',
     getParentRoute: () => ProtectedRoute,
   } as any)
+const ProtectedglobalSubscriptionsIndexRoute =
+  ProtectedglobalSubscriptionsIndexRouteImport.update({
+    id: '/(global)/subscriptions/',
+    path: '/subscriptions/',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
+const ProtectedglobalReportsIndexRoute =
+  ProtectedglobalReportsIndexRouteImport.update({
+    id: '/(global)/reports/',
+    path: '/reports/',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
 const ProtectedglobalAllUsersIndexRoute =
   ProtectedglobalAllUsersIndexRouteImport.update({
     id: '/(global)/all-users/',
@@ -225,6 +245,7 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/setting': typeof ProtectedglobalSettingRoute
   '/dashboard': typeof ProtectedtenantDashboardRoute
   '/laporan': typeof ProtectedtenantLaporanRoute
   '/cash-shifts/$cashShiftId': typeof ProtectedtenantCashShiftsCashShiftIdRoute
@@ -235,6 +256,8 @@ export interface FileRoutesByFullPath {
   '/products/new': typeof ProtectedtenantProductsNewRoute
   '/admin/': typeof ProtectedglobalAdminIndexRoute
   '/all-users/': typeof ProtectedglobalAllUsersIndexRoute
+  '/reports/': typeof ProtectedglobalReportsIndexRoute
+  '/subscriptions/': typeof ProtectedglobalSubscriptionsIndexRoute
   '/account/': typeof ProtectedtenantAccountIndexRoute
   '/cash-shifts/': typeof ProtectedtenantCashShiftsIndexRoute
   '/categories/': typeof ProtectedtenantCategoriesIndexRoute
@@ -257,6 +280,7 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/setting': typeof ProtectedglobalSettingRoute
   '/dashboard': typeof ProtectedtenantDashboardRoute
   '/laporan': typeof ProtectedtenantLaporanRoute
   '/cash-shifts/$cashShiftId': typeof ProtectedtenantCashShiftsCashShiftIdRoute
@@ -267,6 +291,8 @@ export interface FileRoutesByTo {
   '/products/new': typeof ProtectedtenantProductsNewRoute
   '/admin': typeof ProtectedglobalAdminIndexRoute
   '/all-users': typeof ProtectedglobalAllUsersIndexRoute
+  '/reports': typeof ProtectedglobalReportsIndexRoute
+  '/subscriptions': typeof ProtectedglobalSubscriptionsIndexRoute
   '/account': typeof ProtectedtenantAccountIndexRoute
   '/cash-shifts': typeof ProtectedtenantCashShiftsIndexRoute
   '/categories': typeof ProtectedtenantCategoriesIndexRoute
@@ -291,6 +317,7 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/_protected/(global)/setting': typeof ProtectedglobalSettingRoute
   '/_protected/(tenant)/dashboard': typeof ProtectedtenantDashboardRoute
   '/_protected/(tenant)/laporan': typeof ProtectedtenantLaporanRoute
   '/_protected/(tenant)/cash-shifts/$cashShiftId': typeof ProtectedtenantCashShiftsCashShiftIdRoute
@@ -301,6 +328,8 @@ export interface FileRoutesById {
   '/_protected/(tenant)/products/new': typeof ProtectedtenantProductsNewRoute
   '/_protected/(global)/admin/': typeof ProtectedglobalAdminIndexRoute
   '/_protected/(global)/all-users/': typeof ProtectedglobalAllUsersIndexRoute
+  '/_protected/(global)/reports/': typeof ProtectedglobalReportsIndexRoute
+  '/_protected/(global)/subscriptions/': typeof ProtectedglobalSubscriptionsIndexRoute
   '/_protected/(tenant)/account/': typeof ProtectedtenantAccountIndexRoute
   '/_protected/(tenant)/cash-shifts/': typeof ProtectedtenantCashShiftsIndexRoute
   '/_protected/(tenant)/categories/': typeof ProtectedtenantCategoriesIndexRoute
@@ -325,6 +354,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/verify-email'
+    | '/setting'
     | '/dashboard'
     | '/laporan'
     | '/cash-shifts/$cashShiftId'
@@ -335,6 +365,8 @@ export interface FileRouteTypes {
     | '/products/new'
     | '/admin/'
     | '/all-users/'
+    | '/reports/'
+    | '/subscriptions/'
     | '/account/'
     | '/cash-shifts/'
     | '/categories/'
@@ -357,6 +389,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/verify-email'
+    | '/setting'
     | '/dashboard'
     | '/laporan'
     | '/cash-shifts/$cashShiftId'
@@ -367,6 +400,8 @@ export interface FileRouteTypes {
     | '/products/new'
     | '/admin'
     | '/all-users'
+    | '/reports'
+    | '/subscriptions'
     | '/account'
     | '/cash-shifts'
     | '/categories'
@@ -390,6 +425,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/verify-email'
+    | '/_protected/(global)/setting'
     | '/_protected/(tenant)/dashboard'
     | '/_protected/(tenant)/laporan'
     | '/_protected/(tenant)/cash-shifts/$cashShiftId'
@@ -400,6 +436,8 @@ export interface FileRouteTypes {
     | '/_protected/(tenant)/products/new'
     | '/_protected/(global)/admin/'
     | '/_protected/(global)/all-users/'
+    | '/_protected/(global)/reports/'
+    | '/_protected/(global)/subscriptions/'
     | '/_protected/(tenant)/account/'
     | '/_protected/(tenant)/cash-shifts/'
     | '/_protected/(tenant)/categories/'
@@ -498,6 +536,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedtenantDashboardRouteImport
       parentRoute: typeof ProtectedRoute
     }
+    '/_protected/(global)/setting': {
+      id: '/_protected/(global)/setting'
+      path: '/setting'
+      fullPath: '/setting'
+      preLoaderRoute: typeof ProtectedglobalSettingRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
     '/_protected/(tenant)/users/': {
       id: '/_protected/(tenant)/users/'
       path: '/users'
@@ -589,6 +634,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedtenantAccountIndexRouteImport
       parentRoute: typeof ProtectedRoute
     }
+    '/_protected/(global)/subscriptions/': {
+      id: '/_protected/(global)/subscriptions/'
+      path: '/subscriptions'
+      fullPath: '/subscriptions/'
+      preLoaderRoute: typeof ProtectedglobalSubscriptionsIndexRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/(global)/reports/': {
+      id: '/_protected/(global)/reports/'
+      path: '/reports'
+      fullPath: '/reports/'
+      preLoaderRoute: typeof ProtectedglobalReportsIndexRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
     '/_protected/(global)/all-users/': {
       id: '/_protected/(global)/all-users/'
       path: '/all-users'
@@ -649,6 +708,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface ProtectedRouteChildren {
+  ProtectedglobalSettingRoute: typeof ProtectedglobalSettingRoute
   ProtectedtenantDashboardRoute: typeof ProtectedtenantDashboardRoute
   ProtectedtenantLaporanRoute: typeof ProtectedtenantLaporanRoute
   ProtectedtenantCashShiftsCashShiftIdRoute: typeof ProtectedtenantCashShiftsCashShiftIdRoute
@@ -659,6 +719,8 @@ interface ProtectedRouteChildren {
   ProtectedtenantProductsNewRoute: typeof ProtectedtenantProductsNewRoute
   ProtectedglobalAdminIndexRoute: typeof ProtectedglobalAdminIndexRoute
   ProtectedglobalAllUsersIndexRoute: typeof ProtectedglobalAllUsersIndexRoute
+  ProtectedglobalReportsIndexRoute: typeof ProtectedglobalReportsIndexRoute
+  ProtectedglobalSubscriptionsIndexRoute: typeof ProtectedglobalSubscriptionsIndexRoute
   ProtectedtenantAccountIndexRoute: typeof ProtectedtenantAccountIndexRoute
   ProtectedtenantCashShiftsIndexRoute: typeof ProtectedtenantCashShiftsIndexRoute
   ProtectedtenantCategoriesIndexRoute: typeof ProtectedtenantCategoriesIndexRoute
@@ -675,6 +737,7 @@ interface ProtectedRouteChildren {
 }
 
 const ProtectedRouteChildren: ProtectedRouteChildren = {
+  ProtectedglobalSettingRoute: ProtectedglobalSettingRoute,
   ProtectedtenantDashboardRoute: ProtectedtenantDashboardRoute,
   ProtectedtenantLaporanRoute: ProtectedtenantLaporanRoute,
   ProtectedtenantCashShiftsCashShiftIdRoute:
@@ -687,6 +750,9 @@ const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedtenantProductsNewRoute: ProtectedtenantProductsNewRoute,
   ProtectedglobalAdminIndexRoute: ProtectedglobalAdminIndexRoute,
   ProtectedglobalAllUsersIndexRoute: ProtectedglobalAllUsersIndexRoute,
+  ProtectedglobalReportsIndexRoute: ProtectedglobalReportsIndexRoute,
+  ProtectedglobalSubscriptionsIndexRoute:
+    ProtectedglobalSubscriptionsIndexRoute,
   ProtectedtenantAccountIndexRoute: ProtectedtenantAccountIndexRoute,
   ProtectedtenantCashShiftsIndexRoute: ProtectedtenantCashShiftsIndexRoute,
   ProtectedtenantCategoriesIndexRoute: ProtectedtenantCategoriesIndexRoute,

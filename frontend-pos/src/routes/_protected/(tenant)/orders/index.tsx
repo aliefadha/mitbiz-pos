@@ -24,14 +24,16 @@ export function OrdersPage() {
     setStatusFilter,
     outletFilter,
     setOutletFilter,
-    startDate,
-    setStartDate,
-    endDate,
-    setEndDate,
+    dateRange,
+    setDateRange,
     outlets,
     orders,
     ordersLoading,
   } = useOrdersPage({ canReadOutlets });
+
+  const formatDate = (date: Date | undefined) => {
+    return date ? date.toISOString().split('T')[0] : undefined;
+  };
 
   const handleView = (orderId: string) => {
     navigate({ to: '/orders/$orderId', params: { orderId } });
@@ -57,8 +59,8 @@ export function OrdersPage() {
       <StatCardsLaporan
         tenantId={tenantId}
         outletId={canReadOutlets && outletFilter !== 'all' ? outletFilter : undefined}
-        startDate={startDate}
-        endDate={endDate}
+        startDate={formatDate(dateRange?.from)}
+        endDate={formatDate(dateRange?.to)}
       />
 
       <Card className="shadow-sm border-gray-200">
@@ -72,10 +74,8 @@ export function OrdersPage() {
             onStatusChange={setStatusFilter}
             outletFilter={outletFilter}
             onOutletChange={setOutletFilter}
-            startDate={startDate}
-            onStartDateChange={setStartDate}
-            endDate={endDate}
-            onEndDateChange={setEndDate}
+            dateRange={dateRange}
+            onDateRangeChange={setDateRange}
             outlets={outlets}
             canReadOutlets={canReadOutlets}
           />

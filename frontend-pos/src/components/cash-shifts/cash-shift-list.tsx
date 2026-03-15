@@ -1,9 +1,7 @@
 import { Link } from '@tanstack/react-router';
-import { ChevronLeft, ChevronRight, Eye, Search, Wallet, XCircle } from 'lucide-react';
-import { useState } from 'react';
+import { ChevronLeft, ChevronRight, Eye, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -25,7 +23,6 @@ import type { CashShift } from '@/lib/api/cash-shifts';
 interface CashShiftListProps {
   displayedShifts: CashShift[];
   isLoading: boolean;
-  canUpdate: boolean;
   canRead: boolean;
   currentPage: number;
   pageSize: number;
@@ -35,7 +32,6 @@ interface CashShiftListProps {
   onSearchChange: (query: string) => void;
   onPageChange: (page: number) => void;
   onPageSizeChange: (size: number) => void;
-  onCloseShift: (shift: CashShift) => void;
 }
 
 const formatRupiah = (value: string | number): string => {
@@ -48,7 +44,8 @@ const formatRupiah = (value: string | number): string => {
   }).format(num);
 };
 
-const formatDate = (date: Date | string): string => {
+const formatDate = (date: Date | string | null): string => {
+  if (!date) return '-';
   const d = new Date(date);
   return new Intl.DateTimeFormat('id-ID', {
     day: '2-digit',
@@ -75,7 +72,7 @@ const getStatusLabel = (status: string) => {
     case 'buka':
       return 'Buka';
     case 'tutup':
-      return 'Tutup';
+      return 'Ditutup';
     default:
       return status;
   }
@@ -84,48 +81,20 @@ const getStatusLabel = (status: string) => {
 export function CashShiftList({
   displayedShifts,
   isLoading,
-  canUpdate,
   canRead,
   currentPage,
   pageSize,
   total,
   totalPages,
-  searchQuery,
-  onSearchChange,
   onPageChange,
   onPageSizeChange,
-  onCloseShift,
 }: CashShiftListProps) {
-  const [localSearch, setLocalSearch] = useState(searchQuery);
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSearchChange(localSearch);
-  };
-
-  const hasActions = canUpdate;
-
   return (
-    <Card>
+    <Card className="shadow-sm border-gray-200">
+      <CardHeader>
+        <CardTitle className="text-base font-semibold text-gray-900">Riwayat Shift</CardTitle>
+      </CardHeader>
       <CardContent>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-          <h4 className="text-base font-semibold">Daftar Shift</h4>
-          <form onSubmit={handleSearchSubmit} className="flex gap-2">
-            <div className="relative flex-1 sm:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Cari shift..."
-                value={localSearch}
-                onChange={(e) => setLocalSearch(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-            <Button type="submit" variant="secondary">
-              Cari
-            </Button>
-          </form>
-        </div>
-
         {isLoading ? (
           <div className="p-6 space-y-2">
             <Skeleton className="h-10 w-full" />
@@ -135,53 +104,58 @@ export function CashShiftList({
         ) : displayedShifts.length === 0 ? (
           <div className="text-center py-10 text-gray-500">
             <Wallet className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-            <p>Belum ada shift</p>
+            <p>Belum ada riwayat shift</p>
           </div>
         ) : (
-          <Table>
-            <TableHeader className="[&_tr]:border-b-0">
-              <TableRow className="bg-gray-100 hover:bg-gray-100 border-b-0">
-                <TableHead className="text-gray-800 font-medium w-[80px] rounded-tl-lg rounded-bl-lg">
-                  No
-                </TableHead>
-                <TableHead className="text-gray-800 font-medium">Outlet</TableHead>
-                <TableHead className="text-gray-800 font-medium">Kasir</TableHead>
-                <TableHead className="text-gray-800 font-medium">Jumlah Buka</TableHead>
-                <TableHead className="text-gray-800 font-medium">Jumlah Tutup</TableHead>
-                <TableHead className="text-gray-800 font-medium">Status</TableHead>
-                <TableHead className="text-gray-800 font-medium">Tanggal</TableHead>
-                {hasActions && (
-                  <TableHead className="text-gray-800 font-medium w-[120px] rounded-tr-lg rounded-br-lg">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader className="[&_tr]:border-b-0">
+                <TableRow className="bg-gray-50 hover:bg-gray-50 border-b-0">
+                  <TableHead className="text-gray-600 font-medium rounded-tl-lg rounded-bl-lg">
+                    Kasir
+                  </TableHead>
+                  <TableHead className="text-gray-600 font-medium">Dibuka</TableHead>
+                  <TableHead className="text-gray-600 font-medium">Ditutup</TableHead>
+                  <TableHead className="text-gray-600 font-medium">Penjualan</TableHead>
+                  <TableHead className="text-gray-600 font-medium">Transaksi</TableHead>
+                  <TableHead className="text-gray-600 font-medium">Status</TableHead>
+                  <TableHead className="text-gray-600 font-medium rounded-tr-lg rounded-br-lg">
                     Aksi
                   </TableHead>
-                )}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {displayedShifts.map((shift, index) => (
-                <TableRow key={shift.id} className="hover:bg-white">
-                  <TableCell>{(currentPage - 1) * pageSize + index + 1}</TableCell>
-                  <TableCell>{shift.outlet?.nama || '-'}</TableCell>
-                  <TableCell>{shift.cashier?.name || '-'}</TableCell>
-                  <TableCell className="font-medium">{formatRupiah(shift.jumlahBuka)}</TableCell>
-                  <TableCell className="font-medium">
-                    {shift.status === 'tutup' ? formatRupiah(shift.jumlahTutup) : '-'}
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs capitalize ${getStatusColor(
-                        shift.status
-                      )}`}
-                    >
-                      {getStatusLabel(shift.status)}
-                    </span>
-                  </TableCell>
-                  <TableCell>{formatDate(shift.openedAt)}</TableCell>
-                  {hasActions && (
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {displayedShifts.map((shift) => (
+                  <TableRow key={shift.id} className="hover:bg-gray-50/50">
+                    <TableCell className="font-medium text-gray-900">
+                      {shift.cashier?.name || '-'}
+                    </TableCell>
+                    <TableCell className="text-gray-600">{formatDate(shift.openedAt)}</TableCell>
+                    <TableCell className="text-gray-600">
+                      {shift.closedAt ? formatDate(shift.closedAt) : '-'}
+                    </TableCell>
+                    <TableCell className="text-gray-900 font-medium">
+                      {formatRupiah(shift.jumlahTutup || '0')}
+                    </TableCell>
+                    <TableCell className="text-gray-600 text-center">0</TableCell>
+                    <TableCell>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium ${getStatusColor(
+                          shift.status
+                        )}`}
+                      >
+                        {getStatusLabel(shift.status)}
+                      </span>
+                    </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
                         {canRead && (
-                          <Button variant="ghost" size="icon" asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-gray-400 hover:text-gray-600"
+                            asChild
+                          >
                             <Link
                               to="/cash-shifts/$cashShiftId"
                               params={{ cashShiftId: shift.id }}
@@ -191,23 +165,13 @@ export function CashShiftList({
                             </Link>
                           </Button>
                         )}
-                        {canUpdate && shift.status === 'buka' && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => onCloseShift(shift)}
-                            title="Tutup shift"
-                          >
-                            <XCircle className="h-4 w-4" />
-                          </Button>
-                        )}
                       </div>
                     </TableCell>
-                  )}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         )}
 
         {totalPages > 0 && (

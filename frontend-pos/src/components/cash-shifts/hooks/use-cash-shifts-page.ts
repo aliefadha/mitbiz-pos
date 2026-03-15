@@ -73,17 +73,22 @@ export function useCashShiftsPage() {
     enabled: !!tenantId,
   });
 
-  const { data: userOpenShiftData, isLoading: userOpenShiftLoading } = useQuery({
-    queryKey: ['cash-shifts', 'user-open', tenantId, userId],
-    queryFn: async () => {
-      const response = await cashShiftsApi.getAll({
+  const { data: allOpenShiftsData, isLoading: openShiftsLoading } = useQuery({
+    queryKey: ['cash-shifts', 'all-open', tenantId],
+    queryFn: () =>
+      cashShiftsApi.getAll({
         tenantId,
         status: 'buka',
-      });
-      return response.data.find((shift) => shift.cashierId === userId) || null;
-    },
-    enabled: !!tenantId && !!userId,
+      }),
+    enabled: !!tenantId,
   });
+
+  const allOpenShifts = useMemo(() => allOpenShiftsData?.data ?? [], [allOpenShiftsData]);
+  const userOpenShiftData = useMemo(
+    () => allOpenShifts.find((shift) => shift.cashierId === userId) || null,
+    [allOpenShifts, userId]
+  );
+  const userOpenShiftLoading = openShiftsLoading;
 
   const { data: cashShiftsData, isLoading: cashShiftsLoading } = useQuery({
     queryKey: ['cash-shifts', tenantId, statusFilter],
@@ -246,6 +251,7 @@ export function useCashShiftsPage() {
     totalPages,
     total: totalFiltered,
     userOpenShiftData,
+    allOpenShifts,
 
     createMutation,
     closeMutation,

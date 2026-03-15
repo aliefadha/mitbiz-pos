@@ -1,6 +1,6 @@
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
-import { CASHIER_ROLE_ID, OWNER_ROLE_ID } from '../constants/role-ids';
+import { OWNER_ROLE_ID } from '../constants/role-ids';
 import { authClient, signIn, signOut } from '../lib/auth-client';
 
 // Re-export the new auth hooks from context
@@ -86,12 +86,11 @@ export function useLogin() {
         throw error;
       }
 
-      // Check user role and redirect accordingly
-      const userRoleId = (data?.user as unknown as { roleId?: string })?.roleId;
+      // Check user role scope and redirect accordingly
+      const userRoleScope = (data?.user as unknown as { roleScope?: string })?.roleScope;
 
-      // If role is neither cashier nor owner, redirect to /pos
-      if (userRoleId !== CASHIER_ROLE_ID && userRoleId !== OWNER_ROLE_ID) {
-        navigate({ to: '/pos' });
+      if (userRoleScope === 'global') {
+        navigate({ to: '/admin' });
       } else {
         navigate({ to: '/dashboard' });
       }

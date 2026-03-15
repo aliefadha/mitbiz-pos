@@ -4,7 +4,6 @@ import { createRootRouteWithContext, Outlet } from '@tanstack/react-router';
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
 import { Toaster } from 'sonner';
 import { AuthProvider } from '../contexts/auth-context';
-import { TenantProvider } from '../contexts/tenant-context';
 import TanStackQueryDevtools from '../integrations/tanstack-query/devtools';
 
 interface MyRouterContext {
@@ -14,9 +13,7 @@ interface MyRouterContext {
 export const Route = createRootRouteWithContext<MyRouterContext>()({
   component: () => (
     <AuthProvider>
-      <TenantProvider>
-        <Layout />
-      </TenantProvider>
+      <Layout />
     </AuthProvider>
   ),
   errorComponent: ({ error, reset }) => (

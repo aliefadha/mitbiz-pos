@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import type { DateRange } from 'react-day-picker';
 import { ordersApi } from '@/lib/api/orders';
 import { outletsApi } from '@/lib/api/outlets';
 import { useSession } from '@/lib/auth-client';
@@ -18,13 +19,13 @@ export function useOrdersPage(options?: UseOrdersPageOptions) {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [outletFilter, setOutletFilter] = useState<string>('all');
 
-  const [startDate, setStartDate] = useState<string>(() => {
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(() => {
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    return thirtyDaysAgo.toISOString().split('T')[0];
-  });
-  const [endDate, setEndDate] = useState<string>(() => {
-    return new Date().toISOString().split('T')[0];
+    return {
+      from: thirtyDaysAgo,
+      to: now,
+    };
   });
 
   const { data: outletsData, isLoading: outletsLoading } = useQuery({
@@ -58,10 +59,8 @@ export function useOrdersPage(options?: UseOrdersPageOptions) {
     setStatusFilter,
     outletFilter,
     setOutletFilter,
-    startDate,
-    setStartDate,
-    endDate,
-    setEndDate,
+    dateRange,
+    setDateRange,
 
     outlets,
     outletsLoading,
