@@ -30,7 +30,7 @@ async function bootstrap() {
 
   app.enableCors({
     // TODO: Change this once the hosting setup
-    origin: "*",
+    origin: '*',
     credentials: true,
   });
 
