@@ -57,17 +57,71 @@ export class TenantsService {
         limit,
         offset,
         orderBy: [asc(tenants.createdAt)],
-        with: {
-          outlets: true,
+        columns: {
+          id: true,
+          nama: true,
+          slug: true,
+          alamat: true,
+          noHp: true,
+          isActive: true,
+          createdAt: true,
         },
       }),
       this.db.select({ count: sql<number>`count(*)` }).from(tenants).where(whereClause),
     ]);
 
+    if (data.length === 0) {
+      return {
+        data: [],
+        meta: {
+          page,
+          limit,
+          total: 0,
+          totalPages: 0,
+        },
+      };
+    }
+
+    const tenantIds = data.map((t) => t.id);
+
+    const [usersCount, outletsCount] = await Promise.all([
+      this.db
+        .select({
+          tenantId: userSchema.tenantId,
+          count: sql<number>`count(*)`,
+        })
+        .from(userSchema)
+        .where(inArray(userSchema.tenantId, tenantIds))
+        .groupBy(userSchema.tenantId),
+      this.db
+        .select({
+          tenantId: outlets.tenantId,
+          count: sql<number>`count(*)`,
+        })
+        .from(outlets)
+        .where(inArray(outlets.tenantId, tenantIds))
+        .groupBy(outlets.tenantId),
+    ]);
+
+    const usersCountMap = new Map(usersCount.map((u) => [u.tenantId, Number(u.count)]));
+    const outletsCountMap = new Map(outletsCount.map((o) => [o.tenantId, Number(o.count)]));
+
+    const result = data.map((tenant) => ({
+      id: tenant.id,
+      nama: tenant.nama,
+      slug: tenant.slug,
+      alamat: tenant.alamat,
+      noHp: tenant.noHp,
+      isActive: tenant.isActive,
+      createdAt: tenant.createdAt,
+      usersCount: usersCountMap.get(tenant.id) || 0,
+      outletsCount: outletsCountMap.get(tenant.id) || 0,
+    }));
+
     const total = Number(totalResult[0]?.count || 0);
 
     return {
-      data,
+      data: result,
       meta: {
         page,
         limit,

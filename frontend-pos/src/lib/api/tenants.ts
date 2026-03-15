@@ -37,7 +37,8 @@ export interface Tenant {
   slug: string;
   userId: string;
   user?: User;
-  users?: User[];
+  usersCount?: number;
+  outletsCount?: number;
   settings?: TenantSettings;
   image?: string;
   alamat?: string;
@@ -46,6 +47,13 @@ export interface Tenant {
   createdAt: Date;
   updatedAt?: Date;
   outlets?: Outlet[];
+}
+
+export interface TenantSummary {
+  outletsCount: number;
+  categoriesCount: number;
+  productsCount: number;
+  user: User | null;
 }
 
 export interface TenantQueryParams {
@@ -150,5 +158,13 @@ export const tenantsApi = {
 
   getUsers: async (slug: string): Promise<{ data: User[] }> => {
     return fetchApi<{ data: User[] }>(`/tenants/${slug}/users`);
+  },
+
+  getOutlets: async (slug: string): Promise<{ data: Outlet[] }> => {
+    return fetchApi<{ data: Outlet[] }>(`/tenants/${slug}/outlets`);
+  },
+
+  getSummary: async (slug: string): Promise<TenantSummary> => {
+    return fetchApi<TenantSummary>(`/tenants/${slug}/summary`);
   },
 };

@@ -11,6 +11,7 @@ import {
   Percent,
   Settings,
   Store,
+  StoreIcon,
   Users,
 } from 'lucide-react';
 import type { UserScope } from '@/lib/permissions';
@@ -65,6 +66,13 @@ export const menuConfig: MenuGroup[] = [
         icon: LayoutDashboard,
         label: 'Dashboard',
         permissions: [{ resource: 'dashboard', actions: ['read'] }],
+        scope: 'global',
+      },
+      {
+        key: '/tenants',
+        icon: StoreIcon,
+        label: 'Manajemen Tenant',
+        permissions: [{ resource: 'users', actions: ['read', 'create', 'list'] }],
         scope: 'global',
       },
       {
