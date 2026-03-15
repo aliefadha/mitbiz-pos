@@ -1,1 +1,1 @@
-npm run check --workspaces --if-present && npm run build --workspaces --if-present
+npm run check -w backend-pos -w frontend-pos --if-present
