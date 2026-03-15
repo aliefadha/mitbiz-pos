@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { useState } from 'react';
 import { AvailableCashiers } from '@/components/cash-shifts/available-cashiers';
 import { CashShiftList } from '@/components/cash-shifts/cash-shift-list';
 import { CashShiftStats } from '@/components/cash-shifts/cash-shift-stats';
@@ -12,8 +13,14 @@ export function CashShiftPage() {
   const canCreate = hasPermission('cashShifts', 'create');
   const canUpdate = hasPermission('cashShifts', 'update');
 
+  const [selectedCashier, setSelectedCashier] = useState<{
+    id: string;
+    name: string;
+    outletId?: string | null;
+  } | null>(null);
+
   const {
-    userId,
+    userOutletId,
     searchQuery,
     setSearchQuery,
     currentPage,
@@ -40,6 +47,7 @@ export function CashShiftPage() {
     closeMutation,
     handleOpenShift,
     handleCloseShift,
+    handleSelectShiftForClose,
     handlePageChange,
     handlePageSizeChange,
   } = useCashShiftsPage();
@@ -60,10 +68,17 @@ export function CashShiftPage() {
   }
 
   const handleOpenShiftForCashier = (cashierId: string) => {
-    // Pre-fill the form with the selected cashier and open the dialog
-    const firstOutlet = outletsData?.data?.[0];
+    const cashier = usersData?.users?.find((u) => u.id === cashierId);
+    if (!cashier) return;
+
+    setSelectedCashier({
+      id: cashier.id,
+      name: cashier.name,
+      outletId: cashier.outletId,
+    });
+
     openForm.reset({
-      outletId: firstOutlet?.id || '',
+      outletId: cashier.outletId || '',
       cashierId: cashierId,
       jumlahBuka: '0',
       catatan: '',
@@ -88,7 +103,9 @@ export function CashShiftPage() {
         openShifts={allOpenShifts}
         isLoading={userOpenShiftLoading}
         canCreate={canCreate}
+        canUpdate={canUpdate}
         onOpenShift={handleOpenShiftForCashier}
+        onCloseShift={handleSelectShiftForClose}
       />
 
       {/* Shift History Table */}
@@ -104,6 +121,7 @@ export function CashShiftPage() {
         onSearchChange={setSearchQuery}
         onPageChange={handlePageChange}
         onPageSizeChange={handlePageSizeChange}
+        userOutletId={userOutletId}
       />
 
       {totalPages > 0 && (
@@ -117,10 +135,13 @@ export function CashShiftPage() {
       {canCreate && (
         <OpenShiftDialog
           open={createModalOpen}
-          onOpenChange={setCreateModalOpen}
+          onOpenChange={(open) => {
+            setCreateModalOpen(open);
+            if (!open) setSelectedCashier(null);
+          }}
           outlets={outletsData?.data ?? []}
-          users={usersData?.users ?? []}
-          currentUserId={userId}
+          cashierName={selectedCashier?.name ?? ''}
+          cashierOutletId={selectedCashier?.outletId}
           onSubmit={handleOpenShift}
           isPending={createMutation.isPending}
           form={openForm}

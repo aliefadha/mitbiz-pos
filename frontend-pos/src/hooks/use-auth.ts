@@ -79,7 +79,7 @@ export function useLogin() {
       const { data, error } = await signIn.email({
         email: input.email,
         password: input.password,
-        callbackURL: `${import.meta.env.VITE_APP_URL || 'http://localhost:3000'}/dashboard`,
+        callbackURL: `${import.meta.env.VITE_APP_URL || 'http://localhost:3000'}`,
       });
 
       if (error) {

@@ -1,4 +1,5 @@
 import { fetchApi } from './client';
+import type { User } from './users';
 
 export interface CashShift {
   id: string;
@@ -63,6 +64,17 @@ export interface CashShiftQueryParams {
   status?: 'buka' | 'tutup';
   tenantId?: string;
   outletId?: string;
+  cashierId?: string;
+}
+
+export interface CashierShiftStatus {
+  id: string;
+  cashierId: string;
+  status: 'buka' | 'tutup';
+  outletId: string;
+  outletName: string | null;
+  jumlahBuka: string;
+  openedAt: Date;
 }
 
 export const cashShiftsApi = {
@@ -107,5 +119,16 @@ export const cashShiftsApi = {
     return fetchApi<CashShift>(`/cash-shifts/${id}`, {
       method: 'DELETE',
     });
+  },
+
+  getCashiersStatus: async (cashierIds: string[]): Promise<CashierShiftStatus[]> => {
+    return fetchApi<CashierShiftStatus[]>('/cash-shifts/cashiers/status', {
+      method: 'POST',
+      data: { cashierIds },
+    });
+  },
+
+  getCashiers: async (): Promise<User[]> => {
+    return fetchApi<User[]>('/cash-shifts/cashiers');
   },
 };

@@ -1,5 +1,6 @@
 import type { UseFormReturn } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import {
   Dialog,
   DialogContent,
@@ -28,16 +29,6 @@ interface CloseShiftDialogProps {
   form: UseFormReturn<CloseShiftFormValues>;
 }
 
-const formatRupiah = (value: string | number): string => {
-  const num = typeof value === 'string' ? parseFloat(value) : value;
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(num);
-};
-
 export function CloseShiftDialog({
   open,
   onOpenChange,
@@ -53,17 +44,7 @@ export function CloseShiftDialog({
           <DialogTitle>Tutup Shift Kasir</DialogTitle>
         </DialogHeader>
         {shift && (
-          <div className="space-y-4">
-            <div className="bg-gray-50 p-3 rounded-lg space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-500">Jumlah Buka:</span>
-                <span className="font-medium">{formatRupiah(shift.jumlahBuka)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Expected:</span>
-                <span className="font-medium">{formatRupiah(shift.jumlahExpected)}</span>
-              </div>
-            </div>
+          <div className="space-y-4 mt-4">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
@@ -73,11 +54,10 @@ export function CloseShiftDialog({
                     <FormItem>
                       <FormLabel>Jumlah Tutup (Kas di akhir)</FormLabel>
                       <FormControl>
-                        <Input
-                          type="number"
+                        <CurrencyInput
+                          value={field.value || '0'}
+                          onChange={field.onChange}
                           placeholder="0"
-                          {...field}
-                          onChange={(e) => field.onChange(e.target.value)}
                         />
                       </FormControl>
                       <FormMessage />

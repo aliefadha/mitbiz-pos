@@ -11,7 +11,6 @@ import {
   type UpdateCashShiftDto,
 } from '@/lib/api/cash-shifts';
 import { outletsApi } from '@/lib/api/outlets';
-import { usersApi } from '@/lib/api/users';
 import { useSession } from '@/lib/auth-client';
 
 export const openShiftSchema = z.object({
@@ -34,6 +33,7 @@ export function useCashShiftsPage() {
   const { data: session } = useSession();
   const tenantId = session?.user?.tenantId;
   const userId = session?.user?.id;
+  const userOutletId = session?.user?.outletId;
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -47,7 +47,7 @@ export function useCashShiftsPage() {
     resolver: zodResolver(openShiftSchema),
     defaultValues: {
       outletId: '',
-      cashierId: '',
+      cashierId: undefined,
       jumlahBuka: '0',
       catatan: '',
     },
@@ -68,22 +68,50 @@ export function useCashShiftsPage() {
   });
 
   const { data: usersData } = useQuery({
-    queryKey: ['users', tenantId],
-    queryFn: () => usersApi.getUsers({ tenantId }),
+    queryKey: ['cashiers', tenantId],
+    queryFn: async () => {
+      const users = await cashShiftsApi.getCashiers();
+      return { users, total: users.length };
+    },
     enabled: !!tenantId,
   });
 
-  const { data: allOpenShiftsData, isLoading: openShiftsLoading } = useQuery({
-    queryKey: ['cash-shifts', 'all-open', tenantId],
-    queryFn: () =>
-      cashShiftsApi.getAll({
-        tenantId,
-        status: 'buka',
-      }),
-    enabled: !!tenantId,
+  const { data: cashiersShiftStatus, isLoading: openShiftsLoading } = useQuery({
+    queryKey: ['cashiers-status', tenantId],
+    queryFn: async () => {
+      if (!usersData?.users?.length) return [];
+      return cashShiftsApi.getCashiersStatus(usersData.users.map((u) => u.id));
+    },
+    enabled: !!tenantId && !!usersData?.users?.length,
   });
 
-  const allOpenShifts = useMemo(() => allOpenShiftsData?.data ?? [], [allOpenShiftsData]);
+  const allOpenShifts = useMemo(() => {
+    if (!cashiersShiftStatus) return [];
+    return cashiersShiftStatus.map(
+      (status): CashShift => ({
+        id: status.id,
+        tenantId: '',
+        cashierId: status.cashierId,
+        outletId: status.outletId,
+        jumlahBuka: status.jumlahBuka,
+        jumlahTutup: '0',
+        jumlahExpected: '0',
+        selisih: '0',
+        status: status.status,
+        openedAt: status.openedAt,
+        closedAt: null,
+        catatan: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        outlet: {
+          id: status.outletId,
+          nama: status.outletName || '',
+          alamat: null,
+          isActive: true,
+        },
+      })
+    );
+  }, [cashiersShiftStatus]);
   const userOpenShiftData = useMemo(
     () => allOpenShifts.find((shift) => shift.cashierId === userId) || null,
     [allOpenShifts, userId]
@@ -107,6 +135,7 @@ export function useCashShiftsPage() {
       setCreateModalOpen(false);
       openForm.reset();
       queryClient.invalidateQueries({ queryKey: ['cash-shifts'] });
+      queryClient.invalidateQueries({ queryKey: ['cashiers-status', tenantId] });
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Gagal membuka shift');
@@ -122,6 +151,7 @@ export function useCashShiftsPage() {
       setSelectedShift(null);
       closeForm.reset();
       queryClient.invalidateQueries({ queryKey: ['cash-shifts'] });
+      queryClient.invalidateQueries({ queryKey: ['cashiers-status', tenantId] });
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Gagal menutup shift');
@@ -166,7 +196,7 @@ export function useCashShiftsPage() {
     createMutation.mutate({
       tenantId: tenantId,
       outletId: values.outletId,
-      cashierId: values.cashierId || userId || undefined,
+      cashierId: values.cashierId ?? userId ?? undefined,
       jumlahBuka: values.jumlahBuka || '0',
       status: 'buka',
       catatan: values.catatan || null,
@@ -186,7 +216,7 @@ export function useCashShiftsPage() {
   };
 
   const handleOpen = () => {
-    openForm.reset({ outletId: '', cashierId: userId || '', jumlahBuka: '0', catatan: '' });
+    openForm.reset({ outletId: '', cashierId: userId || undefined, jumlahBuka: '0', catatan: '' });
     setCreateModalOpen(true);
   };
 
@@ -221,6 +251,7 @@ export function useCashShiftsPage() {
   return {
     tenantId,
     userId,
+    userOutletId,
 
     searchQuery,
     setSearchQuery: handleSearchChange,
@@ -252,6 +283,7 @@ export function useCashShiftsPage() {
     total: totalFiltered,
     userOpenShiftData,
     allOpenShifts,
+    cashiersShiftStatus,
 
     createMutation,
     closeMutation,

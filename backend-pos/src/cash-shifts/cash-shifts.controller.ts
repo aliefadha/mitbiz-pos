@@ -53,6 +53,23 @@ export class CashShiftsController {
     return this.cashShiftsService.findOpenShift(targetOutletId, user);
   }
 
+  @Post('cashiers/status')
+  @ApiOperation({ summary: 'Get shift status for multiple cashiers' })
+  @Permission('cashShifts', [Action.READ])
+  findCashiersStatus(
+    @Body() data: { cashierIds: string[] },
+    @CurrentUser() user: CurrentUserWithRole,
+  ) {
+    return this.cashShiftsService.findCashiersStatus(data.cashierIds, user);
+  }
+
+  @Get('cashiers')
+  @ApiOperation({ summary: 'Get cashiers visible to current user' })
+  @Permission('cashShifts', [Action.READ])
+  findCashiers(@CurrentUser() user: CurrentUserWithRole) {
+    return this.cashShiftsService.findCashiersForCurrentUser(user);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get cash shift by ID' })
   @UsePipes(new ZodValidationPipe(CashShiftIdSchema, 'params'))

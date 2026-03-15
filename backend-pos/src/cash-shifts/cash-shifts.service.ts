@@ -7,7 +7,7 @@ import { outlets } from '@/db/schema/outlet-schema';
 import type { DrizzleDB } from '@/db/type';
 import { TenantAuthService } from '@/rbac/services/tenant-auth.service';
 import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { SQL, and, desc, eq, like, sql } from 'drizzle-orm';
+import { SQL, and, desc, eq, inArray, like, sql } from 'drizzle-orm';
 import { CashShiftQueryDto, CreateCashShiftDto, UpdateCashShiftDto } from './dto';
 
 @Injectable()
@@ -18,7 +18,7 @@ export class CashShiftsService {
   ) {}
 
   async findAll(query: CashShiftQueryDto, user: CurrentUserWithRole) {
-    const { page = 1, limit = 10, search, status, tenantId, outletId } = query;
+    const { page = 1, limit = 10, search, status, tenantId, outletId, cashierId } = query;
     const offset = (page - 1) * limit;
 
     // Validate that query tenantId matches user's allowed tenant
@@ -43,6 +43,15 @@ export class CashShiftsService {
 
     if (outletId) {
       conditions.push(eq(cashShifts.outletId, outletId));
+    }
+
+    if (cashierId) {
+      conditions.push(eq(cashShifts.cashierId, cashierId));
+    }
+
+    // If user has outletId assigned, automatically filter to show only their shifts
+    if (user.outletId && !cashierId) {
+      conditions.push(eq(cashShifts.cashierId, user.id));
     }
 
     const [data, totalResult] = await Promise.all([
@@ -143,6 +152,64 @@ export class CashShiftsService {
     return cashShift || null;
   }
 
+  async findCashiersStatus(cashierIds: string[], user: CurrentUserWithRole) {
+    if (!cashierIds.length) return [];
+
+    const effectiveTenantId = await this.tenantAuth.getEffectiveTenantId(user);
+    if (!effectiveTenantId) return [];
+
+    // If user has outletId assigned, only return their own shift status
+    const targetCashierIds = user.outletId ? [user.id] : cashierIds;
+
+    const openShifts = await this.db
+      .select({
+        id: cashShifts.id,
+        cashierId: cashShifts.cashierId,
+        status: cashShifts.status,
+        outletId: cashShifts.outletId,
+        jumlahBuka: cashShifts.jumlahBuka,
+        openedAt: cashShifts.openedAt,
+        outletName: outlets.nama,
+      })
+      .from(cashShifts)
+      .leftJoin(outlets, eq(cashShifts.outletId, outlets.id))
+      .where(
+        and(
+          eq(cashShifts.tenantId, effectiveTenantId),
+          eq(cashShifts.status, 'buka'),
+          inArray(cashShifts.cashierId, targetCashierIds),
+        ),
+      );
+
+    return openShifts;
+  }
+
+  async findCashiersForCurrentUser(user: CurrentUserWithRole) {
+    const effectiveTenantId = await this.tenantAuth.getEffectiveTenantId(user);
+    if (!effectiveTenantId) return [];
+
+    const users = await this.db
+      .select({
+        id: userTable.id,
+        name: userTable.name,
+        email: userTable.email,
+        emailVerified: userTable.emailVerified,
+        image: userTable.image,
+        createdAt: userTable.createdAt,
+        updatedAt: userTable.updatedAt,
+        roleId: userTable.roleId,
+        outletId: userTable.outletId,
+      })
+      .from(userTable)
+      .where(eq(userTable.tenantId, effectiveTenantId));
+
+    if (user.outletId) {
+      return users.filter((u) => u.id === user.id);
+    }
+
+    return users;
+  }
+
   async create(data: CreateCashShiftDto, user: CurrentUserWithRole) {
     // Validate tenant access for creating cash shift
     await this.tenantAuth.validateTenantOperation(user, data.tenantId);
@@ -172,7 +239,7 @@ export class CashShiftsService {
       .insert(cashShifts)
       .values({
         ...data,
-        cashierId: user.id,
+        cashierId: data.cashierId || user.id,
         jumlahTutup: '0',
         jumlahExpected: '0',
         selisih: '0',

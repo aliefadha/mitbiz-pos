@@ -32,6 +32,7 @@ interface CashShiftListProps {
   onSearchChange: (query: string) => void;
   onPageChange: (page: number) => void;
   onPageSizeChange: (size: number) => void;
+  userOutletId?: string | null;
 }
 
 const formatRupiah = (value: string | number): string => {
@@ -88,7 +89,10 @@ export function CashShiftList({
   totalPages,
   onPageChange,
   onPageSizeChange,
+  userOutletId,
 }: CashShiftListProps) {
+  const isShowingOnlyUserShifts = !!userOutletId;
+
   return (
     <Card className="shadow-sm border-gray-200">
       <CardHeader>
@@ -104,7 +108,11 @@ export function CashShiftList({
         ) : displayedShifts.length === 0 ? (
           <div className="text-center py-10 text-gray-500">
             <Wallet className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-            <p>Belum ada riwayat shift</p>
+            <p>
+              {isShowingOnlyUserShifts
+                ? 'Anda belum memiliki riwayat shift'
+                : 'Belum ada riwayat shift'}
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import type { UseFormReturn } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import {
   Dialog,
   DialogContent,
@@ -25,15 +26,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { Outlet } from '@/lib/api/outlets';
-import type { User } from '@/lib/api/users';
 import type { OpenShiftFormValues } from '../hooks';
 
 interface OpenShiftDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   outlets: Outlet[];
-  users: User[];
-  currentUserId?: string;
+  cashierName: string;
+  cashierOutletId?: string | null;
   onSubmit: (values: OpenShiftFormValues) => void;
   isPending: boolean;
   form: UseFormReturn<OpenShiftFormValues>;
@@ -43,28 +43,23 @@ export function OpenShiftDialog({
   open,
   onOpenChange,
   outlets,
-  users,
-  currentUserId,
+  cashierName,
+  cashierOutletId,
   onSubmit,
   isPending,
   form,
 }: OpenShiftDialogProps) {
-  const selectedCashierId = form.watch('cashierId');
-  const selectedCashier = users.find((u) => u.id === selectedCashierId);
-  const cashierHasOutlet = !!selectedCashier?.outletId;
   const selectedOutletId = form.watch('outletId');
+  const cashierHasOutlet = !!cashierOutletId;
 
   useEffect(() => {
-    if (selectedCashier?.outletId) {
-      form.setValue('outletId', selectedCashier.outletId);
-    } else if (!selectedCashier?.outletId && selectedCashierId) {
-      form.setValue('outletId', '');
+    if (cashierOutletId) {
+      form.setValue('outletId', cashierOutletId);
     }
-  }, [selectedCashier, selectedCashierId, form]);
+  }, [cashierOutletId, form]);
 
   const isOutletDisabled = cashierHasOutlet;
-  const canSubmit =
-    selectedCashierId && (cashierHasOutlet || (!cashierHasOutlet && selectedOutletId));
+  const canSubmit = cashierHasOutlet || (!cashierHasOutlet && selectedOutletId);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -74,41 +69,22 @@ export function OpenShiftDialog({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="cashierId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Kasir</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value || currentUserId || ''}
-                    value={field.value || currentUserId || ''}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Pilih kasir" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {users?.map((user) => (
-                        <SelectItem key={user.id} value={user.id}>
-                          {user.name || user.email}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <FormItem>
+              <FormLabel>Kasir</FormLabel>
+              <Select disabled value="cashier">
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue>{cashierName}</SelectValue>
+                  </SelectTrigger>
+                </FormControl>
+              </Select>
+            </FormItem>
             <FormField
               control={form.control}
               name="outletId"
               render={({ field }) => {
                 const outletName = cashierHasOutlet
-                  ? selectedCashier?.outlet?.nama ||
-                    outlets.find((o) => o.id === selectedCashier?.outletId)?.nama
+                  ? outlets.find((o) => o.id === cashierOutletId)?.nama
                   : outlets.find((o) => o.id === field.value)?.nama;
 
                 return (
@@ -145,11 +121,10 @@ export function OpenShiftDialog({
                 <FormItem>
                   <FormLabel>Jumlah Buka (Kas di awal)</FormLabel>
                   <FormControl>
-                    <Input
-                      type="number"
+                    <CurrencyInput
+                      value={field.value || '0'}
+                      onChange={field.onChange}
                       placeholder="0"
-                      {...field}
-                      onChange={(e) => field.onChange(e.target.value)}
                     />
                   </FormControl>
                   <FormMessage />
