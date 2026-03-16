@@ -1,12 +1,19 @@
 import type { CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
 import { DB_CONNECTION } from '@/db/db.module';
 import { rolePermissions, roles, user } from '@/db/schema';
+import { outlets, tenants } from '@/db/schema';
 import type { DrizzleDB } from '@/db/type';
 import { auth } from '@/lib/auth';
 import { TenantAuthService } from '@/rbac/services/tenant-auth.service';
 import { BadRequestException, ForbiddenException, Inject, Injectable } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import type { CreateUserDto, UpdateUserDto } from './dto';
+
+export interface UserQueryParams {
+  tenantId?: string;
+  page?: number;
+  limit?: number;
+}
 
 export interface UserRoleAndPermissions {
   role: {
@@ -29,7 +36,10 @@ export class UserService {
     private readonly tenantAuth: TenantAuthService,
   ) {}
 
-  async getAllUsers(currentUser: CurrentUserWithRole, tenantId?: string) {
+  async getAllUsers(currentUser: CurrentUserWithRole, params: UserQueryParams) {
+    const { tenantId, page = 1, limit = 10 } = params;
+    const offset = (page - 1) * limit;
+
     // If query tenantId provided, validate access
     if (tenantId) {
       await this.tenantAuth.validateQueryTenantId(currentUser, tenantId);
@@ -40,62 +50,108 @@ export class UserService {
 
     // Global roles can see all users, optionally filtered by tenantId
     if (!effectiveTenantId) {
-      const users = await this.db.query.user.findMany({
-        where: tenantId ? eq(user.tenantId, tenantId) : undefined,
-        with: {
+      const users = await this.db
+        .select({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          image: user.image,
+          createdAt: user.createdAt,
+          emailVerified: user.emailVerified,
+          roleId: user.roleId,
+          tenantId: user.tenantId,
+          outletId: user.outletId,
+          isSubscribed: user.isSubscribed,
           role: {
-            columns: {
-              id: true,
-              name: true,
-              scope: true,
-              tenantId: true,
-            },
+            id: roles.id,
+            name: roles.name,
+            scope: roles.scope,
+            tenantId: roles.tenantId,
           },
           tenant: {
-            columns: {
-              id: true,
-              nama: true,
-            },
+            id: tenants.id,
+            nama: tenants.nama,
           },
           outlet: {
-            columns: {
-              id: true,
-              nama: true,
-            },
+            id: outlets.id,
+            nama: outlets.nama,
           },
+        })
+        .from(user)
+        .leftJoin(roles, eq(user.roleId, roles.id))
+        .leftJoin(tenants, eq(user.tenantId, tenants.id))
+        .leftJoin(outlets, eq(user.outletId, outlets.id))
+        .where(tenantId ? eq(user.tenantId, tenantId) : undefined)
+        .limit(limit)
+        .offset(offset);
+
+      const [{ count }] = await this.db
+        .select({ count: sql<number>`count(*)` })
+        .from(user)
+        .where(tenantId ? eq(user.tenantId, tenantId) : undefined);
+
+      return {
+        users,
+        meta: {
+          page,
+          limit,
+          total: count,
+          totalPages: Math.ceil(count / limit),
         },
-      });
-      return { users, total: users.length };
+      };
     }
 
     // Tenant-scoped roles can only see users in their tenant
     const filterTenantId = tenantId || effectiveTenantId;
-    const users = await this.db.query.user.findMany({
-      where: eq(user.tenantId, filterTenantId),
-      with: {
+    const users = await this.db
+      .select({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        image: user.image,
+        createdAt: user.createdAt,
+        emailVerified: user.emailVerified,
+        roleId: user.roleId,
+        tenantId: user.tenantId,
+        outletId: user.outletId,
+        isSubscribed: user.isSubscribed,
         role: {
-          columns: {
-            id: true,
-            name: true,
-            scope: true,
-            tenantId: true,
-          },
+          id: roles.id,
+          name: roles.name,
+          scope: roles.scope,
+          tenantId: roles.tenantId,
         },
         tenant: {
-          columns: {
-            id: true,
-            nama: true,
-          },
+          id: tenants.id,
+          nama: tenants.nama,
         },
         outlet: {
-          columns: {
-            id: true,
-            nama: true,
-          },
+          id: outlets.id,
+          nama: outlets.nama,
         },
+      })
+      .from(user)
+      .leftJoin(roles, eq(user.roleId, roles.id))
+      .leftJoin(tenants, eq(user.tenantId, tenants.id))
+      .leftJoin(outlets, eq(user.outletId, outlets.id))
+      .where(eq(user.tenantId, filterTenantId))
+      .limit(limit)
+      .offset(offset);
+
+    const [{ count }] = await this.db
+      .select({ count: sql<number>`count(*)` })
+      .from(user)
+      .where(eq(user.tenantId, filterTenantId));
+
+    return {
+      users,
+      meta: {
+        page,
+        limit,
+        total: count,
+        totalPages: Math.ceil(count / limit),
       },
-    });
-    return { users, total: users.length };
+    };
   }
 
   async findUserRoles(userId: string) {

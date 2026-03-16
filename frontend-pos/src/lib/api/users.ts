@@ -56,11 +56,18 @@ async function getUsers(filters?: {
   tenantId?: string;
   outletId?: string;
   roleId?: string;
-}): Promise<{ users: User[]; total: number }> {
+  page?: number;
+  limit?: number;
+}): Promise<{
+  users: User[];
+  meta: { page: number; limit: number; total: number; totalPages: number };
+}> {
   const params = new URLSearchParams();
   if (filters?.tenantId) params.append('tenantId', filters.tenantId);
   if (filters?.outletId) params.append('outletId', filters.outletId);
   if (filters?.roleId) params.append('roleId', filters.roleId);
+  if (filters?.page) params.append('page', String(filters.page));
+  if (filters?.limit) params.append('limit', String(filters.limit));
   const query = params.toString();
   return fetchApi(`/users${query ? `?${query}` : ''}`);
 }

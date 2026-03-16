@@ -24,6 +24,20 @@ export class UpdateUserDto extends createZodDto(UpdateUserSchema) {}
 
 export const UserQuerySchema = z.object({
   tenantId: z.string().optional(),
+  page: z
+    .string()
+    .transform((val) => {
+      const parsed = parseInt(val, 10);
+      return isNaN(parsed) || parsed < 1 ? 1 : parsed;
+    })
+    .optional(),
+  limit: z
+    .string()
+    .transform((val) => {
+      const parsed = parseInt(val, 10);
+      return isNaN(parsed) || parsed < 1 ? 10 : Math.min(parsed, 100);
+    })
+    .optional(),
 });
 
 export class UserQueryDto extends createZodDto(UserQuerySchema) {}

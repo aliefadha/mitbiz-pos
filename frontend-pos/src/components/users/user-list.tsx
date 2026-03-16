@@ -212,19 +212,16 @@ export function UserList({
               </Table>
             </div>
 
-            {totalPages > 1 && (
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-2 py-4 mt-4">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs sm:text-sm text-gray-600">
+            {totalPages > 0 && (
+              <div className="flex items-center justify-between px-2 py-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">
                     Menampilkan {(currentPage - 1) * pageSize + 1} -{' '}
                     {Math.min(currentPage * pageSize, totalUsers)} dari {totalUsers}
                   </span>
                   <Select
                     value={pageSize.toString()}
-                    onValueChange={(value) => {
-                      onPageSizeChange(parseInt(value));
-                      onPageChange(1);
-                    }}
+                    onValueChange={(value) => onPageSizeChange(parseInt(value))}
                   >
                     <SelectTrigger className="w-[70px]">
                       <SelectValue />
@@ -237,7 +234,7 @@ export function UserList({
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex items-center gap-1 sm:gap-2">
+                <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
                     size="sm"
@@ -247,17 +244,45 @@ export function UserList({
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
                   <div className="flex items-center gap-1">
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                      <Button
-                        key={page}
-                        variant={currentPage === page ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => onPageChange(page)}
-                        className="w-8 sm:w-9"
-                      >
-                        {page}
-                      </Button>
-                    ))}
+                    {(() => {
+                      const pages: (number | string)[] = [];
+
+                      if (totalPages <= 5) {
+                        for (let i = 1; i <= totalPages; i++) {
+                          pages.push(i);
+                        }
+                      } else {
+                        pages.push(1);
+
+                        if (currentPage <= 3) {
+                          pages.push(2, 3, '...');
+                        } else if (currentPage >= totalPages - 2) {
+                          pages.push('...', totalPages - 2, totalPages - 1);
+                        } else {
+                          pages.push('...', currentPage, '...');
+                        }
+
+                        pages.push(totalPages);
+                      }
+
+                      return pages.map((page, index) =>
+                        page === '...' ? (
+                          <span key={`ellipsis-${index}`} className="px-2 text-sm text-gray-500">
+                            ...
+                          </span>
+                        ) : (
+                          <Button
+                            key={page}
+                            variant={currentPage === page ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => onPageChange(page as number)}
+                            className="w-9"
+                          >
+                            {page}
+                          </Button>
+                        )
+                      );
+                    })()}
                   </div>
                   <Button
                     variant="outline"

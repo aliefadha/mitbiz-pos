@@ -135,10 +135,44 @@ export class TenantsService {
     const tenant = await this.db.query.tenants.findFirst({
       where: eq(tenants.id, id),
       with: {
-        user: true,
+        user: {
+          columns: {
+            id: true,
+            name: true,
+            image: true,
+            email: true,
+            outletId: true,
+            createdAt: true,
+          },
+          with: {
+            role: {
+              columns: {
+                name: true,
+                scope: true,
+              },
+            },
+          },
+        },
         outlets: {
           with: {
-            cashiers: true,
+            cashiers: {
+              columns: {
+                id: true,
+                name: true,
+                image: true,
+                email: true,
+                outletId: true,
+                createdAt: true,
+              },
+              with: {
+                role: {
+                  columns: {
+                    name: true,
+                    scope: true,
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -161,10 +195,44 @@ export class TenantsService {
     const tenant = await this.db.query.tenants.findFirst({
       where: eq(tenants.slug, slug),
       with: {
-        user: true,
+        user: {
+          columns: {
+            id: true,
+            name: true,
+            image: true,
+            email: true,
+            outletId: true,
+            createdAt: true,
+          },
+          with: {
+            role: {
+              columns: {
+                name: true,
+                scope: true,
+              },
+            },
+          },
+        },
         outlets: {
           with: {
-            cashiers: true,
+            cashiers: {
+              columns: {
+                id: true,
+                name: true,
+                image: true,
+                email: true,
+                outletId: true,
+                createdAt: true,
+              },
+              with: {
+                role: {
+                  columns: {
+                    name: true,
+                    scope: true,
+                  },
+                },
+              },
+            },
           },
         },
       },

@@ -98,8 +98,8 @@ export function useUsersPage() {
 
   // Fetch users
   const { data: usersData, isLoading: isLoadingUsers } = useQuery({
-    queryKey: ['users', tenantId],
-    queryFn: () => usersApi.getUsers({ tenantId }),
+    queryKey: ['users', tenantId, currentPage, pageSize, userSearchQuery],
+    queryFn: () => usersApi.getUsers({ tenantId, page: currentPage, limit: pageSize }),
     enabled: !!tenantId,
   });
 
@@ -172,10 +172,10 @@ export function useUsersPage() {
     return users;
   }, [usersData, selectedRoleId, userSearchQuery]);
 
-  // Pagination
-  const totalUsers = filteredUsers.length;
-  const totalPages = Math.ceil(totalUsers / pageSize);
-  const displayedUsers = filteredUsers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  // Pagination - use backend meta
+  const totalUsers = usersData?.meta?.total ?? 0;
+  const totalPages = usersData?.meta?.totalPages ?? 0;
+  const displayedUsers = usersData?.users ?? [];
 
   const usersWithRole = useMemo(() => {
     if (!usersData?.users || !selectedRoleId) return [];

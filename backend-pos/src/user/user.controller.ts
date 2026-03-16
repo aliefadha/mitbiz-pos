@@ -27,7 +27,7 @@ import {
   UserQueryDto,
   UserQuerySchema,
 } from './dto';
-import { type UserRoleAndPermissions, UserService } from './user.service';
+import { UserQueryParams, type UserRoleAndPermissions, UserService } from './user.service';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard, PermissionGuard, ScopeGuard)
@@ -43,10 +43,14 @@ export class UserController {
   @Permission('user', [Action.READ])
   async getUsers(@Query() query: UserQueryDto, @CurrentUser() currentUser: CurrentUserWithRole) {
     if (!currentUser?.id) {
-      return { users: [], total: 0 };
+      return { users: [], meta: { page: 1, limit: 10, total: 0, totalPages: 0 } };
     }
 
-    return this.userService.getAllUsers(currentUser, query.tenantId);
+    return this.userService.getAllUsers(currentUser, {
+      tenantId: query.tenantId,
+      page: query.page,
+      limit: query.limit,
+    });
   }
 
   @Get('me')

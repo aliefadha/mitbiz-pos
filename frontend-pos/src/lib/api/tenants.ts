@@ -11,12 +11,13 @@ export interface User {
   id: string;
   name: string | null;
   email: string;
-  emailVerified: boolean;
   image: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-  role?: 'admin' | 'owner' | 'cashier';
   outletId?: string | null;
+  createdAt?: Date;
+  role?: {
+    name: string;
+    scope: 'global' | 'tenant';
+  } | null;
 }
 
 export interface Outlet {
