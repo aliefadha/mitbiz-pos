@@ -9,7 +9,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { AuthService } from '@thallesp/nestjs-better-auth';
 import { fromNodeHeaders } from 'better-auth/node';
-import { PERMISSION_KEY, PUBLIC_KEY, PermissionMetadata } from '../decorators/permission.decorator';
+import { PERMISSION_KEY, PUBLIC_KEY, PermissionMetadata, PermissionTuple } from '../decorators/permission.decorator';
 import { RbacService } from '../services/rbac.service';
 import { Action, CONTROLLER_TO_RESOURCE, METHOD_TO_ACTION } from '../types/rbac.types';
 
@@ -40,15 +40,15 @@ export class PermissionGuard implements CanActivate {
       throw new UnauthorizedException('No role assigned to user');
     }
 
-    const explicitPermission = this.reflector.get<PermissionMetadata>(
-      PERMISSION_KEY,
-      context.getHandler(),
-    );
+    const handler = context.getHandler();
+    const controller = context.getClass();
 
-    const resource = explicitPermission?.resource || this.getResourceFromController(context);
-    const action = explicitPermission?.actions?.[0] || this.getAction(request.method);
+    const handlerPermissions = this.reflector.getAllAndOverride<PermissionTuple[]>(PERMISSION_KEY, [
+      handler,
+      controller,
+    ]);
 
-    if (!resource || !action) {
+    if (!handlerPermissions || handlerPermissions.length === 0) {
       return true;
     }
 
@@ -57,13 +57,25 @@ export class PermissionGuard implements CanActivate {
       throw new ForbiddenException('Role not found or inactive');
     }
 
-    const hasPermission = this.rbacService.hasPermission(role.permissions, resource, action);
+    const method = request.method;
+    const defaultAction = this.getAction(method);
 
-    if (!hasPermission) {
-      throw new ForbiddenException(`You don't have permission to ${action} ${resource}`);
+    const allPermissions: PermissionMetadata[] = handlerPermissions.flatMap(([resource, actions]) =>
+      actions.map((action) => ({ resource, actions: [action] })),
+    );
+
+    const hasAnyPermission = allPermissions.some(({ resource, actions }) =>
+      this.rbacService.hasPermission(role.permissions, resource, actions[0]),
+    );
+
+    if (!hasAnyPermission) {
+      const missing = allPermissions
+        .filter(({ resource, actions }) => !this.rbacService.hasPermission(role.permissions, resource, actions[0]))
+        .map(({ resource, actions }) => `${actions[0]} ${resource}`)
+        .join(', ');
+      throw new ForbiddenException(`You don't have permission to ${missing}`);
     }
 
-    // Attach role info to request for caching
     request.user = {
       ...session.user,
       role: {
