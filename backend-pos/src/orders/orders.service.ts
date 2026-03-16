@@ -9,6 +9,7 @@ import { outlets } from '@/db/schema/outlet-schema';
 import { paymentMethods } from '@/db/schema/payment-method-schema';
 import { products } from '@/db/schema/product-schema';
 import { productStocks } from '@/db/schema/stock-schema';
+import { tenants } from '@/db/schema/tenant-schema';
 import type { DrizzleDB } from '@/db/type';
 import { TenantAuthService } from '@/rbac/services/tenant-auth.service';
 import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
@@ -168,32 +169,38 @@ export class OrdersService {
     // Validate tenant access for creating order
     await this.tenantAuth.validateTenantOperation(user, data.tenantId);
 
-    // Verify outlet belongs to the same tenant
-    const outlet = await this.db.query.outlets.findFirst({
-      where: eq(outlets.id, data.outletId),
-    });
+    // Parallelize initial queries
+    const [outlet, tenant, openShift] = await Promise.all([
+      this.db.query.outlets.findFirst({
+        where: eq(outlets.id, data.outletId),
+      }),
+      this.db.query.tenants.findFirst({
+        where: eq(tenants.id, data.tenantId),
+      }),
+      this.db.query.cashShifts.findFirst({
+        where: and(
+          eq(cashShifts.outletId, data.outletId),
+          eq(cashShifts.cashierId, user.id),
+          eq(cashShifts.status, 'buka'),
+        ),
+      }),
+    ]);
 
     if (!outlet) {
       throw new NotFoundException('Outlet not found');
+    }
+
+    if (!tenant) {
+      throw new NotFoundException('Tenant not found');
     }
 
     if (outlet.tenantId !== data.tenantId) {
       throw new ForbiddenException('Outlet does not belong to the specified tenant');
     }
 
-    const openShift = await this.db.query.cashShifts.findFirst({
-      where: and(eq(cashShifts.outletId, data.outletId), eq(cashShifts.status, 'buka')),
-    });
-
     if (!openShift) {
       throw new ForbiddenException(
         'Tidak ada shift kasir yang terbuka. Silakan buka shift terlebih dahulu.',
-      );
-    }
-
-    if (openShift.cashierId !== user.id) {
-      throw new ForbiddenException(
-        'Shift kasir ini bukan milik Anda. Silakan buka shift Anda sendiri.',
       );
     }
 
@@ -203,7 +210,7 @@ export class OrdersService {
     const dd = String(today.getDate()).padStart(2, '0');
     const dateStr = `${yyyy}${mm}${dd}`;
     const uuid = randomUUID().split('-')[0].toUpperCase();
-    const orderNumber = `ORD-${outlet.kode}-${dateStr}-${uuid}`;
+    const orderNumber = `ORD-${tenant.slug}-${outlet.kode}-${dateStr}-${uuid}`;
 
     return await this.db.transaction(async (tx) => {
       const [order] = await tx
@@ -219,6 +226,7 @@ export class OrdersService {
 
       if (data.items && data.items.length > 0) {
         const productIds = data.items.map((item) => item.productId);
+
         const productData = await tx
           .select({
             id: products.id,
@@ -229,19 +237,29 @@ export class OrdersService {
 
         const productMap = new Map(productData.map((p) => [p.id, p]));
 
-        const trackedItems = data.items.filter(
+        const trackedItemsFiltered = data.items.filter(
           (item) => productMap.get(item.productId)?.enableStockTracking === true,
         );
 
-        if (trackedItems.length > 0) {
-          const stocks = await tx
-            .select()
-            .from(productStocks)
-            .where(and(eq(productStocks.outletId, data.outletId)));
+        if (trackedItemsFiltered.length > 0) {
+          const stockMap = new Map(
+            (
+              await tx
+                .select()
+                .from(productStocks)
+                .where(
+                  and(
+                    eq(productStocks.outletId, data.outletId),
+                    inArray(
+                      productStocks.productId,
+                      trackedItemsFiltered.map((i) => i.productId),
+                    ),
+                  ),
+                )
+            ).map((s) => [s.productId, s]),
+          );
 
-          const stockMap = new Map(stocks.map((s) => [s.productId, s]));
-
-          const insufficientStock = trackedItems.find((item) => {
+          const insufficientStock = trackedItemsFiltered.find((item) => {
             const existingStock = stockMap.get(item.productId);
             if (!existingStock) return true;
             return existingStock.quantity < item.quantity;
@@ -254,10 +272,10 @@ export class OrdersService {
           }
 
           await Promise.all(
-            trackedItems.map(async (item) => {
+            trackedItemsFiltered.map((item) => {
               const existingStock = stockMap.get(item.productId);
               if (existingStock) {
-                await tx
+                return tx
                   .update(productStocks)
                   .set({ quantity: existingStock.quantity - item.quantity })
                   .where(eq(productStocks.id, existingStock.id));
