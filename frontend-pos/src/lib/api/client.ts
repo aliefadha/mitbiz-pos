@@ -1,5 +1,3 @@
-import { authClient } from '../auth-client';
-
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 interface FetchOptions extends RequestInit {
@@ -7,13 +5,8 @@ interface FetchOptions extends RequestInit {
 }
 
 export async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
-  const session = await authClient.getSession();
-
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
-    ...(session?.data?.session?.token
-      ? { Authorization: `Bearer ${session.data.session.token}` }
-      : {}),
     ...options.headers,
   };
 
