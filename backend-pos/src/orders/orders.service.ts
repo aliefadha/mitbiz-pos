@@ -191,6 +191,12 @@ export class OrdersService {
       );
     }
 
+    if (openShift.cashierId !== user.id) {
+      throw new ForbiddenException(
+        'Shift kasir ini bukan milik Anda. Silakan buka shift Anda sendiri.',
+      );
+    }
+
     const today = new Date();
     const yyyy = today.getFullYear();
     const mm = String(today.getMonth() + 1).padStart(2, '0');
