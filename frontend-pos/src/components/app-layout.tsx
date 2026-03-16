@@ -104,7 +104,7 @@ export function AppLayout() {
       <Sidebar variant="inset" collapsible="icon" className="h-dvh">
         <AppSidebar />
       </Sidebar>
-      <SidebarInset className="h-dvh overflow-y-auto">
+      <SidebarInset className="min-h-dvh overflow-y-auto">
         <header className="flex h-12 shrink-0 items-center gap-2">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
