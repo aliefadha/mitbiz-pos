@@ -228,11 +228,17 @@ export class CashShiftsService {
     }
 
     const openShift = await this.db.query.cashShifts.findFirst({
-      where: and(eq(cashShifts.outletId, data.outletId), eq(cashShifts.status, 'buka')),
+      where: and(
+        eq(cashShifts.outletId, data.outletId),
+        eq(cashShifts.cashierId, data.cashierId || user.id),
+        eq(cashShifts.status, 'buka'),
+      ),
     });
 
     if (openShift) {
-      throw new ForbiddenException('There is already an open cash shift for this outlet');
+      throw new ForbiddenException(
+        'There is already an open cash shift for this user at this outlet',
+      );
     }
 
     const [cashShift] = await this.db
