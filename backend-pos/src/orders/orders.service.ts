@@ -7,11 +7,12 @@ import { orderItems } from '@/db/schema/order-item-schema';
 import { orders } from '@/db/schema/order-schema';
 import { outlets } from '@/db/schema/outlet-schema';
 import { paymentMethods } from '@/db/schema/payment-method-schema';
+import { products } from '@/db/schema/product-schema';
 import { productStocks } from '@/db/schema/stock-schema';
 import type { DrizzleDB } from '@/db/type';
 import { TenantAuthService } from '@/rbac/services/tenant-auth.service';
 import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { SQL, and, desc, eq, like, sql } from 'drizzle-orm';
+import { SQL, and, desc, eq, inArray, like, sql } from 'drizzle-orm';
 import { CreateOrderDto, OrderQueryDto, UpdateOrderDto } from './dto';
 
 @Injectable()
@@ -211,6 +212,54 @@ export class OrdersService {
         .returning();
 
       if (data.items && data.items.length > 0) {
+        const productIds = data.items.map((item) => item.productId);
+        const productData = await tx
+          .select({
+            id: products.id,
+            enableStockTracking: products.enableStockTracking,
+          })
+          .from(products)
+          .where(inArray(products.id, productIds));
+
+        const productMap = new Map(productData.map((p) => [p.id, p]));
+
+        const trackedItems = data.items.filter(
+          (item) => productMap.get(item.productId)?.enableStockTracking === true,
+        );
+
+        if (trackedItems.length > 0) {
+          const stocks = await tx
+            .select()
+            .from(productStocks)
+            .where(and(eq(productStocks.outletId, data.outletId)));
+
+          const stockMap = new Map(stocks.map((s) => [s.productId, s]));
+
+          const insufficientStock = trackedItems.find((item) => {
+            const existingStock = stockMap.get(item.productId);
+            if (!existingStock) return true;
+            return existingStock.quantity < item.quantity;
+          });
+
+          if (insufficientStock) {
+            throw new ForbiddenException(
+              `Insufficient stock for product ${insufficientStock.productId}.`,
+            );
+          }
+
+          await Promise.all(
+            trackedItems.map(async (item) => {
+              const existingStock = stockMap.get(item.productId);
+              if (existingStock) {
+                await tx
+                  .update(productStocks)
+                  .set({ quantity: existingStock.quantity - item.quantity })
+                  .where(eq(productStocks.id, existingStock.id));
+              }
+            }),
+          );
+        }
+
         const orderItemsData = data.items.map((item) => ({
           outletId: data.outletId,
           orderId: order.id,
@@ -222,38 +271,6 @@ export class OrdersService {
         }));
 
         await tx.insert(orderItems).values(orderItemsData);
-
-        const stocks = await tx
-          .select()
-          .from(productStocks)
-          .where(and(eq(productStocks.outletId, data.outletId)));
-
-        const stockMap = new Map(stocks.map((s) => [s.productId, s]));
-
-        const insufficientStock = data.items.find((item) => {
-          const existingStock = stockMap.get(item.productId);
-          if (!existingStock) return true;
-          return existingStock.quantity < item.quantity;
-        });
-
-        if (insufficientStock) {
-          const product = stockMap.get(insufficientStock.productId);
-          throw new ForbiddenException(
-            `Insufficient stock for product ${product?.productId || insufficientStock.productId}. Available: ${product?.quantity || 0}, Requested: ${insufficientStock.quantity}`,
-          );
-        }
-
-        await Promise.all(
-          data.items.map(async (item) => {
-            const existingStock = stockMap.get(item.productId);
-            if (existingStock) {
-              await tx
-                .update(productStocks)
-                .set({ quantity: existingStock.quantity - item.quantity })
-                .where(eq(productStocks.id, existingStock.id));
-            }
-          }),
-        );
       }
 
       return order;

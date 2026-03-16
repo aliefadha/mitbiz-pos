@@ -24,6 +24,7 @@ export const products = pgTable('products', {
   unit: text('unit').default('pcs').notNull(),
   minStockLevel: integer('min_stock_level').default(0).notNull(),
   enableMinStock: boolean('enable_min_stock').default(false).notNull(),
+  enableStockTracking: boolean('enable_stock_tracking').default(true).notNull(),
   isActive: boolean('is_active').default(true).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),

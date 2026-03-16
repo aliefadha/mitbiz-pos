@@ -54,6 +54,7 @@ const editFormSchema = z.object({
   hargaJual: z.string(),
   minStockLevel: z.number(),
   enableMinStock: z.boolean(),
+  enableStockTracking: z.boolean(),
   unit: z.string(),
   isActive: z.boolean(),
   discountIds: z.array(z.string()).optional(),
@@ -80,12 +81,14 @@ function ProductDetailPage() {
       unit: 'pcs',
       minStockLevel: 0,
       enableMinStock: false,
+      enableStockTracking: true,
       isActive: true,
       discountIds: [],
     },
   });
 
   const enableMinStock = editForm.watch('enableMinStock');
+  const enableStockTracking = editForm.watch('enableStockTracking');
 
   const { data: product, isLoading: productLoading } = useQuery({
     queryKey: ['product', productId],
@@ -160,6 +163,7 @@ function ProductDetailPage() {
       hargaJual: product.hargaJual || '0',
       minStockLevel: product.minStockLevel || 0,
       enableMinStock: product.enableMinStock || false,
+      enableStockTracking: product.enableStockTracking ?? true,
       unit: product.unit,
       isActive: product.isActive,
       discountIds: product.discountProducts?.map((dp) => dp.discountId) || [],
@@ -309,6 +313,18 @@ function ProductDetailPage() {
                 <div className="space-y-4">
                   <FormField
                     control={editForm.control}
+                    name="enableStockTracking"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-md border px-4 py-3">
+                        <FormLabel> Tracking Stok</FormLabel>
+                        <FormControl>
+                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
                     name="enableMinStock"
                     render={({ field }) => (
                       <FormItem className="flex flex-row items-center justify-between rounded-md border px-4 py-3">
@@ -316,7 +332,11 @@ function ProductDetailPage() {
                           <FormLabel>Notifikasi Minimum Stok</FormLabel>
                         </div>
                         <FormControl>
-                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            disabled={!enableStockTracking}
+                          />
                         </FormControl>
                       </FormItem>
                     )}
@@ -479,6 +499,18 @@ function ProductDetailPage() {
               </div>
               <div>
                 <span className="text-gray-500">Minimum Stok:</span> {product.minStockLevel}
+              </div>
+              <div>
+                <span className="text-gray-500">Tracking Stok:</span>{' '}
+                <span
+                  className={`px-2 py-1 rounded text-xs ${
+                    product.enableStockTracking !== false
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'bg-gray-100 text-gray-700'
+                  }`}
+                >
+                  {product.enableStockTracking !== false ? 'Aktif' : 'Nonaktif'}
+                </span>
               </div>
               <div>
                 <span className="text-gray-500">Status:</span>{' '}

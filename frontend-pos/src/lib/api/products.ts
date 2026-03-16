@@ -37,6 +37,7 @@ export interface Product {
   stockQuantity: number;
   minStockLevel: number;
   enableMinStock: boolean;
+  enableStockTracking: boolean;
   unit: string;
   isActive: boolean;
   createdAt: Date;
@@ -55,6 +56,7 @@ export interface CreateProductDto {
   stockQuantity?: number;
   minStockLevel?: number;
   enableMinStock?: boolean;
+  enableStockTracking?: boolean;
   unit?: string;
   isActive?: boolean;
 }
@@ -68,6 +70,7 @@ export interface UpdateProductDto {
   hargaJual?: string;
   minStockLevel?: number;
   enableMinStock?: boolean;
+  enableStockTracking?: boolean;
   unit?: string;
   isActive?: boolean;
   discountIds?: string[];

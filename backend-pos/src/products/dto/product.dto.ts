@@ -12,6 +12,7 @@ export const CreateProductSchema = z.object({
   unit: z.string().max(20).default('pcs'),
   minStockLevel: z.number().int().min(0).default(0),
   enableMinStock: z.boolean().default(false),
+  enableStockTracking: z.boolean().optional(),
   isActive: z.boolean().default(true),
 });
 
@@ -25,6 +26,7 @@ export const UpdateProductSchema = z.object({
   unit: z.string().max(20).optional(),
   minStockLevel: z.number().int().min(0).optional(),
   enableMinStock: z.boolean().optional(),
+  enableStockTracking: z.boolean().optional(),
   isActive: z.boolean().optional(),
   discountIds: z.array(z.string().min(1)).optional(),
 });

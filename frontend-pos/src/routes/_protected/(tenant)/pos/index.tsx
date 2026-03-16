@@ -289,11 +289,12 @@ function PosPage() {
     const cartItem = cart.find((item) => item.product.id === productId);
     if (!cartItem) return;
 
-    const maxStock = cartItem.product.stock ?? 0;
+    const stockTrackingEnabled = cartItem.product.enableStockTracking !== false;
+    const maxStock = stockTrackingEnabled ? (cartItem.product.stock ?? 0) : Infinity;
     const newQuantity = cartItem.quantity + delta;
 
     if (newQuantity < 1) return;
-    if (cartItem.product.enableMinStock && newQuantity > maxStock) return;
+    if (cartItem.product.enableMinStock && stockTrackingEnabled && newQuantity > maxStock) return;
 
     setCart(
       cart
@@ -463,7 +464,9 @@ function PosPage() {
                       size="icon"
                       className={isSheet ? 'h-7 w-7' : 'h-5 w-5 lg:h-6 lg:w-6 xl:h-7 xl:w-7'}
                       disabled={
-                        item.product.enableMinStock && item.quantity >= (item.product.stock ?? 0)
+                        item.product.enableStockTracking !== false &&
+                        item.product.enableMinStock &&
+                        item.quantity >= (item.product.stock ?? 0)
                       }
                       onClick={() => updateQuantity(item.product.id, 1)}
                     >
@@ -621,9 +624,11 @@ function PosPage() {
           <div className="relative flex-1 min-h-0">
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4 overflow-y-auto flex-1 py-2">
               {products.map((product, index) => {
+                const stockTrackingEnabled = product.enableStockTracking !== false;
                 const stock = product.stock ?? 0;
-                const isOutOfStock = stock === 0;
-                const isLowStock = stock > 0 && stock < product.minStockLevel;
+                const isOutOfStock = stockTrackingEnabled && stock === 0;
+                const isLowStock =
+                  stockTrackingEnabled && stock > 0 && stock < product.minStockLevel;
 
                 return (
                   <div
@@ -642,7 +647,9 @@ function PosPage() {
                       <p className="font-bold text-xs lg:text-base text-primary truncate">
                         {formatRupiah(product.hargaJual)}
                       </p>
-                      {isOutOfStock ? (
+                      {!stockTrackingEnabled ? (
+                        <></>
+                      ) : isOutOfStock ? (
                         <p className="text-[10px] lg:text-xs font-medium text-gray-500 shrink-0">
                           Habis
                         </p>
