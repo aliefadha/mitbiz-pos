@@ -42,6 +42,7 @@ const formSchema = z.object({
   unit: z.string(),
   minStockLevel: z.number(),
   enableMinStock: z.boolean(),
+  enableStockTracking: z.boolean(),
 });
 
 export function CreateProductPage() {
@@ -62,6 +63,7 @@ export function CreateProductPage() {
       unit: 'pcs',
       minStockLevel: 0,
       enableMinStock: false,
+      enableStockTracking: true,
     },
   });
 
@@ -88,10 +90,11 @@ export function CreateProductPage() {
       ...values,
       categoryId: values.categoryId && values.categoryId !== 'none' ? values.categoryId : null,
       hargaBeli: values.hargaBeli || '0',
-      hargaJual: values.hargaJual,
+      hargaJual: values.hargaJual || '0',
       tenantId: tenantId!,
       isActive: true,
       enableMinStock: values.enableMinStock,
+      enableStockTracking: values.enableStockTracking,
     };
 
     createMutation.mutate(productData as CreateProductDto);
@@ -99,6 +102,7 @@ export function CreateProductPage() {
 
   const categories = categoriesData?.data ?? [];
   const enableMinStock = form.watch('enableMinStock');
+  const enableStockTracking = form.watch('enableStockTracking');
 
   if (categoriesLoading) {
     return (
@@ -227,6 +231,18 @@ export function CreateProductPage() {
               <div className="space-y-4">
                 <FormField
                   control={form.control}
+                  name="enableStockTracking"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-md border px-4 py-3">
+                      <FormLabel>Tracking Stok</FormLabel>
+                      <FormControl>
+                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
                   name="enableMinStock"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-md border px-4 py-3">
@@ -234,7 +250,11 @@ export function CreateProductPage() {
                         <FormLabel>Notifikasi Minimum Stok</FormLabel>
                       </div>
                       <FormControl>
-                        <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          disabled={!enableStockTracking}
+                        />
                       </FormControl>
                     </FormItem>
                   )}

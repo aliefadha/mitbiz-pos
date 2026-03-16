@@ -167,11 +167,11 @@ export class ProductsService {
     }
 
     const existingSku = await this.db.query.products.findFirst({
-      where: eq(products.sku, data.sku),
+      where: and(eq(products.sku, data.sku), eq(products.tenantId, data.tenantId)),
     });
 
     if (existingSku) {
-      throw new ConflictException(`Product with SKU ${data.sku} already exists`);
+      throw new ConflictException(`Product with SKU ${data.sku} already exists in this tenant`);
     }
 
     const [product] = await this.db.insert(products).values(data).returning();
@@ -185,11 +185,11 @@ export class ProductsService {
 
     if (data.sku && data.sku !== existingProduct.sku) {
       const skuExists = await this.db.query.products.findFirst({
-        where: eq(products.sku, data.sku),
+        where: and(eq(products.sku, data.sku), eq(products.tenantId, existingProduct.tenantId)),
       });
 
       if (skuExists) {
-        throw new ConflictException(`Product with SKU ${data.sku} already exists`);
+        throw new ConflictException(`Product with SKU ${data.sku} already exists in this tenant`);
       }
     }
 
