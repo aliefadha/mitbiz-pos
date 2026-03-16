@@ -172,10 +172,23 @@ export function useUsersPage() {
     return users;
   }, [usersData, selectedRoleId, userSearchQuery]);
 
-  // Pagination - use backend meta
-  const totalUsers = usersData?.meta?.total ?? 0;
-  const totalPages = usersData?.meta?.totalPages ?? 0;
-  const displayedUsers = usersData?.users ?? [];
+  // Pagination - use filtered users count when role is selected
+  const totalUsers =
+    selectedRoleId || userSearchQuery ? filteredUsers.length : (usersData?.meta?.total ?? 0);
+
+  const totalPages =
+    selectedRoleId || userSearchQuery
+      ? Math.ceil(filteredUsers.length / pageSize)
+      : (usersData?.meta?.totalPages ?? 0);
+
+  // Displayed users - apply pagination to filtered users
+  const displayedUsers = useMemo(() => {
+    if (selectedRoleId || userSearchQuery) {
+      const start = (currentPage - 1) * pageSize;
+      return filteredUsers.slice(start, start + pageSize);
+    }
+    return usersData?.users ?? [];
+  }, [filteredUsers, currentPage, pageSize, selectedRoleId, userSearchQuery, usersData]);
 
   const usersWithRole = useMemo(() => {
     if (!usersData?.users || !selectedRoleId) return [];
