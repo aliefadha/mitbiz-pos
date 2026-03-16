@@ -116,11 +116,11 @@ export class OutletsService {
     // Validate tenant access (permission already checked by guard)
     await this.tenantAuth.validateTenantOperation(user, data.tenantId);
 
-    const existing = await this.db.query.outlets.findFirst({
-      where: eq(outlets.kode, data.kode),
+    const kodeExists = await this.db.query.outlets.findFirst({
+      where: and(eq(outlets.kode, data.kode), eq(outlets.tenantId, data.tenantId)),
     });
 
-    if (existing) {
+    if (kodeExists) {
       throw new ConflictException(`Outlet with kode ${data.kode} already exists`);
     }
 
@@ -135,7 +135,7 @@ export class OutletsService {
 
     if (data.kode && data.kode !== existingOutlet.kode) {
       const kodeExists = await this.db.query.outlets.findFirst({
-        where: eq(outlets.kode, data.kode),
+        where: and(eq(outlets.kode, data.kode), eq(outlets.tenantId, existingOutlet.tenantId)),
       });
 
       if (kodeExists) {
