@@ -9,7 +9,12 @@ import {
 import { Reflector } from '@nestjs/core';
 import { AuthService } from '@thallesp/nestjs-better-auth';
 import { fromNodeHeaders } from 'better-auth/node';
-import { PERMISSION_KEY, PUBLIC_KEY, PermissionMetadata, PermissionTuple } from '../decorators/permission.decorator';
+import {
+  PERMISSION_KEY,
+  PUBLIC_KEY,
+  PermissionMetadata,
+  PermissionTuple,
+} from '../decorators/permission.decorator';
 import { RbacService } from '../services/rbac.service';
 import { Action, CONTROLLER_TO_RESOURCE, METHOD_TO_ACTION } from '../types/rbac.types';
 
@@ -70,7 +75,10 @@ export class PermissionGuard implements CanActivate {
 
     if (!hasAnyPermission) {
       const missing = allPermissions
-        .filter(({ resource, actions }) => !this.rbacService.hasPermission(role.permissions, resource, actions[0]))
+        .filter(
+          ({ resource, actions }) =>
+            !this.rbacService.hasPermission(role.permissions, resource, actions[0]),
+        )
         .map(({ resource, actions }) => `${actions[0]} ${resource}`)
         .join(', ');
       throw new ForbiddenException(`You don't have permission to ${missing}`);
