@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router';
-import { Home, ShieldAlert } from 'lucide-react';
+import { Home, LogOut, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth, useLogout } from '@/hooks/use-auth';
 import { Card, CardContent } from './ui/card';
 
 interface ForbiddenPageProps {
@@ -10,6 +10,11 @@ interface ForbiddenPageProps {
 
 export function ForbiddenPage({ resource }: ForbiddenPageProps) {
   const { user } = useAuth();
+  const logoutMutation = useLogout();
+
+  const handleLogout = () => {
+    logoutMutation.mutate();
+  };
 
   return (
     <div className="relative flex h-screen w-full items-center justify-center overflow-hidden bg-linear-to-br from-[#0a1e5c] via-[#0d2a6e] to-[#1a4fa0] px-6 font-sans">
@@ -52,6 +57,13 @@ export function ForbiddenPage({ resource }: ForbiddenPageProps) {
                 Beranda
               </Button>
             </Link>
+            <Button
+              onClick={handleLogout}
+              className="h-11 w-full rounded-lg bg-transparent border border-red-200 text-red-600 text-sm font-semibold hover:bg-red-50 transition-colors"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Keluar
+            </Button>
           </div>
         </CardContent>
       </Card>

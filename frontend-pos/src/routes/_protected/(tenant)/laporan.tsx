@@ -22,18 +22,25 @@ import { type Category, categoriesApi } from '@/lib/api/categories';
 import { type Outlet, outletsApi } from '@/lib/api/outlets';
 import { salesApi, type TopProduct } from '@/lib/api/sales';
 import { useSession } from '@/lib/auth-client';
-import { checkPermissionWithScope } from '@/lib/permissions';
+import { checkAnyPermissionWithScope } from '@/lib/permissions';
 
 export const Route = createFileRoute('/_protected/(tenant)/laporan')({
   component: LaporanPage,
   beforeLoad: async () => {
-    await checkPermissionWithScope('report', 'read', 'tenant');
+    await checkAnyPermissionWithScope(
+      [
+        { resource: 'report', actions: ['read', 'create', 'update'] },
+        { resource: 'sales', actions: ['read'] },
+      ],
+      'tenant'
+    );
   },
 });
 
 function LaporanPage() {
   const { data: session } = useSession();
   const tenantId = session?.user?.tenantId;
+  const userOutletId = session?.user?.outletId;
   const { hasPermission } = usePermissions();
 
   const canExportReport = hasPermission('report', 'export');
@@ -70,9 +77,9 @@ function LaporanPage() {
       startDate,
       endDate,
       tenantId,
-      outletId: selectedOutletId === 'all' ? undefined : selectedOutletId,
+      outletId: userOutletId ?? (selectedOutletId === 'all' ? undefined : selectedOutletId),
     }),
-    [startDate, endDate, tenantId, selectedOutletId]
+    [startDate, endDate, tenantId, selectedOutletId, userOutletId]
   );
 
   const { data: topProducts, isLoading: loadingTopProducts } = useQuery({
@@ -135,7 +142,7 @@ function LaporanPage() {
               </div>
             </div>
 
-            {canReadOutlets && (
+            {canReadOutlets && !userOutletId && (
               <div className="space-y-2">
                 <Label className="text-sm font-semibold text-gray-700">Cabang</Label>
                 <Select value={selectedOutletId} onValueChange={setSelectedOutletId}>
@@ -180,7 +187,7 @@ function LaporanPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <SalesTrendChart {...queryParams} />
-        <SalesByBranchChart {...queryParams} />
+        {!userOutletId && <SalesByBranchChart {...queryParams} />}
       </div>
 
       {canReadSales && (

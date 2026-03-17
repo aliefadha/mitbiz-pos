@@ -17,7 +17,11 @@ export class SalesController {
   @Get('top-products')
   @ApiOperation({ summary: 'Get top selling products' })
   @UsePipes(new ZodValidationPipe(SalesQuerySchema, 'query'))
-  @Permission('sales', [Action.READ])
+  @Permission([
+    ['sales', [Action.READ]],
+    ['reports', [Action.READ]],
+    ['orders', [Action.READ]],
+  ])
   getTopProducts(@Query() query: SalesQueryDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.salesService.getTopProducts(query, user, query.limit ?? 10);
   }
@@ -25,7 +29,11 @@ export class SalesController {
   @Get('by-category')
   @ApiOperation({ summary: 'Get sales by category' })
   @UsePipes(new ZodValidationPipe(SalesQuerySchema, 'query'))
-  @Permission('sales', [Action.READ])
+  @Permission([
+    ['sales', [Action.READ]],
+    ['reports', [Action.READ]],
+    ['orders', [Action.READ]],
+  ])
   getSalesByCategory(@Query() query: SalesQueryDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.salesService.getSalesByCategory(query, user);
   }
@@ -33,7 +41,11 @@ export class SalesController {
   @Get('by-product')
   @ApiOperation({ summary: 'Get sales by product' })
   @UsePipes(new ZodValidationPipe(SalesQuerySchema, 'query'))
-  @Permission('sales', [Action.READ])
+  @Permission([
+    ['sales', [Action.READ]],
+    ['reports', [Action.READ]],
+    ['orders', [Action.READ]],
+  ])
   getSalesByProduct(@Query() query: SalesQueryDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.salesService.getSalesByProduct(query, user);
   }

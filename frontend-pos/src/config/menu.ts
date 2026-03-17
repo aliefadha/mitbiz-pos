@@ -45,7 +45,10 @@ export const menuConfig: MenuGroup[] = [
         key: '/laporan',
         icon: FileText,
         label: 'Laporan',
-        permissions: [{ resource: 'report', actions: ['read'] }],
+        permissions: [
+          { resource: 'report', actions: ['read'] },
+          { resource: 'sales', actions: ['read'] },
+        ],
         scope: 'tenant',
       },
       {

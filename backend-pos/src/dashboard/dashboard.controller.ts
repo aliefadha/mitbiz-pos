@@ -17,7 +17,12 @@ export class DashboardController {
   @Get('stats')
   @ApiOperation({ summary: 'Get dashboard statistics' })
   @UsePipes(new ZodValidationPipe(DashboardQuerySchema, 'query'))
-  @Permission('dashboard', [Action.READ])
+  @Permission([
+    ['dashboard', [Action.READ]],
+    ['sales', [Action.READ]],
+    ['reports', [Action.READ]],
+    ['orders', [Action.READ]],
+  ])
   getStats(@Query() query: DashboardQueryDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.dashboardService.getStats(query, user);
   }
@@ -25,7 +30,12 @@ export class DashboardController {
   @Get('sales-trend')
   @ApiOperation({ summary: 'Get sales trend over time' })
   @UsePipes(new ZodValidationPipe(DashboardQuerySchema, 'query'))
-  @Permission('dashboard', [Action.READ])
+  @Permission([
+    ['dashboard', [Action.READ]],
+    ['sales', [Action.READ]],
+    ['reports', [Action.READ]],
+    ['orders', [Action.READ]],
+  ])
   getSalesTrend(@Query() query: DashboardQueryDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.dashboardService.getSalesTrend(query, user);
   }
@@ -33,7 +43,12 @@ export class DashboardController {
   @Get('sales-by-branch')
   @ApiOperation({ summary: 'Get sales by branch/outlet' })
   @UsePipes(new ZodValidationPipe(DashboardQuerySchema, 'query'))
-  @Permission('dashboard', [Action.READ])
+  @Permission([
+    ['dashboard', [Action.READ]],
+    ['sales', [Action.READ]],
+    ['reports', [Action.READ]],
+    ['orders', [Action.READ]],
+  ])
   getSalesByBranch(@Query() query: DashboardQueryDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.dashboardService.getSalesByBranch(query, user);
   }
@@ -41,7 +56,12 @@ export class DashboardController {
   @Get('sales-by-payment-method')
   @ApiOperation({ summary: 'Get sales by payment method' })
   @UsePipes(new ZodValidationPipe(DashboardQuerySchema, 'query'))
-  @Permission('dashboard', [Action.READ])
+  @Permission([
+    ['dashboard', [Action.READ]],
+    ['sales', [Action.READ]],
+    ['reports', [Action.READ]],
+    ['orders', [Action.READ]],
+  ])
   getSalesByPaymentMethod(
     @Query() query: DashboardQueryDto,
     @CurrentUser() user: CurrentUserWithRole,
