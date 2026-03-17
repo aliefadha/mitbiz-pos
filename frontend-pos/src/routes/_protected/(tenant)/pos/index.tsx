@@ -16,6 +16,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import {
   Dialog,
   DialogContent,
@@ -96,7 +97,6 @@ function PosPage() {
   const [notes, setNotes] = useState<string>('');
   const [nomorAntrian, setNomorAntrian] = useState<string>('');
   const [selectedDiscountIds, setSelectedDiscountIds] = useState<string[]>([]);
-  const [selectedOutletId, setSelectedOutletId] = useState<string>('');
   const [closeShiftOpen, setCloseShiftOpen] = useState(false);
   const [jumlahTutup, setJumlahTutup] = useState<string>('');
   const [shiftNotes, setShiftNotes] = useState<string>('');
@@ -108,26 +108,18 @@ function PosPage() {
   const isMobile = useMediaQuery('(max-width: 767px)');
 
   const { data: session } = useSession();
-  const tenantId = session?.user?.tenantId;
   const userId = session?.user?.id;
 
   const { data: userOpenShiftData, isLoading: userOpenShiftLoading } = useQuery({
-    queryKey: ['cash-shifts', 'user-open', tenantId, userId],
+    queryKey: ['cash-shifts', 'my-open', userId],
     queryFn: async () => {
-      const response = await cashShiftsApi.getAll({
-        tenantId,
-        status: 'buka',
-      });
-      return response.data.find((shift) => shift.cashierId === userId) || null;
+      return cashShiftsApi.getMyOpen();
     },
-    enabled: !!tenantId && !!userId,
+    enabled: !!userId,
   });
 
-  useEffect(() => {
-    if (userOpenShiftData?.outletId) {
-      setSelectedOutletId(userOpenShiftData.outletId);
-    }
-  }, [userOpenShiftData]);
+  const tenantId = userOpenShiftData?.tenantId;
+  const outletId = userOpenShiftData?.outletId;
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -139,36 +131,29 @@ function PosPage() {
   }, [searchInput]);
 
   const { data: productsData, isLoading: productsLoading } = useQuery({
-    queryKey: [
-      'products',
-      tenantId,
-      selectedOutletId,
-      searchQuery,
-      categoryFilter,
-      currentPage,
-      pageSize,
-    ],
+    queryKey: ['products', tenantId, outletId, searchQuery, categoryFilter, currentPage, pageSize],
     queryFn: () =>
       productsApi.getAll({
         tenantId,
+        outletId,
         categoryId: categoryFilter !== 'all' ? categoryFilter : undefined,
         search: searchQuery || undefined,
         isActive: true,
         page: currentPage,
         limit: pageSize,
       }),
-    enabled: !!tenantId,
+    enabled: !!tenantId && !!outletId,
   });
 
   const { data: discountsData } = useQuery({
-    queryKey: ['discounts', tenantId, selectedOutletId],
+    queryKey: ['discounts', tenantId, outletId],
     queryFn: () =>
       discountsApi.getAll({
         tenantId,
-        outletId: selectedOutletId,
+        outletId: outletId,
         isActive: true,
       }),
-    enabled: !!tenantId && !!selectedOutletId,
+    enabled: !!tenantId && !!outletId,
   });
 
   const { data: categoriesData } = useQuery({
@@ -360,7 +345,7 @@ function PosPage() {
       return;
     }
 
-    if (!selectedOutletId) {
+    if (!outletId) {
       alert('Silakan pilih outlet terlebih dahulu');
       return;
     }
@@ -380,7 +365,7 @@ function PosPage() {
 
     createOrderMutation.mutate({
       tenantId: tenantId,
-      outletId: selectedOutletId,
+      outletId: outletId,
       status: 'complete',
       subtotal: String(subtotal),
       jumlahPajak: String(jumlahPajak),
@@ -982,12 +967,7 @@ function PosPage() {
               <div className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Jumlah Tutup (Kas di akhir)</label>
-                  <Input
-                    type="number"
-                    placeholder="0"
-                    value={jumlahTutup}
-                    onChange={(e) => setJumlahTutup(e.target.value)}
-                  />
+                  <CurrencyInput placeholder="0" value={jumlahTutup} onChange={setJumlahTutup} />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Catatan (Opsional)</label>

@@ -36,7 +36,10 @@ export class ProductsController {
 
   @Get()
   @ApiOperation({ summary: 'Get all products' })
-  @Permission('products', [Action.READ])
+  @Permission([
+    ['products', [Action.READ]],
+    ['orders', [Action.CREATE]],
+  ])
   @UsePipes(new ZodValidationPipe(ProductQuerySchema, 'query'))
   findAll(@Query() query: ProductQueryDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.productsService.findAll(query, user);
@@ -45,6 +48,7 @@ export class ProductsController {
   @Get(':id')
   @ApiOperation({ summary: 'Get product by ID' })
   @Permission('products', [Action.READ])
+  @Permission('orders', [Action.CREATE])
   @UsePipes(new ZodValidationPipe(ProductIdSchema, 'params'))
   findById(@Param() { id }: ProductIdDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.productsService.findById(id, user);

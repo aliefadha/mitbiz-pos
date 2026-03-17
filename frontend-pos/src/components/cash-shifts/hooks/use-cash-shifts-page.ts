@@ -56,7 +56,7 @@ export function useCashShiftsPage() {
   const closeForm = useForm<CloseShiftFormValues>({
     resolver: zodResolver(closeShiftSchema),
     defaultValues: {
-      jumlahTutup: '',
+      jumlahTutup: '0',
       catatan: '',
     },
   });

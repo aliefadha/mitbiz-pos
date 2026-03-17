@@ -79,10 +79,6 @@ function CashShiftDetailPage() {
                 </div>
               )}
               <div className="flex justify-between">
-                <span className="text-gray-500">Jumlah Expected</span>
-                <span className="font-medium">{formatRupiah(cashShift.jumlahExpected)}</span>
-              </div>
-              <div className="flex justify-between">
                 <span className="text-gray-500">Jumlah Tutup</span>
                 <span className="font-medium">
                   {cashShift.status === 'tutup' ? formatRupiah(cashShift.jumlahTutup) : '-'}

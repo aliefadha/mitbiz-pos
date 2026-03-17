@@ -37,7 +37,10 @@ export class DiscountsController {
   @Get()
   @ApiOperation({ summary: 'Get all discounts' })
   @UsePipes(new ZodValidationPipe(DiscountQuerySchema, 'query'))
-  @Permission('discounts', [Action.READ])
+  @Permission([
+    ['discounts', [Action.READ]],
+    ['orders', [Action.CREATE]],
+  ])
   findAll(@Query() query: DiscountQueryDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.discountsService.findAll(query, user);
   }

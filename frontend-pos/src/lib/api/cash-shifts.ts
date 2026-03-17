@@ -97,6 +97,10 @@ export const cashShiftsApi = {
     return fetchApi<CashShift | null>(`/cash-shifts/open${query ? `?${query}` : ''}`);
   },
 
+  getMyOpen: async (): Promise<CashShift | null> => {
+    return fetchApi<CashShift | null>('/cash-shifts/my-open');
+  },
+
   getById: async (id: string): Promise<CashShift> => {
     return fetchApi<CashShift>(`/cash-shifts/${id}`);
   },

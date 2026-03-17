@@ -55,7 +55,7 @@ export function CloseShiftDialog({
                       <FormLabel>Jumlah Tutup (Kas di akhir)</FormLabel>
                       <FormControl>
                         <CurrencyInput
-                          value={field.value || '0'}
+                          value={field.value}
                           onChange={field.onChange}
                           placeholder="0"
                         />

@@ -6,7 +6,8 @@ export type UserScope = 'global' | 'tenant' | undefined;
 
 export interface PermissionCheck {
   resource: string;
-  action: string;
+  action?: string;
+  actions?: string[];
 }
 
 export interface RoutePermissionConfig {
@@ -83,7 +84,14 @@ export async function checkAnyPermission(
         p.resource.toLowerCase() === check.resource.toLowerCase() ||
         p.resource.toLowerCase() === check.resource.toLowerCase() + 's'
     );
-    return permission?.actions.some((a) => a.toLowerCase() === check.action.toLowerCase());
+
+    if (!permission) return false;
+
+    // Support both single action and multiple actions
+    const actionsToCheck = check.actions || (check.action ? [check.action] : []);
+    return actionsToCheck.some((action) =>
+      permission.actions.some((a) => a.toLowerCase() === action.toLowerCase())
+    );
   });
 
   return { allowed: hasAny, scope };
@@ -118,7 +126,15 @@ export async function checkAllPermissions(
         p.resource.toLowerCase() === check.resource.toLowerCase() ||
         p.resource.toLowerCase() === check.resource.toLowerCase() + 's'
     );
-    return permission?.actions.some((a) => a.toLowerCase() === check.action.toLowerCase());
+
+    if (!permission) return false;
+
+    // Support both single action and multiple actions
+    // For checkAllPermissions, having ANY of the actions counts as having the permission
+    const actionsToCheck = check.actions || (check.action ? [check.action] : []);
+    return actionsToCheck.some((action) =>
+      permission.actions.some((a) => a.toLowerCase() === action.toLowerCase())
+    );
   });
 
   return { allowed: hasAll, scope };
@@ -134,6 +150,27 @@ export async function checkPermissionWithScope(
   requiredScope: UserScope
 ): Promise<{ allowed: boolean; scope: UserScope }> {
   const { allowed, scope } = await checkPermission(resource, action);
+
+  if (!allowed) {
+    throw redirect({ to: '/403' });
+  }
+
+  if (requiredScope && scope !== requiredScope) {
+    throw redirect({ to: '/403' });
+  }
+
+  return { allowed: true, scope };
+}
+
+/**
+ * Check any permission with optional scope requirement
+ * Allows access if user has ANY of the specified permissions
+ */
+export async function checkAnyPermissionWithScope(
+  checks: PermissionCheck[],
+  requiredScope: UserScope
+): Promise<{ allowed: boolean; scope: UserScope }> {
+  const { allowed, scope } = await checkAnyPermission(checks);
 
   if (!allowed) {
     throw redirect({ to: '/403' });

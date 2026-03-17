@@ -37,7 +37,10 @@ export class CategoriesController {
   @Get()
   @ApiOperation({ summary: 'Get all categories' })
   @UsePipes(new ZodValidationPipe(CategoryQuerySchema, 'query'))
-  @Permission('categories', [Action.READ])
+  @Permission([
+    ['categories', [Action.READ]],
+    ['orders', [Action.CREATE]],
+  ])
   findAll(@Query() query: CategoryQueryDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.categoriesService.findAll(query, user);
   }

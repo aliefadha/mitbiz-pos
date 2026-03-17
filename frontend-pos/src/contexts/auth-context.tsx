@@ -33,6 +33,9 @@ export interface AuthContextType {
   logout: () => Promise<void>;
   hasPermission: (resource: string, action: string) => boolean;
   hasAnyPermission: (resource: string, actions: string[]) => boolean;
+  hasAnyResourcePermission: (
+    checks: { resource: string; action?: string; actions?: string[] }[]
+  ) => boolean;
   hasAllPermissions: (checks: { resource: string; actions: string[] }[]) => boolean;
 }
 
@@ -94,6 +97,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [hasPermission]
   );
 
+  // Helper to check if user has any permission across multiple resources
+  const hasAnyResourcePermission = useCallback(
+    (checks: { resource: string; action?: string; actions?: string[] }[]): boolean => {
+      return checks.some((check) => {
+        const actionsToCheck = check.actions || (check.action ? [check.action] : []);
+        return actionsToCheck.some((action) => hasPermission(check.resource, action));
+      });
+    },
+    [hasPermission]
+  );
+
   // Helper to check if user has all of the specified permissions
   const hasAllPermissions = useCallback(
     (checks: { resource: string; actions: string[] }[]): boolean => {
@@ -118,6 +132,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logout,
     hasPermission,
     hasAnyPermission,
+    hasAnyResourcePermission,
     hasAllPermissions,
   };
 
@@ -134,9 +149,22 @@ export function useAuth() {
 
 // Convenience hooks for common use cases
 export function usePermissions() {
-  const { permissions, isPermissionsLoading, hasPermission, hasAnyPermission, hasAllPermissions } =
-    useAuth();
-  return { permissions, isPermissionsLoading, hasPermission, hasAnyPermission, hasAllPermissions };
+  const {
+    permissions,
+    isPermissionsLoading,
+    hasPermission,
+    hasAnyPermission,
+    hasAnyResourcePermission,
+    hasAllPermissions,
+  } = useAuth();
+  return {
+    permissions,
+    isPermissionsLoading,
+    hasPermission,
+    hasAnyPermission,
+    hasAnyResourcePermission,
+    hasAllPermissions,
+  };
 }
 
 export function useUser() {

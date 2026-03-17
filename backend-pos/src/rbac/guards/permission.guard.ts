@@ -48,7 +48,7 @@ export class PermissionGuard implements CanActivate {
     const handler = context.getHandler();
     const controller = context.getClass();
 
-    const handlerPermissions = this.reflector.getAllAndOverride<PermissionTuple[]>(PERMISSION_KEY, [
+    const handlerPermissions = this.reflector.getAllAndMerge<PermissionTuple[]>(PERMISSION_KEY, [
       handler,
       controller,
     ]);

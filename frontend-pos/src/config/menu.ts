@@ -20,7 +20,7 @@ export interface MenuItem {
   key: string;
   icon: React.ComponentType<{ className?: string }>;
   label: string;
-  permissions: { resource: string; actions: string[] }[];
+  permissions: { resource: string; action?: string; actions?: string[] }[];
   scope?: UserScope;
 }
 
@@ -52,7 +52,10 @@ export const menuConfig: MenuGroup[] = [
         key: '/cash-shifts',
         icon: Clock4,
         label: 'Shift Kasir',
-        permissions: [{ resource: 'cashShifts', actions: ['read'] }],
+        permissions: [
+          { resource: 'cashShifts', actions: ['read'] },
+          { resource: 'orders', actions: ['create'] },
+        ],
         scope: 'tenant',
       },
     ],

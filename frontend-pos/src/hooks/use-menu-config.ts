@@ -14,11 +14,12 @@ export function useMenuConfig(): MenuGroup[] {
       .map((group) => ({
         ...group,
         items: group.items.filter((item) => {
-          // Check all permission actions (ALL must be satisfied)
-          const hasAllPerms = item.permissions.every((perm) =>
-            perm.actions.every((action) => hasPermission(perm.resource, action))
-          );
-          if (!hasAllPerms) return false;
+          // Check permission with OR logic - user needs ANY of the specified permissions
+          const hasAnyPerm = item.permissions.some((perm) => {
+            const actionsToCheck = perm.actions || (perm.action ? [perm.action] : []);
+            return actionsToCheck.some((action) => hasPermission(perm.resource, action));
+          });
+          if (!hasAnyPerm) return false;
 
           // Check scope requirement (default to 'tenant' if not specified)
           const itemScope = item.scope ?? 'tenant';

@@ -37,7 +37,10 @@ export class OutletsController {
   @Get()
   @ApiOperation({ summary: 'Get all outlets' })
   @UsePipes(new ZodValidationPipe(OutletQuerySchema, 'query'))
-  @Permission('outlets', [Action.READ])
+  @Permission([
+    ['cashShifts', [Action.READ]],
+    ['orders', [Action.CREATE]],
+  ])
   findAll(@Query() query: OutletQueryDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.outletsService.findAll(query, user);
   }
@@ -46,6 +49,7 @@ export class OutletsController {
   @ApiOperation({ summary: 'Get outlet by ID' })
   @UsePipes(new ZodValidationPipe(OutletIdSchema, 'params'))
   @Permission('outlets', [Action.READ])
+  @Permission('orders', [Action.CREATE])
   findById(@Param() { id }: OutletIdDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.outletsService.findById(id, user);
   }

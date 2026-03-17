@@ -41,7 +41,10 @@ export class TenantsController {
   @Get()
   @ApiOperation({ summary: 'Get all tenants' })
   @UsePipes(new ZodValidationPipe(TenantQuerySchema, 'query'))
-  @Permission('tenants', [Action.READ])
+  @Permission([
+    ['tenants', [Action.READ]],
+    ['orders', [Action.CREATE]],
+  ])
   findAll(@Query() query: TenantQueryDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.tenantsService.findAll(query, user);
   }
@@ -49,7 +52,10 @@ export class TenantsController {
   @Get('id/:id')
   @ApiOperation({ summary: 'Get tenant by ID' })
   @UsePipes(new ZodValidationPipe(TenantIdSchema, 'params'))
-  @Permission('tenants', [Action.READ])
+  @Permission([
+    ['tenants', [Action.READ]],
+    ['orders', [Action.CREATE]],
+  ])
   findById(@Param() { id }: TenantIdDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.tenantsService.findById(id, user);
   }

@@ -37,7 +37,10 @@ export class PaymentMethodsController {
   @Get()
   @ApiOperation({ summary: 'Get all payment methods' })
   @UsePipes(new ZodValidationPipe(PaymentMethodQuerySchema, 'query'))
-  @Permission('paymentMethods', [Action.READ])
+  @Permission([
+    ['paymentMethods', [Action.READ]],
+    ['orders', [Action.CREATE]],
+  ])
   findAll(@Query() query: PaymentMethodQueryDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.paymentMethodsService.findAll(query, user);
   }

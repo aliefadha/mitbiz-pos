@@ -7,11 +7,18 @@ import { CloseShiftDialog, OpenShiftDialog } from '@/components/cash-shifts/dial
 import { useCashShiftsPage } from '@/components/cash-shifts/hooks';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePermissions } from '@/hooks/use-auth';
+import { checkAnyPermissionWithScope } from '@/lib/permissions';
 
 export function CashShiftPage() {
-  const { hasPermission } = usePermissions();
-  const canCreate = hasPermission('cashShifts', 'create');
-  const canUpdate = hasPermission('cashShifts', 'update');
+  const { hasAnyResourcePermission } = usePermissions();
+  const canCreate = hasAnyResourcePermission([
+    { resource: 'cashShifts', action: 'create' },
+    { resource: 'order', action: 'create' },
+  ]);
+  const canUpdate = hasAnyResourcePermission([
+    { resource: 'cashShifts', action: 'update' },
+    { resource: 'order', action: 'create' },
+  ]);
 
   const [selectedCashier, setSelectedCashier] = useState<{
     id: string;
@@ -164,4 +171,13 @@ export function CashShiftPage() {
 
 export const Route = createFileRoute('/_protected/(tenant)/cash-shifts/')({
   component: CashShiftPage,
+  beforeLoad: async () => {
+    await checkAnyPermissionWithScope(
+      [
+        { resource: 'cashShifts', actions: ['read', 'create', 'update'] },
+        { resource: 'order', actions: ['read', 'create'] },
+      ],
+      'tenant'
+    );
+  },
 });

@@ -152,6 +152,47 @@ export class CashShiftsService {
     return cashShift || null;
   }
 
+  async findMyOpenShift(user: CurrentUserWithRole) {
+    const cashShift = await this.db
+      .select({
+        id: cashShifts.id,
+        tenantId: cashShifts.tenantId,
+        outletId: cashShifts.outletId,
+        cashierId: cashShifts.cashierId,
+        jumlahBuka: cashShifts.jumlahBuka,
+        jumlahTutup: cashShifts.jumlahTutup,
+        jumlahExpected: cashShifts.jumlahExpected,
+        selisih: cashShifts.selisih,
+        status: cashShifts.status,
+        openedAt: cashShifts.openedAt,
+        closedAt: cashShifts.closedAt,
+        catatan: cashShifts.catatan,
+        createdAt: cashShifts.createdAt,
+        updatedAt: cashShifts.updatedAt,
+        outlet: {
+          id: outlets.id,
+          nama: outlets.nama,
+        },
+      })
+      .from(cashShifts)
+      .leftJoin(outlets, eq(cashShifts.outletId, outlets.id))
+      .where(and(eq(cashShifts.cashierId, user.id), eq(cashShifts.status, 'buka')))
+      .limit(1);
+
+    if (!cashShift.length) {
+      return null;
+    }
+
+    const shift = cashShift[0];
+
+    const hasAccess = await this.tenantAuth.canAccessTenant(user, shift.tenantId);
+    if (!hasAccess) {
+      return null;
+    }
+
+    return shift;
+  }
+
   async findCashiersStatus(cashierIds: string[], user: CurrentUserWithRole) {
     if (!cashierIds.length) return [];
 

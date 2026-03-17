@@ -37,7 +37,10 @@ export class CashShiftsController {
   @Get()
   @ApiOperation({ summary: 'Get all cash shifts' })
   @UsePipes(new ZodValidationPipe(CashShiftQuerySchema, 'query'))
-  @Permission('cashShifts', [Action.READ])
+  @Permission([
+    ['cashShifts', [Action.READ]],
+    ['orders', [Action.CREATE]],
+  ])
   findAll(@Query() query: CashShiftQueryDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.cashShiftsService.findAll(query, user);
   }
@@ -53,9 +56,22 @@ export class CashShiftsController {
     return this.cashShiftsService.findOpenShift(targetOutletId, user);
   }
 
+  @Get('my-open')
+  @ApiOperation({ summary: 'Get current user open cash shift' })
+  @Permission([
+    ['cashShifts', [Action.READ]],
+    ['orders', [Action.CREATE]],
+  ])
+  findMyOpen(@CurrentUser() user: CurrentUserWithRole) {
+    return this.cashShiftsService.findMyOpenShift(user);
+  }
+
   @Post('cashiers/status')
   @ApiOperation({ summary: 'Get shift status for multiple cashiers' })
-  @Permission('cashShifts', [Action.READ])
+  @Permission([
+    ['cashShifts', [Action.READ]],
+    ['orders', [Action.CREATE]],
+  ])
   findCashiersStatus(
     @Body() data: { cashierIds: string[] },
     @CurrentUser() user: CurrentUserWithRole,
@@ -65,7 +81,10 @@ export class CashShiftsController {
 
   @Get('cashiers')
   @ApiOperation({ summary: 'Get cashiers visible to current user' })
-  @Permission('cashShifts', [Action.READ])
+  @Permission([
+    ['cashShifts', [Action.READ]],
+    ['orders', [Action.CREATE]],
+  ])
   findCashiers(@CurrentUser() user: CurrentUserWithRole) {
     return this.cashShiftsService.findCashiersForCurrentUser(user);
   }
@@ -73,7 +92,10 @@ export class CashShiftsController {
   @Get(':id')
   @ApiOperation({ summary: 'Get cash shift by ID' })
   @UsePipes(new ZodValidationPipe(CashShiftIdSchema, 'params'))
-  @Permission('cashShifts', [Action.READ])
+  @Permission([
+    ['cashShifts', [Action.READ]],
+    ['orders', [Action.CREATE]],
+  ])
   findById(@Param() { id }: CashShiftIdDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.cashShiftsService.findById(id, user);
   }
@@ -81,7 +103,10 @@ export class CashShiftsController {
   @Post()
   @ApiOperation({ summary: 'Open a new cash shift' })
   @UsePipes(new ZodValidationPipe(CreateCashShiftSchema))
-  @Permission('cashShifts', [Action.CREATE])
+  @Permission([
+    ['cashShifts', [Action.CREATE]],
+    ['orders', [Action.CREATE]],
+  ])
   create(@Body() data: CreateCashShiftDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.cashShiftsService.create(data, user);
   }
@@ -90,7 +115,10 @@ export class CashShiftsController {
   @ApiOperation({ summary: 'Update a cash shift (close shift)' })
   @UsePipes(new ZodValidationPipe(CashShiftIdSchema, 'params'))
   @UsePipes(new ZodValidationPipe(UpdateCashShiftSchema))
-  @Permission('cashShifts', [Action.UPDATE])
+  @Permission([
+    ['cashShifts', [Action.UPDATE]],
+    ['orders', [Action.CREATE]],
+  ])
   update(
     @Param() { id }: CashShiftIdDto,
     @Body() data: UpdateCashShiftDto,
