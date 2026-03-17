@@ -35,6 +35,7 @@ interface StockListProps {
   outletFilter: string;
   products: Product[];
   outlets: Outlet[];
+  hasOutletId: boolean;
   getStockStatusColor: (quantity: number, minStockLevel?: number) => string;
   getStockStatusText: (quantity: number, minStockLevel?: number) => string;
   onSearchChange: (query: string) => void;
@@ -56,6 +57,7 @@ export function StockList({
   outletFilter,
   products,
   outlets,
+  hasOutletId,
   getStockStatusColor,
   getStockStatusText,
   onSearchChange,
@@ -75,7 +77,7 @@ export function StockList({
     <Card>
       <CardContent>
         <h4 className="text-base font-semibold mb-6">Daftar Stok</h4>
-        <div className="grid grid-cols-3 gap-2 mb-6 w-full">
+        <div className={`grid gap-2 mb-6 w-full ${hasOutletId ? 'grid-cols-2' : 'grid-cols-3'}`}>
           <form onSubmit={handleSearchSubmit} className="relative flex">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
@@ -98,19 +100,21 @@ export function StockList({
               ))}
             </SelectContent>
           </Select>
-          <Select value={outletFilter || 'all'} onValueChange={onOutletFilterChange}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Semua Outlet" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Semua Outlet</SelectItem>
-              {outlets.map((outlet, index) => (
-                <SelectItem key={`${outlet.id}-${index}`} value={outlet.id}>
-                  {outlet.nama}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {!hasOutletId && (
+            <Select value={outletFilter || 'all'} onValueChange={onOutletFilterChange}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Semua Outlet" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Outlet</SelectItem>
+                {outlets.map((outlet, index) => (
+                  <SelectItem key={`${outlet.id}-${index}`} value={outlet.id}>
+                    {outlet.nama}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
 
         {isLoading ? (

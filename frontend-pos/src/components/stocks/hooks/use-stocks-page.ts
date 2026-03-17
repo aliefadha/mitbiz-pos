@@ -8,6 +8,8 @@ import { useSession } from '@/lib/auth-client';
 export function useStocksPage() {
   const { data: session } = useSession();
   const tenantId = session?.user?.tenantId;
+  const outletId = session?.user?.outletId;
+  const hasOutletId = !!outletId;
 
   const [searchQuery, setSearchQuery] = useState('');
   const [productFilter, setProductFilter] = useState<string>('');
@@ -15,13 +17,23 @@ export function useStocksPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
+  const effectiveOutletId = hasOutletId ? outletId : outletFilter || undefined;
+
   const { data: stocksData, isLoading: stocksLoading } = useQuery({
-    queryKey: ['stocks', tenantId, productFilter, outletFilter, currentPage, pageSize, searchQuery],
+    queryKey: [
+      'stocks',
+      tenantId,
+      effectiveOutletId,
+      productFilter,
+      currentPage,
+      pageSize,
+      searchQuery,
+    ],
     queryFn: () =>
       stocksApi.getAll({
         tenantId,
         productId: productFilter || undefined,
-        outletId: outletFilter || undefined,
+        outletId: effectiveOutletId,
         page: currentPage,
         limit: pageSize,
       }),
@@ -105,6 +117,8 @@ export function useStocksPage() {
     currentPage,
     pageSize,
     tenantId,
+    outletId,
+    hasOutletId,
 
     stocksLoading,
     displayedStocks,

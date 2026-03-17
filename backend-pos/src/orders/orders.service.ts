@@ -55,6 +55,11 @@ export class OrdersService {
       conditions.push(eq(orders.cashShiftId, cashShiftId));
     }
 
+    // If user has outletId assigned, automatically filter to show only their orders
+    if (user.outletId) {
+      conditions.push(eq(orders.cashierId, user.id));
+    }
+
     if (search) {
       conditions.push(
         like(orders.orderNumber, `%${search}%`),

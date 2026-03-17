@@ -4,7 +4,7 @@ import { ForbiddenPage } from '@/components/forbidden-page';
 import { useStocksPage } from '@/components/stocks/hooks/use-stocks-page';
 import { StockList } from '@/components/stocks/stock-list';
 import { StockStats } from '@/components/stocks/stock-stats';
-import { checkAllPermissions, ForbiddenError } from '@/lib/permissions';
+import { checkAnyPermissionWithScope, ForbiddenError } from '@/lib/permissions';
 
 function StockPage() {
   const {
@@ -29,6 +29,7 @@ function StockPage() {
     handleOutletFilterChange,
     handlePageChange,
     handlePageSizeChange,
+    hasOutletId,
   } = useStocksPage();
 
   return (
@@ -54,6 +55,7 @@ function StockPage() {
         outletFilter={outletFilter}
         products={products}
         outlets={outlets}
+        hasOutletId={hasOutletId}
         getStockStatusColor={getStockStatusColor}
         getStockStatusText={getStockStatusText}
         onSearchChange={handleSearchChange}
@@ -69,10 +71,13 @@ function StockPage() {
 export const Route = createFileRoute('/_protected/(tenant)/stocks/')({
   component: StockPage,
   beforeLoad: async () => {
-    const { allowed } = await checkAllPermissions([
-      { resource: 'stocks', action: 'read' },
-      { resource: 'products', action: 'read' },
-    ]);
+    const { allowed } = await checkAnyPermissionWithScope(
+      [
+        { resource: 'stocks', actions: ['read', 'create', 'update', 'delete'] },
+        { resource: 'products', actions: ['read'] },
+      ],
+      'tenant'
+    );
     if (!allowed) {
       throw new ForbiddenError('stocks');
     }

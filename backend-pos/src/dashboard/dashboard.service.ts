@@ -48,11 +48,13 @@ export class DashboardService {
 
     const dateConditions = this.buildDateConditions(query.startDate, query.endDate);
     const outletCondition = query.outletId ? eq(orders.outletId, query.outletId) : undefined;
+    const cashierCondition = user.outletId ? eq(orders.cashierId, user.id) : undefined;
 
     const whereCondition = and(
       dateConditions,
       eq(orders.tenantId, effectiveTenantId),
       outletCondition,
+      cashierCondition,
     );
 
     const result = await this.db
@@ -154,11 +156,13 @@ export class DashboardService {
 
     const dateConditions = this.buildDateConditions(query.startDate, query.endDate);
     const outletCondition = query.outletId ? eq(orders.outletId, query.outletId) : undefined;
+    const cashierCondition = user.outletId ? eq(orders.cashierId, user.id) : undefined;
 
     const whereCondition = and(
       dateConditions,
       eq(orders.tenantId, effectiveTenantId),
       outletCondition,
+      cashierCondition,
     );
 
     const result = await this.db
@@ -195,11 +199,13 @@ export class DashboardService {
 
     const dateConditions = this.buildDateConditions(query.startDate, query.endDate);
     const outletCondition = query.outletId ? eq(orders.outletId, query.outletId) : undefined;
+    const cashierCondition = user.outletId ? eq(orders.cashierId, user.id) : undefined;
 
     const whereCondition = and(
       dateConditions,
       eq(orders.tenantId, effectiveTenantId),
       outletCondition,
+      cashierCondition,
     );
 
     const result = await this.db
@@ -239,11 +245,13 @@ export class DashboardService {
 
     const dateConditions = this.buildDateConditions(query.startDate, query.endDate);
     const outletCondition = query.outletId ? eq(orders.outletId, query.outletId) : undefined;
+    const cashierCondition = user.outletId ? eq(orders.cashierId, user.id) : undefined;
 
     const whereCondition = and(
       dateConditions,
       eq(orders.tenantId, effectiveTenantId),
       outletCondition,
+      cashierCondition,
     );
 
     const result = await this.db

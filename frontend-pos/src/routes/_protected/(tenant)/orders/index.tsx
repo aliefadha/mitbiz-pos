@@ -5,20 +5,18 @@ import { useOrdersPage } from '@/components/orders/hooks';
 import { OrderFilters } from '@/components/orders/order-filters';
 import { OrderList } from '@/components/orders/order-list';
 import { Card, CardContent } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import { usePermissions } from '@/hooks/use-auth';
-import { useSession } from '@/lib/auth-client';
 import { checkPermissionWithScope } from '@/lib/permissions';
 
 export function OrdersPage() {
   const navigate = useNavigate();
-  const { data: session } = useSession();
-  const tenantId = session?.user?.tenantId;
   const { hasPermission } = usePermissions();
 
   const canReadOutlets = hasPermission('outlet', 'read');
+  const canReadDashboards = hasPermission('dashboard', 'read');
 
   const {
+    tenantId,
     searchQuery,
     setSearchQuery,
     statusFilter,
@@ -40,16 +38,6 @@ export function OrdersPage() {
     navigate({ to: '/orders/$orderId', params: { orderId } });
   };
 
-  if (ordersLoading) {
-    return (
-      <div className="p-6 space-y-4">
-        <Skeleton className="h-10 w-1/3" />
-        <Skeleton className="h-24" />
-        <Skeleton className="h-96" />
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col gap-6 w-full">
       <div>
@@ -57,12 +45,14 @@ export function OrdersPage() {
         <p className="text-sm text-gray-500 m-0">Lihat semua transaksi yang telah dilakukan</p>
       </div>
 
-      <StatCardsLaporan
-        tenantId={tenantId}
-        outletId={canReadOutlets && outletFilter !== 'all' ? outletFilter : undefined}
-        startDate={formatDate(dateRange?.from)}
-        endDate={formatDate(dateRange?.to)}
-      />
+      {canReadDashboards && (
+        <StatCardsLaporan
+          tenantId={tenantId}
+          outletId={canReadOutlets && outletFilter !== 'all' ? outletFilter : undefined}
+          startDate={formatDate(dateRange?.from)}
+          endDate={formatDate(dateRange?.to)}
+        />
+      )}
 
       <Card className="shadow-sm border-gray-200">
         <CardContent>
