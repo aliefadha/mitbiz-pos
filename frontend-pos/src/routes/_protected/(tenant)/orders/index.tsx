@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { format } from 'date-fns';
 import { StatCardsLaporan } from '@/components/dashboard/stat-cards-laporan';
 import { useOrdersPage } from '@/components/orders/hooks';
 import { OrderFilters } from '@/components/orders/order-filters';
@@ -32,7 +33,7 @@ export function OrdersPage() {
   } = useOrdersPage({ canReadOutlets });
 
   const formatDate = (date: Date | undefined) => {
-    return date ? date.toISOString().split('T')[0] : undefined;
+    return date ? format(date, 'yyyy-MM-dd') : undefined;
   };
 
   const handleView = (orderId: string) => {

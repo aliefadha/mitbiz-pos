@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
+import { format, subDays } from 'date-fns';
 import { Upload } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { SalesByBranchChart } from '@/components/dashboard/sales-by-branch-chart';
@@ -41,12 +42,10 @@ function LaporanPage() {
   const canReadSales = hasPermission('sales', 'read');
 
   const [startDate, setStartDate] = useState<string>(() => {
-    const now = new Date();
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    return thirtyDaysAgo.toISOString().split('T')[0];
+    return format(subDays(new Date(), 30), 'yyyy-MM-dd');
   });
   const [endDate, setEndDate] = useState<string>(() => {
-    return new Date().toISOString().split('T')[0];
+    return format(new Date(), 'yyyy-MM-dd');
   });
   const [selectedOutletId, setSelectedOutletId] = useState<string>('all');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');

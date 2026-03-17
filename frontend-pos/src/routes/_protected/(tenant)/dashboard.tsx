@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { format, subDays } from 'date-fns';
 import { useMemo } from 'react';
 import { SalesByBranchChart } from '@/components/dashboard/sales-by-branch-chart';
 import { SalesByPaymentMethodChart } from '@/components/dashboard/sales-by-payment-method-chart';
@@ -16,10 +17,10 @@ export const Route = createFileRoute('/_protected/(tenant)/dashboard')({
 function DashboardPage() {
   const { startDate, endDate } = useMemo(() => {
     const now = new Date();
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = subDays(now, 30);
     return {
-      startDate: thirtyDaysAgo.toISOString().split('T')[0],
-      endDate: now.toISOString().split('T')[0],
+      startDate: format(thirtyDaysAgo, 'yyyy-MM-dd'),
+      endDate: format(now, 'yyyy-MM-dd'),
     };
   }, []);
 

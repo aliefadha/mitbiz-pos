@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
+import { format, subDays } from 'date-fns';
 import { Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { BranchStatusCard } from '@/components/dashboard/branch-status-card';
@@ -30,10 +31,10 @@ function DashboardPage() {
 
   const { startDate, endDate } = useMemo(() => {
     const now = new Date();
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = subDays(now, 30);
     return {
-      startDate: thirtyDaysAgo.toISOString().split('T')[0],
-      endDate: now.toISOString().split('T')[0],
+      startDate: format(thirtyDaysAgo, 'yyyy-MM-dd'),
+      endDate: format(now, 'yyyy-MM-dd'),
     };
   }, []);
 
