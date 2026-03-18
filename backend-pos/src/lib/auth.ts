@@ -42,7 +42,7 @@ export const auth = betterAuth({
     cookiePrefix: 'mitbiz',
     useSecureCookies: true,
     crossOrigin: {
-      trustedOrigins: allowedOrigins,
+      trustedOrigins: ['*'],
     },
     defaultCookieAttributes: {
       sameSite: 'none',
