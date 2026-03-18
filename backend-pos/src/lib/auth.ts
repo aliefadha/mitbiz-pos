@@ -50,7 +50,7 @@ export const auth = betterAuth({
       path: '/',
     },
   },
-  trustedOrigins: allowedOrigins,
+  trustedOrigins: ['*'],
   session: {
     cookieCache: {
       enabled: true,
