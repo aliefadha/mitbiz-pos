@@ -3,7 +3,7 @@ steps:
     args:
       - 'build'
       - '--build-arg'
-      - 'VITE_API_URL=https://backend-pos-508482854424.us-central1.run.app/api'
+      - 'VITE_API_URL=/api'
       - '--build-arg'
       - 'VITE_APP_URL=https://pos.mitbiz.id/'
       - '--build-arg'
