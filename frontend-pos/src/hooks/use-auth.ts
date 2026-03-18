@@ -79,6 +79,7 @@ export function useLogin() {
       const { data, error } = await signIn.email({
         email: input.email,
         password: input.password,
+        // this should be change
         callbackURL: `${import.meta.env.VITE_APP_URL || 'http://localhost:3000'}`,
       });
 
