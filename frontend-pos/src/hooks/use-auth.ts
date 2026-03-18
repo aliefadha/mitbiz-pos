@@ -80,7 +80,7 @@ export function useLogin() {
         email: input.email,
         password: input.password,
         // this should be change
-        // callbackURL: `${import.meta.env.VITE_APP_URL || 'http://localhost:3000'}`,
+        callbackURL: `${import.meta.env.VITE_APP_URL || 'http://localhost:3000'}`,
       });
 
       if (error) {
