@@ -40,7 +40,7 @@ export async function seedUser(): Promise<string | null> {
     if (result.user) {
       await db
         .update(user)
-        .set({ roleId: GLOBAL_ADMIN_ROLE_ID, emailVerified: true, isSubscribed: true })
+        .set({ roleId: GLOBAL_ADMIN_ROLE_ID, emailVerified: true })
         .where(eq(user.id, result.user.id));
       console.log('✅ Created superadmin user with admin role:', result.user.email);
       return result.user.id;
@@ -86,7 +86,7 @@ export async function seedOwnerUser(): Promise<string | null> {
     if (result.user) {
       await db
         .update(user)
-        .set({ roleId: GLOBAL_OWNER_ROLE_ID, emailVerified: true, isSubscribed: true })
+        .set({ roleId: GLOBAL_OWNER_ROLE_ID, emailVerified: true })
         .where(eq(user.id, result.user.id));
       console.log('✅ Created owner user with owner role:', result.user.email);
       return result.user.id;

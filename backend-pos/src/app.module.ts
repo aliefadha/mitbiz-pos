@@ -24,6 +24,7 @@ import { RolesModule } from './roles/roles.module';
 import { SalesModule } from './sales/sales.module';
 import { StockAdjustmentsModule } from './stock-adjustments/stock-adjustments.module';
 import { StocksModule } from './stocks/stocks.module';
+import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { TenantsModule } from './tenants/tenants.module';
 import { UserModule } from './user/user.module';
 
@@ -55,6 +56,7 @@ import { UserModule } from './user/user.module';
     CashShiftsModule,
     DashboardModule,
     SalesModule,
+    SubscriptionsModule,
   ],
   controllers: [AppController],
   providers: [

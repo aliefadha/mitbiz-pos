@@ -5,6 +5,8 @@ import { cashShifts } from './cash-shift-schema';
 import { categories } from './category-schema';
 import { outlets } from './outlet-schema';
 import { products } from './product-schema';
+import { subscriptionHistories } from './subscription-history-schema';
+import { subscriptions } from './subscription-schema';
 
 export const tenants = pgTable('tenants', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),
@@ -38,4 +40,6 @@ export const tenantsRelations = relations(tenants, ({ one, many }) => ({
   products: many(products),
   cashShifts: many(cashShifts),
   users: many(user),
+  subscriptions: many(subscriptions),
+  subscriptionHistories: many(subscriptionHistories),
 }));

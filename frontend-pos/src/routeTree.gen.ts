@@ -46,6 +46,8 @@ import { Route as ProtectedtenantCategoriesCategoryIdRouteImport } from './route
 import { Route as ProtectedtenantCashShiftsCashShiftIdRouteImport } from './routes/_protected/(tenant)/cash-shifts/$cashShiftId'
 import { Route as ProtectedglobalTenantsNewRouteImport } from './routes/_protected/(global)/tenants/new'
 import { Route as ProtectedglobalTenantsTenantIdRouteImport } from './routes/_protected/(global)/tenants/$tenantId'
+import { Route as ProtectedglobalSubscriptionsNewRouteImport } from './routes/_protected/(global)/subscriptions/new'
+import { Route as ProtectedglobalSubscriptionsPlanIdRouteImport } from './routes/_protected/(global)/subscriptions/$planId'
 
 const VerifyEmailRoute = VerifyEmailRouteImport.update({
   id: '/verify-email',
@@ -257,6 +259,18 @@ const ProtectedglobalTenantsTenantIdRoute =
     path: '/tenants/$tenantId',
     getParentRoute: () => ProtectedRoute,
   } as any)
+const ProtectedglobalSubscriptionsNewRoute =
+  ProtectedglobalSubscriptionsNewRouteImport.update({
+    id: '/(global)/subscriptions/new',
+    path: '/subscriptions/new',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
+const ProtectedglobalSubscriptionsPlanIdRoute =
+  ProtectedglobalSubscriptionsPlanIdRouteImport.update({
+    id: '/(global)/subscriptions/$planId',
+    path: '/subscriptions/$planId',
+    getParentRoute: () => ProtectedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -269,6 +283,8 @@ export interface FileRoutesByFullPath {
   '/setting': typeof ProtectedglobalSettingRoute
   '/dashboard': typeof ProtectedtenantDashboardRoute
   '/laporan': typeof ProtectedtenantLaporanRoute
+  '/subscriptions/$planId': typeof ProtectedglobalSubscriptionsPlanIdRoute
+  '/subscriptions/new': typeof ProtectedglobalSubscriptionsNewRoute
   '/tenants/$tenantId': typeof ProtectedglobalTenantsTenantIdRoute
   '/tenants/new': typeof ProtectedglobalTenantsNewRoute
   '/cash-shifts/$cashShiftId': typeof ProtectedtenantCashShiftsCashShiftIdRoute
@@ -307,6 +323,8 @@ export interface FileRoutesByTo {
   '/setting': typeof ProtectedglobalSettingRoute
   '/dashboard': typeof ProtectedtenantDashboardRoute
   '/laporan': typeof ProtectedtenantLaporanRoute
+  '/subscriptions/$planId': typeof ProtectedglobalSubscriptionsPlanIdRoute
+  '/subscriptions/new': typeof ProtectedglobalSubscriptionsNewRoute
   '/tenants/$tenantId': typeof ProtectedglobalTenantsTenantIdRoute
   '/tenants/new': typeof ProtectedglobalTenantsNewRoute
   '/cash-shifts/$cashShiftId': typeof ProtectedtenantCashShiftsCashShiftIdRoute
@@ -347,6 +365,8 @@ export interface FileRoutesById {
   '/_protected/(global)/setting': typeof ProtectedglobalSettingRoute
   '/_protected/(tenant)/dashboard': typeof ProtectedtenantDashboardRoute
   '/_protected/(tenant)/laporan': typeof ProtectedtenantLaporanRoute
+  '/_protected/(global)/subscriptions/$planId': typeof ProtectedglobalSubscriptionsPlanIdRoute
+  '/_protected/(global)/subscriptions/new': typeof ProtectedglobalSubscriptionsNewRoute
   '/_protected/(global)/tenants/$tenantId': typeof ProtectedglobalTenantsTenantIdRoute
   '/_protected/(global)/tenants/new': typeof ProtectedglobalTenantsNewRoute
   '/_protected/(tenant)/cash-shifts/$cashShiftId': typeof ProtectedtenantCashShiftsCashShiftIdRoute
@@ -387,6 +407,8 @@ export interface FileRouteTypes {
     | '/setting'
     | '/dashboard'
     | '/laporan'
+    | '/subscriptions/$planId'
+    | '/subscriptions/new'
     | '/tenants/$tenantId'
     | '/tenants/new'
     | '/cash-shifts/$cashShiftId'
@@ -425,6 +447,8 @@ export interface FileRouteTypes {
     | '/setting'
     | '/dashboard'
     | '/laporan'
+    | '/subscriptions/$planId'
+    | '/subscriptions/new'
     | '/tenants/$tenantId'
     | '/tenants/new'
     | '/cash-shifts/$cashShiftId'
@@ -464,6 +488,8 @@ export interface FileRouteTypes {
     | '/_protected/(global)/setting'
     | '/_protected/(tenant)/dashboard'
     | '/_protected/(tenant)/laporan'
+    | '/_protected/(global)/subscriptions/$planId'
+    | '/_protected/(global)/subscriptions/new'
     | '/_protected/(global)/tenants/$tenantId'
     | '/_protected/(global)/tenants/new'
     | '/_protected/(tenant)/cash-shifts/$cashShiftId'
@@ -764,6 +790,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedglobalTenantsTenantIdRouteImport
       parentRoute: typeof ProtectedRoute
     }
+    '/_protected/(global)/subscriptions/new': {
+      id: '/_protected/(global)/subscriptions/new'
+      path: '/subscriptions/new'
+      fullPath: '/subscriptions/new'
+      preLoaderRoute: typeof ProtectedglobalSubscriptionsNewRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/(global)/subscriptions/$planId': {
+      id: '/_protected/(global)/subscriptions/$planId'
+      path: '/subscriptions/$planId'
+      fullPath: '/subscriptions/$planId'
+      preLoaderRoute: typeof ProtectedglobalSubscriptionsPlanIdRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
   }
 }
 
@@ -771,6 +811,8 @@ interface ProtectedRouteChildren {
   ProtectedglobalSettingRoute: typeof ProtectedglobalSettingRoute
   ProtectedtenantDashboardRoute: typeof ProtectedtenantDashboardRoute
   ProtectedtenantLaporanRoute: typeof ProtectedtenantLaporanRoute
+  ProtectedglobalSubscriptionsPlanIdRoute: typeof ProtectedglobalSubscriptionsPlanIdRoute
+  ProtectedglobalSubscriptionsNewRoute: typeof ProtectedglobalSubscriptionsNewRoute
   ProtectedglobalTenantsTenantIdRoute: typeof ProtectedglobalTenantsTenantIdRoute
   ProtectedglobalTenantsNewRoute: typeof ProtectedglobalTenantsNewRoute
   ProtectedtenantCashShiftsCashShiftIdRoute: typeof ProtectedtenantCashShiftsCashShiftIdRoute
@@ -803,6 +845,9 @@ const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedglobalSettingRoute: ProtectedglobalSettingRoute,
   ProtectedtenantDashboardRoute: ProtectedtenantDashboardRoute,
   ProtectedtenantLaporanRoute: ProtectedtenantLaporanRoute,
+  ProtectedglobalSubscriptionsPlanIdRoute:
+    ProtectedglobalSubscriptionsPlanIdRoute,
+  ProtectedglobalSubscriptionsNewRoute: ProtectedglobalSubscriptionsNewRoute,
   ProtectedglobalTenantsTenantIdRoute: ProtectedglobalTenantsTenantIdRoute,
   ProtectedglobalTenantsNewRoute: ProtectedglobalTenantsNewRoute,
   ProtectedtenantCashShiftsCashShiftIdRoute:

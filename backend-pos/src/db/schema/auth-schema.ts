@@ -18,7 +18,6 @@ export const user = pgTable('user', {
   banReason: text('ban_reason'),
   banExpires: timestamp('ban_expires'),
   outletId: text('outlet_id'),
-  isSubscribed: boolean('is_subscribed').default(false),
 });
 
 export const session = pgTable(

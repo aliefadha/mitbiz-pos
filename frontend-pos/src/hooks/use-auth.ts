@@ -72,28 +72,16 @@ export function useResetPassword() {
 }
 
 export function useLogin() {
-  const navigate = useNavigate({ from: '/login' });
-
   return {
     mutate: async (input: { email: string; password: string }) => {
-      const { data, error } = await signIn.email({
+      const { error } = await signIn.email({
         email: input.email,
         password: input.password,
-        // this should be change
         callbackURL: `${import.meta.env.VITE_APP_URL || 'http://localhost:3000'}`,
       });
 
       if (error) {
         throw error;
-      }
-
-      // Check user role scope and redirect accordingly
-      const userRoleScope = (data?.user as unknown as { roleScope?: string })?.roleScope;
-
-      if (userRoleScope === 'global') {
-        navigate({ to: '/admin' });
-      } else {
-        navigate({ to: '/dashboard' });
       }
     },
     isPending: false,

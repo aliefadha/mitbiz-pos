@@ -61,7 +61,6 @@ export class UserService {
           roleId: user.roleId,
           tenantId: user.tenantId,
           outletId: user.outletId,
-          isSubscribed: user.isSubscribed,
           role: {
             id: roles.id,
             name: roles.name,
@@ -114,7 +113,6 @@ export class UserService {
         roleId: user.roleId,
         tenantId: user.tenantId,
         outletId: user.outletId,
-        isSubscribed: user.isSubscribed,
         role: {
           id: roles.id,
           name: roles.name,
@@ -237,7 +235,6 @@ export class UserService {
         roleId: data.roleId,
         tenantId: data.tenantId,
         outletId: data.outletId,
-        isSubscribed: data.isSubscribed,
         emailVerified: true,
       })
       .where(eq(user.id, result.user.id));
