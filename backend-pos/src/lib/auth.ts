@@ -11,7 +11,7 @@ import { findUserRoles } from './user.service';
 // Trigger rebuild v2
 // Hardcoded for production
 const BASE_URL =
-  process.env.BETTER_AUTH_URL || 'https://backend-pos-508482854424.us-central1.run.app';
+  process.env.BETTER_AUTH_URL || 'https://api-pos.mitbiz.id';
 const getAllowedOrigins = (): string[] => {
   const defaultOrigins = ['http://localhost:3000', 'http://localhost:5173'];
   const envOrigins = process.env.ALLOWED_ORIGINS;
