@@ -193,7 +193,7 @@ function RegisterPage() {
 
       setAccountData(values);
       setCurrentStep(2);
-    } catch (error) {
+    } catch (_error) {
       setEmailError('Gagal memverifikasi email');
     }
   });
