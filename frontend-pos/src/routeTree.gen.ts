@@ -15,11 +15,17 @@ import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as ProtectedRouteImport } from './routes/_protected'
+import { Route as OnboardingRouteImport } from './routes/_onboarding'
+import { Route as AuthOnlyRouteImport } from './routes/_authOnly'
 import { Route as R403RouteImport } from './routes/403'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthOnlySubscriptionRouteImport } from './routes/_authOnly/subscription'
 import { Route as ProtectedtenantLaporanRouteImport } from './routes/_protected/(tenant)/laporan'
 import { Route as ProtectedtenantDashboardRouteImport } from './routes/_protected/(tenant)/dashboard'
 import { Route as ProtectedglobalSettingRouteImport } from './routes/_protected/(global)/setting'
+import { Route as OnboardingOnboardingSuccessRouteImport } from './routes/_onboarding/onboarding/success'
+import { Route as OnboardingOnboardingCreateTenantRouteImport } from './routes/_onboarding/onboarding/create-tenant'
+import { Route as OnboardingOnboardingCreateOutletRouteImport } from './routes/_onboarding/onboarding/create-outlet'
 import { Route as ProtectedtenantUsersIndexRouteImport } from './routes/_protected/(tenant)/users/index'
 import { Route as ProtectedtenantStocksIndexRouteImport } from './routes/_protected/(tenant)/stocks/index'
 import { Route as ProtectedtenantStockAdjustmentIndexRouteImport } from './routes/_protected/(tenant)/stock-adjustment/index'
@@ -78,6 +84,14 @@ const ProtectedRoute = ProtectedRouteImport.update({
   id: '/_protected',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/_onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthOnlyRoute = AuthOnlyRouteImport.update({
+  id: '/_authOnly',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const R403Route = R403RouteImport.update({
   id: '/403',
   path: '/403',
@@ -87,6 +101,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthOnlySubscriptionRoute = AuthOnlySubscriptionRouteImport.update({
+  id: '/subscription',
+  path: '/subscription',
+  getParentRoute: () => AuthOnlyRoute,
 } as any)
 const ProtectedtenantLaporanRoute = ProtectedtenantLaporanRouteImport.update({
   id: '/(tenant)/laporan',
@@ -104,6 +123,24 @@ const ProtectedglobalSettingRoute = ProtectedglobalSettingRouteImport.update({
   path: '/setting',
   getParentRoute: () => ProtectedRoute,
 } as any)
+const OnboardingOnboardingSuccessRoute =
+  OnboardingOnboardingSuccessRouteImport.update({
+    id: '/onboarding/success',
+    path: '/onboarding/success',
+    getParentRoute: () => OnboardingRoute,
+  } as any)
+const OnboardingOnboardingCreateTenantRoute =
+  OnboardingOnboardingCreateTenantRouteImport.update({
+    id: '/onboarding/create-tenant',
+    path: '/onboarding/create-tenant',
+    getParentRoute: () => OnboardingRoute,
+  } as any)
+const OnboardingOnboardingCreateOutletRoute =
+  OnboardingOnboardingCreateOutletRouteImport.update({
+    id: '/onboarding/create-outlet',
+    path: '/onboarding/create-outlet',
+    getParentRoute: () => OnboardingRoute,
+  } as any)
 const ProtectedtenantUsersIndexRoute =
   ProtectedtenantUsersIndexRouteImport.update({
     id: '/(tenant)/users/',
@@ -280,6 +317,10 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/subscription': typeof AuthOnlySubscriptionRoute
+  '/onboarding/create-outlet': typeof OnboardingOnboardingCreateOutletRoute
+  '/onboarding/create-tenant': typeof OnboardingOnboardingCreateTenantRoute
+  '/onboarding/success': typeof OnboardingOnboardingSuccessRoute
   '/setting': typeof ProtectedglobalSettingRoute
   '/dashboard': typeof ProtectedtenantDashboardRoute
   '/laporan': typeof ProtectedtenantLaporanRoute
@@ -320,6 +361,10 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/subscription': typeof AuthOnlySubscriptionRoute
+  '/onboarding/create-outlet': typeof OnboardingOnboardingCreateOutletRoute
+  '/onboarding/create-tenant': typeof OnboardingOnboardingCreateTenantRoute
+  '/onboarding/success': typeof OnboardingOnboardingSuccessRoute
   '/setting': typeof ProtectedglobalSettingRoute
   '/dashboard': typeof ProtectedtenantDashboardRoute
   '/laporan': typeof ProtectedtenantLaporanRoute
@@ -356,12 +401,18 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/403': typeof R403Route
+  '/_authOnly': typeof AuthOnlyRouteWithChildren
+  '/_onboarding': typeof OnboardingRouteWithChildren
   '/_protected': typeof ProtectedRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/_authOnly/subscription': typeof AuthOnlySubscriptionRoute
+  '/_onboarding/onboarding/create-outlet': typeof OnboardingOnboardingCreateOutletRoute
+  '/_onboarding/onboarding/create-tenant': typeof OnboardingOnboardingCreateTenantRoute
+  '/_onboarding/onboarding/success': typeof OnboardingOnboardingSuccessRoute
   '/_protected/(global)/setting': typeof ProtectedglobalSettingRoute
   '/_protected/(tenant)/dashboard': typeof ProtectedtenantDashboardRoute
   '/_protected/(tenant)/laporan': typeof ProtectedtenantLaporanRoute
@@ -404,6 +455,10 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/verify-email'
+    | '/subscription'
+    | '/onboarding/create-outlet'
+    | '/onboarding/create-tenant'
+    | '/onboarding/success'
     | '/setting'
     | '/dashboard'
     | '/laporan'
@@ -444,6 +499,10 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/verify-email'
+    | '/subscription'
+    | '/onboarding/create-outlet'
+    | '/onboarding/create-tenant'
+    | '/onboarding/success'
     | '/setting'
     | '/dashboard'
     | '/laporan'
@@ -479,12 +538,18 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/403'
+    | '/_authOnly'
+    | '/_onboarding'
     | '/_protected'
     | '/forgot-password'
     | '/login'
     | '/register'
     | '/reset-password'
     | '/verify-email'
+    | '/_authOnly/subscription'
+    | '/_onboarding/onboarding/create-outlet'
+    | '/_onboarding/onboarding/create-tenant'
+    | '/_onboarding/onboarding/success'
     | '/_protected/(global)/setting'
     | '/_protected/(tenant)/dashboard'
     | '/_protected/(tenant)/laporan'
@@ -521,6 +586,8 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   R403Route: typeof R403Route
+  AuthOnlyRoute: typeof AuthOnlyRouteWithChildren
+  OnboardingRoute: typeof OnboardingRouteWithChildren
   ProtectedRoute: typeof ProtectedRouteWithChildren
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
@@ -573,6 +640,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_onboarding': {
+      id: '/_onboarding'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authOnly': {
+      id: '/_authOnly'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthOnlyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/403': {
       id: '/403'
       path: '/403'
@@ -586,6 +667,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authOnly/subscription': {
+      id: '/_authOnly/subscription'
+      path: '/subscription'
+      fullPath: '/subscription'
+      preLoaderRoute: typeof AuthOnlySubscriptionRouteImport
+      parentRoute: typeof AuthOnlyRoute
     }
     '/_protected/(tenant)/laporan': {
       id: '/_protected/(tenant)/laporan'
@@ -607,6 +695,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/setting'
       preLoaderRoute: typeof ProtectedglobalSettingRouteImport
       parentRoute: typeof ProtectedRoute
+    }
+    '/_onboarding/onboarding/success': {
+      id: '/_onboarding/onboarding/success'
+      path: '/onboarding/success'
+      fullPath: '/onboarding/success'
+      preLoaderRoute: typeof OnboardingOnboardingSuccessRouteImport
+      parentRoute: typeof OnboardingRoute
+    }
+    '/_onboarding/onboarding/create-tenant': {
+      id: '/_onboarding/onboarding/create-tenant'
+      path: '/onboarding/create-tenant'
+      fullPath: '/onboarding/create-tenant'
+      preLoaderRoute: typeof OnboardingOnboardingCreateTenantRouteImport
+      parentRoute: typeof OnboardingRoute
+    }
+    '/_onboarding/onboarding/create-outlet': {
+      id: '/_onboarding/onboarding/create-outlet'
+      path: '/onboarding/create-outlet'
+      fullPath: '/onboarding/create-outlet'
+      preLoaderRoute: typeof OnboardingOnboardingCreateOutletRouteImport
+      parentRoute: typeof OnboardingRoute
     }
     '/_protected/(tenant)/users/': {
       id: '/_protected/(tenant)/users/'
@@ -807,6 +916,34 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthOnlyRouteChildren {
+  AuthOnlySubscriptionRoute: typeof AuthOnlySubscriptionRoute
+}
+
+const AuthOnlyRouteChildren: AuthOnlyRouteChildren = {
+  AuthOnlySubscriptionRoute: AuthOnlySubscriptionRoute,
+}
+
+const AuthOnlyRouteWithChildren = AuthOnlyRoute._addFileChildren(
+  AuthOnlyRouteChildren,
+)
+
+interface OnboardingRouteChildren {
+  OnboardingOnboardingCreateOutletRoute: typeof OnboardingOnboardingCreateOutletRoute
+  OnboardingOnboardingCreateTenantRoute: typeof OnboardingOnboardingCreateTenantRoute
+  OnboardingOnboardingSuccessRoute: typeof OnboardingOnboardingSuccessRoute
+}
+
+const OnboardingRouteChildren: OnboardingRouteChildren = {
+  OnboardingOnboardingCreateOutletRoute: OnboardingOnboardingCreateOutletRoute,
+  OnboardingOnboardingCreateTenantRoute: OnboardingOnboardingCreateTenantRoute,
+  OnboardingOnboardingSuccessRoute: OnboardingOnboardingSuccessRoute,
+}
+
+const OnboardingRouteWithChildren = OnboardingRoute._addFileChildren(
+  OnboardingRouteChildren,
+)
+
 interface ProtectedRouteChildren {
   ProtectedglobalSettingRoute: typeof ProtectedglobalSettingRoute
   ProtectedtenantDashboardRoute: typeof ProtectedtenantDashboardRoute
@@ -888,6 +1025,8 @@ const ProtectedRouteWithChildren = ProtectedRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   R403Route: R403Route,
+  AuthOnlyRoute: AuthOnlyRouteWithChildren,
+  OnboardingRoute: OnboardingRouteWithChildren,
   ProtectedRoute: ProtectedRouteWithChildren,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,

@@ -3,6 +3,7 @@ import { createContext, type ReactNode, useCallback, useContext, useMemo } from 
 import { groupPermissions, type Permission, type PermissionItem } from '../lib/api/roles';
 import { usersApi } from '../lib/api/users';
 import { signOut as signOutAuth, useSession } from '../lib/auth-client';
+import { clearCachedSession, clearPermissionsCache } from '../lib/session-cache';
 
 export type UserScope = 'global' | 'tenant' | undefined;
 
@@ -55,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryFn: async () => {
       if (!roleId) return null;
       const result = await usersApi.getMyRoleAndPermissions();
-      return result.permissions;
+      return result.permissions ?? [];
     },
     enabled: !!roleId && !!user,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -63,6 +64,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const logout = useCallback(async () => {
+    clearCachedSession();
+    clearPermissionsCache();
     await signOutAuth();
   }, []);
 

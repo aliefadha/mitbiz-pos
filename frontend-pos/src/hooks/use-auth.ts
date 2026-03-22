@@ -1,6 +1,6 @@
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
-import { OWNER_ROLE_ID } from '../constants/role-ids';
+import { REGISTERED_ROLE_ID } from '@/constants/role-ids';
 import { authClient, signIn, signOut } from '../lib/auth-client';
 
 // Re-export the new auth hooks from context
@@ -17,12 +17,10 @@ export function useRegister() {
         email: input.email,
         password: input.password,
         callbackURL: `${import.meta.env.VITE_APP_URL || 'http://localhost:3000'}/verify-email`,
-        roleId: OWNER_ROLE_ID,
-        roleName: 'owner',
+        roleId: REGISTERED_ROLE_ID,
         roleScope: 'tenant',
         tenantId: '',
         outletId: '',
-        isSubscribed: false,
       });
 
       if (error) {

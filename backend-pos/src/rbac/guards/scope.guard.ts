@@ -9,6 +9,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { AuthService } from '@thallesp/nestjs-better-auth';
 import { fromNodeHeaders } from 'better-auth/node';
+import { PUBLIC_KEY } from '../decorators/permission.decorator';
 import { SCOPE_KEY } from '../decorators/scope.decorator';
 import { RbacService } from '../services/rbac.service';
 import { ScopeType } from '../types/rbac.types';
@@ -22,6 +23,15 @@ export class ScopeGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    const isPublic = this.reflector.getAllAndOverride<boolean>(PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+
+    if (isPublic) {
+      return true;
+    }
+
     const request = context.switchToHttp().getRequest();
     const headers = fromNodeHeaders(request.headers);
     const session = await this.authService.api.getSession({ headers });

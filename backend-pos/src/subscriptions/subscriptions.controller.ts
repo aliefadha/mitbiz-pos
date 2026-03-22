@@ -166,7 +166,6 @@ export class SubscriptionPlansController {
     description: 'Items per page',
   })
   @UsePipes(new ZodValidationPipe(SubscriptionPlanQuerySchema, 'query'))
-  @Permission('subscription_plans', [Action.LIST])
   findAll(@Query() query: SubscriptionPlanQueryDto) {
     return this.subscriptionsService.findAllPlans(query);
   }
@@ -344,7 +343,6 @@ export class TenantSubscriptionsController {
   @ApiOperation({ summary: 'Get tenant subscription' })
   @ApiParam({ name: 'slug', required: true, description: 'Tenant slug' })
   @UsePipes(new ZodValidationPipe(SubscriptionSlugSchema, 'params'))
-  @Permission('subscriptions', [Action.READ])
   getSubscription(
     @Param() { slug }: SubscriptionSlugDto,
     @CurrentUser() user: CurrentUserWithRole,

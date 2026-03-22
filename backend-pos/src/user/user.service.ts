@@ -299,4 +299,14 @@ export class UserService {
 
     return updatedUser;
   }
+
+  async checkEmailExists(email: string): Promise<boolean> {
+    const [existingUser] = await this.db
+      .select({ id: user.id })
+      .from(user)
+      .where(eq(user.email, email.toLowerCase()))
+      .limit(1);
+
+    return !!existingUser;
+  }
 }

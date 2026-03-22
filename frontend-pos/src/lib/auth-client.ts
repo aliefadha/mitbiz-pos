@@ -16,11 +16,9 @@ export const authClient = createAuthClient({
     inferAdditionalFields({
       user: {
         roleId: { type: 'string' },
-        roleName: { type: 'string' },
         roleScope: { type: 'string' },
         tenantId: { type: 'string' },
         outletId: { type: 'string' },
-        isSubscribed: { type: 'boolean' },
       },
     }),
   ],

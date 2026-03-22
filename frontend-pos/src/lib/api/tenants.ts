@@ -169,6 +169,14 @@ export const tenantsApi = {
     return fetchApi<TenantSummary>(`/tenants/${slug}/summary`);
   },
 
+  getSubscription: async (
+    slug: string
+  ): Promise<{ tenant: { id: string; nama: string; slug: string }; subscription: any }> => {
+    return fetchApi<{ tenant: { id: string; nama: string; slug: string }; subscription: any }>(
+      `/tenants/${slug}/subscription`
+    );
+  },
+
   createSubscription: async (
     slug: string,
     data: { planId: string }

@@ -32,6 +32,10 @@ export const Route = createFileRoute('/')({
       throw redirect({ to: '/admin' });
     }
 
+    if (!session.user.tenantId) {
+      throw redirect({ to: '/onboarding/create-tenant' });
+    }
+
     const { allowed } = await checkAnyPermission(TENANT_ROUTE_PRIORITY);
 
     if (!allowed) {

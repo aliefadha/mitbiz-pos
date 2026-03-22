@@ -9,6 +9,7 @@ export const subscriptionStatusEnum = pgEnum('subscription_status', [
   'expired',
   'cancelled',
   'suspended',
+  'pending',
 ]);
 
 export const subscriptions = pgTable('subscriptions', {
@@ -18,7 +19,7 @@ export const subscriptions = pgTable('subscriptions', {
     .notNull(),
   planId: text('plan_id').references(() => subscriptionPlans.id, { onDelete: 'set null' }),
   status: text('status', {
-    enum: ['active', 'expired', 'cancelled', 'suspended'],
+    enum: ['active', 'expired', 'cancelled', 'suspended', 'pending'],
   })
     .notNull()
     .default('active'),
@@ -26,6 +27,7 @@ export const subscriptions = pgTable('subscriptions', {
   expiresAt: timestamp('expires_at').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  midtransOrderId: text('midtrans_order_id'),
 });
 
 export const subscriptionRelations = relations(subscriptions, ({ one, many }) => ({

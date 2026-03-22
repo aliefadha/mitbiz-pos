@@ -304,6 +304,19 @@ export class TenantsService {
       user,
     );
 
+    //TODO: manually add payment method to tenant
+
+    // Link user to the new tenant
+    if (finalUserId) {
+      await this.db
+        .update(userSchema)
+        .set({ tenantId: tenant.id })
+        .where(eq(userSchema.id, finalUserId));
+    }
+
+    //TODO: Create tenant owner and cashier role by copying template from role template and links it with tenantId
+    //TODO: Change registered user role into new tenant owner role
+
     return tenant;
   }
 

@@ -80,7 +80,7 @@ jobs:
             --cpu 1 \
             --max-instances 10 \
             --min-instances 0 \
-            --set-secrets=DATABASE_URL=database-url:latest,BETTER_AUTH_SECRET=better-auth-secret:latest,JWT_SECRET=jwt-secret:latest \
+            --set-secrets=DATABASE_URL=database-url:latest,BETTER_AUTH_SECRET=better-auth-secret:latest,JWT_SECRET=jwt-secret:latest,MIDTRANS_SERVER_KEY=midtrans-server-key:latest,MIDTRANS_CLIENT_KEY=midtrans-client-key:latest,MIDTRANS_IS_PRODUCTION=midtrans-is-production:latest
             --env-vars-file=env-vars.yaml \
           
           # Get the deployed URL

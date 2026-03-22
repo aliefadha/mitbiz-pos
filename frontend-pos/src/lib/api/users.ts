@@ -107,6 +107,10 @@ async function updateProfile(data: { name?: string; image?: string }): Promise<U
   });
 }
 
+async function checkEmail(email: string): Promise<{ exists: boolean }> {
+  return fetchApi(`/users/check-email?email=${encodeURIComponent(email)}`);
+}
+
 export const usersApi = {
   getUsers,
   getProfile,
@@ -115,4 +119,5 @@ export const usersApi = {
   updateUser,
   deleteUser,
   updateProfile,
+  checkEmail,
 };

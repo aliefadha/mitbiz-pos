@@ -1,6 +1,6 @@
 import { redirect } from '@tanstack/react-router';
-import { authClient } from '@/lib/auth-client';
 import { getRolePermissions, groupPermissions } from './api/roles';
+import { getCachedPermissions, getSessionWithCache, setCachedPermissions } from './session-cache';
 
 export type UserScope = 'global' | 'tenant' | undefined;
 
@@ -24,21 +24,25 @@ export async function checkPermission(
   resource: string,
   action: string
 ): Promise<{ allowed: boolean; scope?: UserScope }> {
-  const session = await authClient.getSession();
+  const session = await getSessionWithCache();
 
-  if (!session.data) {
+  if (!session) {
     throw redirect({ to: '/login' });
   }
 
-  const roleId = (session.data.user as unknown as { roleId?: string })?.roleId;
-  const scope = (session.data.user as unknown as { roleScope?: UserScope })?.roleScope;
+  const roleId = (session.user as unknown as { roleId?: string })?.roleId;
+  const scope = (session.user as unknown as { roleScope?: UserScope })?.roleScope;
 
   if (!roleId) {
     return { allowed: false, scope };
   }
 
-  const permissionsData = await getRolePermissions(roleId);
-  const groupedPermissions = groupPermissions(permissionsData);
+  let groupedPermissions = getCachedPermissions(roleId);
+  if (!groupedPermissions) {
+    const permissionsData = await getRolePermissions(roleId);
+    groupedPermissions = groupPermissions(permissionsData);
+    setCachedPermissions(roleId, groupedPermissions);
+  }
 
   const permission = groupedPermissions.find(
     (p) =>
@@ -61,21 +65,25 @@ export async function checkPermission(
 export async function checkAnyPermission(
   checks: PermissionCheck[]
 ): Promise<{ allowed: boolean; scope?: UserScope }> {
-  const session = await authClient.getSession();
+  const session = await getSessionWithCache();
 
-  if (!session.data) {
+  if (!session) {
     throw redirect({ to: '/login' });
   }
 
-  const roleId = (session.data.user as unknown as { roleId?: string })?.roleId;
-  const scope = (session.data.user as unknown as { roleScope?: UserScope })?.roleScope;
+  const roleId = (session.user as unknown as { roleId?: string })?.roleId;
+  const scope = (session.user as unknown as { roleScope?: UserScope })?.roleScope;
 
   if (!roleId) {
     return { allowed: false, scope };
   }
 
-  const permissionsData = await getRolePermissions(roleId);
-  const groupedPermissions = groupPermissions(permissionsData);
+  let groupedPermissions = getCachedPermissions(roleId);
+  if (!groupedPermissions) {
+    const permissionsData = await getRolePermissions(roleId);
+    groupedPermissions = groupPermissions(permissionsData);
+    setCachedPermissions(roleId, groupedPermissions);
+  }
 
   // Check if user has ANY of the specified permissions
   const hasAny = checks.some((check) => {
@@ -103,21 +111,25 @@ export async function checkAnyPermission(
 export async function checkAllPermissions(
   checks: PermissionCheck[]
 ): Promise<{ allowed: boolean; scope?: UserScope }> {
-  const session = await authClient.getSession();
+  const session = await getSessionWithCache();
 
-  if (!session.data) {
+  if (!session) {
     throw redirect({ to: '/login' });
   }
 
-  const roleId = (session.data.user as unknown as { roleId?: string })?.roleId;
-  const scope = (session.data.user as unknown as { roleScope?: UserScope })?.roleScope;
+  const roleId = (session.user as unknown as { roleId?: string })?.roleId;
+  const scope = (session.user as unknown as { roleScope?: UserScope })?.roleScope;
 
   if (!roleId) {
     return { allowed: false, scope };
   }
 
-  const permissionsData = await getRolePermissions(roleId);
-  const groupedPermissions = groupPermissions(permissionsData);
+  let groupedPermissions = getCachedPermissions(roleId);
+  if (!groupedPermissions) {
+    const permissionsData = await getRolePermissions(roleId);
+    groupedPermissions = groupPermissions(permissionsData);
+    setCachedPermissions(roleId, groupedPermissions);
+  }
 
   // Check if user has ALL of the specified permissions
   const hasAll = checks.every((check) => {

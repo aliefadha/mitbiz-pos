@@ -15,10 +15,12 @@ import {
   UseGuards,
   UsePipes,
 } from '@nestjs/common';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { AuthService } from '@thallesp/nestjs-better-auth';
 import { fromNodeHeaders } from 'better-auth/node';
 import type { Request as ExpressRequest } from 'express';
+import { z } from 'zod';
 import {
   CreateUserDto,
   CreateUserSchema,
@@ -27,8 +29,13 @@ import {
   UserQueryDto,
   UserQuerySchema,
 } from './dto';
-import { UserQueryParams, type UserRoleAndPermissions, UserService } from './user.service';
+import { UserService } from './user.service';
 
+const CheckEmailSchema = z.object({
+  email: z.string().email('Invalid email format'),
+});
+
+@ApiTags('users')
 @Controller('users')
 @UseGuards(JwtAuthGuard, PermissionGuard, ScopeGuard)
 @GlobalScope()
@@ -66,11 +73,9 @@ export class UserController {
   }
 
   @Get('me/permissions')
-  @Public()
-  @UseGuards(JwtAuthGuard)
   async getMyPermissions(@CurrentUser() currentUser: CurrentUserWithRole) {
     if (!currentUser?.id) {
-      return { error: 'No session found' };
+      return { role: null, permissions: [] };
     }
     return this.userService.getUserRolesAndPermissions(currentUser.id);
   }
@@ -101,5 +106,14 @@ export class UserController {
 
     const updatedUser = await this.userService.updateUser(id, body, currentUser);
     return { user: updatedUser };
+  }
+
+  @Get('check-email')
+  @Public()
+  @UsePipes(new ZodValidationPipe(CheckEmailSchema, 'query'))
+  @ApiOperation({ summary: 'Check if email already exists' })
+  async checkEmail(@Query() query: z.infer<typeof CheckEmailSchema>) {
+    const exists = await this.userService.checkEmailExists(query.email);
+    return { exists };
   }
 }

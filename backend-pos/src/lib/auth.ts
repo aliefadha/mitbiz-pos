@@ -51,19 +51,19 @@ export const auth = betterAuth({
   },
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: true,
+    requireEmailVerification: false,
     sendResetPassword: async ({ user, url }) => {
       await emailService.sendPasswordResetEmail(user.email, url);
     },
   },
-  emailVerification: {
-    sendVerificationEmail: async ({ user, url }) => {
-      await emailService.sendVerificationEmail(user.email, url);
-    },
-    sendOnSignUp: true,
-    expiresIn: 24 * 60 * 60,
-    autoSignInAfterVerification: false,
-  },
+  // emailVerification: {
+  //   sendVerificationEmail: async ({ user, url }) => {
+  //     await emailService.sendVerificationEmail(user.email, url);
+  //   },
+  //   sendOnSignUp: true,
+  //   expiresIn: 24 * 60 * 60,
+  //   autoSignInAfterVerification: false,
+  // },
   plugins: [
     openAPI(),
     customSession(async ({ user, session }) => {
@@ -92,10 +92,6 @@ export const auth = betterAuth({
       outletId: {
         type: 'string',
         required: false,
-      },
-      isSubscribed: {
-        type: 'boolean',
-        defaultValue: false,
       },
     },
   },

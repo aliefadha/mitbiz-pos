@@ -22,16 +22,10 @@ export const SubscriptionStatusSchema = z.enum(['active', 'expired', 'cancelled'
 
 export const CreateSubscriptionSchema = z.object({
   planId: z.string().min(1, 'Plan ID is required'),
-  // TODO: Add payment integration fields
-  // paymentMethodId: z.string().uuid().optional(),
-  // paymentProof: z.string().optional(),
 });
 
 export const RenewSubscriptionSchema = z.object({
   billingCycle: BillingCycleSchema.optional(),
-  // TODO: Add payment integration fields
-  // paymentMethodId: z.string().uuid().optional(),
-  // paymentProof: z.string().optional(),
 });
 
 export const SubscriptionSlugSchema = z.object({

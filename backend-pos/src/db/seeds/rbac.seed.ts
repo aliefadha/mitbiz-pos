@@ -5,6 +5,8 @@ import { Action, ScopeType } from '@/rbac/types/rbac.types';
 const GLOBAL_ADMIN_ROLE_ID = '00000000-0000-0000-0000-000000000001';
 const GLOBAL_OWNER_ROLE_ID = '00000000-0000-0000-0000-000000000002';
 const GLOBAL_CASHIER_ROLE_ID = '00000000-0000-0000-0000-000000000003';
+const TEMPLATE_OWNER_ROLE_ID = '00000000-0000-0000-0000-000000000010';
+const TEMPLATE_CASHIER_ROLE_ID = '00000000-0000-0000-0000-000000000011';
 
 const defaultRoles = [
   {
@@ -27,6 +29,22 @@ const defaultRoles = [
     id: GLOBAL_CASHIER_ROLE_ID,
     name: 'cashier',
     scope: ScopeType.GLOBAL,
+    description: 'Cashier with limited access',
+    isDefault: false,
+    isActive: true,
+  },
+  {
+    id: TEMPLATE_OWNER_ROLE_ID,
+    name: 'owner',
+    scope: ScopeType.TENANT,
+    description: 'Tenant owner with full access to their organization',
+    isDefault: true,
+    isActive: true,
+  },
+  {
+    id: TEMPLATE_CASHIER_ROLE_ID,
+    name: 'cashier',
+    scope: ScopeType.TENANT,
     description: 'Cashier with limited access',
     isDefault: false,
     isActive: true,
@@ -100,8 +118,6 @@ const ownerPermissions = [
 ];
 
 const cashierPermissions = [
-  { resource: 'users', actions: [Action.READ] },
-  { resource: 'user', actions: [Action.READ] },
   { resource: 'products', actions: [Action.READ] },
   { resource: 'categories', actions: [Action.READ] },
   { resource: 'transaction', actions: [Action.CREATE, Action.READ, Action.REFUND] },
@@ -112,7 +128,7 @@ const cashierPermissions = [
     resource: 'stockAdjustments',
     actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE],
   },
-  { resource: 'orders', actions: [Action.CREATE, Action.READ] },
+  { resource: 'orders', actions: [Action.CREATE, Action.READ, Action.UPDATE] },
   { resource: 'orderItems', actions: [Action.CREATE, Action.READ] },
   { resource: 'report', actions: [Action.READ] },
   { resource: 'settings', actions: [Action.READ] },
@@ -120,7 +136,6 @@ const cashierPermissions = [
   { resource: 'paymentMethods', actions: [Action.READ] },
   { resource: 'cashShifts', actions: [Action.CREATE, Action.READ, Action.UPDATE] },
   { resource: 'sales', actions: [Action.READ] },
-  { resource: 'roles', actions: [Action.READ, Action.CREATE, Action.UPDATE, Action.DELETE] },
 ];
 
 async function seedRbac() {
@@ -170,6 +185,8 @@ async function seedRbac() {
     [GLOBAL_ADMIN_ROLE_ID]: adminPermissions,
     [GLOBAL_OWNER_ROLE_ID]: ownerPermissions,
     [GLOBAL_CASHIER_ROLE_ID]: cashierPermissions,
+    [TEMPLATE_OWNER_ROLE_ID]: ownerPermissions,
+    [TEMPLATE_CASHIER_ROLE_ID]: cashierPermissions,
   };
 
   for (const [roleId, permissions] of Object.entries(rolePermissionsMap)) {

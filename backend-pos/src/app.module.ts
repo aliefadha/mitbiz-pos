@@ -14,6 +14,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { DbModule } from './db/db.module';
 import { DiscountsModule } from './discounts/discounts.module';
 import { auth } from './lib/auth';
+import { MidtransModule } from './midtrans/midtrans.module';
 import { OrderItemsModule } from './order-items/order-items.module';
 import { OrdersModule } from './orders/orders.module';
 import { OutletsModule } from './outlets/outlets.module';
@@ -55,8 +56,24 @@ import { UserModule } from './user/user.module';
     PaymentMethodsModule,
     CashShiftsModule,
     DashboardModule,
+    DbModule,
+    DiscountsModule,
+    TenantsModule,
+    OutletsModule,
+    CategoriesModule,
+    ProductsModule,
+    StocksModule,
+    StockAdjustmentsModule,
+    UserModule,
+    OrdersModule,
+    OrderItemsModule,
+    DiscountsModule,
+    PaymentMethodsModule,
+    CashShiftsModule,
+    DashboardModule,
     SalesModule,
     SubscriptionsModule,
+    MidtransModule,
   ],
   controllers: [AppController],
   providers: [
