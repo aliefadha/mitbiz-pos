@@ -10,8 +10,7 @@ import { findUserRoles } from './user.service';
 // Testing env-vars-file deployment
 // Trigger rebuild v2
 // Hardcoded for production
-const BASE_URL =
-  process.env.BETTER_AUTH_URL || 'https://api-pos.mitbiz.id';
+const BASE_URL = process.env.BETTER_AUTH_URL || 'https://api-pos.mitbiz.id';
 const getAllowedOrigins = (): string[] => {
   const defaultOrigins = ['http://localhost:3000', 'http://localhost:5173'];
   const envOrigins = process.env.ALLOWED_ORIGINS;
