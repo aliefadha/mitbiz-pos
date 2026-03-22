@@ -50,12 +50,17 @@ jobs:
             --location=${{ env.REGION }} \
             --description="Docker repository for ${{ env.SERVICE_NAME }}"
 
+      - name: Get Midtrans Client Key from Secret Manager
+        run: |
+          MIDTRANS_CLIENT_KEY=$(gcloud secrets versions describe midtrans-client-key --secret=midtrans-client-key --format='get(payload.data)' | base64 -d)
+          echo "midtrans_client_key=$MIDTRANS_CLIENT_KEY" >> $GITHUB_ENV
+
       - name: Build and Push Container
         run: |
           cd frontend-pos
           gcloud builds submit \
             --config=../cloudbuild-configs/cloudbuild-frontend.yaml \
-            --substitutions=_REGION=${{ env.REGION }},_PROJECT_ID=${{ env.PROJECT_ID }},_IMAGE_NAME=${{ env.IMAGE_NAME }},_BACKEND_URL=${{ secrets.BACKEND_URL }},COMMIT_SHA=${{ github.sha }} \
+            --substitutions=_REGION=${{ env.REGION }},_PROJECT_ID=${{ env.PROJECT_ID }},_IMAGE_NAME=${{ env.IMAGE_NAME }},_BACKEND_URL=${{ secrets.BACKEND_URL }},_MIDTRANS_CLIENT_KEY=${{ env.midtrans_client_key }},COMMIT_SHA=${{ github.sha }} \
             --service-account=projects/dulcet-outlook-479500-k3/serviceAccounts/cloudbuild@dulcet-outlook-479500-k3.iam.gserviceaccount.com \
             --gcs-log-dir=gs://dulcet-outlook-479500-k3_cloudbuild/logs
 
