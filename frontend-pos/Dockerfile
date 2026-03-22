@@ -35,13 +35,8 @@ RUN apk add --no-cache dumb-init
 # Copy built application from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Build arg for backend URL
-ARG BACKEND_URL
-ENV BACKEND_URL=$BACKEND_URL
-
-# Copy nginx configuration and replace placeholder
+# Copy nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-RUN sed -i 's|__BACKEND_URL__|'"$BACKEND_URL"'|g' /etc/nginx/conf.d/default.conf
 
 # Cloud Run sets PORT environment variable, default to 8080
 ENV PORT=8080
