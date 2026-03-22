@@ -2,7 +2,7 @@ import { customSessionClient, inferAdditionalFields } from 'better-auth/client/p
 import { createAuthClient } from 'better-auth/react';
 
 const baseApiUrl = import.meta.env.VITE_API_URL || '/api';
-const baseURL = `${baseApiUrl}/auth`
+const baseURL = `${baseApiUrl}/auth`;
 
 export const authClient = createAuthClient({
   baseURL,
