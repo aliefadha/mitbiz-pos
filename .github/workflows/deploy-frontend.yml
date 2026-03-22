@@ -52,7 +52,7 @@ jobs:
 
       - name: Get Midtrans Client Key from Secret Manager
         run: |
-          MIDTRANS_CLIENT_KEY=$(gcloud secrets versions describe midtrans-client-key --secret=midtrans-client-key --format='get(payload.data)' | base64 -d)
+          MIDTRANS_CLIENT_KEY=$(gcloud secrets versions access latest --secret=midtrans-client-key)
           echo "midtrans_client_key=$MIDTRANS_CLIENT_KEY" >> $GITHUB_ENV
 
       - name: Build and Push Container
