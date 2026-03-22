@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from '@/components/ui/skeleton';
 import { subscriptionPlansApi } from '@/lib/api/subscriptions';
 import { tenantsApi } from '@/lib/api/tenants';
-import { signOut, useSession } from '@/lib/auth-client';
+import { signOut } from '@/lib/auth-client';
 
 function formatCurrency(amount: string | number): string {
   const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
@@ -30,12 +30,25 @@ export const Route = createFileRoute('/_authOnly/subscription')({
     if (user.roleScope === 'global') {
       throw redirect({ to: '/admin' });
     }
+
+    const tenantId = user.tenantId;
+    if (!tenantId) {
+      throw redirect({ to: '/onboarding/create-tenant' });
+    }
+
+    const tenant = await tenantsApi.getById(tenantId);
+    const { subscription } = await tenantsApi.getSubscription(tenant.slug);
+
+    if (subscription && subscription.status === 'active') {
+      throw redirect({ to: '/cash-shifts' });
+    }
+
+    return { subscription };
   },
 });
 
 function SubscriptionPage() {
-  const { data: session } = useSession();
-  const tenantId = session?.user?.tenantId;
+  const { subscription } = Route.useRouteContext();
   const [selectedPlan, setSelectedPlan] = useState<{
     id: string;
     name: string;
@@ -44,24 +57,11 @@ function SubscriptionPage() {
   } | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const { data: tenant, isLoading: isTenantLoading } = useQuery({
-    queryKey: ['tenant', tenantId],
-    queryFn: () => tenantsApi.getById(tenantId!),
-    enabled: !!tenantId,
-  });
-
-  const { data: subscriptionData, isLoading: isSubscriptionLoading } = useQuery({
-    queryKey: ['subscription', tenant?.slug],
-    queryFn: () => tenantsApi.getSubscription(tenant!.slug),
-    enabled: !!tenant?.slug,
-  });
-
   const { data: plansData, isLoading: isPlansLoading } = useQuery({
     queryKey: ['subscription-plans', 'active'],
     queryFn: () => subscriptionPlansApi.getAll({ isActive: true }),
   });
 
-  const subscription = subscriptionData?.subscription;
   const plans = plansData?.data ?? [];
 
   const getStatusMessage = () => {
@@ -93,7 +93,7 @@ function SubscriptionPage() {
     }
   };
 
-  if (isTenantLoading || isSubscriptionLoading || isPlansLoading) {
+  if (isPlansLoading) {
     return (
       <div className="container mx-auto py-8">
         <div className="max-w-4xl mx-auto">
