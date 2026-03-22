@@ -5,7 +5,7 @@ steps:
       - '--build-arg'
       - 'VITE_API_URL=https://api-pos.mitbiz.id'
       - '--build-arg'
-      - 'VITE_APP_URL=https://pos.mitbiz.id/api'
+      - 'VITE_APP_URL=https://pos.mitbiz.id'
       - '--build-arg'
       - 'VITE_MIDTRANS_CLIENT_KEY=${_MIDTRANS_CLIENT_KEY}'
       - '--tag'
