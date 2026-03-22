@@ -119,9 +119,9 @@ export class MidtransService {
         },
       ],
       callbacks: {
-        finish: `${this.configService.get<string>('FRONTEND_URL') || 'https://pos.mitbiz.id'}/subscription?payment=success`,
+        finish: `${this.configService.get<string>('MIDTRANS_FINISH_URL') || 'https://pos.mitbiz.id'}/subscription?payment=success`,
       },
-      notificationUrl: `${this.configService.get<string>('API_URL') || 'https://api-pos.mitbiz.id'}/api/payments/notification`,
+      notificationUrl: `${this.configService.get<string>('MIDTRANS_NOTIFICATION_URL') || 'https://api-pos.mitbiz.id'}/api/payments/notification`,
     };
 
     const transaction = await this.snap.createTransaction(parameter);
