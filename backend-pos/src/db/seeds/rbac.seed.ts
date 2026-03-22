@@ -85,6 +85,14 @@ const adminPermissions = [
   { resource: 'cashShifts', actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE] },
   { resource: 'sales', actions: [Action.READ] },
   { resource: 'roles', actions: [Action.READ, Action.CREATE, Action.UPDATE, Action.DELETE] },
+  {
+    resource: 'subscriptions',
+    actions: [Action.READ, Action.CREATE, Action.UPDATE, Action.DELETE],
+  },
+  {
+    resource: 'subscription_plans',
+    actions: [Action.READ, Action.CREATE, Action.UPDATE, Action.DELETE],
+  },
 ];
 
 const ownerPermissions = [

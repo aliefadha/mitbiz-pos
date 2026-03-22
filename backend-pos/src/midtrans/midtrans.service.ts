@@ -27,7 +27,7 @@ export class MidtransService {
     this.snap = new Snap({
       clientKey: clientKey ?? '',
       serverKey: serverKey,
-      production: this.isProduction,
+      isProduction: this.isProduction,
     });
   }
 
