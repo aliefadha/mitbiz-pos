@@ -1,5 +1,6 @@
 import { createFileRoute, redirect } from '@tanstack/react-router';
 import { AppLayout } from '@/components/app-layout';
+import { tenantsApi } from '@/lib/api/tenants';
 import { getSessionWithCache } from '@/lib/session-cache';
 
 export const Route = createFileRoute('/_protected')({
@@ -20,7 +21,15 @@ export const Route = createFileRoute('/_protected')({
     if (!tenantId) {
       throw redirect({ to: '/onboarding/create-tenant' });
     }
-    return { session };
+
+    const tenant = await tenantsApi.getById(tenantId);
+    const { subscription } = await tenantsApi.getSubscription(tenant.slug);
+
+    if (!subscription || subscription.status !== 'active') {
+      throw redirect({ to: '/subscription' });
+    }
+
+    return { session, subscription };
   },
 });
 

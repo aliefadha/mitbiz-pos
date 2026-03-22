@@ -678,8 +678,7 @@ function RegisterPage() {
                 Akun Berhasil Dibuat! 🎉
               </h2>
               <p className="mb-8 max-w-sm text-center text-sm leading-relaxed text-gray-500">
-                Selamat datang di Mitbiz POS. Bisnis Anda sudah siap untuk dikelola. Cek email untuk
-                verifikasi akun.
+                Selamat datang di Mitbiz POS. Bisnis Anda sudah siap untuk dikelola.
               </p>
               <Button
                 onClick={() => {
