@@ -9,7 +9,7 @@ import { MidtransService } from './midtrans.service';
 
 @Controller('payments')
 export class MidtransController {
-  constructor(private readonly midtransService: MidtransService) { }
+  constructor(private readonly midtransService: MidtransService) {}
 
   @Post('snap/token')
   async createSnapToken(
