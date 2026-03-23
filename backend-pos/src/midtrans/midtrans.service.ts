@@ -144,12 +144,12 @@ export class MidtransService {
   async handleNotification(notification: any) {
     const orderId = notification.order_id;
     const transactionStatus = notification.transaction_status;
-    const statusCode = notification.status_code;
 
     const subscription = await this.db.query.subscriptions.findFirst({
       where: eq(subscriptions.midtransOrderId, orderId),
       with: {
         plan: true,
+        tenant: true,
       },
     });
 
@@ -172,7 +172,7 @@ export class MidtransService {
         .where(eq(subscriptions.id, subscription.id));
 
       await this.db.insert(subscriptionHistories).values({
-        tenantId: subscription.tenantId,
+        tenantId: subscription.tenant?.id,
         subscriptionId: subscription.id,
         planId: subscription.planId,
         action: 'subscribed',
