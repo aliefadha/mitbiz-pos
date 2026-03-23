@@ -12,6 +12,7 @@ export class MidtransController {
   constructor(private readonly midtransService: MidtransService) {}
 
   @Post('snap/token')
+  @UseGuards(AuthGuard)
   async createSnapToken(
     @Body(new ZodValidationPipe(CreateSnapTransactionSchema)) dto: CreateSnapTransactionDto,
     @Req() req: any,
