@@ -8,9 +8,8 @@ import {
 import { MidtransService } from './midtrans.service';
 
 @Controller('payments')
-@UseGuards(AuthGuard)
 export class MidtransController {
-  constructor(private readonly midtransService: MidtransService) {}
+  constructor(private readonly midtransService: MidtransService) { }
 
   @Post('snap/token')
   async createSnapToken(
@@ -28,7 +27,7 @@ export class MidtransController {
   }
 
   @Post('notification')
-  @UseGuards() // Disable auth guard for webhook endpoint - Midtrans doesn't send auth headers
+  // Disable auth guard for webhook endpoint - Midtrans doesn't send auth headers
   async handleNotification(@Body() notification: any) {
     return this.midtransService.handleNotification(notification);
   }
