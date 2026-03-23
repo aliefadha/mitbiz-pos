@@ -18,7 +18,8 @@ export class MidtransService {
   ) {
     const serverKey = this.configService.get<string>('MIDTRANS_SERVER_KEY');
     const clientKey = this.configService.get<string>('MIDTRANS_CLIENT_KEY');
-    this.isProduction = this.configService.get<boolean>('MIDTRANS_IS_PRODUCTION') ?? false;
+    const isProductionStr = this.configService.get<string>('MIDTRANS_IS_PRODUCTION');
+    this.isProduction = isProductionStr === 'true';
 
     if (!serverKey) {
       throw new Error('MIDTRANS_SERVER_KEY is not configured');
