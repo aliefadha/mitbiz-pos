@@ -65,12 +65,12 @@ jobs:
             --gcs-log-dir=gs://dulcet-outlook-479500-k3_cloudbuild/logs
 
       - name: Deploy to Compute Engine via SSH
+        env:
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
-          gcloud compute ssh ${{ secrets.VM_SSH_USER }}@instance-20260302-200802 \
-            --project=${{ env.PROJECT_ID }} \
-            --zone=us-west1-b \
-            --tunnel-through-iap \
-            --command="cd /opt/mitbiz-deploy && ./deploy.sh frontend '${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_NAME }}' '${{ github.sha }}' '${{ env.REGION }}' '${{ env.PROJECT_ID }}'"
+          echo "$SSH_KEY" > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i /tmp/deploy_key ${{ secrets.VM_SSH_USER }}@${{ secrets.VM_EXTERNAL_IP }} "cd /opt/mitbiz-deploy && ./deploy.sh frontend '${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_NAME }}' '${{ github.sha }}' '${{ env.REGION }}' '${{ env.PROJECT_ID }}'"
 
       - name: Show deployment info
         run: |
