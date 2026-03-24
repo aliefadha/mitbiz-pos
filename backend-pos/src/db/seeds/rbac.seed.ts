@@ -53,6 +53,10 @@ const defaultRoles = [
 
 const adminPermissions = [
   {
+    resource: 'dashboard',
+    actions: [Action.CREATE, Action.READ, Action.LIST, Action.UPDATE, Action.DELETE],
+  },
+  {
     resource: 'users',
     actions: [Action.CREATE, Action.READ, Action.LIST, Action.UPDATE, Action.DELETE],
   },
