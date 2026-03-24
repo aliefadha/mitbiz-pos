@@ -60,15 +60,14 @@ jobs:
             --service-account=projects/dulcet-outlook-479500-k3/serviceAccounts/cloudbuild@dulcet-outlook-479500-k3.iam.gserviceaccount.com \
             --gcs-log-dir=gs://dulcet-outlook-479500-k3_cloudbuild/logs
 
+      - name: Install sshpass
+        run: apt-get update && apt-get install -y sshpass
+
       - name: Deploy to Compute Engine via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.VM_EXTERNAL_IP }}
-          username: ${{ secrets.VM_SSH_USER }}
-          password: ${{ secrets.VM_SSH_PASSWORD }}
-          script: |
-            cd /opt/mitbiz-deploy
-            ./deploy.sh backend "${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_NAME }}" "${{ github.sha }}" "${{ env.REGION }}" "${{ env.PROJECT_ID }}"
+        env:
+          SSH_PASS: ${{ secrets.VM_SSH_PASSWORD }}
+        run: |
+          sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no ${{ secrets.VM_SSH_USER }}@${{ secrets.VM_EXTERNAL_IP }} "cd /opt/mitbiz-deploy && ./deploy.sh backend '${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_NAME }}' '${{ github.sha }}' '${{ env.REGION }}' '${{ env.PROJECT_ID }}'"
 
       - name: Show deployment info
         run: |
