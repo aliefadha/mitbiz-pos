@@ -66,9 +66,9 @@ jobs:
 
       - name: Deploy to Compute Engine via SSH
         env:
-          SSH_KEY_BASE64: ${{ secrets.SSH_PRIVATE_KEY_BASE64 }}
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
-          echo "$SSH_KEY_BASE64" | base64 -d > /tmp/deploy_key
+          printf '%s' "$SSH_KEY" > /tmp/deploy_key
           chmod 600 /tmp/deploy_key
           ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i /tmp/deploy_key ${{ secrets.VM_SSH_USER }}@${{ secrets.VM_EXTERNAL_IP }} "cd /opt/mitbiz-deploy && ./deploy.sh frontend '${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_NAME }}' '${{ github.sha }}' '${{ env.REGION }}' '${{ env.PROJECT_ID }}'"
 
