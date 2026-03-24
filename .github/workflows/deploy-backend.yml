@@ -1,4 +1,4 @@
-name: Deploy Backend to Cloud Run
+name: Deploy Backend to Compute Engine
 
 on:
   push:
@@ -38,7 +38,7 @@ jobs:
 
       - name: Enable required APIs
         run: |
-          gcloud services enable run.googleapis.com || true
+          gcloud services enable compute.googleapis.com || true
           gcloud services enable artifactregistry.googleapis.com || true
           gcloud services enable cloudbuild.googleapis.com || true
           gcloud services enable secretmanager.googleapis.com || true
@@ -60,30 +60,17 @@ jobs:
             --service-account=projects/dulcet-outlook-479500-k3/serviceAccounts/cloudbuild@dulcet-outlook-479500-k3.iam.gserviceaccount.com \
             --gcs-log-dir=gs://dulcet-outlook-479500-k3_cloudbuild/logs
 
-      - name: Create env vars file
-        run: |
-          cat > env-vars.yaml << 'EOF'
-          ALLOWED_ORIGINS: "${{ secrets.FRONTEND_URL }},https://api-pos.mitbiz.id"
-          API_PREFIX: "/api"
-          EOF
+      - name: Deploy to Compute Engine via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VM_EXTERNAL_IP }}
+          username: ${{ secrets.VM_SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/mitbiz-deploy
+            ./deploy.sh backend "${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_NAME }}" "${{ github.sha }}" "${{ env.REGION }}" "${{ env.PROJECT_ID }}"
 
-      - name: Deploy to Cloud Run
-        id: deploy
+      - name: Show deployment info
         run: |
-          gcloud run deploy ${{ env.SERVICE_NAME }} \
-            --image ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
-            --region ${{ env.REGION }} \
-            --platform managed \
-            --allow-unauthenticated \
-            --port 3001 \
-            --memory 512Mi \
-            --cpu 1 \
-            --max-instances 10 \
-            --min-instances 0 \
-            --set-secrets=DATABASE_URL=database-url:latest,BETTER_AUTH_SECRET=better-auth-secret:latest,JWT_SECRET=jwt-secret:latest,BETTER_AUTH_URL=better-auth-url:latest,MIDTRANS_SERVER_KEY=midtrans-server-key:latest,MIDTRANS_CLIENT_KEY=midtrans-client-key:latest,MIDTRANS_IS_PRODUCTION=midtrans-is-production:latest,MIDTRANS_FINISH_URL=midtrans-finish-url:latest,MIDTRANS_NOTIFICATION_URL=midtrans-notification-url:latest \
-            --env-vars-file=env-vars.yaml
-          
-          # Get the deployed URL
-          SERVICE_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} --region=${{ env.REGION }} --format='value(status.url)')
-          echo "service_url=$SERVICE_URL" >> $GITHUB_OUTPUT
-          echo "Deployed to: $SERVICE_URL"
+          echo "Backend deployed to Compute Engine"
+          echo "Image: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"

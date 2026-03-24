@@ -1,0 +1,28 @@
+services:
+  backend:
+    image: ${REGION}-docker.pkg.dev/${PROJECT_ID}/backend-pos/backend-pos:${TAG:-latest}
+    container_name: mitbiz-backend
+    restart: unless-stopped
+    env_file:
+      - ./env_vars/backend.env
+    ports:
+      - "3001:3001"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  frontend:
+    image: ${REGION}-docker.pkg.dev/${PROJECT_ID}/frontend-pos/frontend-pos:${TAG:-latest}
+    container_name: mitbiz-frontend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
