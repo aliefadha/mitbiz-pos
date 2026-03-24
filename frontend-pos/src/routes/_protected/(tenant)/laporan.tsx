@@ -21,8 +21,8 @@ import { usePermissions } from '@/hooks/use-auth';
 import { type Category, categoriesApi } from '@/lib/api/categories';
 import { type Outlet, outletsApi } from '@/lib/api/outlets';
 import { salesApi, type TopProduct } from '@/lib/api/sales';
-import { useSession } from '@/lib/auth-client';
 import { checkAnyPermissionWithScope } from '@/lib/permissions';
+import { useSessionWithCache } from '@/lib/session-cache';
 
 export const Route = createFileRoute('/_protected/(tenant)/laporan')({
   component: LaporanPage,
@@ -38,7 +38,7 @@ export const Route = createFileRoute('/_protected/(tenant)/laporan')({
 });
 
 function LaporanPage() {
-  const { data: session } = useSession();
+  const { data: session } = useSessionWithCache();
   const tenantId = session?.user?.tenantId;
   const userOutletId = session?.user?.outletId;
   const { hasPermission } = usePermissions();

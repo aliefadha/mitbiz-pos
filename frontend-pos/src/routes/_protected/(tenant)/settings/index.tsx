@@ -20,8 +20,8 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePermissions } from '@/hooks/use-auth';
 import { type TenantSettings, tenantsApi } from '@/lib/api/tenants';
-import { useSession } from '@/lib/auth-client';
 import { checkPermissionWithScope } from '@/lib/permissions';
+import { useSessionWithCache } from '@/lib/session-cache';
 
 const settingsFormSchema = z.object({
   nama: z.string().min(1, 'Business name is required'),
@@ -33,7 +33,7 @@ const settingsFormSchema = z.object({
 });
 
 function SettingsPage() {
-  const { data: session } = useSession();
+  const { data: session } = useSessionWithCache();
   const tenantId = session?.user?.tenantId;
 
   const { hasPermission } = usePermissions();

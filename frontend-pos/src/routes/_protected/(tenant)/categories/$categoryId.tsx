@@ -6,7 +6,7 @@ import { useCategoryDetailPage } from '@/components/categories/hooks/use-categor
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePermissions } from '@/hooks/use-auth';
-import { useSession } from '@/lib/auth-client';
+import { useSessionWithCache } from '@/lib/session-cache';
 
 export function CategoryDetailPage() {
   const { categoryId } = useParams({
@@ -15,7 +15,7 @@ export function CategoryDetailPage() {
 
   const navigate = useNavigate();
   const { hasPermission } = usePermissions();
-  const { data: session } = useSession();
+  const { data: session } = useSessionWithCache();
   const tenantId = session?.user?.tenantId;
 
   const canReadProducts = hasPermission('products', 'read');

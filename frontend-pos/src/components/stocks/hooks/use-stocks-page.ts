@@ -3,10 +3,10 @@ import { useState } from 'react';
 import { outletsApi } from '@/lib/api/outlets';
 import { productsApi } from '@/lib/api/products';
 import { stocksApi } from '@/lib/api/stocks';
-import { useSession } from '@/lib/auth-client';
+import { useSessionWithCache } from '@/lib/session-cache';
 
 export function useStocksPage() {
-  const { data: session } = useSession();
+  const { data: session } = useSessionWithCache();
   const tenantId = session?.user?.tenantId;
   const outletId = session?.user?.outletId;
   const hasOutletId = !!outletId;

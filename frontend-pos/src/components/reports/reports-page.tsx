@@ -28,7 +28,7 @@ import {
   subscriptionPlansApi,
 } from '@/lib/api/subscriptions';
 import { tenantsApi } from '@/lib/api/tenants';
-import { useSession } from '@/lib/auth-client';
+import { useSessionWithCache } from '@/lib/session-cache';
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('id-ID', {
@@ -71,7 +71,7 @@ function formatActionBadgeColor(action: SubscriptionHistoryAction): string {
 }
 
 export function ReportsPage() {
-  const { data: session } = useSession();
+  const { data: session } = useSessionWithCache();
   const tenantId = session?.user?.tenantId;
 
   const { data: tenantData } = useQuery({

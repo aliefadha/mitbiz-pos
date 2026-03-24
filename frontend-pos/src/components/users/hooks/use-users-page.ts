@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { outletsApi } from '@/lib/api/outlets';
 import { getRolePermissions, groupPermissions, type Role, rolesApi } from '@/lib/api/roles';
 import { type CreateUserDto, type User, usersApi } from '@/lib/api/users';
-import { useSession } from '@/lib/auth-client';
+import { useSessionWithCache } from '@/lib/session-cache';
 
 const ACTIONS = ['create', 'read', 'update', 'delete'] as const;
 
@@ -37,7 +37,7 @@ export interface EditUserForm {
 
 export function useUsersPage() {
   const queryClient = useQueryClient();
-  const { data: session } = useSession();
+  const { data: session } = useSessionWithCache();
   const tenantId = session?.user?.tenantId;
 
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);

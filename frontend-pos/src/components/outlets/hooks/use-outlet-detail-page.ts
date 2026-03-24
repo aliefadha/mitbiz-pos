@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { outletsApi } from '@/lib/api/outlets';
 import { stockAdjustmentsApi } from '@/lib/api/stock-adjustments';
 import { stocksApi } from '@/lib/api/stocks';
-import { useSession } from '@/lib/auth-client';
+import { useSessionWithCache } from '@/lib/session-cache';
 import type { ProductStockRow } from './use-outlet-stocks';
 
 const editFormSchema = z.object({
@@ -25,7 +25,7 @@ export type AdjustStockFormValues = z.infer<typeof adjustFormSchema>;
 
 export function useOutletDetailPage(outletId: string) {
   const queryClient = useQueryClient();
-  const { data: session } = useSession();
+  const { data: session } = useSessionWithCache();
   const userId = session?.user?.id;
 
   const [searchText, setSearchText] = useState('');

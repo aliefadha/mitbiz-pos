@@ -3,11 +3,11 @@ import { useState } from 'react';
 import { outletsApi } from '@/lib/api/outlets';
 import { productsApi } from '@/lib/api/products';
 import { stockAdjustmentsApi } from '@/lib/api/stock-adjustments';
-import { useSession } from '@/lib/auth-client';
+import { useSessionWithCache } from '@/lib/session-cache';
 
 export function useStockAdjustmentsPage() {
   const queryClient = useQueryClient();
-  const { data: session } = useSession();
+  const { data: session } = useSessionWithCache();
   const tenantId = session?.user?.tenantId;
   const userId = session?.user?.id;
 

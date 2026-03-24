@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { type Outlet, outletsApi } from '@/lib/api/outlets';
-import { useSession } from '@/lib/auth-client';
+import { useSessionWithCache } from '@/lib/session-cache';
 
 const formSchema = z.object({
   nama: z.string().min(1, 'Nama outlet wajib diisi'),
@@ -19,7 +19,7 @@ export type OutletFormValues = z.infer<typeof formSchema>;
 
 export function useOutletsPage() {
   const queryClient = useQueryClient();
-  const { data: session } = useSession();
+  const { data: session } = useSessionWithCache();
   const tenantId = session?.user?.tenantId;
 
   const [createModalOpen, setCreateModalOpen] = useState(false);

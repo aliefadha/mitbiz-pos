@@ -33,8 +33,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { type CreateUserDto, usersApi } from '@/lib/api/users';
-import { useSession } from '@/lib/auth-client';
 import { checkPermissionWithScope } from '@/lib/permissions';
+import { useSessionWithCache } from '@/lib/session-cache';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -53,7 +53,7 @@ function AccountPage() {
       password: '',
     },
   });
-  const { data: session } = useSession();
+  const { data: session } = useSessionWithCache();
   const tenantId = session?.user?.tenantId;
 
   const { data, isLoading } = useQuery({

@@ -10,7 +10,7 @@ import {
   categoriesApi,
   type UpdateCategoryDto,
 } from '@/lib/api/categories';
-import { useSession } from '@/lib/auth-client';
+import { useSessionWithCache } from '@/lib/session-cache';
 
 const formSchema = z.object({
   nama: z.string().min(1, 'Nama kategori wajib diisi'),
@@ -22,7 +22,7 @@ export type CategoryFormValues = z.infer<typeof formSchema>;
 
 export function useCategoriesPage() {
   const queryClient = useQueryClient();
-  const { data: session } = useSession();
+  const { data: session } = useSessionWithCache();
   const tenantId = session?.user?.tenantId;
 
   const [createModalOpen, setCreateModalOpen] = useState(false);

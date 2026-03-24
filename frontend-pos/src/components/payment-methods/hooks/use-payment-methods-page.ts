@@ -10,7 +10,7 @@ import {
   paymentMethodsApi,
   type UpdatePaymentMethodDto,
 } from '@/lib/api/payment-methods';
-import { useSession } from '@/lib/auth-client';
+import { useSessionWithCache } from '@/lib/session-cache';
 
 const formSchema = z.object({
   nama: z.string().min(1, 'Nama metode pembayaran wajib diisi'),
@@ -21,7 +21,7 @@ export type PaymentMethodFormValues = z.infer<typeof formSchema>;
 
 export function usePaymentMethodsPage() {
   const queryClient = useQueryClient();
-  const { data: session } = useSession();
+  const { data: session } = useSessionWithCache();
   const tenantId = session?.user?.tenantId;
 
   const [createModalOpen, setCreateModalOpen] = useState(false);

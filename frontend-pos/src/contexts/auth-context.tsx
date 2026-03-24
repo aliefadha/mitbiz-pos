@@ -2,8 +2,12 @@ import { useQuery } from '@tanstack/react-query';
 import { createContext, type ReactNode, useCallback, useContext, useMemo } from 'react';
 import { groupPermissions, type Permission, type PermissionItem } from '../lib/api/roles';
 import { usersApi } from '../lib/api/users';
-import { signOut as signOutAuth, useSession } from '../lib/auth-client';
-import { clearCachedSession, clearPermissionsCache } from '../lib/session-cache';
+import { signOut as signOutAuth } from '../lib/auth-client';
+import {
+  clearCachedSession,
+  clearPermissionsCache,
+  useSessionWithCache,
+} from '../lib/session-cache';
 
 export type UserScope = 'global' | 'tenant' | undefined;
 
@@ -43,7 +47,7 @@ export interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { data: session, isPending: isSessionLoading } = useSession();
+  const { data: session, isPending: isSessionLoading } = useSessionWithCache();
 
   const user = session?.user as User | null | undefined;
   const roleId = user?.roleId;

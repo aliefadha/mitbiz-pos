@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query';
 import { type Permission } from './api/roles';
 import { authClient } from './auth-client';
 
@@ -89,4 +90,13 @@ export function setCachedPermissions(roleId: string, permissions: Permission[]):
 export function clearPermissionsCache(): void {
   permissionsCache.clear();
   permissionsCacheTimestamp.clear();
+}
+
+export function useSessionWithCache() {
+  return useQuery({
+    queryKey: ['session-with-cache'],
+    queryFn: () => getSessionWithCache(),
+    staleTime: SESSION_CACHE_TTL,
+    gcTime: SESSION_CACHE_TTL * 2,
+  });
 }

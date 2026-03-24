@@ -16,12 +16,12 @@ import {
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePermissions } from '@/hooks/use-auth';
-import { useSession } from '@/lib/auth-client';
 import { checkPermissionWithScope } from '@/lib/permissions';
+import { useSessionWithCache } from '@/lib/session-cache';
 
 export function OrderDetailPage() {
   const { orderId } = useParams({ from: '/_protected/(tenant)/orders/$orderId' });
-  const { data: session } = useSession();
+  const { data: session } = useSessionWithCache();
   const tenantId = session?.user?.tenantId;
   const { hasPermission } = usePermissions();
 

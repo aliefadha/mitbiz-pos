@@ -11,7 +11,7 @@ import {
   type UpdateDiscountDto,
 } from '@/lib/api/discounts';
 import { outletsApi } from '@/lib/api/outlets';
-import { useSession } from '@/lib/auth-client';
+import { useSessionWithCache } from '@/lib/session-cache';
 
 const formSchema = z.object({
   nama: z.string().min(1, 'Nama diskon wajib diisi'),
@@ -26,7 +26,7 @@ export type DiscountFormValues = z.infer<typeof formSchema>;
 
 export function useDiscountsPage() {
   const queryClient = useQueryClient();
-  const { data: session } = useSession();
+  const { data: session } = useSessionWithCache();
   const tenantId = session?.user?.tenantId;
 
   const [createModalOpen, setCreateModalOpen] = useState(false);

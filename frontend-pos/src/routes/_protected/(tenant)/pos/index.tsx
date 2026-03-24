@@ -42,8 +42,8 @@ import { paymentMethodsApi } from '@/lib/api/payment-methods';
 
 import { type Product, productsApi } from '@/lib/api/products';
 import { tenantsApi } from '@/lib/api/tenants';
-import { useSession } from '@/lib/auth-client';
 import { checkPermissionWithScope } from '@/lib/permissions';
+import { useSessionWithCache } from '@/lib/session-cache';
 import { formatRupiah } from '@/lib/utils';
 
 function useMediaQuery(query: string): boolean {
@@ -107,7 +107,7 @@ function PosPage() {
 
   const isMobile = useMediaQuery('(max-width: 767px)');
 
-  const { data: session } = useSession();
+  const { data: session } = useSessionWithCache();
   const userId = session?.user?.id;
 
   const { data: userOpenShiftData, isLoading: userOpenShiftLoading } = useQuery({

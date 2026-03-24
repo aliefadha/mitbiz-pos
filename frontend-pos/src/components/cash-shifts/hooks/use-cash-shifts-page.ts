@@ -11,7 +11,7 @@ import {
   type UpdateCashShiftDto,
 } from '@/lib/api/cash-shifts';
 import { outletsApi } from '@/lib/api/outlets';
-import { useSession } from '@/lib/auth-client';
+import { useSessionWithCache } from '@/lib/session-cache';
 
 export const openShiftSchema = z.object({
   outletId: z.string().min(1, 'Outlet wajib dipilih'),
@@ -30,7 +30,7 @@ export type CloseShiftFormValues = z.infer<typeof closeShiftSchema>;
 
 export function useCashShiftsPage() {
   const queryClient = useQueryClient();
-  const { data: session } = useSession();
+  const { data: session } = useSessionWithCache();
   const tenantId = session?.user?.tenantId;
   const userId = session?.user?.id;
   const userOutletId = session?.user?.outletId;

@@ -3,11 +3,11 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { categoriesApi } from '@/lib/api/categories';
 import { type Product, productsApi } from '@/lib/api/products';
-import { useSession } from '@/lib/auth-client';
+import { useSessionWithCache } from '@/lib/session-cache';
 
 export function useProductsPage() {
   const queryClient = useQueryClient();
-  const { data: session } = useSession();
+  const { data: session } = useSessionWithCache();
   const tenantId = session?.user?.tenantId;
 
   const [searchQuery, setSearchQuery] = useState('');

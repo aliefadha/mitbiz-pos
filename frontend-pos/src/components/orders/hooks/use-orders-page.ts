@@ -3,14 +3,14 @@ import { useState } from 'react';
 import type { DateRange } from 'react-day-picker';
 import { ordersApi } from '@/lib/api/orders';
 import { outletsApi } from '@/lib/api/outlets';
-import { useSession } from '@/lib/auth-client';
+import { useSessionWithCache } from '@/lib/session-cache';
 
 interface UseOrdersPageOptions {
   canReadOutlets: boolean;
 }
 
 export function useOrdersPage(options?: UseOrdersPageOptions) {
-  const { data: session } = useSession();
+  const { data: session } = useSessionWithCache();
   const tenantId = session?.user?.tenantId;
 
   const canReadOutlets = options?.canReadOutlets ?? false;

@@ -29,8 +29,8 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { categoriesApi } from '@/lib/api/categories';
 import { type CreateProductDto, productsApi } from '@/lib/api/products';
-import { useSession } from '@/lib/auth-client';
 import { checkPermissionWithScope } from '@/lib/permissions';
+import { useSessionWithCache } from '@/lib/session-cache';
 
 const formSchema = z.object({
   sku: z.string().min(1, 'SKU wajib diisi'),
@@ -48,7 +48,7 @@ const formSchema = z.object({
 export function CreateProductPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const { data: session } = useSession();
+  const { data: session } = useSessionWithCache();
   const tenantId = session?.user?.tenantId;
 
   const form = useForm<z.infer<typeof formSchema>>({
