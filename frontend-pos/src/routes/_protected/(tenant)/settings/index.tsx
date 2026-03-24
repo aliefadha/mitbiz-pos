@@ -280,6 +280,6 @@ function SettingsPage() {
 export const Route = createFileRoute('/_protected/(tenant)/settings/')({
   component: SettingsPage,
   beforeLoad: async () => {
-    await checkPermissionWithScope('tenants', 'read', 'tenant');
+    await checkPermissionWithScope('settings', 'read', 'tenant');
   },
 });

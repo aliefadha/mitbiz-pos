@@ -190,7 +190,7 @@ export const menuConfig: MenuGroup[] = [
         key: '/settings',
         icon: Settings,
         label: 'Pengaturan',
-        permissions: [{ resource: 'tenant', actions: ['read'] }],
+        permissions: [{ resource: 'settings', actions: ['read'] }],
         scope: 'tenant',
       },
       {

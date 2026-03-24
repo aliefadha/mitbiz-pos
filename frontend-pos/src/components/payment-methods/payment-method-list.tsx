@@ -131,7 +131,12 @@ export function PaymentMethodList({
                     <TableCell>
                       <div className="flex gap-1">
                         {canUpdate && (
-                          <Button variant="ghost" size="icon" onClick={() => onEdit(paymentMethod)}>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => onEdit(paymentMethod)}
+                            disabled={paymentMethod.nama.toLowerCase() === 'tunai'}
+                          >
                             <Pencil className="h-4 w-4" />
                           </Button>
                         )}
@@ -140,6 +145,7 @@ export function PaymentMethodList({
                             variant="ghost"
                             size="icon"
                             onClick={() => onDelete(paymentMethod)}
+                            disabled={paymentMethod.nama.toLowerCase() === 'tunai'}
                           >
                             <Trash2 className="h-4 w-4 text-red-500" />
                           </Button>
