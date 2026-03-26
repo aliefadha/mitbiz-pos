@@ -575,17 +575,7 @@ function PosPage() {
           </div>
         </div>
 
-        {!tenantId ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center">
-              <Receipt className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <p className="text-gray-500">Anda belum memiliki tenant</p>
-              <p className="text-sm text-gray-400">
-                Silakan hubungi admin untuk informasi lebih lanjut
-              </p>
-            </div>
-          </div>
-        ) : userOpenShiftLoading ? (
+        {userOpenShiftLoading ? (
           <div className="flex items-center justify-center h-full">
             <p className="text-gray-500">Memuat data...</p>
           </div>
