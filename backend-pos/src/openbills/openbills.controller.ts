@@ -26,6 +26,8 @@ import {
   OpenBillIdSchema,
   OpenBillQueryDto,
   OpenBillQuerySchema,
+  ReplaceOpenBillItemsDto,
+  ReplaceOpenBillItemsSchema,
   UpdateOpenBillDto,
   UpdateOpenBillSchema,
 } from './dto';
@@ -40,7 +42,7 @@ export class OpenBillsController {
 
   @Get()
   @ApiOperation({ summary: 'Get all open bills' })
-  @Permission('openBills', [Action.READ])
+  @Permission('orders', [Action.READ])
   @UsePipes(new ZodValidationPipe(OpenBillQuerySchema, 'query'))
   findAll(@Query() query: OpenBillQueryDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.openBillsService.findAll(query, user);
@@ -48,7 +50,7 @@ export class OpenBillsController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get open bill by ID' })
-  @Permission('openBills', [Action.READ])
+  @Permission('orders', [Action.READ])
   @UsePipes(new ZodValidationPipe(OpenBillIdSchema, 'params'))
   findById(@Param() { id }: OpenBillIdDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.openBillsService.findById(id, user);
@@ -56,7 +58,7 @@ export class OpenBillsController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new open bill' })
-  @Permission('openBills', [Action.CREATE])
+  @Permission('orders', [Action.CREATE])
   @UsePipes(new ZodValidationPipe(CreateOpenBillSchema))
   create(@Body() data: CreateOpenBillDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.openBillsService.create(data, user);
@@ -64,7 +66,7 @@ export class OpenBillsController {
 
   @Put(':id')
   @ApiOperation({ summary: 'Update an open bill' })
-  @Permission('openBills', [Action.UPDATE])
+  @Permission('orders', [Action.UPDATE])
   @UsePipes(new ZodValidationPipe(OpenBillIdSchema, 'params'))
   @UsePipes(new ZodValidationPipe(UpdateOpenBillSchema))
   update(
@@ -77,7 +79,7 @@ export class OpenBillsController {
 
   @Post(':id/items')
   @ApiOperation({ summary: 'Add item to open bill' })
-  @Permission('openBills', [Action.UPDATE])
+  @Permission('orders', [Action.UPDATE])
   @UsePipes(new ZodValidationPipe(OpenBillIdSchema, 'params'))
   @UsePipes(new ZodValidationPipe(AddItemToOpenBillSchema))
   addItem(
@@ -88,9 +90,22 @@ export class OpenBillsController {
     return this.openBillsService.addItem(id, data, user);
   }
 
+  @Put(':id/items')
+  @ApiOperation({ summary: 'Replace all items in open bill' })
+  @Permission('orders', [Action.UPDATE])
+  @UsePipes(new ZodValidationPipe(OpenBillIdSchema, 'params'))
+  @UsePipes(new ZodValidationPipe(ReplaceOpenBillItemsSchema))
+  replaceItems(
+    @Param() { id }: OpenBillIdDto,
+    @Body() data: ReplaceOpenBillItemsDto,
+    @CurrentUser() user: CurrentUserWithRole,
+  ) {
+    return this.openBillsService.replaceItems(id, data.items, user);
+  }
+
   @Delete(':id/items/:itemId')
   @ApiOperation({ summary: 'Remove item from open bill' })
-  @Permission('openBills', [Action.UPDATE])
+  @Permission('orders', [Action.UPDATE])
   @UsePipes(new ZodValidationPipe(OpenBillIdSchema, 'params'))
   removeItem(
     @Param() { id }: OpenBillIdDto,
@@ -102,7 +117,7 @@ export class OpenBillsController {
 
   @Post(':id/close')
   @ApiOperation({ summary: 'Close/complete an open bill' })
-  @Permission('openBills', [Action.UPDATE])
+  @Permission('orders', [Action.UPDATE])
   @UsePipes(new ZodValidationPipe(OpenBillIdSchema, 'params'))
   @UsePipes(new ZodValidationPipe(CloseOpenBillSchema))
   close(
@@ -115,7 +130,7 @@ export class OpenBillsController {
 
   @Post(':id/cancel')
   @ApiOperation({ summary: 'Cancel an open bill' })
-  @Permission('openBills', [Action.DELETE])
+  @Permission('orders', [Action.DELETE])
   @UsePipes(new ZodValidationPipe(OpenBillIdSchema, 'params'))
   cancel(@Param() { id }: OpenBillIdDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.openBillsService.cancel(id, user);

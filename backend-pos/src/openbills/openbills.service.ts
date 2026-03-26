@@ -14,10 +14,12 @@ import type { DrizzleDB } from '@/db/type';
 import { TenantAuthService } from '@/rbac/services/tenant-auth.service';
 import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { SQL, and, desc, eq, inArray, like, sql } from 'drizzle-orm';
+import { z } from 'zod';
 import {
   AddItemToOpenBillDto,
   CloseOpenBillDto,
   CreateOpenBillDto,
+  CreateOpenBillItemSchema,
   OpenBillQueryDto,
   UpdateOpenBillDto,
 } from './dto';
@@ -69,6 +71,8 @@ export class OpenBillsService {
         .leftJoin(outlets, eq(orders.outletId, outlets.id))
         .leftJoin(userTable, eq(orders.cashierId, userTable.id))
         .leftJoin(paymentMethods, eq(orders.paymentMethodId, paymentMethods.id))
+        .leftJoin(orderItems, eq(orders.id, orderItems.orderId))
+        .leftJoin(products, eq(orderItems.productId, products.id))
         .where(conditions.length > 0 ? and(...conditions) : undefined)
         .limit(limit)
         .offset(offset)
@@ -79,28 +83,55 @@ export class OpenBillsService {
         .where(conditions.length > 0 ? and(...conditions) : undefined),
     ]);
 
-    const ordersWithRelations = data.map((row) => ({
-      ...row.orders,
-      outlet: row.outlets
-        ? {
-            id: row.outlets.id,
-            nama: row.outlets.nama,
-          }
-        : null,
-      cashier: row.user
-        ? {
-            id: row.user.id,
-            name: row.user.name,
-            email: row.user.email,
-          }
-        : null,
-      paymentMethod: row.payment_methods
-        ? {
-            id: row.payment_methods.id,
-            nama: row.payment_methods.nama,
-          }
-        : null,
-    }));
+    const ordersMap = new Map<string, any>();
+
+    for (const row of data) {
+      const orderId = row.orders.id;
+      if (!ordersMap.has(orderId)) {
+        ordersMap.set(orderId, {
+          ...row.orders,
+          outlet: row.outlets
+            ? {
+                id: row.outlets.id,
+                nama: row.outlets.nama,
+              }
+            : null,
+          cashier: row.user
+            ? {
+                id: row.user.id,
+                name: row.user.name,
+                email: row.user.email,
+              }
+            : null,
+          paymentMethod: row.payment_methods
+            ? {
+                id: row.payment_methods.id,
+                nama: row.payment_methods.nama,
+              }
+            : null,
+          orderItems: [],
+        });
+      }
+
+      if (row.order_items && row.products) {
+        ordersMap.get(orderId).orderItems.push({
+          id: row.order_items.id,
+          orderId: row.order_items.orderId,
+          productId: row.order_items.productId,
+          quantity: row.order_items.quantity,
+          hargaSatuan: row.order_items.hargaSatuan,
+          jumlahDiskon: row.order_items.jumlahDiskon,
+          total: row.order_items.total,
+          product: {
+            id: row.products.id,
+            sku: row.products.sku,
+            nama: row.products.nama,
+          },
+        });
+      }
+    }
+
+    const ordersWithRelations = Array.from(ordersMap.values());
 
     const total = Number(totalResult[0]?.count || 0);
 
@@ -401,6 +432,118 @@ export class OpenBillsService {
     return order;
   }
 
+  async replaceItems(
+    openBillId: string,
+    items: z.infer<typeof CreateOpenBillItemSchema>[],
+    user: CurrentUserWithRole,
+  ) {
+    const openBill = await this.findById(openBillId, user);
+
+    const existingItems = await this.db.query.orderItems.findMany({
+      where: eq(orderItems.orderId, openBillId),
+    });
+
+    await this.db.transaction(async (tx) => {
+      for (const item of existingItems) {
+        if (item.productId) {
+          const product = await tx.query.products.findFirst({
+            where: eq(products.id, item.productId),
+          });
+
+          if (product?.enableStockTracking) {
+            const stock = await tx.query.productStocks.findFirst({
+              where: and(
+                eq(productStocks.outletId, openBill.outletId),
+                eq(productStocks.productId, item.productId),
+              ),
+            });
+
+            if (stock) {
+              await tx
+                .update(productStocks)
+                .set({ reservedQuantity: stock.reservedQuantity - item.quantity })
+                .where(eq(productStocks.id, stock.id));
+            }
+          }
+        }
+      }
+
+      await tx.delete(orderItems).where(eq(orderItems.orderId, openBillId));
+
+      if (items.length > 0) {
+        const productIds = items.map((item) => item.productId);
+        const productData = await tx
+          .select({
+            id: products.id,
+            enableStockTracking: products.enableStockTracking,
+          })
+          .from(products)
+          .where(inArray(products.id, productIds));
+        const productMap = new Map(productData.map((p) => [p.id, p]));
+
+        const trackedItemsFiltered = items.filter(
+          (item) => productMap.get(item.productId)?.enableStockTracking === true,
+        );
+
+        if (trackedItemsFiltered.length > 0) {
+          const stocks =
+            trackedItemsFiltered.length > 0
+              ? await tx
+                  .select()
+                  .from(productStocks)
+                  .where(
+                    and(
+                      eq(productStocks.outletId, openBill.outletId),
+                      inArray(
+                        productStocks.productId,
+                        trackedItemsFiltered.map((i) => i.productId),
+                      ),
+                    ),
+                  )
+              : [];
+          const stockMap = new Map(stocks.map((s) => [s.productId, s]));
+
+          for (const item of trackedItemsFiltered) {
+            const stock = stockMap.get(item.productId);
+            if (!stock) {
+              throw new ForbiddenException(`No stock record found for product ${item.productId}`);
+            }
+            const availableQuantity = stock.quantity - stock.reservedQuantity;
+            if (availableQuantity < item.quantity) {
+              throw new ForbiddenException(
+                `Insufficient stock for product ${item.productId}. Available: ${availableQuantity}`,
+              );
+            }
+          }
+
+          for (const item of trackedItemsFiltered) {
+            const stock = stockMap.get(item.productId);
+            if (stock) {
+              await tx
+                .update(productStocks)
+                .set({ reservedQuantity: stock.reservedQuantity + item.quantity })
+                .where(eq(productStocks.id, stock.id));
+            }
+          }
+        }
+
+        const orderItemsData = items.map((item) => ({
+          outletId: openBill.outletId,
+          orderId: openBill.id,
+          productId: item.productId,
+          quantity: item.quantity,
+          hargaSatuan: item.hargaSatuan,
+          jumlahDiskon: item.jumlahDiskon || '0',
+          total: item.total,
+        }));
+
+        await tx.insert(orderItems).values(orderItemsData);
+      }
+    });
+
+    return this.findById(openBillId, user);
+  }
+
   async close(openBillId: string, data: CloseOpenBillDto, user: CurrentUserWithRole) {
     const openBill = await this.findById(openBillId, user);
 
@@ -504,8 +647,6 @@ export class OpenBillsService {
 
       return order;
     });
-
-    return this.findById(openBillId, user);
   }
 
   async cancel(openBillId: string, user: CurrentUserWithRole) {

@@ -13,7 +13,7 @@ export const CreateOpenBillSchema = z.object({
   tenantId: z.string().min(1, 'Tenant ID is required'),
   outletId: z.string().min(1, 'Outlet ID is required'),
   notes: z.string().optional().nullable(),
-  nomorAntrian: z.string().optional().nullable(),
+  nomorAntrian: z.string().min(1, 'Nomor antrian is required'),
   items: z.array(CreateOpenBillItemSchema).optional(),
 });
 
@@ -28,6 +28,10 @@ export const AddItemToOpenBillSchema = z.object({
 export const UpdateOpenBillSchema = z.object({
   notes: z.string().optional().nullable(),
   nomorAntrian: z.string().optional().nullable(),
+});
+
+export const ReplaceOpenBillItemsSchema = z.object({
+  items: z.array(CreateOpenBillItemSchema),
 });
 
 export const CloseOpenBillSchema = z.object({
@@ -62,6 +66,7 @@ export const OpenBillIdSchema = z.object({
 export class CreateOpenBillDto extends createZodDto(CreateOpenBillSchema) {}
 export class AddItemToOpenBillDto extends createZodDto(AddItemToOpenBillSchema) {}
 export class UpdateOpenBillDto extends createZodDto(UpdateOpenBillSchema) {}
+export class ReplaceOpenBillItemsDto extends createZodDto(ReplaceOpenBillItemsSchema) {}
 export class CloseOpenBillDto extends createZodDto(CloseOpenBillSchema) {}
 export class OpenBillQueryDto extends createZodDto(OpenBillQuerySchema) {}
 export class OpenBillIdDto extends createZodDto(OpenBillIdSchema) {}
