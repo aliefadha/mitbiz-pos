@@ -11,6 +11,7 @@ import {
   Post,
   Put,
   Query,
+  Res,
   UseGuards,
   UsePipes,
 } from '@nestjs/common';
@@ -44,6 +45,32 @@ export class OrdersController {
   @UsePipes(new ZodValidationPipe(OrderQuerySchema, 'query'))
   findAll(@Query() query: OrderQueryDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.ordersService.findAll(query, user);
+  }
+
+  @Get('export')
+  @ApiOperation({ summary: 'Export orders to Excel' })
+  @Permission('orders', [Action.READ])
+  @UsePipes(new ZodValidationPipe(OrderQuerySchema, 'query'))
+  async exportOrders(
+    @Query() query: OrderQueryDto,
+    @CurrentUser() user: CurrentUserWithRole,
+    @Res() res: any,
+  ) {
+    const buffer = await this.ordersService.findAllForExport(query, user);
+
+    const startDate = query.startDate || 'all';
+    const endDate = query.endDate || 'all';
+
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="laporan-penjualan-${startDate}-${endDate}.xlsx"`,
+    );
+
+    res.send(buffer);
   }
 
   @Get(':id')

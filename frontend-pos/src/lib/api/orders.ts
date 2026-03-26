@@ -176,4 +176,31 @@ export const ordersApi = {
       method: 'POST',
     });
   },
+
+  exportSalesReport: async (params: {
+    startDate: string;
+    endDate: string;
+    outletId?: string;
+    tenantId?: string;
+  }): Promise<Blob> => {
+    const API_URL = `${import.meta.env.VITE_API_URL}/api` || '/api';
+    const queryParams = new URLSearchParams();
+    queryParams.append('startDate', params.startDate);
+    queryParams.append('endDate', params.endDate);
+    if (params.outletId) queryParams.append('outletId', params.outletId);
+    if (params.tenantId) queryParams.append('tenantId', params.tenantId);
+    const query = queryParams.toString();
+
+    const response = await fetch(`${API_URL}/orders/export?${query}`, {
+      method: 'GET',
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || error.error?.message || `HTTP ${response.status}`);
+    }
+
+    return response.blob();
+  },
 };

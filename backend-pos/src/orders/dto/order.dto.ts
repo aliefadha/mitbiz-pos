@@ -73,6 +73,8 @@ export const OrderQuerySchema = z.object({
   tenantId: z.string().min(1).optional(),
   outletId: z.string().min(1).optional(),
   cashShiftId: z.string().min(1).optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
 });
 
 export class CreateOrderDto extends createZodDto(CreateOrderSchema) {}

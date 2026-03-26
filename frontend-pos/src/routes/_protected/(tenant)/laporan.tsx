@@ -3,6 +3,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { format, subDays } from 'date-fns';
 import { Upload } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { SalesByBranchChart } from '@/components/dashboard/sales-by-branch-chart';
 import { SalesTrendChart } from '@/components/dashboard/sales-trend-chart';
 import { StatCardsLaporan } from '@/components/dashboard/stat-cards-laporan';
@@ -19,6 +20,7 @@ import {
 } from '@/components/ui/select';
 import { usePermissions } from '@/hooks/use-auth';
 import { type Category, categoriesApi } from '@/lib/api/categories';
+import { ordersApi } from '@/lib/api/orders';
 import { type Outlet, outletsApi } from '@/lib/api/outlets';
 import { salesApi, type TopProduct } from '@/lib/api/sales';
 import { checkAnyPermissionWithScope } from '@/lib/permissions';
@@ -56,6 +58,7 @@ function LaporanPage() {
   });
   const [selectedOutletId, setSelectedOutletId] = useState<string>('all');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('all');
+  const [isExporting, setIsExporting] = useState(false);
 
   const { data: outletsData } = useQuery({
     queryKey: ['outlets', tenantId],
@@ -97,6 +100,33 @@ function LaporanPage() {
     }).format(value);
   };
 
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const blob = await ordersApi.exportSalesReport({
+        startDate,
+        endDate,
+        outletId: userOutletId ?? (selectedOutletId === 'all' ? undefined : selectedOutletId),
+        tenantId,
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `laporan-penjualan-${startDate}-${endDate}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success('Laporan berhasil diekspor');
+    } catch {
+      toast.error('Gagal mengekspor laporan');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-10">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -105,9 +135,13 @@ function LaporanPage() {
           <p className="text-gray-500 text-sm mt-1">Analisis dan laporan penjualan lengkap</p>
         </div>
         {canExportReport && (
-          <Button className="bg-[#0B6CE6] text-white hover:bg-[#0B6CE6]/90 gap-2 rounded-lg">
+          <Button
+            className="bg-[#0B6CE6] text-white hover:bg-[#0B6CE6]/90 gap-2 rounded-lg"
+            onClick={handleExport}
+            disabled={isExporting}
+          >
             <Upload className="w-4 h-4" />
-            Ekspor Laporan
+            {isExporting ? 'Mengekspor...' : 'Ekspor Laporan'}
           </Button>
         )}
       </div>

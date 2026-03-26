@@ -13,7 +13,8 @@ import { tenants } from '@/db/schema/tenant-schema';
 import type { DrizzleDB } from '@/db/type';
 import { TenantAuthService } from '@/rbac/services/tenant-auth.service';
 import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { SQL, and, desc, eq, inArray, like, sql } from 'drizzle-orm';
+import { SQL, and, desc, eq, gte, inArray, like, lte, sql } from 'drizzle-orm';
+import * as XLSX from 'xlsx';
 import { CreateOrderDto, OrderQueryDto, UpdateOrderDto } from './dto';
 
 @Injectable()
@@ -430,5 +431,164 @@ export class OrdersService {
       .returning();
 
     return order;
+  }
+
+  async findAllForExport(query: OrderQueryDto, user: CurrentUserWithRole) {
+    const { startDate, endDate, tenantId, outletId } = query;
+
+    if (tenantId) {
+      await this.tenantAuth.validateQueryTenantId(user, tenantId);
+    }
+
+    const effectiveTenantId = await this.tenantAuth.getEffectiveTenantId(user);
+
+    const conditions: SQL<unknown>[] = [];
+
+    const filterTenantId = tenantId || effectiveTenantId;
+    if (filterTenantId) {
+      conditions.push(eq(orders.tenantId, filterTenantId));
+    }
+
+    if (outletId) {
+      conditions.push(eq(orders.outletId, outletId));
+    }
+
+    if (user.outletId) {
+      conditions.push(eq(orders.cashierId, user.id));
+    }
+
+    if (startDate) {
+      conditions.push(gte(orders.createdAt, new Date(startDate)));
+    }
+
+    if (endDate) {
+      const endOfDay = new Date(endDate);
+      endOfDay.setHours(23, 59, 59, 999);
+      conditions.push(lte(orders.createdAt, endOfDay));
+    }
+
+    const data = await this.db
+      .select()
+      .from(orders)
+      .leftJoin(outlets, eq(orders.outletId, outlets.id))
+      .leftJoin(userTable, eq(orders.cashierId, userTable.id))
+      .leftJoin(paymentMethods, eq(orders.paymentMethodId, paymentMethods.id))
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(orders.createdAt));
+
+    const ordersWithItems = await Promise.all(
+      data.map(async (row) => {
+        const orderItemsData = await this.db.query.orderItems.findMany({
+          where: eq(orderItems.orderId, row.orders.id),
+          with: {
+            product: {
+              columns: {
+                id: true,
+                nama: true,
+              },
+            },
+          },
+        });
+
+        return {
+          ...row.orders,
+          outlet: row.outlets
+            ? {
+                id: row.outlets.id,
+                nama: row.outlets.nama,
+              }
+            : null,
+          cashier: row.user
+            ? {
+                id: row.user.id,
+                name: row.user.name,
+                email: row.user.email,
+              }
+            : null,
+          paymentMethod: row.payment_methods
+            ? {
+                id: row.payment_methods.id,
+                nama: row.payment_methods.nama,
+              }
+            : null,
+          orderItems: orderItemsData,
+        };
+      }),
+    );
+
+    const formatDate = (date: Date) => {
+      const d = new Date(date);
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      return `${day}/${month}/${year} ${hours}:${minutes}`;
+    };
+
+    const formatCurrency = (value: string | number) => {
+      const num = typeof value === 'string' ? parseFloat(value) : value;
+      return num;
+    };
+
+    const formatStatus = (status: string) => {
+      switch (status) {
+        case 'complete':
+          return 'Selesai';
+        case 'cancel':
+          return 'Dibatalkan';
+        case 'refunded':
+          return 'Dikembalikan';
+        default:
+          return status;
+      }
+    };
+
+    const formatProducts = (items: { product?: { nama: string }; quantity: number }[]) => {
+      return items
+        .filter((item) => item.product)
+        .map((item) => `${item.product!.nama}(${item.quantity})`)
+        .join(', ');
+    };
+
+    const exportData = ordersWithItems.map((order, index) => ({
+      No: index + 1,
+      'Nomor Pesanan': order.orderNumber,
+      Tanggal: formatDate(order.createdAt),
+      Outlet: order.outlet?.nama || '-',
+      Kasir: order.cashier?.name || '-',
+      'Metode Pembayaran': order.paymentMethod?.nama || '-',
+      Produk: order.orderItems ? formatProducts(order.orderItems) : '-',
+      Subtotal: formatCurrency(order.subtotal || 0),
+      Pajak: formatCurrency(order.jumlahPajak || 0),
+      Diskon: formatCurrency(order.jumlahDiskon || 0),
+      Total: formatCurrency(order.total || 0),
+      Status: formatStatus(order.status),
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+
+    const colWidths = [
+      { wch: 5 },
+      { wch: 25 },
+      { wch: 18 },
+      { wch: 15 },
+      { wch: 15 },
+      { wch: 18 },
+      { wch: 40 },
+      { wch: 15 },
+      { wch: 12 },
+      { wch: 12 },
+      { wch: 15 },
+      { wch: 12 },
+    ];
+    worksheet['!cols'] = colWidths;
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Riwayat Penjualan');
+
+    const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+    return buffer;
   }
 }
