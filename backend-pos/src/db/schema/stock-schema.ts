@@ -13,6 +13,7 @@ export const productStocks = pgTable('product_stocks', {
     .references(() => outlets.id)
     .notNull(),
   quantity: integer('quantity').default(0).notNull(),
+  reservedQuantity: integer('reserved_quantity').default(0).notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 

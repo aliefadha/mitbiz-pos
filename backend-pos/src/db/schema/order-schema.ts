@@ -8,7 +8,7 @@ import { outlets } from './outlet-schema';
 import { paymentMethods } from './payment-method-schema';
 import { tenants } from './tenant-schema';
 
-export const orderStatusEnum = pgEnum('order_status', ['complete', 'cancel', 'refunded']);
+export const orderStatusEnum = pgEnum('order_status', ['open', 'complete', 'cancel', 'refunded']);
 
 export const orders = pgTable('orders', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),

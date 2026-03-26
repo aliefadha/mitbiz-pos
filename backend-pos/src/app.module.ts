@@ -15,6 +15,7 @@ import { DbModule } from './db/db.module';
 import { DiscountsModule } from './discounts/discounts.module';
 import { auth } from './lib/auth';
 import { MidtransModule } from './midtrans/midtrans.module';
+import { OpenBillsModule } from './openbills/openbills.module';
 import { OrderItemsModule } from './order-items/order-items.module';
 import { OrdersModule } from './orders/orders.module';
 import { OutletsModule } from './outlets/outlets.module';
@@ -51,6 +52,7 @@ import { UserModule } from './user/user.module';
     StockAdjustmentsModule,
     UserModule,
     OrdersModule,
+    OpenBillsModule,
     OrderItemsModule,
     DiscountsModule,
     PaymentMethodsModule,

@@ -24,6 +24,7 @@ export const RESOURCES = [
   'stocks',
   'stockAdjustments',
   'orders',
+  'openBills',
   'orderItems',
   'report',
   'settings',
