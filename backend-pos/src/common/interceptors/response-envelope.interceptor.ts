@@ -15,8 +15,14 @@ export interface ErrorEnvelope {
 }
 
 @Injectable()
-export class ResponseEnvelopeInterceptor<T> implements NestInterceptor<T, ResponseEnvelope<T>> {
-  intercept(context: ExecutionContext, next: CallHandler): Observable<ResponseEnvelope<T>> {
+export class ResponseEnvelopeInterceptor<T> implements NestInterceptor<T, ResponseEnvelope<T> | T> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<ResponseEnvelope<T> | T> {
+    const request = context.switchToHttp().getRequest();
+
+    if (request.path?.startsWith('/api/auth')) {
+      return next.handle() as Observable<T>;
+    }
+
     return next.handle().pipe(
       map((data) => ({
         success: true,
