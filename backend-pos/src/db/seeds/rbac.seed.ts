@@ -77,7 +77,10 @@ const adminPermissions = [
     resource: 'stockAdjustments',
     actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE],
   },
-  { resource: 'orders', actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE] },
+  {
+    resource: 'orders',
+    actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE, Action.CANCEL],
+  },
   { resource: 'orderItems', actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE] },
   { resource: 'report', actions: [Action.READ, Action.EXPORT] },
   { resource: 'settings', actions: [Action.READ, Action.UPDATE] },
@@ -114,7 +117,10 @@ const ownerPermissions = [
     resource: 'stockAdjustments',
     actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE],
   },
-  { resource: 'orders', actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE] },
+  {
+    resource: 'orders',
+    actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE, Action.CANCEL],
+  },
   { resource: 'orderItems', actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE] },
   { resource: 'report', actions: [Action.READ, Action.EXPORT] },
   { resource: 'settings', actions: [Action.READ, Action.UPDATE] },

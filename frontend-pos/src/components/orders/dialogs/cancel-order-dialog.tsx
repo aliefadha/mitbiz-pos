@@ -1,3 +1,4 @@
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import type { Order } from '@/lib/api/orders';
+import { ordersApi } from '@/lib/api/orders';
 
 interface CancelOrderDialogProps {
   open: boolean;
@@ -18,9 +20,25 @@ interface CancelOrderDialogProps {
 }
 
 export function CancelOrderDialog({ open, onOpenChange, order }: CancelOrderDialogProps) {
+  const queryClient = useQueryClient();
+
+  const cancelMutation = useMutation({
+    mutationFn: (id: string) => ordersApi.cancel(id),
+    onSuccess: () => {
+      toast.success('Pesanan berhasil dibatalkan');
+      queryClient.invalidateQueries({ queryKey: ['order', order?.id] });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      onOpenChange(false);
+    },
+    onError: () => {
+      toast.error('Gagal membatalkan pesanan');
+    },
+  });
+
   const handleConfirm = () => {
-    toast.info('Fitur pembatalan pesanan belum tersedia');
-    onOpenChange(false);
+    if (order?.id) {
+      cancelMutation.mutate(order.id);
+    }
   };
 
   return (
@@ -41,8 +59,8 @@ export function CancelOrderDialog({ open, onOpenChange, order }: CancelOrderDial
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Batal
           </Button>
-          <Button variant="destructive" onClick={handleConfirm}>
-            Batalkan Pesanan
+          <Button variant="destructive" onClick={handleConfirm} disabled={cancelMutation.isPending}>
+            {cancelMutation.isPending ? 'Membatalkan...' : 'Batalkan Pesanan'}
           </Button>
         </DialogFooter>
       </DialogContent>

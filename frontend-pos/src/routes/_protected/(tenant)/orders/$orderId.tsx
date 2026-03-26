@@ -83,11 +83,11 @@ export function OrderDetailPage() {
         <div className="mt-6 flex gap-3">
           <Button variant="outline" onClick={() => setCancelDialogOpen(true)}>
             <XCircle className="mr-2 h-4 w-4" />
-            Batalkan Pesanan
+            Cancel Pesanan
           </Button>
           <Button variant="outline" onClick={() => setRefundDialogOpen(true)}>
             <RotateCcw className="mr-2 h-4 w-4" />
-            Kembalikan Pesanan
+            Refund Pesanan
           </Button>
         </div>
       )}

@@ -16,12 +16,16 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
+  CancelOrderDto,
+  CancelOrderSchema,
   CreateOrderDto,
   CreateOrderSchema,
   OrderIdDto,
   OrderIdSchema,
   OrderQueryDto,
   OrderQuerySchema,
+  RefundOrderDto,
+  RefundOrderSchema,
   UpdateOrderDto,
   UpdateOrderSchema,
 } from './dto';
@@ -77,5 +81,21 @@ export class OrdersController {
   @UsePipes(new ZodValidationPipe(OrderIdSchema, 'params'))
   remove(@Param() { id }: OrderIdDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.ordersService.remove(id, user);
+  }
+
+  @Post(':id/cancel')
+  @ApiOperation({ summary: 'Cancel an order' })
+  @Permission('orders', [Action.CANCEL])
+  @UsePipes(new ZodValidationPipe(OrderIdSchema, 'params'))
+  cancel(@Param() { id }: OrderIdDto, @CurrentUser() user: CurrentUserWithRole) {
+    return this.ordersService.cancel(id, user);
+  }
+
+  @Post(':id/refund')
+  @ApiOperation({ summary: 'Refund an order' })
+  @Permission('orders', [Action.REFUND])
+  @UsePipes(new ZodValidationPipe(OrderIdSchema, 'params'))
+  refund(@Param() { id }: OrderIdDto, @CurrentUser() user: CurrentUserWithRole) {
+    return this.ordersService.refund(id, user);
   }
 }

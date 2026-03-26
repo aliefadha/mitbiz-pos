@@ -164,4 +164,16 @@ export const ordersApi = {
       method: 'DELETE',
     });
   },
+
+  cancel: async (id: string): Promise<Order> => {
+    return fetchApi<Order>(`/orders/${id}/cancel`, {
+      method: 'POST',
+    });
+  },
+
+  refund: async (id: string): Promise<Order> => {
+    return fetchApi<Order>(`/orders/${id}/refund`, {
+      method: 'POST',
+    });
+  },
 };

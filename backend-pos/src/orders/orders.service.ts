@@ -345,4 +345,90 @@ export class OrdersService {
 
     return order;
   }
+
+  async cancel(id: string, user: CurrentUserWithRole) {
+    const existingOrder = await this.findById(id, user);
+
+    if (existingOrder.status !== 'complete') {
+      throw new ForbiddenException('Only completed orders can be cancelled');
+    }
+
+    return await this.db.transaction(async (tx) => {
+      if (existingOrder.orderItems && existingOrder.orderItems.length > 0) {
+        const productIds = existingOrder.orderItems.map((item) => item.productId);
+
+        const productData = await tx
+          .select({ id: products.id, enableStockTracking: products.enableStockTracking })
+          .from(products)
+          .where(inArray(products.id, productIds));
+
+        const productMap = new Map(productData.map((p) => [p.id, p]));
+
+        const trackedItems = existingOrder.orderItems.filter(
+          (item) => productMap.get(item.productId)?.enableStockTracking === true,
+        );
+
+        if (trackedItems.length > 0) {
+          const stockMap = new Map(
+            (
+              await tx
+                .select()
+                .from(productStocks)
+                .where(
+                  and(
+                    eq(productStocks.outletId, existingOrder.outletId),
+                    inArray(
+                      productStocks.productId,
+                      trackedItems.map((i) => i.productId),
+                    ),
+                  ),
+                )
+            ).map((s) => [s.productId, s]),
+          );
+
+          await Promise.all(
+            trackedItems.map((item) => {
+              const stock = stockMap.get(item.productId);
+              if (stock) {
+                return tx
+                  .update(productStocks)
+                  .set({ quantity: stock.quantity + item.quantity })
+                  .where(eq(productStocks.id, stock.id));
+              }
+            }),
+          );
+        }
+      }
+
+      const [order] = await tx
+        .update(orders)
+        .set({
+          status: 'cancel',
+          updatedAt: new Date(),
+        })
+        .where(eq(orders.id, id))
+        .returning();
+
+      return order;
+    });
+  }
+
+  async refund(id: string, user: CurrentUserWithRole) {
+    const existingOrder = await this.findById(id, user);
+
+    if (existingOrder.status !== 'complete') {
+      throw new ForbiddenException('Only completed orders can be refunded');
+    }
+
+    const [order] = await this.db
+      .update(orders)
+      .set({
+        status: 'refunded',
+        updatedAt: new Date(),
+      })
+      .where(eq(orders.id, id))
+      .returning();
+
+    return order;
+  }
 }

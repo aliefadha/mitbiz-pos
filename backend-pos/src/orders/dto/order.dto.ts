@@ -79,3 +79,9 @@ export class CreateOrderDto extends createZodDto(CreateOrderSchema) {}
 export class UpdateOrderDto extends createZodDto(UpdateOrderSchema) {}
 export class OrderIdDto extends createZodDto(OrderIdSchema) {}
 export class OrderQueryDto extends createZodDto(OrderQuerySchema) {}
+
+export const CancelOrderSchema = z.object({});
+export const RefundOrderSchema = z.object({});
+
+export class CancelOrderDto extends createZodDto(CancelOrderSchema) {}
+export class RefundOrderDto extends createZodDto(RefundOrderSchema) {}

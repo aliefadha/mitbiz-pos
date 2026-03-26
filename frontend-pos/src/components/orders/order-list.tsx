@@ -55,6 +55,7 @@ export function OrderList({ orders, isLoading, onView }: OrderListProps) {
                 Nomor Pesanan
               </TableHead>
               <TableHead className=" text-gray-800 font-medium">Tanggal</TableHead>
+              <TableHead className=" text-gray-800 font-medium">Status</TableHead>
               <TableHead className=" text-gray-800 font-medium">Outlet</TableHead>
               <TableHead className=" text-gray-800 font-medium">Kasir</TableHead>
               <TableHead className=" text-gray-800 font-medium">Metode Pembayaran</TableHead>
@@ -73,6 +74,13 @@ export function OrderList({ orders, isLoading, onView }: OrderListProps) {
                   </span>
                 </TableCell>
                 <TableCell>{formatDate(order.createdAt)}</TableCell>
+                <TableCell>
+                  {order.status === 'complete'
+                    ? 'Selesai'
+                    : order.status === 'cancel'
+                      ? 'Dibatalkan'
+                      : 'Dikembalikan'}
+                </TableCell>
                 <TableCell>{order.outlet?.nama || '-'}</TableCell>
                 <TableCell>{order.cashier?.name || '-'}</TableCell>
                 <TableCell>

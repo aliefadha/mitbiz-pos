@@ -9,6 +9,7 @@ export enum Action {
   UPDATE = 'update',
   DELETE = 'delete',
   LIST = 'list',
+  CANCEL = 'cancel',
   REFUND = 'refund',
   EXPORT = 'export',
 }
