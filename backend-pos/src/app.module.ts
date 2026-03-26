@@ -5,6 +5,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from '@thallesp/nestjs-better-auth';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AuthApiModule } from './auth/auth.module';
 import { CashShiftsModule } from './cash-shifts/cash-shifts.module';
 import { CategoriesModule } from './categories/categories.module';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
@@ -33,6 +34,7 @@ import { UserModule } from './user/user.module';
 @Module({
   imports: [
     AuthModule.forRoot({ auth, disableGlobalAuthGuard: true }),
+    AuthApiModule,
     ConfigModule.forRoot({ isGlobal: true }),
     DbModule,
     RbacModule,

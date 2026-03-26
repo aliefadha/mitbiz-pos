@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { apiReference } from '@scalar/nestjs-api-reference';
 import { AppModule } from './app.module';
+import { auth } from './lib/auth';
 
 // CORS fix deployed - using comma-separated origins
 // Testing env-vars-file deployment
@@ -54,6 +55,35 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
+
+  const authOpenApiSchema = await auth.api.generateOpenAPISchema();
+
+  if (authOpenApiSchema.paths) {
+    for (const [path, methods] of Object.entries(authOpenApiSchema.paths)) {
+      const apiPath = `/api/auth${path}`;
+      if (!document.paths[apiPath]) {
+        document.paths[apiPath] = {};
+      }
+      for (const [method, spec] of Object.entries(methods as Record<string, any>)) {
+        document.paths[apiPath][method] = {
+          ...spec,
+          tags: ['auth', ...(spec.tags || [])],
+        };
+      }
+    }
+  }
+
+  if (authOpenApiSchema.components?.schemas) {
+    document.components = document.components || {};
+    (document.components as any).schemas = {
+      ...document.components.schemas,
+      ...(authOpenApiSchema.components.schemas as any),
+    };
+  }
+
+  if (authOpenApiSchema.security) {
+    document.security = [...(document.security || []), ...authOpenApiSchema.security];
+  }
 
   // Swagger UI at /api/docs
   app.use(
