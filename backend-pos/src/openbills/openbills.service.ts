@@ -296,7 +296,9 @@ export class OpenBillsService {
             for (const item of stockUpdates) {
               await tx
                 .update(productStocks)
-                .set({ reservedQuantity: sql`${productStocks.reservedQuantity} + ${item.quantity}` })
+                .set({
+                  reservedQuantity: sql`${productStocks.reservedQuantity} + ${item.quantity}`,
+                })
                 .where(eq(productStocks.id, item.id));
             }
           }
