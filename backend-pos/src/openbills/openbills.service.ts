@@ -301,7 +301,7 @@ export class OpenBillsService {
             await tx
               .update(productStocks)
               .set({
-                reservedQuantity: sql`case ${productStocks.id} ${sql.join(caseClauses)} else ${productStocks.reservedQuantity} end`,
+                reservedQuantity: sql`case when ${sql.join(caseClauses)} else ${productStocks.reservedQuantity} end`,
               })
               .where(
                 inArray(
@@ -620,8 +620,8 @@ export class OpenBillsService {
         await tx
           .update(productStocks)
           .set({
-            quantity: sql`case ${productStocks.id} ${sql.join(quantityCase)} else ${productStocks.quantity} end`,
-            reservedQuantity: sql`case ${productStocks.id} ${sql.join(reservedCase)} else ${productStocks.reservedQuantity} end`,
+            quantity: sql`case when ${sql.join(quantityCase)} else ${productStocks.quantity} end`,
+            reservedQuantity: sql`case when ${sql.join(reservedCase)} else ${productStocks.reservedQuantity} end`,
           })
           .where(
             inArray(
@@ -691,7 +691,7 @@ export class OpenBillsService {
         await tx
           .update(productStocks)
           .set({
-            reservedQuantity: sql`case ${productStocks.id} ${sql.join(reservedCase)} else ${productStocks.reservedQuantity} end`,
+            reservedQuantity: sql`case when ${sql.join(reservedCase)} else ${productStocks.reservedQuantity} end`,
           })
           .where(
             inArray(
