@@ -1,7 +1,11 @@
 import { createFileRoute, Link, useParams } from '@tanstack/react-router';
-import { ArrowLeft, RotateCcw, XCircle } from 'lucide-react';
+import { ArrowLeft, Check, RotateCcw, XCircle } from 'lucide-react';
 import { useState } from 'react';
-import { CancelOrderDialog, RefundOrderDialog } from '@/components/orders/dialogs';
+import {
+  CancelOrderDialog,
+  CompleteOrderDialog,
+  RefundOrderDialog,
+} from '@/components/orders/dialogs';
 import { useOrderDetailPage } from '@/components/orders/hooks';
 import { OrderInfoCard } from '@/components/orders/order-info-card';
 import { OrderItemsTable } from '@/components/orders/order-items-table';
@@ -30,6 +34,7 @@ export function OrderDetailPage() {
   const { order, isLoading } = useOrderDetailPage(orderId);
 
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
   const [refundDialogOpen, setRefundDialogOpen] = useState(false);
 
   if (isLoading) {
@@ -57,6 +62,7 @@ export function OrderDetailPage() {
   }
 
   const canCancel = order.status === 'complete' && canUpdate;
+  const canComplete = (order.status === 'cancel' || order.status === 'refunded') && canUpdate;
 
   return (
     <div>
@@ -92,7 +98,22 @@ export function OrderDetailPage() {
         </div>
       )}
 
+      {canComplete && (
+        <div className="mt-6 flex gap-3">
+          <Button variant="outline" onClick={() => setCompleteDialogOpen(true)}>
+            <Check className="mr-2 h-4 w-4" />
+            Tandai Selesai
+          </Button>
+        </div>
+      )}
+
       <CancelOrderDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen} order={order} />
+
+      <CompleteOrderDialog
+        open={completeDialogOpen}
+        onOpenChange={setCompleteDialogOpen}
+        order={order}
+      />
 
       <RefundOrderDialog open={refundDialogOpen} onOpenChange={setRefundDialogOpen} order={order} />
     </div>
