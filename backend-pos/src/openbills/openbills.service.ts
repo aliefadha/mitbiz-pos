@@ -293,22 +293,12 @@ export class OpenBillsService {
           }
 
           if (stockUpdates.length > 0) {
-            const caseClauses = stockUpdates.map(
-              (u) =>
-                sql`when ${productStocks.id} = ${u.id} then ${productStocks.reservedQuantity} + ${u.quantity}`,
-            );
-
-            await tx
-              .update(productStocks)
-              .set({
-                reservedQuantity: sql`case when ${sql.join(caseClauses)} else ${productStocks.reservedQuantity} end`,
-              })
-              .where(
-                inArray(
-                  productStocks.id,
-                  stockUpdates.map((u) => u.id),
-                ),
-              );
+            for (const item of stockUpdates) {
+              await tx
+                .update(productStocks)
+                .set({ reservedQuantity: sql`${productStocks.reservedQuantity} + ${item.quantity}` })
+                .where(eq(productStocks.id, item.id));
+            }
           }
         }
 
@@ -608,27 +598,15 @@ export class OpenBillsService {
       }
 
       if (stockUpdates.length > 0) {
-        const quantityCase = stockUpdates.map(
-          (u) =>
-            sql`when ${productStocks.id} = ${u.id} then ${productStocks.quantity} - ${u.quantity}`,
-        );
-        const reservedCase = stockUpdates.map(
-          (u) =>
-            sql`when ${productStocks.id} = ${u.id} then ${productStocks.reservedQuantity} - ${u.quantity}`,
-        );
-
-        await tx
-          .update(productStocks)
-          .set({
-            quantity: sql`case when ${sql.join(quantityCase)} else ${productStocks.quantity} end`,
-            reservedQuantity: sql`case when ${sql.join(reservedCase)} else ${productStocks.reservedQuantity} end`,
-          })
-          .where(
-            inArray(
-              productStocks.id,
-              stockUpdates.map((u) => u.id),
-            ),
-          );
+        for (const item of stockUpdates) {
+          await tx
+            .update(productStocks)
+            .set({
+              quantity: sql`${productStocks.quantity} - ${item.quantity}`,
+              reservedQuantity: sql`${productStocks.reservedQuantity} - ${item.quantity}`,
+            })
+            .where(eq(productStocks.id, item.id));
+        }
       }
 
       const [order] = await tx
@@ -683,22 +661,12 @@ export class OpenBillsService {
       }
 
       if (stockUpdates.length > 0) {
-        const reservedCase = stockUpdates.map(
-          (u) =>
-            sql`when ${productStocks.id} = ${u.id} then ${productStocks.reservedQuantity} - ${u.quantity}`,
-        );
-
-        await tx
-          .update(productStocks)
-          .set({
-            reservedQuantity: sql`case when ${sql.join(reservedCase)} else ${productStocks.reservedQuantity} end`,
-          })
-          .where(
-            inArray(
-              productStocks.id,
-              stockUpdates.map((u) => u.id),
-            ),
-          );
+        for (const item of stockUpdates) {
+          await tx
+            .update(productStocks)
+            .set({ reservedQuantity: sql`${productStocks.reservedQuantity} - ${item.quantity}` })
+            .where(eq(productStocks.id, item.id));
+        }
       }
 
       await tx
