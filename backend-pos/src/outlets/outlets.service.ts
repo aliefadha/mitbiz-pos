@@ -116,6 +116,8 @@ export class OutletsService {
     // Validate tenant access (permission already checked by guard)
     await this.tenantAuth.validateTenantOperation(user, data.tenantId);
 
+    data.kode = data.kode.toUpperCase();
+
     const kodeExists = await this.db.query.outlets.findFirst({
       where: and(eq(outlets.kode, data.kode), eq(outlets.tenantId, data.tenantId)),
     });
@@ -133,9 +135,16 @@ export class OutletsService {
     // findById already validates tenant access
     const existingOutlet = await this.findById(id, user);
 
+    if (data.kode) {
+      data.kode = data.kode.toUpperCase();
+    }
+
     if (data.kode && data.kode !== existingOutlet.kode) {
       const kodeExists = await this.db.query.outlets.findFirst({
-        where: and(eq(outlets.kode, data.kode), eq(outlets.tenantId, existingOutlet.tenantId)),
+        where: and(
+          eq(outlets.kode, data.kode.toUpperCase()),
+          eq(outlets.tenantId, existingOutlet.tenantId),
+        ),
       });
 
       if (kodeExists) {

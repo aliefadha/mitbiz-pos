@@ -131,7 +131,7 @@ export const tenantsApi = {
   },
 
   update: async (
-    slug: string,
+    id: string,
     data: Partial<{
       nama: string;
       slug: string;
@@ -143,7 +143,7 @@ export const tenantsApi = {
     }>,
     userId?: string
   ): Promise<Tenant> => {
-    return fetchApiWithUserId<Tenant>(`/tenants/${slug}`, {
+    return fetchApiWithUserId<Tenant>(`/tenants/id/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
       userId,

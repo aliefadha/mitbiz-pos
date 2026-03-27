@@ -262,6 +262,8 @@ export class TenantsService {
       }
     }
 
+    data.slug = data.slug.toUpperCase();
+
     const slugExists = await this.db.query.tenants.findFirst({
       where: eq(tenants.slug, data.slug),
     });
@@ -320,12 +322,16 @@ export class TenantsService {
     return tenant;
   }
 
-  async update(slug: string, data: UpdateTenantDto, user: CurrentUserWithRole) {
-    const existingTenant = await this.findBySlug(slug, user);
+  async update(id: string, data: UpdateTenantDto, user: CurrentUserWithRole) {
+    const existingTenant = await this.findById(id, user);
 
-    if (data.slug && data.slug !== slug) {
+    if (data.slug) {
+      data.slug = data.slug.toUpperCase();
+    }
+
+    if (data.slug && data.slug !== existingTenant.slug) {
       const slugExists = await this.db.query.tenants.findFirst({
-        where: eq(tenants.slug, data.slug),
+        where: eq(tenants.slug, data.slug.toUpperCase()),
       });
 
       if (slugExists) {
@@ -349,7 +355,7 @@ export class TenantsService {
         ...data,
         updatedAt: new Date(),
       })
-      .where(eq(tenants.slug, slug))
+      .where(eq(tenants.id, id))
       .returning();
 
     return tenant;

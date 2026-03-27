@@ -20,8 +20,8 @@ export const CreateTenantSchema = z.object({
     .max(255, 'Tenant name must be less than 255 characters'),
   slug: z
     .string()
-    .min(1, 'Slug is required')
-    .max(100, 'Slug must be less than 100 characters')
+    .min(3, 'Slug must be at least 3 characters')
+    .max(5, 'Slug must be at most 5 characters')
     .regex(/^[a-z0-9-]+$/, 'Slug must contain only lowercase letters, numbers, and hyphens'),
   userId: z.string().min(1, 'User ID is required').optional(),
   settings: TenantSettingsSchema.optional(),
@@ -40,8 +40,8 @@ export const UpdateTenantSchema = z.object({
     .optional(),
   slug: z
     .string()
-    .min(1, 'Slug is required')
-    .max(100, 'Slug must be less than 100 characters')
+    .min(3, 'Slug must be at least 3 characters')
+    .max(5, 'Slug must be at most 5 characters')
     .regex(/^[a-z0-9-]+$/, 'Slug must contain only lowercase letters, numbers, and hyphens')
     .optional(),
   settings: TenantSettingsSchema.optional(),

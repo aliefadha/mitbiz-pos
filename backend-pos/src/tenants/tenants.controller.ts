@@ -78,17 +78,17 @@ export class TenantsController {
     return this.tenantsService.create(data, user);
   }
 
-  @Put(':slug')
+  @Put('id/:id')
   @ApiOperation({ summary: 'Update a tenant' })
-  @UsePipes(new ZodValidationPipe(TenantSlugSchema, 'params'))
+  @UsePipes(new ZodValidationPipe(TenantIdSchema, 'params'))
   @UsePipes(new ZodValidationPipe(UpdateTenantSchema))
   @Permission('tenants', [Action.UPDATE])
   update(
-    @Param() { slug }: TenantSlugDto,
+    @Param() { id }: TenantIdDto,
     @Body() data: UpdateTenantDto,
     @CurrentUser() user: CurrentUserWithRole,
   ) {
-    return this.tenantsService.update(slug, data, user);
+    return this.tenantsService.update(id, data, user);
   }
 
   @Delete(':slug')

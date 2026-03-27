@@ -4,7 +4,10 @@ import { z } from 'zod';
 export const CreateOutletSchema = z.object({
   tenantId: z.string().min(1, 'Tenant ID is required'),
   nama: z.string().min(1, 'Outlet name is required').max(255),
-  kode: z.string().min(1, 'Outlet code is required').max(50),
+  kode: z
+    .string()
+    .min(3, 'Kode outlet minimal 3 karakter')
+    .max(5, 'Kode outlet maksimal 5 karakter'),
   alamat: z.string().max(500).optional().nullable(),
   noHp: z.string().max(20).optional().nullable(),
   isActive: z.boolean().default(true),
@@ -12,7 +15,11 @@ export const CreateOutletSchema = z.object({
 
 export const UpdateOutletSchema = z.object({
   nama: z.string().min(1).max(255).optional(),
-  kode: z.string().min(1).max(50).optional(),
+  kode: z
+    .string()
+    .min(3, 'Kode outlet minimal 3 karakter')
+    .max(5, 'Kode outlet maksimal 5 karakter')
+    .optional(),
   alamat: z.string().max(500).optional().nullable(),
   noHp: z.string().max(20).optional().nullable(),
   isActive: z.boolean().optional(),

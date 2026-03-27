@@ -23,7 +23,10 @@ import type { Outlet } from '@/lib/api/outlets';
 
 export const outletFormSchema = z.object({
   nama: z.string().min(1, 'Nama outlet wajib diisi'),
-  kode: z.string().min(1, 'Kode outlet wajib diisi'),
+  kode: z
+    .string()
+    .min(3, 'Kode outlet minimal 3 karakter')
+    .max(5, 'Kode outlet maksimal 5 karakter'),
   alamat: z.string().optional(),
   noHp: z.string().optional(),
   isActive: z.boolean().optional(),
@@ -65,7 +68,11 @@ export function CreateOutletDialog({
                 <FormItem>
                   <FormLabel>Kode Outlet</FormLabel>
                   <FormControl>
-                    <Input placeholder="Masukkan kode outlet" {...field} />
+                    <Input
+                      placeholder="Masukkan kode outlet"
+                      {...field}
+                      onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

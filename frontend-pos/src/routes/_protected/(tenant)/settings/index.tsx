@@ -4,6 +4,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { Building2, Save, Settings, Upload } from 'lucide-react';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -63,15 +64,11 @@ function SettingsPage() {
 
   const updateSettingsMutation = useMutation({
     mutationFn: async (data: z.infer<typeof settingsFormSchema>) => {
-      // Update tenant info
-      await tenantsApi.update(tenant!.slug, {
+      return tenantsApi.update(tenant!.id, {
         nama: data.nama,
+        slug: data.slug,
         alamat: data.alamat,
         noHp: data.noHp,
-      });
-
-      // Update settings
-      await tenantsApi.update(tenant!.slug, {
         settings: {
           taxRate: data.taxRate,
           receiptFooter: data.receiptFooter,
@@ -82,6 +79,7 @@ function SettingsPage() {
     },
     onSuccess: () => {
       refetchTenant();
+      toast.success('Pengaturan berhasil diperbarui');
     },
     onError: (error: Error) => {
       alert(error.message || 'Failed to update settings');
@@ -168,7 +166,11 @@ function SettingsPage() {
                         <FormItem>
                           <FormLabel>Kode</FormLabel>
                           <FormControl>
-                            <Input disabled {...field} />
+                            <Input
+                              {...field}
+                              disabled={!canUpdate}
+                              onChange={(e) => field.onChange(e.target.value)}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>

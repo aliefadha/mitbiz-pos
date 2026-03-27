@@ -111,6 +111,10 @@ const ownerPermissions = [
     resource: 'transaction',
     actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE, Action.REFUND],
   },
+  {
+    resource: 'tenants',
+    actions: [Action.UPDATE],
+  },
   { resource: 'outlets', actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE] },
   { resource: 'stocks', actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE] },
   {
