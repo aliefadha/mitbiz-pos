@@ -1,4 +1,5 @@
 import { CurrentUser, type CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
+import { FileUploadInterceptor } from '@/common/interceptors/file-upload.interceptor';
 import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
 import { Action, GlobalScope, Permission, PermissionGuard, ScopeGuard } from '@/rbac';
 import {
@@ -10,10 +11,12 @@ import {
   Post,
   Put,
   Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
   UsePipes,
 } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthGuard, OptionalAuth } from '@thallesp/nestjs-better-auth';
 import {
   CreateTenantDto,
@@ -71,24 +74,41 @@ export class TenantsController {
   @OptionalAuth()
   @Post()
   @ApiOperation({ summary: 'Create a new tenant' })
+  @ApiConsumes('multipart/form-data')
   @ApiBody({ type: CreateTenantDto })
   @UsePipes(new ZodValidationPipe(CreateTenantSchema))
+  @UseInterceptors(new FileUploadInterceptor({ fieldName: 'image', dest: './uploads/tenants' }))
   @Permission('tenants', [Action.CREATE])
-  create(@Body() data: CreateTenantDto, @CurrentUser() user: CurrentUserWithRole) {
-    return this.tenantsService.create(data, user);
+  create(
+    @Body() data: CreateTenantDto,
+    @CurrentUser() user: CurrentUserWithRole,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    return this.tenantsService.create(data, user, file);
   }
 
   @Put('id/:id')
   @ApiOperation({ summary: 'Update a tenant' })
+  @ApiConsumes('multipart/form-data')
   @UsePipes(new ZodValidationPipe(TenantIdSchema, 'params'))
   @UsePipes(new ZodValidationPipe(UpdateTenantSchema))
+  @UseInterceptors(new FileUploadInterceptor({ fieldName: 'image', dest: './uploads/tenants' }))
   @Permission('tenants', [Action.UPDATE])
   update(
     @Param() { id }: TenantIdDto,
     @Body() data: UpdateTenantDto,
     @CurrentUser() user: CurrentUserWithRole,
+    @UploadedFile() file?: Express.Multer.File,
   ) {
-    return this.tenantsService.update(id, data, user);
+    return this.tenantsService.update(id, data, user, file);
+  }
+
+  @Delete('id/:id/image')
+  @ApiOperation({ summary: 'Delete tenant image' })
+  @UsePipes(new ZodValidationPipe(TenantIdSchema, 'params'))
+  @Permission('tenants', [Action.UPDATE])
+  deleteImage(@Param() { id }: TenantIdDto, @CurrentUser() user: CurrentUserWithRole) {
+    return this.tenantsService.deleteImage(id, user);
   }
 
   @Delete(':slug')

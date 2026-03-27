@@ -22,10 +22,12 @@ export const CreateTenantSchema = z.object({
     .string()
     .min(3, 'Slug must be at least 3 characters')
     .max(5, 'Slug must be at most 5 characters')
-    .regex(/^[a-z0-9-]+$/, 'Slug must contain only lowercase letters, numbers, and hyphens'),
+    .regex(/^[a-zA-Z0-9-]+$/, 'Slug must contain only letters, numbers, and hyphens'),
   userId: z.string().min(1, 'User ID is required').optional(),
   settings: TenantSettingsSchema.optional(),
-  image: z.string().url('Invalid image URL').optional().nullable(),
+  taxRate: z.string().optional(),
+  receiptFooter: z.string().optional(),
+  image: z.string().optional().nullable(),
   alamat: z.string().max(500, 'Address must be less than 500 characters').optional().nullable(),
   noHp: z.string().max(20, 'Phone number must be less than 20 characters').optional().nullable(),
   isActive: z.boolean().default(true),
@@ -42,10 +44,13 @@ export const UpdateTenantSchema = z.object({
     .string()
     .min(3, 'Slug must be at least 3 characters')
     .max(5, 'Slug must be at most 5 characters')
-    .regex(/^[a-z0-9-]+$/, 'Slug must contain only lowercase letters, numbers, and hyphens')
+    .regex(/^[a-zA-Z0-9-]+$/, 'Slug must contain only letters, numbers, and hyphens')
     .optional(),
   settings: TenantSettingsSchema.optional(),
-  image: z.string().url('Invalid image URL').optional().nullable(),
+  taxRate: z.string().optional(),
+  receiptFooter: z.string().optional(),
+  image: z.string().optional().nullable(),
+  deleteImage: z.string().optional(),
   alamat: z.string().max(500, 'Address must be less than 500 characters').optional().nullable(),
   noHp: z.string().max(20, 'Phone number must be less than 20 characters').optional().nullable(),
   isActive: z.boolean().optional(),
@@ -61,7 +66,7 @@ export const TenantSlugSchema = z.object({
   slug: z
     .string()
     .min(1, 'Slug is required')
-    .regex(/^[a-z0-9-]+$/, 'Invalid slug format'),
+    .regex(/^[a-zA-Z0-9-]+$/, 'Invalid slug format'),
 });
 
 // Tenant query params for filtering/pagination
@@ -102,7 +107,7 @@ export const TenantSummarySchema = z.object({
   slug: z
     .string()
     .min(1, 'Slug is required')
-    .regex(/^[a-z0-9-]+$/, 'Invalid slug format'),
+    .regex(/^[a-zA-Z0-9-]+$/, 'Invalid slug format'),
 });
 
 export class TenantSummaryDto extends createZodDto(TenantSummarySchema) {}

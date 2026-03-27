@@ -1,12 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import { Building2, Save, Settings, Upload } from 'lucide-react';
-import { useEffect } from 'react';
+import { Building2, Save, Settings, Trash2, Upload } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -36,9 +36,15 @@ const settingsFormSchema = z.object({
 function SettingsPage() {
   const { data: session } = useSessionWithCache();
   const tenantId = session?.user?.tenantId;
+  const queryClient = useQueryClient();
 
   const { hasPermission } = usePermissions();
   const canUpdate = hasPermission('tenants', 'update');
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageMarkedForDeletion, setImageMarkedForDeletion] = useState(false);
 
   const form = useForm<z.infer<typeof settingsFormSchema>>({
     resolver: zodResolver(settingsFormSchema),
@@ -52,11 +58,7 @@ function SettingsPage() {
     },
   });
 
-  const {
-    data: tenant,
-    isLoading: isTenantLoading,
-    refetch: refetchTenant,
-  } = useQuery({
+  const { data: tenant, isLoading: isTenantLoading } = useQuery({
     queryKey: ['tenant', tenantId],
     queryFn: () => tenantsApi.getById(tenantId!),
     enabled: !!tenantId,
@@ -64,6 +66,31 @@ function SettingsPage() {
 
   const updateSettingsMutation = useMutation({
     mutationFn: async (data: z.infer<typeof settingsFormSchema>) => {
+      if (selectedImage) {
+        const formData = new FormData();
+        formData.append('nama', data.nama);
+        formData.append('slug', data.slug);
+        formData.append('alamat', data.alamat || '');
+        formData.append('noHp', data.noHp || '');
+        formData.append('taxRate', String(data.taxRate));
+        formData.append('receiptFooter', data.receiptFooter || '');
+        formData.append('image', selectedImage);
+        if (imageMarkedForDeletion) {
+          formData.append('deleteImage', 'true');
+        }
+        return tenantsApi.updateWithImage(tenant!.id, formData);
+      }
+      if (imageMarkedForDeletion) {
+        const formData = new FormData();
+        formData.append('nama', data.nama);
+        formData.append('slug', data.slug);
+        formData.append('alamat', data.alamat || '');
+        formData.append('noHp', data.noHp || '');
+        formData.append('taxRate', String(data.taxRate));
+        formData.append('receiptFooter', data.receiptFooter || '');
+        formData.append('deleteImage', 'true');
+        return tenantsApi.updateWithImage(tenant!.id, formData);
+      }
       return tenantsApi.update(tenant!.id, {
         nama: data.nama,
         slug: data.slug,
@@ -78,7 +105,10 @@ function SettingsPage() {
       });
     },
     onSuccess: () => {
-      refetchTenant();
+      setSelectedImage(null);
+      setImagePreview(null);
+      setImageMarkedForDeletion(false);
+      queryClient.invalidateQueries({ queryKey: ['tenant', tenantId] });
       toast.success('Pengaturan berhasil diperbarui');
     },
     onError: (error: Error) => {
@@ -96,8 +126,34 @@ function SettingsPage() {
         taxRate: tenant.settings?.taxRate || 0,
         receiptFooter: tenant.settings?.receiptFooter || '',
       });
+      if (tenant.image && !imagePreview) {
+        const imageUrl = tenant.image.startsWith('http')
+          ? tenant.image
+          : `${import.meta.env.VITE_API_URL}/${tenant.image.replace(/^\.\//, '')}`;
+        setImagePreview(imageUrl);
+      }
     }
-  }, [tenant, form]);
+  }, [tenant, form, imagePreview]);
+
+  const handleImageClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select an image file');
+        return;
+      }
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   return (
     <div className="w-full">
@@ -130,15 +186,46 @@ function SettingsPage() {
                   <h5 className="text-base font-semibold mb-4">Informasi Bisnis</h5>
 
                   <div className="flex flex-col items-center mb-6">
-                    <Avatar className="h-24 w-24 mb-4">
+                    <Avatar className="h-24 w-24 mb-4 cursor-pointer" onClick={handleImageClick}>
+                      {imagePreview ? <AvatarImage src={imagePreview} alt="Tenant logo" /> : null}
                       <AvatarFallback>
                         <Building2 className="h-10 w-10" />
                       </AvatarFallback>
                     </Avatar>
-                    <Button variant="outline" size="sm" type="button" disabled={!canUpdate}>
-                      <Upload className="mr-2 h-4 w-4" />
-                      Ganti Logo
-                    </Button>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleImageChange}
+                      accept="image/*"
+                      className="hidden"
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        type="button"
+                        disabled={!canUpdate}
+                        onClick={handleImageClick}
+                      >
+                        <Upload className="mr-2 h-4 w-4" />
+                        Ganti Logo
+                      </Button>
+                      {tenant.image && !selectedImage && !imageMarkedForDeletion && (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          type="button"
+                          disabled={!canUpdate}
+                          onClick={() => {
+                            setImageMarkedForDeletion(true);
+                            setImagePreview(null);
+                          }}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Hapus
+                        </Button>
+                      )}
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -263,7 +350,23 @@ function SettingsPage() {
 
             {canUpdate && (
               <div className="flex gap-3 pt-2 justify-end">
-                <Button variant="outline" type="button" onClick={() => form.reset()}>
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={() => {
+                    setImageMarkedForDeletion(false);
+                    setSelectedImage(null);
+                    if (tenant?.image) {
+                      const imageUrl = tenant.image.startsWith('http')
+                        ? tenant.image
+                        : `${import.meta.env.VITE_API_URL}/${tenant.image.replace(/^\.\//, '')}`;
+                      setImagePreview(imageUrl);
+                    } else {
+                      setImagePreview(null);
+                    }
+                    form.reset();
+                  }}
+                >
                   Cancel
                 </Button>
                 <Button type="submit" disabled={updateSettingsMutation.isPending}>

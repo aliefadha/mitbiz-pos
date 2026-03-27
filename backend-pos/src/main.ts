@@ -1,6 +1,9 @@
+import { existsSync, mkdirSync } from 'node:fs';
+import { join } from 'node:path';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { apiReference } from '@scalar/nestjs-api-reference';
+import type { RequestHandler } from 'express';
 import { AppModule } from './app.module';
 import { auth } from './lib/auth';
 
@@ -32,7 +35,24 @@ async function bootstrap() {
   app.enableCors({
     origin: allowedOrigins,
     credentials: true,
+    exposedHeaders: ['Content-Type', 'Content-Length'],
   });
+
+  // Serve static files from uploads directory
+  const uploadsDir = join(process.cwd(), 'uploads');
+  if (!existsSync(uploadsDir)) {
+    mkdirSync(uploadsDir, { recursive: true });
+  }
+  const serveStaticHandler: RequestHandler = (req, res, next) => {
+    if (req.path.startsWith('/uploads/')) {
+      const filePath = join(uploadsDir, req.path.replace('/uploads/', ''));
+      if (existsSync(filePath)) {
+        return res.sendFile(filePath);
+      }
+    }
+    next();
+  };
+  app.use(serveStaticHandler);
 
   app.setGlobalPrefix('api');
 

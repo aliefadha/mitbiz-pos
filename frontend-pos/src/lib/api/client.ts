@@ -5,17 +5,17 @@ interface FetchOptions extends RequestInit {
 }
 
 export async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-    ...options.headers,
-  };
+  const isFormData = options.body instanceof FormData;
+  const headers: HeadersInit = isFormData
+    ? { ...options.headers }
+    : { 'Content-Type': 'application/json', ...options.headers };
 
   const response = await fetch(`${API_URL}${endpoint}`, {
     method: options.method || 'GET',
     ...options,
     headers,
     credentials: 'include',
-    body: options.data ? JSON.stringify(options.data) : options.body,
+    body: isFormData ? options.body : options.data ? JSON.stringify(options.data) : options.body,
   });
 
   if (response.status === 401) {

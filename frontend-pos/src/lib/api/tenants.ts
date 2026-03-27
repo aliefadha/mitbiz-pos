@@ -150,6 +150,21 @@ export const tenantsApi = {
     });
   },
 
+  updateWithImage: async (id: string, formData: FormData, userId?: string): Promise<Tenant> => {
+    return fetchApiWithUserId<Tenant>(`/tenants/id/${id}`, {
+      method: 'PUT',
+      body: formData,
+      userId,
+    });
+  },
+
+  deleteImage: async (id: string, userId?: string): Promise<Tenant> => {
+    return fetchApiWithUserId<Tenant>(`/tenants/id/${id}/image`, {
+      method: 'DELETE',
+      userId,
+    });
+  },
+
   delete: async (slug: string, userId?: string): Promise<{ message: string }> => {
     return fetchApiWithUserId<{ message: string }>(`/tenants/${slug}`, {
       method: 'DELETE',

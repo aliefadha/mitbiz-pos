@@ -7,6 +7,7 @@ TAG="${3:-latest}"
 
 DEPLOY_DIR="/opt/mitbiz-deploy"
 ENV_FILE="${DEPLOY_DIR}/env_vars/${SERVICE}.env"
+DATA_DIR="${DEPLOY_DIR}/data"
 CONTAINER_NAME="mitbiz-${SERVICE}"
 
 echo "=== Deploying ${SERVICE} ==="
@@ -16,6 +17,10 @@ if [ -z "${IMAGE}" ]; then
     echo "Error: IMAGE not provided"
     exit 1
 fi
+
+# Ensure data directory exists
+mkdir -p "${DATA_DIR}/backend-uploads"
+mkdir -p "${DATA_DIR}/frontend-uploads"
 
 echo "Pulling image..."
 docker pull "${IMAGE}:${TAG}"
@@ -31,6 +36,7 @@ if [ -f "${ENV_FILE}" ]; then
             --name "${CONTAINER_NAME}" \
             --restart unless-stopped \
             --env-file "${ENV_FILE}" \
+            -v "${DATA_DIR}/backend-uploads:/app/uploads" \
             -p 3001:3001 \
             "${IMAGE}:${TAG}"
     else
@@ -38,6 +44,7 @@ if [ -f "${ENV_FILE}" ]; then
             --name "${CONTAINER_NAME}" \
             --restart unless-stopped \
             --env-file "${ENV_FILE}" \
+            -v "${DATA_DIR}/frontend-uploads:/app/uploads" \
             -p 8080:8080 \
             "${IMAGE}:${TAG}"
     fi
@@ -47,12 +54,14 @@ else
         docker run -d \
             --name "${CONTAINER_NAME}" \
             --restart unless-stopped \
+            -v "${DATA_DIR}/backend-uploads:/app/uploads" \
             -p 3001:3001 \
             "${IMAGE}:${TAG}"
     else
         docker run -d \
             --name "${CONTAINER_NAME}" \
             --restart unless-stopped \
+            -v "${DATA_DIR}/frontend-uploads:/app/uploads" \
             -p 8080:8080 \
             "${IMAGE}:${TAG}"
     fi

@@ -251,7 +251,7 @@ export class TenantsService {
     return tenant;
   }
 
-  async create(data: CreateTenantDto, user: CurrentUserWithRole) {
+  async create(data: CreateTenantDto, user: CurrentUserWithRole, file?: Express.Multer.File) {
     if (data.userId) {
       const userExists = await this.db.query.user.findFirst({
         where: eq(userSchema.id, data.userId),
@@ -286,12 +286,19 @@ export class TenantsService {
       finalUserId = user.id;
     }
 
+    const settings = {
+      taxRate: data.taxRate !== undefined ? Number(data.taxRate) : (data.settings?.taxRate ?? 0),
+      receiptFooter:
+        data.receiptFooter ?? data.settings?.receiptFooter ?? 'Terima kasih telah berbelanja',
+    };
+
     const [tenant] = await this.db
       .insert(tenants)
       .values({
         ...data,
         userId: finalUserId,
-        settings: data.settings,
+        settings,
+        image: file?.path || data.image,
       })
       .returning();
 
@@ -322,7 +329,12 @@ export class TenantsService {
     return tenant;
   }
 
-  async update(id: string, data: UpdateTenantDto, user: CurrentUserWithRole) {
+  async update(
+    id: string,
+    data: UpdateTenantDto,
+    user: CurrentUserWithRole,
+    file?: Express.Multer.File,
+  ) {
     const existingTenant = await this.findById(id, user);
 
     if (data.slug) {
@@ -349,10 +361,40 @@ export class TenantsService {
       }
     }
 
+    const existingSettings = existingTenant.settings || { taxRate: 0, receiptFooter: '' };
+    const settings = {
+      taxRate: data.taxRate !== undefined ? Number(data.taxRate) : existingSettings.taxRate,
+      receiptFooter: data.receiptFooter ?? existingSettings.receiptFooter,
+    };
+
+    const shouldDeleteImage = data.deleteImage === 'true';
+
     const [tenant] = await this.db
       .update(tenants)
       .set({
         ...data,
+        updatedAt: new Date(),
+        settings,
+        ...(file && { image: file.path }),
+        ...(shouldDeleteImage && { image: null }),
+      })
+      .where(eq(tenants.id, id))
+      .returning();
+
+    return tenant;
+  }
+
+  async deleteImage(id: string, user: CurrentUserWithRole) {
+    const existingTenant = await this.findById(id, user);
+
+    if (!existingTenant.image) {
+      throw new NotFoundException('Tenant does not have an image');
+    }
+
+    const [tenant] = await this.db
+      .update(tenants)
+      .set({
+        image: null,
         updatedAt: new Date(),
       })
       .where(eq(tenants.id, id))
