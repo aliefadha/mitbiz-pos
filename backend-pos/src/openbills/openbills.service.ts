@@ -276,30 +276,22 @@ export class OpenBillsService {
             if (!stock) {
               throw new ForbiddenException(`No stock record found for product ${item.productId}`);
             }
-            const availableQuantity = stock.quantity - stock.reservedQuantity;
-            if (availableQuantity < item.quantity) {
+            if (stock.quantity < item.quantity) {
               throw new ForbiddenException(
-                `Insufficient stock for product ${item.productId}. Available: ${availableQuantity}`,
+                `Insufficient stock for product ${item.productId}. Available: ${stock.quantity}`,
               );
             }
           }
 
-          const stockUpdates: { id: string; quantity: number }[] = [];
           for (const item of trackedItemsFiltered) {
             const stock = stockMap.get(item.productId);
             if (stock) {
-              stockUpdates.push({ id: stock.id, quantity: item.quantity });
-            }
-          }
-
-          if (stockUpdates.length > 0) {
-            for (const item of stockUpdates) {
               await tx
                 .update(productStocks)
                 .set({
-                  reservedQuantity: sql`${productStocks.reservedQuantity} + ${item.quantity}`,
+                  quantity: sql`${productStocks.quantity} - ${item.quantity}`,
                 })
-                .where(eq(productStocks.id, item.id));
+                .where(eq(productStocks.id, stock.id));
             }
           }
         }
@@ -344,16 +336,15 @@ export class OpenBillsService {
         throw new ForbiddenException(`No stock record found for product ${product.nama}`);
       }
 
-      const availableQuantity = stock.quantity - stock.reservedQuantity;
-      if (availableQuantity < item.quantity) {
+      if (stock.quantity < item.quantity) {
         throw new ForbiddenException(
-          `Insufficient stock for product ${product.nama}. Available: ${availableQuantity}`,
+          `Insufficient stock for product ${product.nama}. Available: ${stock.quantity}`,
         );
       }
 
       await this.db
         .update(productStocks)
-        .set({ reservedQuantity: stock.reservedQuantity + item.quantity })
+        .set({ quantity: sql`${productStocks.quantity} - ${item.quantity}` })
         .where(eq(productStocks.id, stock.id));
     }
 
@@ -398,7 +389,7 @@ export class OpenBillsService {
       if (stock) {
         await this.db
           .update(productStocks)
-          .set({ reservedQuantity: stock.reservedQuantity - item.quantity })
+          .set({ quantity: sql`${productStocks.quantity} + ${item.quantity}` })
           .where(eq(productStocks.id, stock.id));
       }
     }
@@ -453,7 +444,7 @@ export class OpenBillsService {
             if (stock) {
               await tx
                 .update(productStocks)
-                .set({ reservedQuantity: stock.reservedQuantity - item.quantity })
+                .set({ quantity: sql`${productStocks.quantity} + ${item.quantity}` })
                 .where(eq(productStocks.id, stock.id));
             }
           }
@@ -500,10 +491,9 @@ export class OpenBillsService {
             if (!stock) {
               throw new ForbiddenException(`No stock record found for product ${item.productId}`);
             }
-            const availableQuantity = stock.quantity - stock.reservedQuantity;
-            if (availableQuantity < item.quantity) {
+            if (stock.quantity < item.quantity) {
               throw new ForbiddenException(
-                `Insufficient stock for product ${item.productId}. Available: ${availableQuantity}`,
+                `Insufficient stock for product ${item.productId}. Available: ${stock.quantity}`,
               );
             }
           }
@@ -513,7 +503,7 @@ export class OpenBillsService {
             if (stock) {
               await tx
                 .update(productStocks)
-                .set({ reservedQuantity: stock.reservedQuantity + item.quantity })
+                .set({ quantity: sql`${productStocks.quantity} - ${item.quantity}` })
                 .where(eq(productStocks.id, stock.id));
             }
           }
@@ -573,53 +563,17 @@ export class OpenBillsService {
     const uuid = randomUUID().split('-')[0].toUpperCase();
     const orderNumber = `ORD-${tenant?.slug}-${outlet?.kode}-${dateStr}-${uuid}`;
 
-    const openBillItems = await this.db.query.orderItems.findMany({
-      where: eq(orderItems.orderId, openBillId),
-    });
-
     await this.db.transaction(async (tx) => {
-      const productIds = openBillItems.map((item) => item.productId).filter(Boolean);
-      const stocks =
-        productIds.length > 0
-          ? await tx
-              .select()
-              .from(productStocks)
-              .where(
-                and(
-                  eq(productStocks.outletId, openBill.outletId),
-                  inArray(productStocks.productId, productIds),
-                ),
-              )
-          : [];
-      const stockMap = new Map(stocks.map((s) => [s.productId, s]));
-
-      const stockUpdates: { id: string; quantity: number }[] = [];
-      for (const item of openBillItems) {
-        if (item.productId) {
-          const stock = stockMap.get(item.productId);
-          if (stock) {
-            stockUpdates.push({ id: stock.id, quantity: item.quantity });
-          }
-        }
-      }
-
-      if (stockUpdates.length > 0) {
-        for (const item of stockUpdates) {
-          await tx
-            .update(productStocks)
-            .set({
-              quantity: sql`${productStocks.quantity} - ${item.quantity}`,
-              reservedQuantity: sql`${productStocks.reservedQuantity} - ${item.quantity}`,
-            })
-            .where(eq(productStocks.id, item.id));
-        }
-      }
-
       const [order] = await tx
         .update(orders)
         .set({
           status: 'complete',
           orderNumber,
+          subtotal: data.subtotal ?? '0',
+          jumlahPajak: data.jumlahPajak ?? '0',
+          jumlahDiskon: data.jumlahDiskon ?? '0',
+          diskonBreakdown: data.diskonBreakdown,
+          total: data.total ?? '0',
           paymentMethodId: data.paymentMethodId,
           notes: data.notes ?? openBill.notes,
           cashShiftId: openShift.id,
@@ -670,7 +624,7 @@ export class OpenBillsService {
         for (const item of stockUpdates) {
           await tx
             .update(productStocks)
-            .set({ reservedQuantity: sql`${productStocks.reservedQuantity} - ${item.quantity}` })
+            .set({ quantity: sql`${productStocks.quantity} + ${item.quantity}` })
             .where(eq(productStocks.id, item.id));
         }
       }

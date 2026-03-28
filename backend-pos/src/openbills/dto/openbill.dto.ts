@@ -1,6 +1,13 @@
 import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
 
+export const DiscountBreakdownSchema = z.object({
+  discountId: z.string(),
+  nama: z.string(),
+  rate: z.string(),
+  amount: z.number(),
+});
+
 export const CreateOpenBillItemSchema = z.object({
   productId: z.string().min(1, 'Product ID is required'),
   quantity: z.number().int().min(1, 'Quantity must be at least 1'),
@@ -37,6 +44,11 @@ export const ReplaceOpenBillItemsSchema = z.object({
 export const CloseOpenBillSchema = z.object({
   paymentMethodId: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
+  subtotal: z.string().optional().default('0'),
+  jumlahPajak: z.string().optional().default('0'),
+  jumlahDiskon: z.string().optional().default('0'),
+  diskonBreakdown: z.array(DiscountBreakdownSchema).optional(),
+  total: z.string().optional().default('0'),
 });
 
 export const OpenBillQuerySchema = z.object({

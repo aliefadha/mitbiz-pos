@@ -82,6 +82,11 @@ export interface AddItemToOpenBillDto {
 export interface CloseOpenBillDto {
   paymentMethodId?: string | null;
   notes?: string | null;
+  subtotal?: string;
+  jumlahPajak?: string;
+  jumlahDiskon?: string;
+  diskonBreakdown?: DiscountBreakdown[];
+  total?: string;
 }
 
 export interface OpenBillListResponse {

@@ -313,11 +313,31 @@ function PosPage() {
     mutationFn: async ({
       openBillId,
       paymentMethodId,
+      subtotal,
+      jumlahPajak,
+      jumlahDiskon,
+      diskonBreakdown,
+      total,
+      notes,
     }: {
       openBillId: string;
       paymentMethodId?: string | null;
+      subtotal: string;
+      jumlahPajak: string;
+      jumlahDiskon: string;
+      diskonBreakdown: DiscountBreakdown[];
+      total: string;
+      notes?: string | null;
     }) => {
-      return openBillsApi.close(openBillId, { paymentMethodId });
+      return openBillsApi.close(openBillId, {
+        paymentMethodId,
+        subtotal,
+        jumlahPajak,
+        jumlahDiskon,
+        diskonBreakdown,
+        total,
+        notes,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['openbills'] });
@@ -516,7 +536,16 @@ function PosPage() {
       {
         onSuccess: () => {
           closeOpenBillMutation.mutate(
-            { openBillId: editingOpenBillId, paymentMethodId: selectedPaymentMethodId || null },
+            {
+              openBillId: editingOpenBillId,
+              paymentMethodId: selectedPaymentMethodId || null,
+              subtotal: String(subtotal),
+              jumlahPajak: String(jumlahPajak),
+              jumlahDiskon: String(discountAmount),
+              diskonBreakdown: discountBreakdown,
+              total: String(total),
+              notes: notes || null,
+            },
             {
               onSuccess: (closedOrder) => {
                 setLastOrder({
