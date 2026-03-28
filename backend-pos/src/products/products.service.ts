@@ -13,7 +13,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { SQL, and, desc, eq, like, sql } from 'drizzle-orm';
+import { SQL, and, desc, eq, ilike, sql } from 'drizzle-orm';
 import { CreateProductDto, ProductQueryDto, UpdateProductDto } from './dto';
 
 @Injectable()
@@ -52,7 +52,7 @@ export class ProductsService {
     }
 
     if (search) {
-      conditions.push(like(products.nama, `%${search}%`));
+      conditions.push(ilike(products.nama, `%${search}%`));
     }
 
     const stockCondition = outletId ? eq(productStocks.outletId, outletId) : undefined;
