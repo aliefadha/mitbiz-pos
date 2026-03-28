@@ -185,11 +185,6 @@ export class CashShiftsService {
 
     const shift = cashShift[0];
 
-    const hasAccess = await this.tenantAuth.canAccessTenant(user, shift.tenantId);
-    if (!hasAccess) {
-      return null;
-    }
-
     return shift;
   }
 
