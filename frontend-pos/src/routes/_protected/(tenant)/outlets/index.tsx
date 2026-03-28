@@ -31,7 +31,6 @@ export function OutletPage() {
     displayedOutlets,
     totalOutlets,
     outletAktif,
-    outletNonaktif,
     totalPages,
     total,
     createMutation,
@@ -75,11 +74,7 @@ export function OutletPage() {
         )}
       </div>
 
-      <OutletStats
-        totalOutlets={totalOutlets}
-        outletAktif={outletAktif}
-        outletNonaktif={outletNonaktif}
-      />
+      <OutletStats totalOutlets={totalOutlets} outletAktif={outletAktif} />
 
       <OutletList
         displayedOutlets={displayedOutlets}

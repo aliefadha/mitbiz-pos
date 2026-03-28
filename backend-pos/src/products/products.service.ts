@@ -24,7 +24,7 @@ export class ProductsService {
   ) {}
 
   async findAll(query: ProductQueryDto, user: CurrentUserWithRole) {
-    const { page = 1, limit = 10, search, isActive, tenantId, categoryId, outletId } = query;
+    const { page = 1, limit = 10, search, isActive = true, tenantId, categoryId, outletId } = query;
     const offset = (page - 1) * limit;
 
     // Validate that query tenantId matches user's allowed tenant

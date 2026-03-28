@@ -16,7 +16,7 @@ export class CategoriesService {
   ) {}
 
   async findAll(query: CategoryQueryDto, user: CurrentUserWithRole) {
-    const { page = 1, limit = 10, search, isActive, tenantId } = query;
+    const { page = 1, limit = 10, search, isActive = true, tenantId } = query;
     const offset = (page - 1) * limit;
 
     // Validate that query tenantId matches user's allowed tenant
@@ -138,14 +138,17 @@ export class CategoriesService {
   }
 
   async remove(id: string, user: CurrentUserWithRole) {
-    // findById already validates tenant access
-    await this.findById(id, user);
+    const existingCategory = await this.findById(id, user);
 
-    const [deletedCategory] = await this.db
-      .delete(categories)
+    const [category] = await this.db
+      .update(categories)
+      .set({
+        isActive: false,
+        updatedAt: new Date(),
+      })
       .where(eq(categories.id, id))
       .returning();
 
-    return deletedCategory;
+    return { ...category, ...existingCategory };
   }
 }

@@ -15,7 +15,6 @@ import { useSessionWithCache } from '@/lib/session-cache';
 const formSchema = z.object({
   nama: z.string().min(1, 'Nama kategori wajib diisi'),
   deskripsi: z.string().optional(),
-  isActive: z.boolean().optional(),
 });
 
 export type CategoryFormValues = z.infer<typeof formSchema>;
@@ -38,7 +37,6 @@ export function useCategoriesPage() {
     defaultValues: {
       nama: '',
       deskripsi: '',
-      isActive: true,
     },
   });
 
@@ -46,7 +44,6 @@ export function useCategoriesPage() {
     form.reset({
       nama: '',
       deskripsi: '',
-      isActive: true,
     });
   };
 
@@ -54,7 +51,6 @@ export function useCategoriesPage() {
     form.reset({
       nama: category.nama,
       deskripsi: category.deskripsi || '',
-      isActive: category.isActive,
     });
   };
 
@@ -107,11 +103,7 @@ export function useCategoriesPage() {
 
   const allCategories = useMemo(() => data?.data ?? [], [data]);
   const totalCategories = data?.data?.length ?? 0;
-  const categoryAktif = useMemo(() => data?.data?.filter((c) => c.isActive).length ?? 0, [data]);
-  const categoryNonaktif = useMemo(
-    () => data?.data?.filter((c) => !c.isActive).length ?? 0,
-    [data]
-  );
+  const categoryAktif = totalCategories;
 
   const filteredCategories = useMemo(
     () =>
@@ -200,7 +192,6 @@ export function useCategoriesPage() {
     displayedCategories,
     totalCategories,
     categoryAktif,
-    categoryNonaktif,
     totalPages,
     total: totalFiltered,
 

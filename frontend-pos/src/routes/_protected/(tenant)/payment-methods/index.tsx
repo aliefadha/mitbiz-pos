@@ -35,7 +35,6 @@ export function PaymentMethodPage() {
     displayedPaymentMethods,
     totalPaymentMethods,
     paymentMethodAktif,
-    paymentMethodNonaktif,
     totalPages,
     total,
     createMutation,
@@ -82,7 +81,6 @@ export function PaymentMethodPage() {
       <PaymentMethodStats
         totalPaymentMethods={totalPaymentMethods}
         paymentMethodAktif={paymentMethodAktif}
-        paymentMethodNonaktif={paymentMethodNonaktif}
       />
 
       <PaymentMethodList

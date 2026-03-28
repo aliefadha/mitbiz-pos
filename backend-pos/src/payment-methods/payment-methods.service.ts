@@ -15,7 +15,7 @@ export class PaymentMethodsService {
   ) {}
 
   async findAll(query: PaymentMethodQueryDto, user: CurrentUserWithRole) {
-    const { page = 1, limit = 10, search, isActive, tenantId } = query;
+    const { page = 1, limit = 10, search, isActive = true, tenantId } = query;
     const offset = (page - 1) * limit;
 
     // Validate that query tenantId matches user's allowed tenant
@@ -115,14 +115,17 @@ export class PaymentMethodsService {
   }
 
   async remove(id: string, user: CurrentUserWithRole) {
-    // findById already validates tenant access
-    await this.findById(id, user);
+    const existingPaymentMethod = await this.findById(id, user);
 
-    const [deletedPaymentMethod] = await this.db
-      .delete(paymentMethods)
+    const [paymentMethod] = await this.db
+      .update(paymentMethods)
+      .set({
+        isActive: false,
+        updatedAt: new Date(),
+      })
       .where(eq(paymentMethods.id, id))
       .returning();
 
-    return deletedPaymentMethod;
+    return { ...paymentMethod, ...existingPaymentMethod };
   }
 }

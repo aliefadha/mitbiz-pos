@@ -61,10 +61,6 @@ export function PaymentMethodList({
     onSearchChange(localSearch);
   };
 
-  const getStatusColor = (isActive: boolean) => {
-    return isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700';
-  };
-
   const hasActions = canUpdate || canDelete;
 
   return (
@@ -107,7 +103,6 @@ export function PaymentMethodList({
                   No
                 </TableHead>
                 <TableHead className="text-gray-800 font-medium">Nama</TableHead>
-                <TableHead className="text-gray-800 font-medium">Status</TableHead>
                 {hasActions && (
                   <TableHead className="text-gray-800 font-medium w-[120px] rounded-tr-lg rounded-br-lg">
                     Aksi
@@ -120,13 +115,6 @@ export function PaymentMethodList({
                 <TableRow key={paymentMethod.id} className="hover:bg-white">
                   <TableCell>{(currentPage - 1) * pageSize + index + 1}</TableCell>
                   <TableCell>{paymentMethod.nama}</TableCell>
-                  <TableCell>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs ${getStatusColor(!!paymentMethod.isActive)}`}
-                    >
-                      {paymentMethod.isActive ? 'Aktif' : 'Tidak Aktif'}
-                    </span>
-                  </TableCell>
                   {hasActions && (
                     <TableCell>
                       <div className="flex gap-1">

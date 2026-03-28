@@ -17,7 +17,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import type { Outlet } from '@/lib/api/outlets';
 
@@ -29,7 +28,6 @@ export const outletFormSchema = z.object({
     .max(5, 'Kode outlet maksimal 5 karakter'),
   alamat: z.string().optional(),
   noHp: z.string().optional(),
-  isActive: z.boolean().optional(),
 });
 
 export type OutletFormValues = z.infer<typeof outletFormSchema>;
@@ -117,22 +115,6 @@ export function CreateOutletDialog({
                 </FormItem>
               )}
             />
-            {isEditing && (
-              <FormField
-                control={form.control}
-                name="isActive"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">Status Aktif</FormLabel>
-                    </div>
-                    <FormControl>
-                      <Switch checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            )}
             <DialogFooter>
               <Button type="submit" disabled={isPending}>
                 {isEditing ? 'Simpan' : 'Buat'}

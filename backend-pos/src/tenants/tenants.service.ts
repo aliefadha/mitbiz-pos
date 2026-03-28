@@ -404,12 +404,18 @@ export class TenantsService {
   }
 
   async remove(slug: string, user: CurrentUserWithRole) {
-    // findBySlug already validates tenant access
-    await this.findBySlug(slug, user);
+    const existingTenant = await this.findBySlug(slug, user);
 
-    const [deletedTenant] = await this.db.delete(tenants).where(eq(tenants.slug, slug)).returning();
+    const [tenant] = await this.db
+      .update(tenants)
+      .set({
+        isActive: false,
+        updatedAt: new Date(),
+      })
+      .where(eq(tenants.slug, slug))
+      .returning();
 
-    return deletedTenant;
+    return { ...tenant, ...existingTenant };
   }
 
   async getSummary(slug: string, user: CurrentUserWithRole) {

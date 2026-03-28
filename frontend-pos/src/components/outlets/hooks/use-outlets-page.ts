@@ -12,7 +12,6 @@ const formSchema = z.object({
   kode: z.string().min(1, 'Kode outlet wajib diisi'),
   alamat: z.string().optional(),
   noHp: z.string().optional(),
-  isActive: z.boolean().optional(),
 });
 
 export type OutletFormValues = z.infer<typeof formSchema>;
@@ -37,7 +36,6 @@ export function useOutletsPage() {
       kode: '',
       alamat: '',
       noHp: '',
-      isActive: true,
     },
   });
 
@@ -47,7 +45,6 @@ export function useOutletsPage() {
       kode: '',
       alamat: '',
       noHp: '',
-      isActive: true,
     });
   };
 
@@ -57,7 +54,6 @@ export function useOutletsPage() {
       kode: outlet.kode,
       alamat: outlet.alamat || '',
       noHp: outlet.noHp || '',
-      isActive: outlet.isActive,
     });
   };
 
@@ -123,8 +119,7 @@ export function useOutletsPage() {
 
   const allOutlets = useMemo(() => data?.data ?? [], [data]);
   const totalOutlets = data?.meta?.totalOutlet ?? 0;
-  const outletAktif = data?.meta?.outletAktif ?? 0;
-  const outletNonaktif = data?.meta?.outletNonaktif ?? 0;
+  const outletAktif = totalOutlets;
   const totalPages = data?.meta?.totalPages ?? 0;
   const total = data?.meta?.total ?? 0;
 
@@ -202,7 +197,6 @@ export function useOutletsPage() {
     displayedOutlets,
     totalOutlets,
     outletAktif,
-    outletNonaktif,
     totalPages,
     total,
 

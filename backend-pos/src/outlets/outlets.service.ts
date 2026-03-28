@@ -21,7 +21,7 @@ export class OutletsService {
   ) {}
 
   async findAll(query: OutletQueryDto, user: CurrentUserWithRole) {
-    const { page = 1, limit = 10, search, isActive, tenantId } = query;
+    const { page = 1, limit = 10, search, isActive = true, tenantId } = query;
     const offset = (page - 1) * limit;
 
     // Validate that query tenantId matches user's allowed tenant
@@ -165,11 +165,17 @@ export class OutletsService {
   }
 
   async remove(id: string, user: CurrentUserWithRole) {
-    // findById already validates tenant access
-    await this.findById(id, user);
+    const existingOutlet = await this.findById(id, user);
 
-    const [deletedOutlet] = await this.db.delete(outlets).where(eq(outlets.id, id)).returning();
+    const [outlet] = await this.db
+      .update(outlets)
+      .set({
+        isActive: false,
+        updatedAt: new Date(),
+      })
+      .where(eq(outlets.id, id))
+      .returning();
 
-    return deletedOutlet;
+    return { ...outlet, ...existingOutlet };
   }
 }

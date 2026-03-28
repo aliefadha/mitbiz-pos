@@ -14,7 +14,6 @@ import { useSessionWithCache } from '@/lib/session-cache';
 
 const formSchema = z.object({
   nama: z.string().min(1, 'Nama metode pembayaran wajib diisi'),
-  isActive: z.boolean().optional(),
 });
 
 export type PaymentMethodFormValues = z.infer<typeof formSchema>;
@@ -36,21 +35,18 @@ export function usePaymentMethodsPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       nama: '',
-      isActive: true,
     },
   });
 
   const resetFormForCreate = () => {
     form.reset({
       nama: '',
-      isActive: true,
     });
   };
 
   const resetFormForEdit = (paymentMethod: PaymentMethod) => {
     form.reset({
       nama: paymentMethod.nama,
-      isActive: paymentMethod.isActive,
     });
   };
 
@@ -103,14 +99,7 @@ export function usePaymentMethodsPage() {
 
   const allPaymentMethods = useMemo(() => data?.data ?? [], [data]);
   const totalPaymentMethods = data?.data?.length ?? 0;
-  const paymentMethodAktif = useMemo(
-    () => data?.data?.filter((pm) => pm.isActive).length ?? 0,
-    [data]
-  );
-  const paymentMethodNonaktif = useMemo(
-    () => data?.data?.filter((pm) => !pm.isActive).length ?? 0,
-    [data]
-  );
+  const paymentMethodAktif = totalPaymentMethods;
 
   const filteredPaymentMethods = useMemo(
     () =>
@@ -197,7 +186,6 @@ export function usePaymentMethodsPage() {
     displayedPaymentMethods,
     totalPaymentMethods,
     paymentMethodAktif,
-    paymentMethodNonaktif,
     totalPages,
     total: totalFiltered,
 

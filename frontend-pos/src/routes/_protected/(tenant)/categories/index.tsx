@@ -31,7 +31,6 @@ export function CategoryPage() {
     displayedCategories,
     totalCategories,
     categoryAktif,
-    categoryNonaktif,
     totalPages,
     total,
     createMutation,
@@ -75,11 +74,7 @@ export function CategoryPage() {
         )}
       </div>
 
-      <CategoryStats
-        totalCategories={totalCategories}
-        categoryAktif={categoryAktif}
-        categoryNonaktif={categoryNonaktif}
-      />
+      <CategoryStats totalCategories={totalCategories} categoryAktif={categoryAktif} />
 
       <CategoryList
         displayedCategories={displayedCategories}

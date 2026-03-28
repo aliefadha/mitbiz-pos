@@ -15,7 +15,7 @@ export class DiscountsService {
   ) {}
 
   async findAll(query: DiscountQueryDto, user: CurrentUserWithRole) {
-    const { page = 1, limit = 10, search, isActive, tenantId } = query;
+    const { page = 1, limit = 10, search, isActive = true, tenantId } = query;
     const offset = (page - 1) * limit;
 
     // Validate that query tenantId matches user's allowed tenant
@@ -149,14 +149,17 @@ export class DiscountsService {
   }
 
   async remove(id: string, user: CurrentUserWithRole) {
-    // findById already validates tenant access
-    await this.findById(id, user);
+    const existingDiscount = await this.findById(id, user);
 
-    const [deletedDiscount] = await this.db
-      .delete(discounts)
+    const [discount] = await this.db
+      .update(discounts)
+      .set({
+        isActive: false,
+        updatedAt: new Date(),
+      })
       .where(eq(discounts.id, id))
       .returning();
 
-    return deletedDiscount;
+    return { ...discount, ...existingDiscount };
   }
 }

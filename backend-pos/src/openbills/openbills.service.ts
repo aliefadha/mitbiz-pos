@@ -561,6 +561,10 @@ export class OpenBillsService {
       );
     }
 
+    if (outlet?.tenantId !== openBill.tenantId) {
+      throw new ForbiddenException('Outlet does not belong to the specified tenant');
+    }
+
     const today = new Date();
     const yyyy = today.getFullYear();
     const mm = String(today.getMonth() + 1).padStart(2, '0');

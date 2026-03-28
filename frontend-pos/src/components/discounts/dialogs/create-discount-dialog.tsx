@@ -24,7 +24,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import type { Discount } from '@/lib/api/discounts';
 import type { Outlet } from '@/lib/api/outlets';
 
@@ -34,7 +33,6 @@ export const discountFormSchema = z.object({
   scope: z.enum(['product', 'transaction']),
   level: z.enum(['tenant', 'outlet']),
   outletId: z.string().optional(),
-  isActive: z.boolean().optional(),
 });
 
 export type DiscountFormValues = z.infer<typeof discountFormSchema>;
@@ -112,7 +110,7 @@ export function CreateDiscountDialog({
                     value={field.value}
                   >
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="Pilih scope diskon" />
                       </SelectTrigger>
                     </FormControl>
@@ -137,11 +135,11 @@ export function CreateDiscountDialog({
                     value={field.value}
                   >
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="Pilih level diskon" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
+                    <SelectContent className="w-full">
                       <SelectItem value="tenant">Tenant</SelectItem>
                       <SelectItem value="outlet">Outlet</SelectItem>
                     </SelectContent>
@@ -163,7 +161,7 @@ export function CreateDiscountDialog({
                       value={field.value}
                     >
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full">
                           <SelectValue placeholder="Pilih outlet" />
                         </SelectTrigger>
                       </FormControl>
@@ -176,22 +174,6 @@ export function CreateDiscountDialog({
                       </SelectContent>
                     </Select>
                     <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-            {isEditing && (
-              <FormField
-                control={form.control}
-                name="isActive"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">Status Aktif</FormLabel>
-                    </div>
-                    <FormControl>
-                      <Switch checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
                   </FormItem>
                 )}
               />

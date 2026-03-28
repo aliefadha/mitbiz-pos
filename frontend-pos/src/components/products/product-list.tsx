@@ -75,10 +75,6 @@ export function ProductList({
     }).format(num);
   };
 
-  const getStatusColor = (isActive: boolean) => {
-    return isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700';
-  };
-
   const hasActions = canDelete;
 
   return (
@@ -136,7 +132,6 @@ export function ProductList({
                 <TableHead className="text-gray-800 font-medium">Nama</TableHead>
                 <TableHead className="text-gray-800 font-medium">Kategori</TableHead>
                 <TableHead className="text-gray-800 font-medium">Harga</TableHead>
-                <TableHead className="text-gray-800 font-medium">Status</TableHead>
                 {hasActions && (
                   <TableHead className="text-gray-800 font-medium w-[120px] rounded-tr-lg rounded-br-lg">
                     Aksi
@@ -159,13 +154,6 @@ export function ProductList({
                   </TableCell>
                   <TableCell>{product.category?.nama || '-'}</TableCell>
                   <TableCell>{formatRupiah(product.hargaJual)}</TableCell>
-                  <TableCell>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs ${getStatusColor(!!product.isActive)}`}
-                    >
-                      {product.isActive ? 'Aktif' : 'Tidak Aktif'}
-                    </span>
-                  </TableCell>
                   {hasActions && (
                     <TableCell>
                       <div className="flex gap-1">

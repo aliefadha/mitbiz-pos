@@ -4,16 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 interface PaymentMethodStatsProps {
   totalPaymentMethods: number;
   paymentMethodAktif: number;
-  paymentMethodNonaktif: number;
 }
 
 export function PaymentMethodStats({
   totalPaymentMethods,
   paymentMethodAktif,
-  paymentMethodNonaktif,
 }: PaymentMethodStatsProps) {
   return (
-    <div className="grid grid-cols-3 gap-4 mb-6">
+    <div className="grid grid-cols-2 gap-4 mb-6">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Total Metode Pembayaran</CardTitle>
@@ -30,15 +28,6 @@ export function PaymentMethodStats({
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{paymentMethodAktif}</div>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Metode Nonaktif</CardTitle>
-          <CreditCard className="h-4 w-4 text-red-600" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{paymentMethodNonaktif}</div>
         </CardContent>
       </Card>
     </div>

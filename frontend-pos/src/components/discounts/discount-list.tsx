@@ -64,10 +64,6 @@ export function DiscountList({
     onSearchChange(localSearch);
   };
 
-  const getStatusColor = (isActive: boolean) => {
-    return isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700';
-  };
-
   const getOutletName = (outletId: string | null | undefined) => {
     if (!outletId) return '-';
     return outlets.find((o) => o.id === outletId)?.nama || '-';
@@ -119,7 +115,6 @@ export function DiscountList({
                 <TableHead className="text-gray-800 font-medium">Scope</TableHead>
                 <TableHead className="text-gray-800 font-medium">Level</TableHead>
                 <TableHead className="text-gray-800 font-medium">Outlet</TableHead>
-                <TableHead className="text-gray-800 font-medium">Status</TableHead>
                 {hasActions && (
                   <TableHead className="text-gray-800 font-medium w-[120px] rounded-tr-lg rounded-br-lg">
                     Aksi
@@ -157,13 +152,6 @@ export function DiscountList({
                   </TableCell>
                   <TableCell>
                     {discount.level === 'tenant' ? '-' : getOutletName(discount.outletId)}
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs ${getStatusColor(!!discount.isActive)}`}
-                    >
-                      {discount.isActive ? 'Aktif' : 'Tidak Aktif'}
-                    </span>
                   </TableCell>
                   {hasActions && (
                     <TableCell>

@@ -19,7 +19,6 @@ const formSchema = z.object({
   scope: z.enum(['product', 'transaction']),
   level: z.enum(['tenant', 'outlet']),
   outletId: z.string().optional(),
-  isActive: z.boolean().optional(),
 });
 
 export type DiscountFormValues = z.infer<typeof formSchema>;
@@ -44,7 +43,6 @@ export function useDiscountsPage() {
       rate: '',
       scope: 'transaction',
       level: 'tenant',
-      isActive: true,
     },
   });
 
@@ -55,7 +53,6 @@ export function useDiscountsPage() {
       scope: 'transaction',
       level: 'tenant',
       outletId: undefined,
-      isActive: true,
     });
   };
 
@@ -66,7 +63,6 @@ export function useDiscountsPage() {
       scope: discount.scope,
       level: discount.level,
       outletId: discount.outletId || undefined,
-      isActive: discount.isActive,
     });
   };
 
@@ -173,7 +169,6 @@ export function useDiscountsPage() {
       scope: values.scope,
       level: values.level,
       outletId: values.level === 'outlet' ? values.outletId : null,
-      isActive: values.isActive,
     };
 
     if (editingDiscount) {

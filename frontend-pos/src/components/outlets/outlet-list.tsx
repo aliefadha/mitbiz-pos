@@ -62,10 +62,6 @@ export function OutletList({
     onSearchChange(localSearch);
   };
 
-  const getStatusColor = (isActive: boolean) => {
-    return isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700';
-  };
-
   const hasActions = canUpdate || canDelete;
 
   return (
@@ -110,7 +106,6 @@ export function OutletList({
                 <TableHead className="text-gray-800 font-medium">Nama</TableHead>
                 <TableHead className="text-gray-800 font-medium">Alamat</TableHead>
                 <TableHead className="text-gray-800 font-medium">No. HP</TableHead>
-                <TableHead className="text-gray-800 font-medium">Status</TableHead>
                 {hasActions && (
                   <TableHead className="text-gray-800 font-medium w-[120px] rounded-tr-lg rounded-br-lg">
                     Aksi
@@ -135,13 +130,6 @@ export function OutletList({
                   </TableCell>
                   <TableCell>{outlet.alamat || '-'}</TableCell>
                   <TableCell>{outlet.noHp || '-'}</TableCell>
-                  <TableCell>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs ${getStatusColor(!!outlet.isActive)}`}
-                    >
-                      {outlet.isActive ? 'Aktif' : 'Tidak Aktif'}
-                    </span>
-                  </TableCell>
                   {hasActions && (
                     <TableCell>
                       <div className="flex gap-1">
