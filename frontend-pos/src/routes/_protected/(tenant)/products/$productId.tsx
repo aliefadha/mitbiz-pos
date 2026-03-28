@@ -56,7 +56,6 @@ const editFormSchema = z.object({
   enableMinStock: z.boolean(),
   enableStockTracking: z.boolean(),
   unit: z.string(),
-  isActive: z.boolean(),
   discountIds: z.array(z.string()).optional(),
 });
 
@@ -82,7 +81,6 @@ function ProductDetailPage() {
       minStockLevel: 0,
       enableMinStock: false,
       enableStockTracking: true,
-      isActive: true,
       discountIds: [],
     },
   });
@@ -165,7 +163,6 @@ function ProductDetailPage() {
       enableMinStock: product.enableMinStock || false,
       enableStockTracking: product.enableStockTracking ?? true,
       unit: product.unit,
-      isActive: product.isActive,
       discountIds: product.discountProducts?.map((dp) => dp.discountId) || [],
     });
     setIsEditing(true);
@@ -375,22 +372,6 @@ function ProductDetailPage() {
                     </FormItem>
                   )}
                 />
-                <div className="space-y-4">
-                  <FormField
-                    control={editForm.control}
-                    name="isActive"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                        <div className="space-y-0.5">
-                          <FormLabel>Status Aktif</FormLabel>
-                        </div>
-                        <FormControl>
-                          <Switch checked={field.value} onCheckedChange={field.onChange} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </div>
                 <FormField
                   control={editForm.control}
                   name="discountIds"

@@ -237,10 +237,17 @@ export class ProductsService {
   }
 
   async remove(id: string, user: CurrentUserWithRole) {
-    await this.findById(id, user);
+    const existingProduct = await this.findById(id, user);
 
-    const [product] = await this.db.delete(products).where(eq(products.id, id)).returning();
+    const [product] = await this.db
+      .update(products)
+      .set({
+        isActive: false,
+        updatedAt: new Date(),
+      })
+      .where(eq(products.id, id))
+      .returning();
 
-    return product;
+    return { ...product, ...existingProduct };
   }
 }
