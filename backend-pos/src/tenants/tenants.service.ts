@@ -363,8 +363,14 @@ export class TenantsService {
 
     const existingSettings = existingTenant.settings || { taxRate: 0, receiptFooter: '' };
     const settings = {
-      taxRate: data.taxRate !== undefined ? Number(data.taxRate) : existingSettings.taxRate,
-      receiptFooter: data.receiptFooter ?? existingSettings.receiptFooter,
+      taxRate:
+        data.settings?.taxRate !== undefined
+          ? data.settings.taxRate
+          : data.taxRate !== undefined
+            ? Number(data.taxRate)
+            : existingSettings.taxRate,
+      receiptFooter:
+        data.settings?.receiptFooter ?? data.receiptFooter ?? existingSettings.receiptFooter,
     };
 
     const shouldDeleteImage = data.deleteImage === 'true';
