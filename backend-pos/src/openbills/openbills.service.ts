@@ -579,6 +579,10 @@ export class OpenBillsService {
           cashShiftId: openShift.id,
           completedAt: new Date(),
           updatedAt: new Date(),
+          nama: data.nama,
+          tipe: 'dine_in' as const,
+          bayar: data.bayar ?? '0',
+          kembali: data.kembali ?? '0',
         })
         .where(eq(orders.id, openBillId))
         .returning();

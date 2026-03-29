@@ -2,6 +2,7 @@ import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
 
 export const OrderStatusSchema = z.enum(['complete', 'cancel', 'refunded']);
+export const OrderTypeSchema = z.enum(['dine_in', 'take_away']);
 
 export const CreateOrderItemSchema = z.object({
   productId: z.string().min(1, 'Product ID is required'),
@@ -31,6 +32,10 @@ export const CreateOrderSchema = z.object({
   notes: z.string().optional().nullable(),
   nomorAntrian: z.string().optional().nullable(),
   completedAt: z.string().optional().nullable(),
+  nama: z.string().optional(),
+  tipe: OrderTypeSchema,
+  bayar: z.string().optional().default('0'),
+  kembali: z.string().optional().default('0'),
   items: z.array(CreateOrderItemSchema).optional(),
 });
 
@@ -47,6 +52,10 @@ export const UpdateOrderSchema = z.object({
   notes: z.string().optional().nullable(),
   nomorAntrian: z.string().optional().nullable(),
   completedAt: z.string().optional().nullable(),
+  nama: z.string().optional(),
+  tipe: OrderTypeSchema.optional(),
+  bayar: z.string().optional(),
+  kembali: z.string().optional(),
 });
 
 export const OrderIdSchema = z.object({
@@ -70,6 +79,7 @@ export const OrderQuerySchema = z.object({
     .optional(),
   search: z.string().optional(),
   status: OrderStatusSchema.optional(),
+  tipe: OrderTypeSchema.optional(),
   tenantId: z.string().min(1).optional(),
   outletId: z.string().min(1).optional(),
   cashShiftId: z.string().min(1).optional(),

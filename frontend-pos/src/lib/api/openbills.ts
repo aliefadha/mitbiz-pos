@@ -19,6 +19,10 @@ export interface OpenBill {
   completedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
+  nama: string | null;
+  tipe: 'dine_in' | 'take_away' | null;
+  bayar: string | null;
+  kembali: string | null;
   outlet?: {
     id: string;
     nama: string;
@@ -55,6 +59,8 @@ export interface CreateOpenBillDto {
   outletId: string;
   notes?: string | null;
   nomorAntrian?: string | null;
+  nama?: string | null;
+  tipe?: 'dine_in' | 'take_away';
   items?: CreateOpenBillItemDto[];
 }
 
@@ -87,6 +93,8 @@ export interface CloseOpenBillDto {
   jumlahDiskon?: string;
   diskonBreakdown?: DiscountBreakdown[];
   total?: string;
+  nama?: string | null;
+  tipe?: 'dine_in' | 'take_away';
 }
 
 export interface OpenBillListResponse {

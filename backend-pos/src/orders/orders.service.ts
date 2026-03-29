@@ -25,7 +25,7 @@ export class OrdersService {
   ) {}
 
   async findAll(query: OrderQueryDto, user: CurrentUserWithRole) {
-    const { page = 1, limit = 10, search, status, tenantId, outletId, cashShiftId } = query;
+    const { page = 1, limit = 10, search, status, tipe, tenantId, outletId, cashShiftId } = query;
     const offset = (page - 1) * limit;
 
     // Validate that query tenantId matches user's allowed tenant
@@ -40,6 +40,10 @@ export class OrdersService {
 
     if (status) {
       conditions.push(eq(orders.status, status));
+    }
+
+    if (tipe) {
+      conditions.push(eq(orders.tipe, tipe));
     }
 
     // Use query tenantId if provided, otherwise use effective tenant (for non-global roles)
@@ -434,7 +438,7 @@ export class OrdersService {
   }
 
   async findAllForExport(query: OrderQueryDto, user: CurrentUserWithRole) {
-    const { startDate, endDate, tenantId, outletId } = query;
+    const { startDate, endDate, tipe, tenantId, outletId } = query;
 
     if (tenantId) {
       await this.tenantAuth.validateQueryTenantId(user, tenantId);
@@ -451,6 +455,10 @@ export class OrdersService {
 
     if (outletId) {
       conditions.push(eq(orders.outletId, outletId));
+    }
+
+    if (tipe) {
+      conditions.push(eq(orders.tipe, tipe));
     }
 
     if (user.outletId) {
@@ -551,10 +559,23 @@ export class OrdersService {
         .join(', ');
     };
 
+    const formatType = (tipe: string) => {
+      switch (tipe) {
+        case 'dine_in':
+          return 'Makan di Tempat';
+        case 'take_away':
+          return 'Bawa Pulang';
+        default:
+          return tipe;
+      }
+    };
+
     const exportData = ordersWithItems.map((order, index) => ({
       No: index + 1,
       'Nomor Pesanan': order.orderNumber,
       Tanggal: formatDate(order.createdAt),
+      Pelanggan: order.nama || '-',
+      'Tipe Pesanan': order.tipe ? formatType(order.tipe) : '-',
       Outlet: order.outlet?.nama || '-',
       Kasir: order.cashier?.name || '-',
       'Metode Pembayaran': order.paymentMethod?.nama || '-',
@@ -563,6 +584,8 @@ export class OrdersService {
       Pajak: formatCurrency(order.jumlahPajak || 0),
       Diskon: formatCurrency(order.jumlahDiskon || 0),
       Total: formatCurrency(order.total || 0),
+      Bayar: formatCurrency(order.bayar || 0),
+      Kembali: formatCurrency(order.kembali || 0),
       Status: formatStatus(order.status),
     }));
 
@@ -573,6 +596,8 @@ export class OrdersService {
       { wch: 25 },
       { wch: 18 },
       { wch: 15 },
+      { wch: 18 },
+      { wch: 15 },
       { wch: 15 },
       { wch: 18 },
       { wch: 40 },
@@ -580,6 +605,7 @@ export class OrdersService {
       { wch: 12 },
       { wch: 12 },
       { wch: 15 },
+      { wch: 12 },
       { wch: 12 },
     ];
     worksheet['!cols'] = colWidths;

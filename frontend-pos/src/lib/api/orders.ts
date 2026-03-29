@@ -34,6 +34,10 @@ export interface Order {
   completedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
+  nama: string | null;
+  tipe: 'dine_in' | 'take_away' | null;
+  bayar: string | null;
+  kembali: string | null;
   outlet?: {
     id: string;
     nama: string;
@@ -81,6 +85,10 @@ export interface CreateOrderDto {
   notes?: string | null;
   nomorAntrian?: string | null;
   completedAt?: string | null;
+  nama?: string | null;
+  tipe?: 'dine_in' | 'take_away';
+  bayar?: string;
+  kembali?: string;
   items?: CreateOrderItemDto[];
 }
 
@@ -122,6 +130,7 @@ export interface OrderQueryParams {
   limit?: number;
   search?: string;
   status?: 'complete' | 'cancel' | 'refunded';
+  tipe?: 'dine_in' | 'take_away';
   tenantId?: string;
   outletId?: string;
   cashShiftId?: string;

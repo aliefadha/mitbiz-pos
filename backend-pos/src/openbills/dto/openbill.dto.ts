@@ -49,6 +49,10 @@ export const CloseOpenBillSchema = z.object({
   jumlahDiskon: z.string().optional().default('0'),
   diskonBreakdown: z.array(DiscountBreakdownSchema).optional(),
   total: z.string().optional().default('0'),
+  nama: z.string().optional().nullable(),
+  tipe: z.enum(['dine_in', 'take_away']).optional(),
+  bayar: z.string().optional().default('0'),
+  kembali: z.string().optional().default('0'),
 });
 
 export const OpenBillQuerySchema = z.object({

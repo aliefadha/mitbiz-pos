@@ -93,10 +93,14 @@ function PosPage() {
     amountPaid: number;
     change: number;
     notes: string;
+    nama: string;
+    tipe: 'dine_in' | 'take_away';
   } | null>(null);
   const [amountPaid, setAmountPaid] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
   const [nomorAntrian, setNomorAntrian] = useState<string>('');
+  const [customerName, setCustomerName] = useState<string>('');
+  const [orderType, setOrderType] = useState<'dine_in' | 'take_away'>('dine_in');
   const [selectedDiscountIds, setSelectedDiscountIds] = useState<string[]>([]);
   const [closeShiftOpen, setCloseShiftOpen] = useState(false);
   const [jumlahTutup, setJumlahTutup] = useState<string>('');
@@ -241,6 +245,8 @@ function PosPage() {
         amountPaid: Number(amountPaid),
         change,
         notes,
+        nama: customerName,
+        tipe: orderType,
       });
       setCart([]);
       setCheckoutOpen(false);
@@ -248,6 +254,8 @@ function PosPage() {
       setAmountPaid('');
       setNotes('');
       setNomorAntrian('');
+      setCustomerName('');
+      setOrderType('dine_in');
       setSelectedDiscountIds([]);
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
@@ -485,6 +493,10 @@ function PosPage() {
       notes: notes || null,
       nomorAntrian: nomorAntrian || null,
       completedAt: new Date().toISOString(),
+      nama: customerName || null,
+      tipe: orderType,
+      bayar: amountPaid || '0',
+      kembali: String(change > 0 ? change : 0),
       items: orderItems,
     });
   };
@@ -545,6 +557,8 @@ function PosPage() {
               diskonBreakdown: discountBreakdown,
               total: String(total),
               notes: notes || null,
+              nama: null,
+              tipe: 'dine_in',
             },
             {
               onSuccess: (closedOrder) => {
@@ -562,6 +576,8 @@ function PosPage() {
                   amountPaid: Number(closedOrder.total),
                   change: 0,
                   notes: closedOrder.notes || '',
+                  nama: closedOrder.nama || '',
+                  tipe: closedOrder.tipe || 'dine_in',
                 });
                 setCart([]);
                 setCheckoutOpen(false);
@@ -569,6 +585,8 @@ function PosPage() {
                 setAmountPaid('');
                 setNotes('');
                 setNomorAntrian('');
+                setCustomerName('');
+                setOrderType('dine_in');
                 setSelectedDiscountIds([]);
                 setEditingOpenBillId(null);
                 setSuccessOpen(true);
@@ -691,6 +709,8 @@ function PosPage() {
               setAmountPaid('');
               setNotes('');
               setNomorAntrian('');
+              setCustomerName('');
+              setOrderType('dine_in');
               setCheckoutOpen(true);
               if (isSheet) setMobileCartOpen(false);
             }}
@@ -1172,6 +1192,43 @@ function PosPage() {
                       placeholder="Masukkan nomor antrian..."
                     />
                   </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Nama Pelanggan (Opsional)</label>
+                    <Input
+                      value={customerName}
+                      onChange={(e) => setCustomerName(e.target.value)}
+                      placeholder="Masukkan nama pelanggan..."
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Tipe Pesanan</label>
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="orderType"
+                          value="dine_in"
+                          checked={orderType === 'dine_in'}
+                          onChange={() => setOrderType('dine_in')}
+                          className="rounded border-gray-300"
+                        />
+                        <span className="text-sm">Makan di Tempat</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="orderType"
+                          value="take_away"
+                          checked={orderType === 'take_away'}
+                          onChange={() => setOrderType('take_away')}
+                          className="rounded border-gray-300"
+                        />
+                        <span className="text-sm">Bawa Pulang</span>
+                      </label>
+                    </div>
+                  </div>
                 </div>
               </div>
               <DialogFooter className="mt-4 flex-col sm:flex-row gap-2">
@@ -1497,6 +1554,19 @@ function PosPage() {
                 No. Antrian: <span className="font-mono font-bold">{lastOrder.nomorAntrian}</span>
               </p>
             )}
+            {lastOrder?.nama && (
+              <p className="text-sm text-gray-500">
+                Pelanggan: <span className="font-mono font-bold">{lastOrder.nama}</span>
+              </p>
+            )}
+            {lastOrder?.tipe && (
+              <p className="text-sm text-gray-500">
+                Tipe:{' '}
+                <span className="font-mono font-bold">
+                  {lastOrder.tipe === 'dine_in' ? 'Makan di Tempat' : 'Bawa Pulang'}
+                </span>
+              </p>
+            )}
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
             <Button
@@ -1526,6 +1596,10 @@ function PosPage() {
             {lastOrder.nomorAntrian && (
               <p className="text-xs">No. Antrian: {lastOrder.nomorAntrian}</p>
             )}
+            {lastOrder.nama && <p className="text-xs">Pelanggan: {lastOrder.nama}</p>}
+            <p className="text-xs">
+              Tipe: {lastOrder.tipe === 'dine_in' ? 'Makan di Tempat' : 'Bawa Pulang'}
+            </p>
             <p className="text-xs">{new Date().toLocaleString('id-ID')}</p>
           </div>
           <div className="border-t border-b border-dashed py-2 mb-2">

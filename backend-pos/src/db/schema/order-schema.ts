@@ -9,6 +9,7 @@ import { paymentMethods } from './payment-method-schema';
 import { tenants } from './tenant-schema';
 
 export const orderStatusEnum = pgEnum('order_status', ['open', 'complete', 'cancel', 'refunded']);
+export const orderTypeEnum = pgEnum('order_type', ['dine_in', 'take_away']);
 
 export const orders = pgTable('orders', {
   id: text('id').primaryKey().default(sql`gen_random_uuid()`),
@@ -41,6 +42,10 @@ export const orders = pgTable('orders', {
   notes: text('notes'),
   nomorAntrian: text('nomor_antrian'),
   completedAt: timestamp('completed_at'),
+  nama: text('nama'),
+  tipe: orderTypeEnum('tipe'),
+  bayar: decimal('bayar', { precision: 12, scale: 2 }).default('0').notNull(),
+  kembali: decimal('kembali', { precision: 12, scale: 2 }).default('0').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
