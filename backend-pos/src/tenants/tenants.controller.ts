@@ -39,7 +39,7 @@ import { TenantsService } from './tenants.service';
 @UseGuards(AuthGuard, PermissionGuard, ScopeGuard)
 @GlobalScope()
 export class TenantsController {
-  constructor(private readonly tenantsService: TenantsService) {}
+  constructor(private readonly tenantsService: TenantsService) { }
 
   @Get()
   @ApiOperation({ summary: 'Get all tenants' })
@@ -111,6 +111,14 @@ export class TenantsController {
     return this.tenantsService.deleteImage(id, user);
   }
 
+  @Get('id/:id/outlets')
+  @ApiOperation({ summary: 'Get all outlets for a tenant by ID' })
+  @UsePipes(new ZodValidationPipe(TenantIdSchema, 'params'))
+  @Permission('tenants', [Action.READ])
+  findOutletsById(@Param() { id }: TenantIdDto, @CurrentUser() user: CurrentUserWithRole) {
+    return this.tenantsService.findOutletsById(id, user);
+  }
+
   @Delete(':slug')
   @ApiOperation({ summary: 'Delete a tenant' })
   @UsePipes(new ZodValidationPipe(TenantSlugSchema, 'params'))
@@ -143,13 +151,5 @@ export class TenantsController {
   @Permission('tenants', [Action.READ])
   findOutlets(@Param() { slug }: TenantSlugDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.tenantsService.findOutlets(slug, user);
-  }
-
-  @Get('id/:id/outlets')
-  @ApiOperation({ summary: 'Get all outlets for a tenant by ID' })
-  @UsePipes(new ZodValidationPipe(TenantIdSchema, 'params'))
-  @Permission('tenants', [Action.READ])
-  findOutletsById(@Param() { id }: TenantIdDto, @CurrentUser() user: CurrentUserWithRole) {
-    return this.tenantsService.findOutletsById(id, user);
   }
 }
