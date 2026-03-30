@@ -12,7 +12,7 @@ export const products = pgTable('products', {
   tenantId: text('tenant_id')
     .references(() => tenants.id)
     .notNull(),
-  sku: text('sku').notNull(),
+  sku: text('sku'),
   nama: text('nama').notNull(),
   deskripsi: text('deskripsi'),
   categoryId: text('category_id').references(() => categories.id),

@@ -33,7 +33,7 @@ import { checkPermissionWithScope } from '@/lib/permissions';
 import { useSessionWithCache } from '@/lib/session-cache';
 
 const formSchema = z.object({
-  sku: z.string().min(1, 'SKU wajib diisi'),
+  sku: z.string().optional(),
   nama: z.string().min(1, 'Nama produk wajib diisi'),
   deskripsi: z.string().optional(),
   categoryId: z.string().optional(),

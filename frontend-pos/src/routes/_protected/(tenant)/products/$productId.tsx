@@ -460,7 +460,7 @@ function ProductDetailPage() {
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <span className="text-gray-500">SKU:</span>{' '}
-                <code className="bg-gray-100 px-2 py-1 rounded">{product.sku}</code>
+                <code className="bg-gray-100 px-2 py-1 rounded">{product.sku || '-'}</code>
               </div>
               <div>
                 <span className="text-gray-500">Nama:</span> {product.nama}

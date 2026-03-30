@@ -142,7 +142,7 @@ export function ProductList({
             <TableBody>
               {displayedProducts.map((product, index) => (
                 <TableRow key={`${product.id}-${index}`} className="hover:bg-white">
-                  <TableCell>{product.sku}</TableCell>
+                  <TableCell>{product.sku || '-'}</TableCell>
                   <TableCell>
                     <Link
                       to="/products/$productId"

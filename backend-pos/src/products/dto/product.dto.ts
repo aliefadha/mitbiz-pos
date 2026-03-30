@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 export const CreateProductSchema = z.object({
   tenantId: z.string().min(1, 'Tenant ID is required'),
-  sku: z.string().min(1, 'SKU is required').max(50),
+  sku: z.string().max(50).optional().nullable(),
   nama: z.string().min(1, 'Product name is required').max(255),
   deskripsi: z.string().max(1000).optional().nullable(),
   categoryId: z.string().min(1).optional().nullable(),

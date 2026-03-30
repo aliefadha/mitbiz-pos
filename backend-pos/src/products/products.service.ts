@@ -13,7 +13,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { SQL, and, desc, eq, ilike, sql } from 'drizzle-orm';
+import { SQL, and, asc, desc, eq, ilike, sql } from 'drizzle-orm';
 import { CreateProductDto, ProductQueryDto, UpdateProductDto } from './dto';
 
 @Injectable()
@@ -68,7 +68,7 @@ export class ProductsService {
         .where(conditions.length > 0 ? and(...conditions) : undefined)
         .limit(limit)
         .offset(offset)
-        .orderBy(desc(products.createdAt)),
+        .orderBy(asc(products.createdAt)),
       this.db
         .select({ count: sql<number>`count(*)` })
         .from(products)
@@ -166,12 +166,14 @@ export class ProductsService {
       }
     }
 
-    const existingSku = await this.db.query.products.findFirst({
-      where: and(eq(products.sku, data.sku), eq(products.tenantId, data.tenantId)),
-    });
+    if (data.sku) {
+      const existingSku = await this.db.query.products.findFirst({
+        where: and(eq(products.sku, data.sku), eq(products.tenantId, data.tenantId)),
+      });
 
-    if (existingSku) {
-      throw new ConflictException(`Product with SKU ${data.sku} already exists in this tenant`);
+      if (existingSku) {
+        throw new ConflictException(`Product with SKU ${data.sku} already exists in this tenant`);
+      }
     }
 
     const [product] = await this.db.insert(products).values(data).returning();
