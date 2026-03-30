@@ -144,4 +144,12 @@ export class TenantsController {
   findOutlets(@Param() { slug }: TenantSlugDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.tenantsService.findOutlets(slug, user);
   }
+
+  @Get('id/:id/outlets')
+  @ApiOperation({ summary: 'Get all outlets for a tenant by ID' })
+  @UsePipes(new ZodValidationPipe(TenantIdSchema, 'params'))
+  @Permission('tenants', [Action.READ])
+  findOutletsById(@Param() { id }: TenantIdDto, @CurrentUser() user: CurrentUserWithRole) {
+    return this.tenantsService.findOutletsById(id, user);
+  }
 }

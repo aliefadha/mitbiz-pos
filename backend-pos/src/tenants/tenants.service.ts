@@ -474,4 +474,10 @@ export class TenantsService {
 
     return { data: tenant.outlets };
   }
+
+  async findOutletsById(id: string, user: CurrentUserWithRole) {
+    const tenant = await this.findById(id, user);
+
+    return { data: tenant.outlets };
+  }
 }
