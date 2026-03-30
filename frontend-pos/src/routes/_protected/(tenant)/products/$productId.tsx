@@ -46,7 +46,7 @@ function formatRupiah(value: number | string): string {
 }
 
 const editFormSchema = z.object({
-  sku: z.string(),
+  sku: z.string().optional(),
   nama: z.string(),
   deskripsi: z.string().optional(),
   categoryId: z.string().optional(),
