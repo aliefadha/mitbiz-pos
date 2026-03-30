@@ -39,7 +39,7 @@ import { TenantsService } from './tenants.service';
 @UseGuards(AuthGuard, PermissionGuard, ScopeGuard)
 @GlobalScope()
 export class TenantsController {
-  constructor(private readonly tenantsService: TenantsService) { }
+  constructor(private readonly tenantsService: TenantsService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get all tenants' })
