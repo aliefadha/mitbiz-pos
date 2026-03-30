@@ -557,8 +557,6 @@ function PosPage() {
               diskonBreakdown: discountBreakdown,
               total: String(total),
               notes: notes || null,
-              nama: null,
-              tipe: 'dine_in',
             },
             {
               onSuccess: (closedOrder) => {
