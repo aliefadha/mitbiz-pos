@@ -27,7 +27,17 @@ export function useCashShiftDetail(cashShiftId: string) {
   const orders = ordersData?.data ?? [];
   const ordersMeta = ordersData?.meta;
 
-  const totalPenjualan = orders.reduce((sum, order) => sum + parseFloat(order.total), 0);
+  // Separate unpaginated query just for the total sales sum — unaffected by current page
+  const { data: allOrdersData } = useQuery({
+    queryKey: ['orders', 'by-cash-shift', cashShiftId, 'all-total'],
+    queryFn: () => ordersApi.getAll({ cashShiftId, limit: 9999 }),
+    enabled: !!cashShiftId,
+  });
+
+  const totalPenjualan = (allOrdersData?.data ?? []).reduce(
+    (sum, order) => sum + parseFloat(order.total),
+    0
+  );
 
   const handlePageChange = (page: number) => setCurrentPage(page);
   const handlePageSizeChange = (size: number) => {
