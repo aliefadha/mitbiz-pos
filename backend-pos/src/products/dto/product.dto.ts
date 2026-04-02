@@ -6,7 +6,7 @@ export const CreateProductSchema = z.object({
   sku: z.string().max(50).optional().nullable(),
   nama: z.string().min(1, 'Product name is required').max(255),
   deskripsi: z.string().max(1000).optional().nullable(),
-  categoryId: z.string().min(1).optional().nullable(),
+  categoryId: z.string().optional().nullable(),
   hargaBeli: z.string().optional().nullable().default('0'),
   hargaJual: z.string().optional().default('0'),
   unit: z.string().max(20).default('pcs'),
@@ -17,10 +17,10 @@ export const CreateProductSchema = z.object({
 });
 
 export const UpdateProductSchema = z.object({
-  sku: z.string().min(1).max(50).optional(),
+  sku: z.string().max(50).optional().nullable(),
   nama: z.string().min(1).max(255).optional(),
   deskripsi: z.string().max(1000).optional().nullable(),
-  categoryId: z.string().min(1).optional().nullable(),
+  categoryId: z.string().optional().nullable(),
   hargaBeli: z.string().optional().nullable(),
   hargaJual: z.string().min(1).optional(),
   unit: z.string().max(20).optional(),
