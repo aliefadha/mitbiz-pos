@@ -119,11 +119,14 @@ export function useCashShiftsPage() {
   const userOpenShiftLoading = openShiftsLoading;
 
   const { data: cashShiftsData, isLoading: cashShiftsLoading } = useQuery({
-    queryKey: ['cash-shifts', tenantId, statusFilter],
+    queryKey: ['cash-shifts', tenantId, statusFilter, searchQuery, currentPage, pageSize],
     queryFn: () =>
       cashShiftsApi.getAll({
         tenantId,
         status: statusFilter !== 'all' ? (statusFilter as 'buka' | 'tutup') : undefined,
+        search: searchQuery || undefined,
+        page: currentPage,
+        limit: pageSize,
       }),
     enabled: !!tenantId,
   });
@@ -158,34 +161,20 @@ export function useCashShiftsPage() {
     },
   });
 
-  const allShifts = useMemo(() => cashShiftsData?.data ?? [], [cashShiftsData]);
+  const displayedShifts = useMemo(() => cashShiftsData?.data ?? [], [cashShiftsData]);
 
-  const filteredShifts = useMemo(
-    () =>
-      allShifts.filter(
-        (shift) =>
-          searchQuery === '' ||
-          shift.outlet?.nama?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          shift.cashier?.name?.toLowerCase().includes(searchQuery.toLowerCase())
-      ),
-    [allShifts, searchQuery]
-  );
+  const totalShifts = cashShiftsData?.meta?.total ?? 0;
+  const totalPages = cashShiftsData?.meta?.totalPages ?? 0;
+  const totalFiltered = totalShifts;
 
-  const totalShifts = useMemo(() => cashShiftsData?.data?.length ?? 0, [cashShiftsData]);
+  // For stats, we count from the current page data (approximate) or use meta
   const openShifts = useMemo(
-    () => cashShiftsData?.data?.filter((s) => s.status === 'buka').length ?? 0,
-    [cashShiftsData]
+    () => displayedShifts.filter((s) => s.status === 'buka').length,
+    [displayedShifts]
   );
   const closedShifts = useMemo(
-    () => cashShiftsData?.data?.filter((s) => s.status === 'tutup').length ?? 0,
-    [cashShiftsData]
-  );
-
-  const totalFiltered = filteredShifts.length;
-  const totalPages = Math.ceil(totalFiltered / pageSize);
-  const displayedShifts = filteredShifts.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
+    () => displayedShifts.filter((s) => s.status === 'tutup').length,
+    [displayedShifts]
   );
 
   const handleOpenShift = (values: OpenShiftFormValues) => {

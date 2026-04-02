@@ -28,6 +28,11 @@ export function OrdersPage() {
     outlets,
     orders,
     ordersLoading,
+    ordersMeta,
+    currentPage,
+    setCurrentPage,
+    pageSize,
+    setPageSize,
   } = useOrdersPage({ canReadOutlets });
 
   const formatDate = (date: Date | undefined) => {
@@ -71,7 +76,20 @@ export function OrdersPage() {
             canReadOutlets={canReadOutlets}
           />
 
-          <OrderList orders={orders} isLoading={ordersLoading} onView={handleView} />
+          <OrderList
+            orders={orders}
+            isLoading={ordersLoading}
+            onView={handleView}
+            currentPage={currentPage}
+            pageSize={pageSize}
+            total={ordersMeta?.total || 0}
+            totalPages={ordersMeta?.totalPages || 0}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setCurrentPage(1);
+            }}
+          />
         </CardContent>
       </Card>
     </div>

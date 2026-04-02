@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight, Package } from 'lucide-react';
-import { useState } from 'react';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -23,6 +23,12 @@ import type { Order } from '@/lib/api/orders';
 interface CashShiftOrdersListProps {
   orders: Order[];
   isLoading: boolean;
+  currentPage: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
 }
 
 const formatRupiah = (value: string | number): string => {
@@ -70,24 +76,17 @@ const getStatusLabel = (status: string) => {
   }
 };
 
-export function CashShiftOrdersList({ orders, isLoading }: CashShiftOrdersListProps) {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-
+export function CashShiftOrdersList({
+  orders,
+  isLoading,
+  currentPage,
+  pageSize,
+  total,
+  totalPages,
+  onPageChange,
+  onPageSizeChange,
+}: CashShiftOrdersListProps) {
   const totalPenjualan = orders.reduce((sum, order) => sum + parseFloat(order.total), 0);
-
-  const total = orders.length;
-  const totalPages = Math.ceil(total / pageSize);
-  const displayedOrders = orders.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-
-  const onPageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-
-  const onPageSizeChange = (size: number) => {
-    setPageSize(size);
-    setCurrentPage(1);
-  };
 
   return (
     <div>
@@ -111,7 +110,7 @@ export function CashShiftOrdersList({ orders, isLoading }: CashShiftOrdersListPr
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {displayedOrders.map((order, index) => (
+                {orders.map((order: Order, index: number) => (
                   <TableRow
                     key={order.id}
                     className="cursor-pointer"

@@ -1,5 +1,4 @@
 import { ChevronLeft, ChevronRight, Eye } from 'lucide-react';
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -23,6 +22,12 @@ interface OrderListProps {
   orders: Order[];
   isLoading: boolean;
   onView: (orderId: string) => void;
+  currentPage: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
 }
 
 const formatRupiah = (value: string | number): string => {
@@ -46,23 +51,17 @@ const formatDate = (date: Date | string): string => {
   }).format(d);
 };
 
-export function OrderList({ orders, isLoading, onView }: OrderListProps) {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-
-  const total = orders.length;
-  const totalPages = Math.ceil(total / pageSize);
-  const displayedOrders = orders.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-
-  const onPageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-
-  const onPageSizeChange = (size: number) => {
-    setPageSize(size);
-    setCurrentPage(1);
-  };
-
+export function OrderList({
+  orders,
+  isLoading,
+  onView,
+  currentPage,
+  pageSize,
+  total,
+  totalPages,
+  onPageChange,
+  onPageSizeChange,
+}: OrderListProps) {
   return (
     <>
       {isLoading ? (
@@ -90,7 +89,7 @@ export function OrderList({ orders, isLoading, onView }: OrderListProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {displayedOrders.map((order) => (
+            {orders.map((order) => (
               <TableRow key={order.id} className="hover:bg-white">
                 <TableCell>
                   <span className="truncate max-w-[120px] block text-gray-900 font-medium ">

@@ -24,8 +24,18 @@ function CashShiftDetailPage() {
 
   const canReadOrders = hasPermission('orders', 'read');
 
-  const { cashShift, orders, totalPenjualan, isLoading, ordersLoading } =
-    useCashShiftDetail(cashShiftId);
+  const {
+    cashShift,
+    orders,
+    ordersMeta,
+    totalPenjualan,
+    isLoading,
+    ordersLoading,
+    currentPage,
+    pageSize,
+    handlePageChange,
+    handlePageSizeChange,
+  } = useCashShiftDetail(cashShiftId);
 
   if (isLoading) {
     return (
@@ -105,7 +115,18 @@ function CashShiftDetailPage() {
         </Card>
       </div>
 
-      {canReadOrders && <CashShiftOrdersList orders={orders} isLoading={ordersLoading} />}
+      {canReadOrders && (
+        <CashShiftOrdersList
+          orders={orders}
+          isLoading={ordersLoading}
+          currentPage={currentPage}
+          pageSize={pageSize}
+          total={ordersMeta?.total ?? 0}
+          totalPages={ordersMeta?.totalPages ?? 0}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+        />
+      )}
     </div>
   );
 }

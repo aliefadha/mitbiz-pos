@@ -18,6 +18,8 @@ export function useOrdersPage(options?: UseOrdersPageOptions) {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [outletFilter, setOutletFilter] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const [dateRange, setDateRange] = useState<DateRange | undefined>(() => {
     const now = new Date();
@@ -35,7 +37,7 @@ export function useOrdersPage(options?: UseOrdersPageOptions) {
   });
 
   const { data: ordersData, isLoading: ordersLoading } = useQuery({
-    queryKey: ['orders', tenantId, outletFilter, searchQuery, statusFilter],
+    queryKey: ['orders', tenantId, outletFilter, searchQuery, statusFilter, currentPage, pageSize],
     queryFn: () =>
       ordersApi.getAll({
         tenantId,
@@ -43,6 +45,8 @@ export function useOrdersPage(options?: UseOrdersPageOptions) {
         search: searchQuery || undefined,
         status:
           statusFilter !== 'all' ? (statusFilter as 'complete' | 'cancel' | 'refunded') : undefined,
+        page: currentPage,
+        limit: pageSize,
       }),
     enabled: !!tenantId,
   });
@@ -69,5 +73,10 @@ export function useOrdersPage(options?: UseOrdersPageOptions) {
     orders: displayedOrders,
     ordersLoading,
     ordersMeta: ordersData?.meta,
+
+    currentPage,
+    setCurrentPage,
+    pageSize,
+    setPageSize,
   };
 }
