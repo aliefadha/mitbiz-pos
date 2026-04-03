@@ -23,7 +23,9 @@ export const CreateTenantSchema = z.object({
     .min(3, 'Slug must be at least 3 characters')
     .max(5, 'Slug must be at most 5 characters')
     .regex(/^[a-zA-Z0-9-]+$/, 'Slug must contain only letters, numbers, and hyphens'),
-  userId: z.string().min(1, 'User ID is required').optional(),
+  ownerName: z.string().min(1, 'Owner name is required').optional(),
+  ownerEmail: z.string().email('Invalid email format').optional(),
+  ownerPassword: z.string().min(8, 'Password must be at least 8 characters').optional(),
   settings: TenantSettingsSchema.optional(),
   taxRate: z.string().optional(),
   receiptFooter: z.string().optional(),

@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { ArrowLeft, Eye, EyeOff, Save, UserPlus } from 'lucide-react';
 import { useState } from 'react';
@@ -18,19 +18,10 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { rolesApi } from '@/lib/api/roles';
 import { tenantsApi } from '@/lib/api/tenants';
-import { usersApi } from '@/lib/api/users';
 import { checkPermissionWithScope } from '@/lib/permissions';
 
 const createTenantSchema = z.object({
@@ -48,7 +39,6 @@ const createTenantSchema = z.object({
   ownerName: z.string().min(1, 'Nama pemilik wajib diisi'),
   ownerEmail: z.string().email('Masukkan email yang valid'),
   ownerPassword: z.string().min(8, 'Password minimal 8 karakter'),
-  ownerRoleId: z.string().min(1, 'Role wajib dipilih'),
 });
 
 type CreateTenantFormValues = z.infer<typeof createTenantSchema>;
@@ -81,40 +71,22 @@ function CreateTenantPage() {
       ownerName: '',
       ownerEmail: '',
       ownerPassword: '',
-      ownerRoleId: '',
     },
-  });
-
-  const { data: roles = [] } = useQuery({
-    queryKey: ['roles', 'tenant'],
-    queryFn: () => rolesApi.getAll({ scope: 'tenant' }),
   });
 
   const createMutation = useMutation({
     mutationFn: async (data: CreateTenantFormValues) => {
-      const userResult = await usersApi.createUser({
-        name: data.ownerName,
-        email: data.ownerEmail,
-        password: data.ownerPassword,
-        roleId: data.ownerRoleId,
-        isSubscribed: true,
-      });
-
-      const createdUser = (userResult as any).user || userResult;
-
       const tenant = await tenantsApi.create({
         nama: data.nama,
         slug: data.slug,
-        userId: createdUser.id,
+        ownerName: data.ownerName,
+        ownerEmail: data.ownerEmail,
+        ownerPassword: data.ownerPassword,
         alamat: data.alamat || undefined,
         noHp: data.noHp || undefined,
         isActive: data.isActive,
-        settings: {
-          currency: 'IDR',
-          timezone: 'Asia/Jakarta',
-          taxRate: data.taxRate,
-          receiptFooter: data.receiptFooter || 'Terima kasih telah berbelanja',
-        },
+        taxRate: String(data.taxRate),
+        receiptFooter: data.receiptFooter || 'Terima kasih telah berbelanja',
       });
 
       return tenant;
@@ -162,7 +134,7 @@ function CreateTenantPage() {
 
       <Form {...form}>
         <form onSubmit={handleSubmit} className="space-y-6">
-          <Card className="py-5 gap-0">
+          <Card>
             <CardContent className="space-y-5">
               <div className="flex items-center gap-2">
                 <UserPlus className="h-5 w-5 text-blue-500" />
@@ -174,7 +146,7 @@ function CreateTenantPage() {
 
               <Separator />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+              <div className="grid grid-cols-1 gap-x-6 gap-y-5">
                 <FormField
                   control={form.control}
                   name="ownerName"
@@ -242,39 +214,6 @@ function CreateTenantPage() {
                     </FormItem>
                   )}
                 />
-
-                <FormField
-                  control={form.control}
-                  name="ownerRoleId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        Role <span className="text-red-500">*</span>
-                      </FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Pilih role untuk pemilik" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {roles.map((role) => (
-                            <SelectItem key={role.id} value={role.id}>
-                              {role.name}
-                              {role.description && (
-                                <span className="text-gray-400 ml-1">— {role.description}</span>
-                              )}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        Role menentukan hak akses pengguna pada bisnis
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </div>
             </CardContent>
           </Card>
@@ -283,7 +222,7 @@ function CreateTenantPage() {
             <CardContent className="space-y-5">
               <h2 className="text-base font-semibold text-gray-900">Informasi Bisnis</h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+              <div className="grid grid-cols-1 gap-x-6 gap-y-5">
                 <FormField
                   control={form.control}
                   name="nama"
@@ -327,7 +266,7 @@ function CreateTenantPage() {
                   control={form.control}
                   name="alamat"
                   render={({ field }) => (
-                    <FormItem className="md:col-span-2">
+                    <FormItem>
                       <FormLabel>Alamat</FormLabel>
                       <FormControl>
                         <Textarea

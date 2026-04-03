@@ -19,7 +19,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { tenantsApi } from '@/lib/api/tenants';
-import { authClient, signOut } from '@/lib/auth-client';
+import { signOut } from '@/lib/auth-client';
 
 const createTenantSchema = z.object({
   nama: z.string().min(1, 'Nama bisnis wajib diisi').max(255, 'Nama bisnis maksimal 255 karakter'),
@@ -59,30 +59,15 @@ function CreateTenantOnboardingPage() {
 
   const createMutation = useMutation({
     mutationFn: async (data: CreateTenantFormValues) => {
-      const session = await authClient.getSession();
-      const userId = session.data?.user?.id;
-
-      if (!userId) {
-        throw new Error('User session not found');
-      }
-
-      const tenant = await tenantsApi.create(
-        {
-          nama: data.nama,
-          slug: data.slug,
-          userId,
-          alamat: data.alamat || undefined,
-          noHp: data.noHp || undefined,
-          isActive: true,
-          settings: {
-            currency: 'IDR',
-            timezone: 'Asia/Jakarta',
-            taxRate: 11,
-            receiptFooter: 'Terima kasih telah berbelanja',
-          },
-        },
-        userId
-      );
+      const tenant = await tenantsApi.create({
+        nama: data.nama,
+        slug: data.slug,
+        alamat: data.alamat || undefined,
+        noHp: data.noHp || undefined,
+        isActive: true,
+        taxRate: '11',
+        receiptFooter: 'Terima kasih telah berbelanja',
+      });
 
       return tenant;
     },

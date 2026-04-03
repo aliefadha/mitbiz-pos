@@ -4,10 +4,14 @@ import { tenants } from '@/db/schema';
 import { user as userSchema } from '@/db/schema';
 import { categories } from '@/db/schema/category-schema';
 import { outlets } from '@/db/schema/outlet-schema';
+import { paymentMethods } from '@/db/schema/payment-method-schema';
 import { products } from '@/db/schema/product-schema';
+import { rolePermissions } from '@/db/schema/role-permission-schema';
+import { roles } from '@/db/schema/role-schema';
 import type { DrizzleDB } from '@/db/type';
-import { OutletsService } from '@/outlets/outlets.service';
+import { auth } from '@/lib/auth';
 import { TenantAuthService } from '@/rbac/services/tenant-auth.service';
+import { ScopeType } from '@/rbac/types/rbac.types';
 import {
   ConflictException,
   ForbiddenException,
@@ -18,12 +22,14 @@ import {
 import { SQL, and, asc, count, eq, ilike, inArray, like, or, sql } from 'drizzle-orm';
 import { CreateTenantDto, TenantQueryDto, UpdateTenantDto } from './dto';
 
+const TEMPLATE_OWNER_ROLE_ID = '00000000-0000-0000-0000-000000000010';
+const TEMPLATE_CASHIER_ROLE_ID = '00000000-0000-0000-0000-000000000011';
+
 @Injectable()
 export class TenantsService {
   constructor(
     @Inject(DB_CONNECTION) private db: DrizzleDB,
     private readonly tenantAuth: TenantAuthService,
-    private readonly outletsService: OutletsService,
   ) {}
 
   async findAll(query: TenantQueryDto, user: CurrentUserWithRole) {
@@ -252,38 +258,35 @@ export class TenantsService {
   }
 
   async create(data: CreateTenantDto, user: CurrentUserWithRole, file?: Express.Multer.File) {
-    if (data.userId) {
-      const userExists = await this.db.query.user.findFirst({
-        where: eq(userSchema.id, data.userId),
-      });
-
-      if (!userExists) {
-        throw new NotFoundException(`User tidak ditemukan`);
-      }
-    }
-
-    data.slug = data.slug.toUpperCase();
+    const slugUpper = data.slug.toUpperCase();
 
     const slugExists = await this.db.query.tenants.findFirst({
-      where: eq(tenants.slug, data.slug),
+      where: eq(tenants.slug, slugUpper),
     });
 
     if (slugExists) {
       throw new ConflictException(`Nama tenant sudah digunakan`);
     }
 
-    const nameExists = await this.db.query.tenants.findFirst({
-      where: or(ilike(tenants.nama, data.nama), eq(tenants.nama, data.nama)),
-    });
+    let userId: string;
 
-    if (nameExists) {
-      throw new ConflictException(`Nama tenant sudah digunakan`);
-    }
+    if (data.ownerEmail && data.ownerPassword && data.ownerName) {
+      const result = await auth.api.signUpEmail({
+        body: {
+          email: data.ownerEmail,
+          password: data.ownerPassword,
+          name: data.ownerName,
+          roleId: TEMPLATE_OWNER_ROLE_ID,
+        },
+      });
 
-    // If user is creating their own tenant (not admin assigning), force userId to be their own id
-    let finalUserId = data.userId;
-    if (!user.role || user.role.scope !== 'global') {
-      finalUserId = user.id;
+      if (!result.user) {
+        throw new ConflictException('Failed to create owner user');
+      }
+
+      userId = result.user.id;
+    } else {
+      userId = user.id;
     }
 
     const settings = {
@@ -292,41 +295,114 @@ export class TenantsService {
         data.receiptFooter ?? data.settings?.receiptFooter ?? 'Terima kasih telah berbelanja',
     };
 
-    const [tenant] = await this.db
-      .insert(tenants)
-      .values({
-        ...data,
-        userId: finalUserId,
-        settings,
-        image: file?.path || data.image,
-      })
-      .returning();
+    return await this.db.transaction(async (tx) => {
+      const [tenant] = await tx
+        .insert(tenants)
+        .values({
+          nama: data.nama,
+          slug: slugUpper,
+          userId: userId,
+          settings,
+          image: file?.path || data.image,
+          alamat: data.alamat || null,
+          noHp: data.noHp || null,
+          isActive: data.isActive ?? true,
+        })
+        .returning();
 
-    // Create default outlet "Outlet Utama"
-    await this.outletsService.create(
-      {
+      await tx.insert(paymentMethods).values([
+        { tenantId: tenant.id, nama: 'Tunai' },
+        { tenantId: tenant.id, nama: 'QRIS' },
+      ]);
+
+      await tx.insert(outlets).values({
         tenantId: tenant.id,
-        nama: 'Outlet Utama',
-        kode: `OUT-001`,
+        nama: 'Toko Utama',
+        kode: 'OUT-001',
         isActive: true,
-      },
-      user,
-    );
+      });
 
-    //TODO: manually add payment method to tenant
+      await tx.update(userSchema).set({ tenantId: tenant.id }).where(eq(userSchema.id, userId));
 
-    // Link user to the new tenant
-    if (finalUserId) {
-      await this.db
+      await this.cloneTemplateRoles(tx, tenant.id, userId);
+
+      return tenant;
+    });
+  }
+
+  private async cloneTemplateRoles(tx: DrizzleDB, tenantId: string, userId: string): Promise<void> {
+    const [templateOwnerRole, templateCashierRole] = await Promise.all([
+      tx.query.roles.findFirst({
+        where: eq(roles.id, TEMPLATE_OWNER_ROLE_ID),
+      }),
+      tx.query.roles.findFirst({
+        where: eq(roles.id, TEMPLATE_CASHIER_ROLE_ID),
+      }),
+    ]);
+
+    const [templateOwnerPermissions, templateCashierPermissions] = await Promise.all([
+      tx.query.rolePermissions.findMany({
+        where: eq(rolePermissions.roleId, TEMPLATE_OWNER_ROLE_ID),
+      }),
+      tx.query.rolePermissions.findMany({
+        where: eq(rolePermissions.roleId, TEMPLATE_CASHIER_ROLE_ID),
+      }),
+    ]);
+
+    if (templateOwnerRole) {
+      const [newOwnerRole] = await tx
+        .insert(roles)
+        .values({
+          name: templateOwnerRole.name,
+          scope: ScopeType.TENANT,
+          tenantId: tenantId,
+          description: templateOwnerRole.description,
+          isActive: true,
+          isDefault: true,
+        })
+        .returning();
+
+      if (newOwnerRole && templateOwnerPermissions.length > 0) {
+        await tx.insert(rolePermissions).values(
+          templateOwnerPermissions.map((perm) => ({
+            roleId: newOwnerRole.id,
+            resource: perm.resource,
+            action: perm.action,
+          })),
+        );
+      }
+
+      await tx
         .update(userSchema)
-        .set({ tenantId: tenant.id })
-        .where(eq(userSchema.id, finalUserId));
+        .set({
+          roleId: newOwnerRole.id,
+        })
+        .where(eq(userSchema.id, userId));
     }
 
-    //TODO: Create tenant owner and cashier role by copying template from role template and links it with tenantId
-    //TODO: Change registered user role into new tenant owner role
+    if (templateCashierRole) {
+      const [newCashierRole] = await tx
+        .insert(roles)
+        .values({
+          name: templateCashierRole.name,
+          scope: ScopeType.TENANT,
+          tenantId: tenantId,
+          description: templateCashierRole.description,
+          isActive: true,
+          isDefault: false,
+        })
+        .returning();
 
-    return tenant;
+      if (newCashierRole && templateCashierPermissions.length > 0) {
+        await tx.insert(rolePermissions).values(
+          templateCashierPermissions.map((perm) => ({
+            roleId: newCashierRole.id,
+            resource: perm.resource,
+            action: perm.action,
+          })),
+        );
+      }
+    }
   }
 
   async update(
@@ -347,16 +423,6 @@ export class TenantsService {
       });
 
       if (slugExists) {
-        throw new ConflictException(`Nama tenant sudah digunakan`);
-      }
-    }
-
-    if (data.nama && data.nama !== existingTenant.nama) {
-      const nameExists = await this.db.query.tenants.findFirst({
-        where: or(ilike(tenants.nama, data.nama), eq(tenants.nama, data.nama)),
-      });
-
-      if (nameExists) {
         throw new ConflictException(`Nama tenant sudah digunakan`);
       }
     }

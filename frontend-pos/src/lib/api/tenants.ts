@@ -114,12 +114,15 @@ export const tenantsApi = {
     data: {
       nama: string;
       slug: string;
-      userId: string;
-      settings?: TenantSettings;
+      ownerName?: string;
+      ownerEmail?: string;
+      ownerPassword?: string;
       image?: string;
       alamat?: string;
       noHp?: string;
       isActive?: boolean;
+      taxRate?: string;
+      receiptFooter?: string;
     },
     userId?: string
   ): Promise<Tenant> => {
