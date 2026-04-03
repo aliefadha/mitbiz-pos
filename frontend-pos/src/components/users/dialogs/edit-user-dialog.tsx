@@ -93,7 +93,7 @@ export function EditUserDialog({
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="email@example.com" {...field} />
+                      <Input type="email" placeholder="email@example.com" {...field} disabled />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
