@@ -47,7 +47,7 @@ export class UserController {
 
   @Get()
   @UsePipes(new ZodValidationPipe(UserQuerySchema, 'query'))
-  @Permission('user', [Action.READ])
+  @Permission('users', [Action.READ])
   async getUsers(@Query() query: UserQueryDto, @CurrentUser() currentUser: CurrentUserWithRole) {
     if (!currentUser?.id) {
       return { users: [], meta: { page: 1, limit: 10, total: 0, totalPages: 0 } };
@@ -61,7 +61,7 @@ export class UserController {
   }
 
   @Get('me')
-  @Permission('user', [Action.READ])
+  @Permission('users', [Action.READ])
   async getProfile(@Request() req: ExpressRequest) {
     const session = await this.authService.api.getSession({
       headers: fromNodeHeaders(req.headers),
@@ -82,7 +82,7 @@ export class UserController {
 
   @Post()
   @UsePipes(new ZodValidationPipe(CreateUserSchema))
-  @Permission('user', [Action.CREATE])
+  @Permission('users', [Action.CREATE])
   async createUser(@Body() body: CreateUserDto, @CurrentUser() currentUser: CurrentUserWithRole) {
     if (!currentUser?.id) {
       return { error: 'No session found' };
@@ -94,7 +94,7 @@ export class UserController {
 
   @Patch(':id')
   @UsePipes(new ZodValidationPipe(UpdateUserSchema))
-  @Permission('user', [Action.UPDATE])
+  @Permission('users', [Action.UPDATE])
   async updateUser(
     @Param('id') id: string,
     @Body() body: UpdateUserDto,

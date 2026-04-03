@@ -13,7 +13,7 @@ const defaultRoles = [
     id: GLOBAL_ADMIN_ROLE_ID,
     name: 'admin',
     scope: ScopeType.GLOBAL,
-    description: 'Full system access',
+    description: 'superadmin',
     isDefault: false,
     isActive: true,
   },
@@ -29,7 +29,7 @@ const defaultRoles = [
     id: GLOBAL_CASHIER_ROLE_ID,
     name: 'cashier',
     scope: ScopeType.GLOBAL,
-    description: 'Kasir',
+    description: 'kasir',
     isDefault: false,
     isActive: true,
   },
@@ -58,10 +58,6 @@ const adminPermissions = [
   },
   {
     resource: 'users',
-    actions: [Action.CREATE, Action.READ, Action.LIST, Action.UPDATE, Action.DELETE],
-  },
-  {
-    resource: 'user',
     actions: [Action.CREATE, Action.READ, Action.LIST, Action.UPDATE, Action.DELETE],
   },
   { resource: 'products', actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE] },
@@ -104,7 +100,6 @@ const adminPermissions = [
 
 const ownerPermissions = [
   { resource: 'users', actions: [Action.CREATE, Action.READ, Action.LIST] },
-  { resource: 'user', actions: [Action.CREATE, Action.READ, Action.LIST] },
   { resource: 'products', actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE] },
   { resource: 'categories', actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE] },
   {
@@ -166,7 +161,6 @@ async function seedRbac() {
 
   const defaultResources = [
     { name: 'users', description: 'User management' },
-    { name: 'user', description: 'User operations' },
     { name: 'products', description: 'Product management' },
     { name: 'categories', description: 'Category management' },
     { name: 'transaction', description: 'Transaction operations' },
