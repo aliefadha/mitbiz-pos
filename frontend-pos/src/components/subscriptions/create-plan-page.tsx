@@ -1,13 +1,10 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { ArrowLeft, Check, Loader2, Save } from 'lucide-react';
+import { ArrowLeft, Loader2, Plus, Save, X } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import {
-  type SubscriptionPlanFormValues,
-  subscriptionPlanFormSchema,
-} from '@/components/subscriptions/dialogs/edit-plan-dialog';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CurrencyInput } from '@/components/ui/currency-input';
@@ -27,28 +24,47 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { type CreatePlanDto, subscriptionPlansApi } from '@/lib/api/subscriptions';
+import {
+  type BillingCycle,
+  type CreatePlanDto,
+  subscriptionPlansApi,
+} from '@/lib/api/subscriptions';
+
+const BILLING_CYCLES: { value: BillingCycle; label: string }[] = [
+  { value: 'monthly', label: 'Monthly (1 bulan)' },
+  { value: 'quarterly', label: 'Quarterly (3 bulan)' },
+  { value: 'semi_annual', label: 'Semi Annual (6 bulan)' },
+  { value: 'yearly', label: 'Yearly (12 bulan)' },
+];
+
+const createPlanFormSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  billingCycles: z
+    .array(
+      z.object({
+        cycle: z.enum(['monthly', 'quarterly', 'semi_annual', 'yearly']),
+        price: z.string().min(1, 'Price is required'),
+      })
+    )
+    .min(1, 'At least one billing cycle is required'),
+  isActive: z.boolean(),
+});
+
+export type CreatePlanFormValues = z.infer<typeof createPlanFormSchema>;
 
 export function CreatePlanPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const form = useForm<SubscriptionPlanFormValues>({
-    resolver: zodResolver(subscriptionPlanFormSchema),
+  const form = useForm<CreatePlanFormValues>({
+    resolver: zodResolver(createPlanFormSchema),
     defaultValues: {
       name: '',
-      billingCycle: 'monthly',
-      price: '0',
+      billingCycles: [{ cycle: 'monthly', price: '0' }],
       isActive: true,
-      proFeatureIds: [],
     },
-  });
-
-  const { data: proFeaturesData, isLoading: proFeaturesLoading } = useQuery({
-    queryKey: ['pro-features'],
-    queryFn: () => subscriptionPlansApi.getAllProFeatures(),
   });
 
   const createMutation = useMutation({
@@ -64,23 +80,31 @@ export function CreatePlanPage() {
   });
 
   const handleSubmit = form.handleSubmit((values) => {
-    const { proFeatureIds, ...planData } = values;
     createMutation.mutate({
-      ...planData,
-      proFeatureIds: proFeatureIds || [],
+      name: values.name,
+      billingCycles: values.billingCycles,
+      isActive: values.isActive,
     });
   });
 
-  const proFeatureIds = form.watch('proFeatureIds') || [];
-  const toggleProFeature = (featureId: string) => {
-    const current = form.getValues('proFeatureIds') || [];
-    if (current.includes(featureId)) {
+  const billingCycles = form.watch('billingCycles') || [];
+
+  const addBillingCycle = () => {
+    const current = form.getValues('billingCycles') || [];
+    const usedCycles = current.map((bc) => bc.cycle);
+    const availableCycle = BILLING_CYCLES.find((bc) => !usedCycles.includes(bc.value));
+    if (availableCycle) {
+      form.setValue('billingCycles', [...current, { cycle: availableCycle.value, price: '0' }]);
+    }
+  };
+
+  const removeBillingCycle = (index: number) => {
+    const current = form.getValues('billingCycles') || [];
+    if (current.length > 1) {
       form.setValue(
-        'proFeatureIds',
-        current.filter((id: string) => id !== featureId)
+        'billingCycles',
+        current.filter((_, i) => i !== index)
       );
-    } else {
-      form.setValue('proFeatureIds', [...current, featureId]);
     }
   };
 
@@ -116,94 +140,94 @@ export function CreatePlanPage() {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="billingCycle"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Billing Cycle</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select billing cycle" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="monthly">Monthly</SelectItem>
-                        <SelectItem value="quarterly">Quarterly</SelectItem>
-                        <SelectItem value="yearly">Yearly</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <FormLabel className="text-base">Billing Cycles</FormLabel>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addBillingCycle}
+                    disabled={billingCycles.length >= BILLING_CYCLES.length}
+                    className="gap-1"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add Cycle
+                  </Button>
+                </div>
 
-              <FormField
-                control={form.control}
-                name="price"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Price (IDR)</FormLabel>
-                    <FormControl>
-                      <CurrencyInput
-                        value={field.value}
-                        onChange={field.onChange}
-                        placeholder="0"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div>
-                <FormLabel className="mb-3 block">Pro Features</FormLabel>
-                {proFeaturesLoading ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {[1, 2, 3].map((i) => (
-                      <Skeleton key={i} className="h-12 w-full" />
-                    ))}
-                  </div>
-                ) : proFeaturesData && proFeaturesData.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {proFeaturesData.map((feature) => (
-                      <div
-                        key={feature.id}
-                        className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors ${
-                          proFeatureIds.includes(feature.id)
-                            ? 'border-blue-500 bg-blue-50'
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                        onClick={() => toggleProFeature(feature.id)}
-                      >
-                        <div className="space-y-0.5">
-                          <p className="font-medium text-sm">{feature.name}</p>
-                          {feature.description && (
-                            <p className="text-xs text-gray-500">{feature.description}</p>
+                <div className="space-y-3">
+                  {billingCycles.map((_, index) => (
+                    <div key={index} className="flex gap-3 items-start">
+                      <div className="flex-1">
+                        <FormField
+                          control={form.control}
+                          name={`billingCycles.${index}.cycle`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                                disabled={billingCycles.length <= 1}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select billing cycle" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {BILLING_CYCLES.map((cycle) => (
+                                    <SelectItem
+                                      key={cycle.value}
+                                      value={cycle.value}
+                                      disabled={billingCycles.some(
+                                        (b, i) => i !== index && b.cycle === cycle.value
+                                      )}
+                                    >
+                                      {cycle.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
                           )}
-                        </div>
-                        <div
-                          className={`w-5 h-5 rounded border flex items-center justify-center ${
-                            proFeatureIds.includes(feature.id)
-                              ? 'bg-blue-500 border-blue-500'
-                              : 'border-gray-300'
-                          }`}
-                        >
-                          {proFeatureIds.includes(feature.id) && (
-                            <Check className="w-3 h-3 text-white" />
-                          )}
-                        </div>
+                        />
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-500">No pro features available</p>
-                )}
-                <p className="text-xs text-gray-400 mt-2">
-                  {proFeatureIds.length} feature{proFeatureIds.length !== 1 ? 's' : ''} selected
-                </p>
+                      <div className="flex-1">
+                        <FormField
+                          control={form.control}
+                          name={`billingCycles.${index}.price`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <CurrencyInput
+                                  value={field.value}
+                                  onChange={field.onChange}
+                                  placeholder="Price"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeBillingCycle(index)}
+                        disabled={billingCycles.length <= 1}
+                        className="mt-1 text-gray-500 hover:text-red-500"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
               </div>
+
+              <Separator />
 
               <FormField
                 control={form.control}

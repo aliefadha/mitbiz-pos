@@ -6,6 +6,7 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { eq } from 'drizzle-orm';
 import { Snap } from 'midtrans-client';
+import { BillingCycle } from '../subscriptions/dto';
 
 @Injectable()
 export class MidtransService {
@@ -32,7 +33,12 @@ export class MidtransService {
     });
   }
 
-  async createSnapTransaction(planId: string, tenantId: string, userId: string) {
+  async createSnapTransaction(
+    planId: string,
+    tenantId: string,
+    userId: string,
+    billingCycle: BillingCycle,
+  ) {
     const plan = await this.db.query.subscriptionPlans.findFirst({
       where: eq(subscriptionPlans.id, planId),
     });
@@ -43,6 +49,12 @@ export class MidtransService {
 
     if (!plan.isActive) {
       throw new BadRequestException('Cannot subscribe to an inactive plan');
+    }
+
+    const billingCycleData = plan.billingCycles.find((bc) => bc.cycle === billingCycle);
+
+    if (!billingCycleData) {
+      throw new NotFoundException(`Billing cycle '${billingCycle}' not found for this plan`);
     }
 
     const tenant = await this.db.query.tenants.findFirst({
@@ -72,7 +84,8 @@ export class MidtransService {
       const [updated] = await this.db
         .update(subscriptions)
         .set({
-          planId: plan.id,
+          planId: planId,
+          billingCycle: billingCycle,
           status: 'pending',
           startedAt: new Date(),
           expiresAt: new Date(),
@@ -85,7 +98,8 @@ export class MidtransService {
         .insert(subscriptions)
         .values({
           tenantId: tenantId,
-          planId: plan.id,
+          planId: planId,
+          billingCycle: billingCycle,
           status: 'pending',
           startedAt: new Date(),
           expiresAt: new Date(),
@@ -97,7 +111,7 @@ export class MidtransService {
     const shortUuid = subscription.id.split('-')[0];
     const orderId = `SUB-${tenant.slug}-${shortUuid}`;
 
-    const grossAmount = parseFloat(plan.price);
+    const grossAmount = parseFloat(billingCycleData.price);
 
     const parameter = {
       transaction_details: {
@@ -114,7 +128,7 @@ export class MidtransService {
       item_details: [
         {
           id: plan.id,
-          name: plan.name,
+          name: `${plan.name} - ${billingCycle}`,
           price: grossAmount,
           quantity: 1,
         },
@@ -159,7 +173,7 @@ export class MidtransService {
 
     if (transactionStatus === 'settlement' || transactionStatus === 'capture') {
       const startedAt = new Date();
-      const billingCycleDays = this.getBillingCycleDays(subscription.plan?.billingCycle);
+      const billingCycleDays = this.getBillingCycleDays(subscription.billingCycle);
       const expiresAt = new Date(startedAt.getTime() + billingCycleDays * 24 * 60 * 60 * 1000);
 
       await this.db
@@ -171,12 +185,16 @@ export class MidtransService {
         })
         .where(eq(subscriptions.id, subscription.id));
 
+      const price = subscription.plan.billingCycles.find(
+        (bc) => bc.cycle === subscription.billingCycle,
+      )?.price;
+
       await this.db.insert(subscriptionHistories).values({
-        tenantId: subscription.tenant?.id,
+        tenantId: subscription.tenantId,
         subscriptionId: subscription.id,
         planId: subscription.planId,
         action: 'subscribed',
-        amountPaid: subscription.plan?.price,
+        amountPaid: price,
         periodStart: startedAt,
         periodEnd: expiresAt,
         performedBy: null,
@@ -214,6 +232,8 @@ export class MidtransService {
         return 30;
       case 'quarterly':
         return 90;
+      case 'semi_annual':
+        return 180;
       case 'yearly':
         return 365;
       default:

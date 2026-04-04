@@ -24,7 +24,12 @@ export class MidtransController {
       throw new Error('Tenant ID not found in session');
     }
 
-    return this.midtransService.createSnapTransaction(dto.planId, tenantId, user.id);
+    return this.midtransService.createSnapTransaction(
+      dto.planId,
+      tenantId,
+      user.id,
+      dto.billingCycle,
+    );
   }
 
   @Post('notification')

@@ -8,11 +8,15 @@ import { paymentMethods } from '@/db/schema/payment-method-schema';
 import { products } from '@/db/schema/product-schema';
 import { rolePermissions } from '@/db/schema/role-permission-schema';
 import { roles } from '@/db/schema/role-schema';
+import { subscriptionHistories } from '@/db/schema/subscription-history-schema';
+import { subscriptionPlans } from '@/db/schema/subscription-plan-schema';
+import { subscriptions } from '@/db/schema/subscription-schema';
 import type { DrizzleDB } from '@/db/type';
 import { auth } from '@/lib/auth';
 import { TenantAuthService } from '@/rbac/services/tenant-auth.service';
 import { ScopeType } from '@/rbac/types/rbac.types';
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Inject,
@@ -20,10 +24,17 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { SQL, and, asc, count, eq, ilike, inArray, like, or, sql } from 'drizzle-orm';
-import { CreateTenantDto, TenantQueryDto, UpdateTenantDto } from './dto';
+import { BillingCycle, CreateTenantDto, TenantQueryDto, UpdateTenantDto } from './dto';
 
 const TEMPLATE_OWNER_ROLE_ID = '00000000-0000-0000-0000-000000000010';
 const TEMPLATE_CASHIER_ROLE_ID = '00000000-0000-0000-0000-000000000011';
+
+const BILLING_CYCLE_DAYS: Record<BillingCycle, number> = {
+  monthly: 30,
+  quarterly: 90,
+  semi_annual: 180,
+  yearly: 365,
+};
 
 @Injectable()
 export class TenantsService {
@@ -325,6 +336,51 @@ export class TenantsService {
       await tx.update(userSchema).set({ tenantId: tenant.id }).where(eq(userSchema.id, userId));
 
       await this.cloneTemplateRoles(tx, tenant.id, userId);
+
+      if (data.planId && data.billingCycle) {
+        const plan = await tx.query.subscriptionPlans.findFirst({
+          where: eq(subscriptionPlans.id, data.planId),
+        });
+
+        if (!plan || !plan.isActive) {
+          throw new BadRequestException('Invalid or inactive subscription plan');
+        }
+
+        const cycleData = plan.billingCycles.find((bc) => bc.cycle === data.billingCycle);
+        if (!cycleData) {
+          throw new BadRequestException(
+            `Billing cycle '${data.billingCycle}' not found for this plan`,
+          );
+        }
+
+        const startedAt = new Date();
+        const expiresAt = new Date(
+          startedAt.getTime() + BILLING_CYCLE_DAYS[data.billingCycle] * 24 * 60 * 60 * 1000,
+        );
+
+        const [subscription] = await tx
+          .insert(subscriptions)
+          .values({
+            tenantId: tenant.id,
+            planId: data.planId,
+            billingCycle: data.billingCycle,
+            status: 'active',
+            startedAt,
+            expiresAt,
+          })
+          .returning();
+
+        await tx.insert(subscriptionHistories).values({
+          tenantId: tenant.id,
+          subscriptionId: subscription.id,
+          planId: data.planId,
+          action: 'subscribed',
+          amountPaid: cycleData.price,
+          periodStart: startedAt,
+          periodEnd: expiresAt,
+          performedBy: user.id,
+        });
+      }
 
       return tenant;
     });

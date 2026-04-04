@@ -60,6 +60,17 @@ function formatActionLabel(action: SubscriptionHistoryAction): string {
   return labels[action] || action;
 }
 
+function formatBillingCycleLabel(cycle: string | undefined): string {
+  if (!cycle) return '-';
+  const labels: Record<string, string> = {
+    monthly: 'Bulanan',
+    quarterly: '3 Bulanan',
+    semi_annual: '6 Bulanan',
+    yearly: 'Tahunan',
+  };
+  return labels[cycle] || cycle;
+}
+
 function formatActionBadgeColor(action: SubscriptionHistoryAction): string {
   const colors: Record<SubscriptionHistoryAction, string> = {
     subscribed: 'bg-green-100 text-green-700',
@@ -269,6 +280,7 @@ export function ReportsPage() {
                   </TableHead>
                   <TableHead className="text-gray-600 font-medium">Aksi</TableHead>
                   <TableHead className="text-gray-600 font-medium">Paket</TableHead>
+                  <TableHead className="text-gray-600 font-medium">Billing Cycle</TableHead>
                   <TableHead className="text-gray-600 font-medium">Jumlah</TableHead>
                   <TableHead className="text-gray-600 font-medium">Periode</TableHead>
                   <TableHead className="text-gray-600 font-medium rounded-tr-lg rounded-br-lg">
@@ -279,13 +291,13 @@ export function ReportsPage() {
               <TableBody>
                 {subscriptionHistoryLoading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                       Memuat...
                     </TableCell>
                   </TableRow>
                 ) : subscriptionHistory.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                       Tidak ada data
                     </TableCell>
                   </TableRow>
@@ -304,6 +316,9 @@ export function ReportsPage() {
                       </TableCell>
                       <TableCell className="font-medium text-gray-900">
                         {history.planName}
+                      </TableCell>
+                      <TableCell className="text-gray-600">
+                        {formatBillingCycleLabel(history.billingCycle)}
                       </TableCell>
                       <TableCell className="text-gray-600">
                         {history.amountPaid ? formatCurrency(Number(history.amountPaid)) : '-'}

@@ -14,7 +14,7 @@ export async function seedTenant(adminUserId: string) {
 
   const tenantData = {
     nama: 'Mitbiz POS',
-    slug: 'mitbiz-pos',
+    slug: 'MIT',
     userId: adminUserId,
     settings: {
       currency: 'IDR',

@@ -12,6 +12,9 @@ const TenantSettingsSchema = z.object({
   receiptFooter: z.string().default('Terima kasih telah berbelanja'),
 });
 
+export const BillingCycleSchema = z.enum(['monthly', 'quarterly', 'semi_annual', 'yearly']);
+export type BillingCycle = z.infer<typeof BillingCycleSchema>;
+
 // Tenant creation schema
 export const CreateTenantSchema = z.object({
   nama: z
@@ -33,6 +36,8 @@ export const CreateTenantSchema = z.object({
   alamat: z.string().max(500, 'Address must be less than 500 characters').optional().nullable(),
   noHp: z.string().max(20, 'Phone number must be less than 20 characters').optional().nullable(),
   isActive: z.boolean().default(true),
+  planId: z.string().optional(),
+  billingCycle: BillingCycleSchema.optional(),
 });
 
 // Tenant update schema

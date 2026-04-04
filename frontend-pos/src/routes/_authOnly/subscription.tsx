@@ -1,12 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, redirect } from '@tanstack/react-router';
-import { Check, LogOut } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { useState } from 'react';
 import { SubscriptionConfirmDialog } from '@/components/subscriptions/subscription-confirm-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { subscriptionPlansApi } from '@/lib/api/subscriptions';
+import { type BillingCycle, subscriptionPlansApi } from '@/lib/api/subscriptions';
 import { tenantsApi } from '@/lib/api/tenants';
 import { signOut } from '@/lib/auth-client';
 
@@ -47,14 +47,31 @@ export const Route = createFileRoute('/_authOnly/subscription')({
   },
 });
 
+function getBillingCycleShortLabel(cycle: string): string {
+  switch (cycle) {
+    case 'monthly':
+      return 'mo';
+    case 'quarterly':
+      return 'qtr';
+    case 'semi_annual':
+      return '6mo';
+    case 'yearly':
+      return 'yr';
+    default:
+      return cycle;
+  }
+}
+
+interface SelectedPlanState {
+  id: string;
+  name: string;
+  cycle: BillingCycle;
+  price: string;
+}
+
 function SubscriptionPage() {
   const { subscription } = Route.useRouteContext();
-  const [selectedPlan, setSelectedPlan] = useState<{
-    id: string;
-    name: string;
-    price: string;
-    billingCycle: string;
-  } | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<SelectedPlanState | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const { data: plansData, isLoading: isPlansLoading } = useQuery({
@@ -77,19 +94,6 @@ function SubscriptionPage() {
         return 'Your subscription has been suspended. Please contact support.';
       default:
         return 'Your subscription is active.';
-    }
-  };
-
-  const formatBillingCycle = (cycle: string) => {
-    switch (cycle) {
-      case 'monthly':
-        return 'Monthly';
-      case 'quarterly':
-        return 'Quarterly';
-      case 'yearly':
-        return 'Yearly';
-      default:
-        return cycle;
     }
   };
 
@@ -166,54 +170,80 @@ function SubscriptionPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {plans.map((plan) => (
-            <Card key={plan.id} className="flex flex-col">
-              <CardHeader>
-                <CardTitle>{plan.name}</CardTitle>
-                <CardDescription>{formatBillingCycle(plan.billingCycle)}</CardDescription>
-              </CardHeader>
-              <CardContent className="flex-1 flex flex-col">
-                <div className="text-3xl font-bold mb-4">
-                  {formatCurrency(Number(plan.price))}
-                  <span className="text-sm font-normal text-muted-foreground">
-                    /
-                    {plan.billingCycle === 'monthly'
-                      ? 'mo'
-                      : plan.billingCycle === 'quarterly'
-                        ? 'qtr'
-                        : 'yr'}
-                  </span>
-                </div>
+        <div className="max-w-2xl mx-auto">
+          {plans[0] &&
+            (() => {
+              const plan = plans[0];
+              const billingCycles = plan.billingCycles || [];
+              const sortedBillingCycles = [...billingCycles].sort((a, b) => {
+                const order = { monthly: 1, quarterly: 2, semi_annual: 3, yearly: 4 };
+                return (
+                  (order[a.cycle as keyof typeof order] || 99) -
+                  (order[b.cycle as keyof typeof order] || 99)
+                );
+              });
+              const defaultCycle = sortedBillingCycles[0];
 
-                <div className="flex-1 space-y-2 mb-6">
-                  {plan.planProFeatures?.map((feature) => (
-                    <div key={feature.id} className="flex items-start gap-2">
-                      <Check className="h-4 w-4 text-green-600 mt-0.5 shrink-0" />
-                      <span className="text-sm">{feature.proFeature.name}</span>
+              return (
+                <Card className="flex flex-col">
+                  <CardHeader>
+                    <CardTitle>{plan.name}</CardTitle>
+                    <CardDescription>
+                      {sortedBillingCycles.length} billing option
+                      {sortedBillingCycles.length !== 1 ? 's' : ''}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex-1 flex flex-col">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                      {sortedBillingCycles.map((bc) => (
+                        <Button
+                          key={bc.cycle}
+                          type="button"
+                          variant="outline"
+                          className={`flex flex-col h-auto py-3 ${selectedPlan?.id === plan.id && selectedPlan?.cycle === bc.cycle ? 'border-blue-500 bg-blue-50' : ''}`}
+                          onClick={() => {
+                            setSelectedPlan({
+                              id: plan.id,
+                              name: plan.name,
+                              cycle: bc.cycle,
+                              price: bc.price,
+                            });
+                          }}
+                        >
+                          <span className="text-lg font-bold">
+                            {formatCurrency(Number(bc.price))}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            /{getBillingCycleShortLabel(bc.cycle)}
+                          </span>
+                        </Button>
+                      ))}
                     </div>
-                  ))}
-                </div>
 
-                <Button
-                  className="w-full"
-                  variant={plan.name.toLowerCase().includes('basic') ? 'outline' : 'default'}
-                  disabled={subscription?.status === 'active'}
-                  onClick={() => {
-                    setSelectedPlan({
-                      id: plan.id,
-                      name: plan.name,
-                      price: plan.price,
-                      billingCycle: plan.billingCycle,
-                    });
-                    setDialogOpen(true);
-                  }}
-                >
-                  {subscription?.status === 'active' ? 'Current Plan' : 'Subscribe'}
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
+                    <Button
+                      className="w-full mt-auto"
+                      variant={plan.name.toLowerCase().includes('free') ? 'outline' : 'default'}
+                      disabled={subscription?.status === 'active'}
+                      onClick={() => {
+                        const currentSelection =
+                          selectedPlan?.id === plan.id ? selectedPlan : defaultCycle;
+                        if (currentSelection) {
+                          setSelectedPlan({
+                            id: plan.id,
+                            name: plan.name,
+                            cycle: currentSelection.cycle,
+                            price: currentSelection.price,
+                          });
+                        }
+                        setDialogOpen(true);
+                      }}
+                    >
+                      {subscription?.status === 'active' ? 'Current Plan' : 'Subscribe'}
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })()}
         </div>
 
         {selectedPlan && (

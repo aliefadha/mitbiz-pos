@@ -18,7 +18,7 @@ export async function seedOutlet(tenantId: string) {
     {
       tenantId,
       nama: 'Toko Utama',
-      kode: 'OUT-001',
+      kode: 'OUT1',
       alamat: 'Jakarta Pusat, Indonesia',
       noHp: '+62812345678',
       isActive: true,
@@ -26,7 +26,7 @@ export async function seedOutlet(tenantId: string) {
     {
       tenantId,
       nama: 'Cabang Selatan',
-      kode: 'OUT-002',
+      kode: 'OUT2',
       alamat: 'Jakarta Selatan, Indonesia',
       noHp: '+62812345679',
       isActive: true,

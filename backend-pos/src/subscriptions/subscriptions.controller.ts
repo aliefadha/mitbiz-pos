@@ -16,18 +16,10 @@ import {
 import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@thallesp/nestjs-better-auth';
 import {
-  BulkManagePlanProFeaturesDto,
-  BulkManagePlanProFeaturesSchema,
-  BulkManagePlanResourcesDto,
-  BulkManagePlanResourcesSchema,
   CreateSubscriptionDto,
   CreateSubscriptionPlanDto,
   CreateSubscriptionPlanSchema,
   CreateSubscriptionSchema,
-  ManagePlanProFeatureDto,
-  ManagePlanProFeatureSchema,
-  ManagePlanResourceDto,
-  ManagePlanResourceSchema,
   RenewSubscriptionDto,
   RenewSubscriptionSchema,
   SubscriptionHistoryQueryDto,
@@ -48,7 +40,6 @@ import { SubscriptionsService } from './subscriptions.service';
 @ApiTags('subscriptions')
 @Controller('subscription-plans')
 @UseGuards(AuthGuard, PermissionGuard, ScopeGuard)
-@GlobalScope()
 export class SubscriptionPlansController {
   constructor(private readonly subscriptionsService: SubscriptionsService) {}
 
@@ -148,12 +139,6 @@ export class SubscriptionPlansController {
     description: 'Filter by active status (true/false)',
   })
   @ApiQuery({
-    name: 'billingCycle',
-    required: false,
-    enum: ['monthly', 'quarterly', 'yearly'],
-    description: 'Filter by billing cycle',
-  })
-  @ApiQuery({
     name: 'page',
     required: false,
     schema: { type: 'string' },
@@ -206,121 +191,6 @@ export class SubscriptionPlansController {
   @Permission('subscription_plans', [Action.DELETE])
   remove(@Param() { id }: SubscriptionPlanIdDto) {
     return this.subscriptionsService.deletePlan(id);
-  }
-
-  @Get(':id/resources')
-  @ApiOperation({ summary: 'Get all resources for a subscription plan' })
-  @ApiParam({ name: 'id', required: true, description: 'Subscription plan ID' })
-  @UsePipes(new ZodValidationPipe(SubscriptionPlanIdSchema, 'params'))
-  @Permission('subscription_plans', [Action.READ])
-  getPlanResources(@Param() { id }: SubscriptionPlanIdDto) {
-    return this.subscriptionsService.getAllResourcesWithPlanStatus(id);
-  }
-
-  @Post(':id/resources')
-  @ApiOperation({ summary: 'Add or update a resource in plan' })
-  @ApiParam({ name: 'id', required: true, description: 'Subscription plan ID' })
-  @ApiBody({ type: ManagePlanResourceDto })
-  @UsePipes(new ZodValidationPipe(SubscriptionPlanIdSchema, 'params'))
-  @UsePipes(new ZodValidationPipe(ManagePlanResourceSchema))
-  @Permission('subscription_plans', [Action.UPDATE])
-  addResourceToPlan(@Param() { id }: SubscriptionPlanIdDto, @Body() data: ManagePlanResourceDto) {
-    return this.subscriptionsService.addResourceToPlan(id, data.resourceId);
-  }
-
-  @Post(':id/resources/bulk')
-  @ApiOperation({ summary: 'Bulk update resources in plan' })
-  @ApiParam({ name: 'id', required: true, description: 'Subscription plan ID' })
-  @ApiBody({ type: BulkManagePlanResourcesDto })
-  @UsePipes(new ZodValidationPipe(SubscriptionPlanIdSchema, 'params'))
-  @UsePipes(new ZodValidationPipe(BulkManagePlanResourcesSchema))
-  @Permission('subscription_plans', [Action.UPDATE])
-  bulkUpdateResources(
-    @Param() { id }: SubscriptionPlanIdDto,
-    @Body() data: BulkManagePlanResourcesDto,
-  ) {
-    return this.subscriptionsService.updatePlanResourcesBulk(id, data.resources);
-  }
-
-  @Delete(':id/resources/:resourceId')
-  @ApiOperation({ summary: 'Remove a resource from plan' })
-  @ApiParam({ name: 'id', required: true, description: 'Subscription plan ID' })
-  @ApiParam({ name: 'resourceId', required: true, description: 'Resource ID' })
-  @UsePipes(new ZodValidationPipe(SubscriptionPlanIdSchema, 'params'))
-  @Permission('subscription_plans', [Action.UPDATE])
-  removeResourceFromPlan(
-    @Param() { id }: SubscriptionPlanIdDto,
-    @Param('resourceId') resourceId: string,
-  ) {
-    return this.subscriptionsService.removeResourceFromPlan(id, resourceId);
-  }
-
-  @Post(':id/resources/all')
-  @ApiOperation({ summary: 'Add all active resources to plan' })
-  @ApiParam({ name: 'id', required: true, description: 'Subscription plan ID' })
-  @UsePipes(new ZodValidationPipe(SubscriptionPlanIdSchema, 'params'))
-  @Permission('subscription_plans', [Action.UPDATE])
-  addAllResources(@Param() { id }: SubscriptionPlanIdDto) {
-    return this.subscriptionsService.addAllResourcesToPlan(id);
-  }
-
-  @Get(':id/pro-features')
-  @ApiOperation({ summary: 'Get all pro features for a subscription plan' })
-  @ApiParam({ name: 'id', required: true, description: 'Subscription plan ID' })
-  @UsePipes(new ZodValidationPipe(SubscriptionPlanIdSchema, 'params'))
-  @Permission('subscription_plans', [Action.READ])
-  getPlanProFeatures(@Param() { id }: SubscriptionPlanIdDto) {
-    return this.subscriptionsService.getAllProFeaturesWithPlanStatus(id);
-  }
-
-  @Post(':id/pro-features')
-  @ApiOperation({ summary: 'Add a pro feature to plan' })
-  @ApiParam({ name: 'id', required: true, description: 'Subscription plan ID' })
-  @ApiBody({ type: ManagePlanProFeatureDto })
-  @UsePipes(new ZodValidationPipe(SubscriptionPlanIdSchema, 'params'))
-  @UsePipes(new ZodValidationPipe(ManagePlanProFeatureSchema))
-  @Permission('subscription_plans', [Action.UPDATE])
-  addProFeatureToPlan(
-    @Param() { id }: SubscriptionPlanIdDto,
-    @Body() data: ManagePlanProFeatureDto,
-  ) {
-    return this.subscriptionsService.addProFeatureToPlan(id, data.proFeatureId);
-  }
-
-  @Post(':id/pro-features/bulk')
-  @ApiOperation({ summary: 'Bulk update pro features in plan' })
-  @ApiParam({ name: 'id', required: true, description: 'Subscription plan ID' })
-  @ApiBody({ type: BulkManagePlanProFeaturesDto })
-  @UsePipes(new ZodValidationPipe(SubscriptionPlanIdSchema, 'params'))
-  @UsePipes(new ZodValidationPipe(BulkManagePlanProFeaturesSchema))
-  @Permission('subscription_plans', [Action.UPDATE])
-  bulkUpdateProFeatures(
-    @Param() { id }: SubscriptionPlanIdDto,
-    @Body() data: BulkManagePlanProFeaturesDto,
-  ) {
-    return this.subscriptionsService.updatePlanProFeaturesBulk(id, data.proFeatures);
-  }
-
-  @Delete(':id/pro-features/:proFeatureId')
-  @ApiOperation({ summary: 'Remove a pro feature from plan' })
-  @ApiParam({ name: 'id', required: true, description: 'Subscription plan ID' })
-  @ApiParam({ name: 'proFeatureId', required: true, description: 'Pro Feature ID' })
-  @UsePipes(new ZodValidationPipe(SubscriptionPlanIdSchema, 'params'))
-  @Permission('subscription_plans', [Action.UPDATE])
-  removeProFeatureFromPlan(
-    @Param() { id }: SubscriptionPlanIdDto,
-    @Param('proFeatureId') proFeatureId: string,
-  ) {
-    return this.subscriptionsService.removeProFeatureFromPlan(id, proFeatureId);
-  }
-
-  @Post(':id/pro-features/all')
-  @ApiOperation({ summary: 'Add all active pro features to plan' })
-  @ApiParam({ name: 'id', required: true, description: 'Subscription plan ID' })
-  @UsePipes(new ZodValidationPipe(SubscriptionPlanIdSchema, 'params'))
-  @Permission('subscription_plans', [Action.UPDATE])
-  addAllProFeatures(@Param() { id }: SubscriptionPlanIdDto) {
-    return this.subscriptionsService.addAllProFeaturesToPlan(id);
   }
 
   @Get(':id/subscriptions')

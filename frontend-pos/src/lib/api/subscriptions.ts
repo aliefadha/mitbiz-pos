@@ -1,90 +1,37 @@
 import { fetchApi } from './client';
 
-export type BillingCycle = 'monthly' | 'quarterly' | 'yearly';
+export type BillingCycle = 'monthly' | 'quarterly' | 'semi_annual' | 'yearly';
+
+export interface BillingCyclePrice {
+  cycle: BillingCycle;
+  price: string;
+}
 
 export interface SubscriptionPlan {
   id: string;
   name: string;
-  billingCycle: BillingCycle;
-  price: string;
   isActive: boolean;
+  billingCycles: BillingCyclePrice[];
   createdAt: string;
   updatedAt: string;
-  planProFeatures?: Array<{
-    id: string;
-    planId: string;
-    proFeatureId: string;
-    createdAt: string;
-    proFeature: ProFeature;
-  }>;
-}
-
-export interface ProFeature {
-  id: string;
-  key: string;
-  name: string;
-  description: string | null;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface ProFeatureWithStatus extends ProFeature {
-  isIncluded: boolean;
-}
-
-export interface Resource {
-  id: string;
-  name: string;
-  description: string | null;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface PlanResource {
-  id: string;
-  planId: string;
-  resourceId: string;
-  isIncluded: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface ResourceWithStatus extends Resource {
-  isIncluded: boolean;
 }
 
 export interface PlanQueryParams {
   isActive?: boolean;
-  billingCycle?: BillingCycle;
   page?: number;
   limit?: number;
 }
 
 export interface CreatePlanDto {
   name: string;
-  billingCycle: BillingCycle;
-  price: string;
+  billingCycles: BillingCyclePrice[];
   isActive?: boolean;
-  proFeatureIds?: string[];
 }
 
 export interface UpdatePlanDto {
   name?: string;
-  billingCycle?: BillingCycle;
-  price?: string;
+  billingCycles?: BillingCyclePrice[];
   isActive?: boolean;
-}
-
-export interface BulkResourceUpdate {
-  resourceId: string;
-  isIncluded: boolean;
-}
-
-export interface ManageResourceDto {
-  resourceId: string;
-  isIncluded: boolean;
 }
 
 export interface PaginatedResponse<T> {
@@ -141,6 +88,7 @@ export interface SubscriptionHistory {
   subscriptionId: string | null;
   planId: string;
   planName: string;
+  billingCycle?: string;
   action: SubscriptionHistoryAction;
   amountPaid: string | null;
   invoiceRef: string | null;
@@ -161,17 +109,12 @@ export const subscriptionPlansApi = {
   getAll: async (params?: PlanQueryParams): Promise<PaginatedResponse<SubscriptionPlan>> => {
     const queryParams = new URLSearchParams();
     if (params?.isActive !== undefined) queryParams.append('isActive', String(params.isActive));
-    if (params?.billingCycle) queryParams.append('billingCycle', params.billingCycle);
     if (params?.page) queryParams.append('page', String(params.page));
     if (params?.limit) queryParams.append('limit', String(params.limit));
     const query = queryParams.toString();
     return fetchApi<PaginatedResponse<SubscriptionPlan>>(
       `/subscription-plans${query ? `?${query}` : ''}`
     );
-  },
-
-  getAllProFeatures: async (): Promise<ProFeature[]> => {
-    return fetchApi<ProFeature[]>('/pro-features');
   },
 
   getById: async (id: string): Promise<SubscriptionPlan> => {
@@ -195,72 +138,6 @@ export const subscriptionPlansApi = {
   delete: async (id: string): Promise<{ message: string }> => {
     return fetchApi<{ message: string }>(`/subscription-plans/${id}`, {
       method: 'DELETE',
-    });
-  },
-
-  getResources: async (planId: string): Promise<ResourceWithStatus[]> => {
-    return fetchApi<ResourceWithStatus[]>(`/subscription-plans/${planId}/resources`);
-  },
-
-  addResource: async (planId: string, data: ManageResourceDto): Promise<PlanResource> => {
-    return fetchApi<PlanResource>(`/subscription-plans/${planId}/resources`, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  },
-
-  removeResource: async (planId: string, resourceId: string): Promise<PlanResource | null> => {
-    return fetchApi<PlanResource | null>(`/subscription-plans/${planId}/resources/${resourceId}`, {
-      method: 'DELETE',
-    });
-  },
-
-  updateResourcesBulk: async (
-    planId: string,
-    resources: BulkResourceUpdate[]
-  ): Promise<ResourceWithStatus[]> => {
-    return fetchApi<ResourceWithStatus[]>(`/subscription-plans/${planId}/resources/bulk`, {
-      method: 'POST',
-      body: JSON.stringify({ resources }),
-    });
-  },
-
-  addAllResources: async (planId: string): Promise<ResourceWithStatus[]> => {
-    return fetchApi<ResourceWithStatus[]>(`/subscription-plans/${planId}/resources/all`, {
-      method: 'POST',
-    });
-  },
-
-  getProFeatures: async (planId: string): Promise<ProFeatureWithStatus[]> => {
-    return fetchApi<ProFeatureWithStatus[]>(`/subscription-plans/${planId}/pro-features`);
-  },
-
-  addProFeature: async (planId: string, proFeatureId: string): Promise<void> => {
-    return fetchApi<void>(`/subscription-plans/${planId}/pro-features`, {
-      method: 'POST',
-      body: JSON.stringify({ proFeatureId }),
-    });
-  },
-
-  removeProFeature: async (planId: string, proFeatureId: string): Promise<void> => {
-    return fetchApi<void>(`/subscription-plans/${planId}/pro-features/${proFeatureId}`, {
-      method: 'DELETE',
-    });
-  },
-
-  updateProFeaturesBulk: async (
-    planId: string,
-    proFeatures: Array<{ proFeatureId: string; isIncluded: boolean }>
-  ): Promise<ProFeatureWithStatus[]> => {
-    return fetchApi<ProFeatureWithStatus[]>(`/subscription-plans/${planId}/pro-features/bulk`, {
-      method: 'POST',
-      body: JSON.stringify({ proFeatures }),
-    });
-  },
-
-  addAllProFeatures: async (planId: string): Promise<ProFeatureWithStatus[]> => {
-    return fetchApi<ProFeatureWithStatus[]>(`/subscription-plans/${planId}/pro-features/all`, {
-      method: 'POST',
     });
   },
 

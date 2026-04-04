@@ -1,18 +1,28 @@
 import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
 
-export const BillingCycleSchema = z.enum(['monthly', 'quarterly', 'yearly']);
+export const BillingCycleSchema = z.enum(['monthly', 'quarterly', 'semi_annual', 'yearly']);
 export type BillingCycle = z.infer<typeof BillingCycleSchema>;
+
+export const BillingCyclePriceSchema = z.object({
+  billingCycle: BillingCycleSchema,
+  price: z.string().min(1, 'Price is required'),
+});
 
 export const CreateSubscriptionPlanSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  billingCycle: BillingCycleSchema,
-  price: z.string().min(1, 'Price is required'),
   isActive: z.boolean().default(true),
-  proFeatureIds: z.array(z.string()).optional(),
+  billingCycles: z.array(BillingCyclePriceSchema).min(1, 'At least one billing cycle is required'),
 });
 
-export const UpdateSubscriptionPlanSchema = CreateSubscriptionPlanSchema.partial();
+export const UpdateSubscriptionPlanSchema = z.object({
+  name: z.string().min(1, 'Name is required').optional(),
+  isActive: z.boolean().optional(),
+  billingCycles: z
+    .array(BillingCyclePriceSchema)
+    .min(1, 'At least one billing cycle is required')
+    .optional(),
+});
 
 export const SubscriptionPlanIdSchema = z.object({
   id: z.string().min(1, 'Plan ID is required'),
@@ -22,10 +32,11 @@ export const SubscriptionStatusSchema = z.enum(['active', 'expired', 'cancelled'
 
 export const CreateSubscriptionSchema = z.object({
   planId: z.string().min(1, 'Plan ID is required'),
+  billingCycle: BillingCycleSchema,
 });
 
 export const RenewSubscriptionSchema = z.object({
-  billingCycle: BillingCycleSchema.optional(),
+  billingCycle: BillingCycleSchema,
 });
 
 export const SubscriptionSlugSchema = z.object({
@@ -41,7 +52,6 @@ export const SubscriptionPlanQuerySchema = z.object({
     .string()
     .transform((val) => val === 'true')
     .optional(),
-  billingCycle: BillingCycleSchema.optional(),
   page: z
     .string()
     .transform((val) => {
@@ -57,43 +67,6 @@ export const SubscriptionPlanQuerySchema = z.object({
     })
     .optional(),
 });
-
-export const ManagePlanResourceSchema = z.object({
-  resourceId: z.string().min(1, 'Resource ID is required'),
-  isIncluded: z.boolean().default(true),
-});
-
-export const BulkManagePlanResourcesSchema = z.object({
-  resources: z
-    .array(
-      z.object({
-        resourceId: z.string().min(1, 'Resource ID is required'),
-        isIncluded: z.boolean().default(true),
-      }),
-    )
-    .min(1, 'At least one resource is required'),
-});
-
-export class ManagePlanResourceDto extends createZodDto(ManagePlanResourceSchema) {}
-export class BulkManagePlanResourcesDto extends createZodDto(BulkManagePlanResourcesSchema) {}
-
-export const ManagePlanProFeatureSchema = z.object({
-  proFeatureId: z.string().min(1, 'Pro Feature ID is required'),
-});
-
-export const BulkManagePlanProFeaturesSchema = z.object({
-  proFeatures: z
-    .array(
-      z.object({
-        proFeatureId: z.string().min(1, 'Pro Feature ID is required'),
-        isIncluded: z.boolean().default(true),
-      }),
-    )
-    .min(1, 'At least one pro feature is required'),
-});
-
-export class ManagePlanProFeatureDto extends createZodDto(ManagePlanProFeatureSchema) {}
-export class BulkManagePlanProFeaturesDto extends createZodDto(BulkManagePlanProFeaturesSchema) {}
 
 export class CreateSubscriptionPlanDto extends createZodDto(CreateSubscriptionPlanSchema) {}
 export class UpdateSubscriptionPlanDto extends createZodDto(UpdateSubscriptionPlanSchema) {}

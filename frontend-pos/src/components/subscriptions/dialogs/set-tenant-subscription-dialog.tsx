@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Loader2, XCircle } from 'lucide-react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -10,16 +11,51 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import type { BillingCyclePrice } from '@/lib/api/subscriptions';
 import { subscriptionPlansApi } from '@/lib/api/subscriptions';
 import { tenantsApi } from '@/lib/api/tenants';
+
+function formatCurrency(amount: string | number): string {
+  const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  })
+    .format(numAmount)
+    .replace('IDR', 'Rp')
+    .trim();
+}
+
+function getBillingCycleLabel(cycle: string): string {
+  switch (cycle) {
+    case 'monthly':
+      return 'Monthly';
+    case 'quarterly':
+      return 'Quarterly';
+    case 'semi_annual':
+      return '6 Monthly';
+    case 'yearly':
+      return 'Yearly';
+    default:
+      return cycle;
+  }
+}
 
 interface SetTenantSubscriptionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   planId: string;
   planName: string;
-  planPrice: string;
-  planBillingCycle: string;
+  billingCycles: BillingCyclePrice[];
   tenantName: string;
   tenantSlug: string;
   existingSubscriptionId?: string | null;
@@ -32,8 +68,7 @@ export function SetTenantSubscriptionDialog({
   onOpenChange,
   planId,
   planName,
-  planPrice,
-  planBillingCycle,
+  billingCycles,
   tenantName,
   tenantSlug,
   existingSubscriptionId,
@@ -45,9 +80,18 @@ export function SetTenantSubscriptionDialog({
   const isCancelledOrExpired =
     existingSubscriptionStatus === 'cancelled' || existingSubscriptionStatus === 'expired';
 
+  const [selectedBillingCycle, setSelectedBillingCycle] = useState<string>(
+    billingCycles[0]?.cycle || 'monthly'
+  );
+
+  const selectedCycleData = billingCycles.find((bc) => bc.cycle === selectedBillingCycle);
+
   const createSubscriptionMutation = useMutation({
     mutationFn: async () => {
-      return tenantsApi.createSubscription(tenantSlug, { planId });
+      return tenantsApi.createSubscription(tenantSlug, {
+        planId,
+        billingCycle: selectedBillingCycle as BillingCyclePrice['cycle'],
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['subscription-plan-subscriptions', planId] });
@@ -79,26 +123,6 @@ export function SetTenantSubscriptionDialog({
     },
   });
 
-  const billingCycleLabel =
-    planBillingCycle === 'monthly'
-      ? 'Monthly'
-      : planBillingCycle === 'quarterly'
-        ? 'Quarterly'
-        : 'Yearly';
-
-  const formatCurrency = (amount: string) => {
-    const numAmount = parseFloat(amount);
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    })
-      .format(numAmount)
-      .replace('IDR', 'Rp')
-      .trim();
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -122,9 +146,34 @@ export function SetTenantSubscriptionDialog({
 
         <div className="p-4 bg-muted rounded-lg">
           <p className="font-medium">{planName}</p>
-          <p className="text-sm text-muted-foreground">
-            {formatCurrency(planPrice)} / {billingCycleLabel}
-          </p>
+          {!isSubscribed && billingCycles.length > 0 && (
+            <div className="mt-2">
+              <Select value={selectedBillingCycle} onValueChange={setSelectedBillingCycle}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select billing cycle" />
+                </SelectTrigger>
+                <SelectContent>
+                  {billingCycles.map((bc) => (
+                    <SelectItem key={bc.cycle} value={bc.cycle}>
+                      {getBillingCycleLabel(bc.cycle)} - {formatCurrency(bc.price)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedCycleData && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  {formatCurrency(selectedCycleData.price)} /{' '}
+                  {getBillingCycleLabel(selectedBillingCycle)}
+                </p>
+              )}
+            </div>
+          )}
+          {isSubscribed && selectedCycleData && (
+            <p className="text-sm text-muted-foreground">
+              {formatCurrency(selectedCycleData.price)} /{' '}
+              {getBillingCycleLabel(selectedCycleData.cycle)}
+            </p>
+          )}
         </div>
 
         <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">

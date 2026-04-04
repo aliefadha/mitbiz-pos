@@ -17,7 +17,12 @@ export const subscriptions = pgTable('subscriptions', {
   tenantId: text('tenant_id')
     .references(() => tenants.id, { onDelete: 'cascade' })
     .notNull(),
-  planId: text('plan_id').references(() => subscriptionPlans.id, { onDelete: 'set null' }),
+  planId: text('plan_id')
+    .references(() => subscriptionPlans.id, { onDelete: 'set null' })
+    .notNull(),
+  billingCycle: text('billing_cycle', {
+    enum: ['monthly', 'quarterly', 'semi_annual', 'yearly'],
+  }).notNull(),
   status: text('status', {
     enum: ['active', 'expired', 'cancelled', 'suspended', 'pending'],
   })

@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { ArrowLeft, Eye, EyeOff, Save, UserPlus } from 'lucide-react';
 import { useState } from 'react';
@@ -18,9 +18,17 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { type SubscriptionPlan, subscriptionPlansApi } from '@/lib/api/subscriptions';
 import { tenantsApi } from '@/lib/api/tenants';
 import { checkPermissionWithScope } from '@/lib/permissions';
 
@@ -39,6 +47,8 @@ const createTenantSchema = z.object({
   ownerName: z.string().min(1, 'Nama pemilik wajib diisi'),
   ownerEmail: z.string().email('Masukkan email yang valid'),
   ownerPassword: z.string().min(8, 'Password minimal 8 karakter'),
+  planId: z.string().optional(),
+  billingCycle: z.enum(['monthly', 'quarterly', 'semi_annual', 'yearly']).optional(),
 });
 
 type CreateTenantFormValues = z.infer<typeof createTenantSchema>;
@@ -58,6 +68,13 @@ function CreateTenantPage() {
   const queryClient = useQueryClient();
   const [showPassword, setShowPassword] = useState(false);
 
+  const { data: plansResponse } = useQuery({
+    queryKey: ['subscription-plans', 'active'],
+    queryFn: () => subscriptionPlansApi.getAll({ isActive: true, limit: 100 }),
+  });
+
+  const plans: SubscriptionPlan[] = plansResponse?.data || [];
+
   const form = useForm<CreateTenantFormValues>({
     resolver: zodResolver(createTenantSchema),
     defaultValues: {
@@ -71,8 +88,13 @@ function CreateTenantPage() {
       ownerName: '',
       ownerEmail: '',
       ownerPassword: '',
+      planId: '',
+      billingCycle: undefined,
     },
   });
+
+  const selectedPlan = plans.find((p) => p.id === form.watch('planId'));
+  const availableCycles = selectedPlan?.billingCycles || [];
 
   const createMutation = useMutation({
     mutationFn: async (data: CreateTenantFormValues) => {
@@ -87,6 +109,8 @@ function CreateTenantPage() {
         isActive: data.isActive,
         taxRate: String(data.taxRate),
         receiptFooter: data.receiptFooter || 'Terima kasih telah berbelanja',
+        planId: data.planId || undefined,
+        billingCycle: data.billingCycle || undefined,
       });
 
       return tenant;
@@ -320,6 +344,79 @@ function CreateTenantPage() {
               <h2 className="text-base font-semibold text-gray-900">Pengaturan</h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+                <FormField
+                  control={form.control}
+                  name="planId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Paket Langganan</FormLabel>
+                      <Select
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          form.setValue('billingCycle', undefined);
+                        }}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Pilih paket langganan" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {plans.map((plan) => (
+                            <SelectItem key={plan.id} value={plan.id}>
+                              {plan.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>Pilih paket langganan untuk bisnis ini</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="billingCycle"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Durasi</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        disabled={!selectedPlan}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Pilih durasi" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {availableCycles.map((cycle) => (
+                            <SelectItem key={cycle.cycle} value={cycle.cycle}>
+                              {cycle.cycle === 'monthly'
+                                ? 'Bulanan'
+                                : cycle.cycle === 'quarterly'
+                                  ? '3 Bulanan'
+                                  : cycle.cycle === 'semi_annual'
+                                    ? '6 Bulanan'
+                                    : 'Tahunan'}{' '}
+                              - Rp {Number(cycle.price).toLocaleString('id-ID')}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        {selectedPlan
+                          ? 'Pilih metode pembayaran'
+                          : 'Pilih paket langganan terlebih dahulu'}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 <FormField
                   control={form.control}
                   name="taxRate"

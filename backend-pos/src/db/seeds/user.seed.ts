@@ -4,7 +4,7 @@ import { auth } from '@/lib/auth';
 import { eq } from 'drizzle-orm';
 
 const GLOBAL_ADMIN_ROLE_ID = '00000000-0000-0000-0000-000000000001';
-const GLOBAL_OWNER_ROLE_ID = '00000000-0000-0000-0000-000000000002';
+const TEMPLATE_OWNER_ROLE_ID = '00000000-0000-0000-0000-000000000010';
 
 export async function seedUser(): Promise<string | null> {
   console.log('🌱 Seeding user...');
@@ -68,7 +68,7 @@ export async function seedOwnerUser(): Promise<string | null> {
       if (!existingOwner.roleId) {
         await db
           .update(user)
-          .set({ roleId: GLOBAL_OWNER_ROLE_ID })
+          .set({ roleId: TEMPLATE_OWNER_ROLE_ID })
           .where(eq(user.id, existingOwner.id));
         console.log('✅ Updated existing user with owner role');
       }
@@ -86,7 +86,7 @@ export async function seedOwnerUser(): Promise<string | null> {
     if (result.user) {
       await db
         .update(user)
-        .set({ roleId: GLOBAL_OWNER_ROLE_ID, emailVerified: true })
+        .set({ roleId: TEMPLATE_OWNER_ROLE_ID, emailVerified: true })
         .where(eq(user.id, result.user.id));
       console.log('✅ Created owner user with owner role:', result.user.email);
       return result.user.id;

@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from '@tanstack/react-router';
-import { ArrowLeft, Building2, Check, Edit2, Loader2, Plus, Settings, Trash2 } from 'lucide-react';
+import { ArrowLeft, Building2, Edit2, Loader2, Plus, Settings, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -31,11 +31,9 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  type ProFeatureWithStatus,
-  type ResourceWithStatus,
+  type BillingCycle,
   type SubscriptionHistory,
   type SubscriptionHistoryAction,
   subscriptionPlansApi,
@@ -59,14 +57,27 @@ function formatCurrency(amount: string | number): string {
 function getBillingCycleLabel(cycle: string): string {
   switch (cycle) {
     case 'monthly':
-      return 'Monthly';
+      return 'Month';
     case 'quarterly':
-      return 'Quarterly';
+      return 'Quarter';
+    case 'semi_annual':
+      return '6 Month';
     case 'yearly':
-      return 'Yearly';
+      return 'Year';
     default:
       return cycle;
   }
+}
+
+function formatBillingCycleLabel(cycle: string | undefined): string {
+  if (!cycle) return '-';
+  const labels: Record<string, string> = {
+    monthly: 'Bulanan',
+    quarterly: '3 Bulanan',
+    semi_annual: '6 Bulanan',
+    yearly: 'Tahunan',
+  };
+  return labels[cycle] || cycle;
 }
 
 export function SubscriptionPlanDetailPage() {
@@ -87,6 +98,7 @@ export function SubscriptionPlanDetailPage() {
   const [historyPage, setHistoryPage] = useState(1);
   const [historyAction, setHistoryAction] = useState<SubscriptionHistoryAction | undefined>();
   const [historyTenantId, setHistoryTenantId] = useState<string | undefined>();
+  const [selectedBillingCycle, setSelectedBillingCycle] = useState<string | null>(null);
 
   const { data: allTenantsData, isLoading: allTenantsLoading } = useQuery({
     queryKey: ['tenants-all'],
@@ -97,8 +109,7 @@ export function SubscriptionPlanDetailPage() {
     resolver: zodResolver(subscriptionPlanFormSchema),
     defaultValues: {
       name: '',
-      billingCycle: 'monthly',
-      price: '0',
+      billingCycles: [{ cycle: 'monthly' as BillingCycle, price: '0' }],
       isActive: true,
     },
   });
@@ -114,35 +125,18 @@ export function SubscriptionPlanDetailPage() {
 
   useEffect(() => {
     if (plan) {
-      const existingProFeatureIds = plan.planProFeatures?.map((pf) => pf.proFeatureId) || [];
+      const billingCycles = plan.billingCycles?.map((bc) => ({
+        cycle: bc.cycle,
+        price: bc.price,
+      })) || [{ cycle: 'monthly' as BillingCycle, price: '0' }];
+
       form.reset({
         name: plan.name,
-        billingCycle: plan.billingCycle,
-        price: plan.price,
+        billingCycles,
         isActive: plan.isActive,
-        proFeatureIds: existingProFeatureIds,
       });
     }
   }, [plan, form]);
-
-  const {
-    data: resourcesData,
-    isLoading: resourcesLoading,
-    refetch: refetchResources,
-  } = useQuery({
-    queryKey: ['subscription-plan-resources', planId],
-    queryFn: () => subscriptionPlansApi.getResources(planId),
-  });
-
-  const { data: planProFeaturesData } = useQuery({
-    queryKey: ['subscription-plan-pro-features', planId],
-    queryFn: () => subscriptionPlansApi.getProFeatures(planId),
-  });
-
-  const { data: allProFeaturesData, isLoading: allProFeaturesLoading } = useQuery({
-    queryKey: ['pro-features'],
-    queryFn: () => subscriptionPlansApi.getAllProFeatures(),
-  });
 
   const { data: planSubscriptionsData, isLoading: planSubscriptionsLoading } = useQuery({
     queryKey: ['subscription-plan-subscriptions', planId],
@@ -167,23 +161,11 @@ export function SubscriptionPlanDetailPage() {
 
   const updatePlanMutation = useMutation({
     mutationFn: async (data: SubscriptionPlanFormValues) => {
-      const { proFeatureIds, ...planData } = data;
-      await subscriptionPlansApi.update(planId, planData);
-      if (proFeatureIds) {
-        const currentProFeatureIds = planProFeaturesData?.map((pf) => pf.id) || [];
-        const toAdd = proFeatureIds.filter((id: string) => !currentProFeatureIds.includes(id));
-        const toRemove = currentProFeatureIds.filter((id: string) => !proFeatureIds.includes(id));
-        for (const id of toAdd) {
-          await subscriptionPlansApi.addProFeature(planId, id);
-        }
-        for (const id of toRemove) {
-          await subscriptionPlansApi.removeProFeature(planId, id);
-        }
-      }
+      const { billingCycles, ...planData } = data;
+      await subscriptionPlansApi.update(planId, { ...planData, billingCycles });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['subscription-plan', planId] });
-      queryClient.invalidateQueries({ queryKey: ['subscription-plan-pro-features', planId] });
       setEditDialogOpen(false);
       toast.success('Plan updated successfully');
     },
@@ -191,80 +173,6 @@ export function SubscriptionPlanDetailPage() {
       toast.error('Failed to update plan');
     },
   });
-
-  const updateResourceMutation = useMutation({
-    mutationFn: (data: { resourceId: string; isIncluded: boolean }) =>
-      subscriptionPlansApi.addResource(planId, data),
-    onSuccess: () => {
-      refetchResources();
-      toast.success('Resource updated successfully');
-    },
-    onError: () => {
-      toast.error('Failed to update resource');
-    },
-  });
-
-  const addAllResourcesMutation = useMutation({
-    mutationFn: () => subscriptionPlansApi.addAllResources(planId),
-    onSuccess: () => {
-      refetchResources();
-      toast.success('All resources added successfully');
-    },
-    onError: () => {
-      toast.error('Failed to add all resources');
-    },
-  });
-
-  const handleToggleResource = (resource: ResourceWithStatus) => {
-    updateResourceMutation.mutate({
-      resourceId: resource.id,
-      isIncluded: !resource.isIncluded,
-    });
-  };
-
-  const {
-    data: proFeaturesData,
-    isLoading: proFeaturesLoading,
-    refetch: refetchProFeatures,
-  } = useQuery({
-    queryKey: ['subscription-plan-pro-features', planId],
-    queryFn: () => subscriptionPlansApi.getProFeatures(planId),
-  });
-
-  const updateProFeatureMutation = useMutation({
-    mutationFn: (proFeatureId: string) => {
-      const isCurrentlyIncluded = proFeaturesData?.find(
-        (pf) => pf.id === proFeatureId && pf.isIncluded
-      );
-      if (isCurrentlyIncluded) {
-        return subscriptionPlansApi.removeProFeature(planId, proFeatureId);
-      } else {
-        return subscriptionPlansApi.addProFeature(planId, proFeatureId);
-      }
-    },
-    onSuccess: () => {
-      refetchProFeatures();
-      toast.success('Pro feature updated successfully');
-    },
-    onError: () => {
-      toast.error('Failed to update pro feature');
-    },
-  });
-
-  const addAllProFeaturesMutation = useMutation({
-    mutationFn: () => subscriptionPlansApi.addAllProFeatures(planId),
-    onSuccess: () => {
-      refetchProFeatures();
-      toast.success('All pro features added successfully');
-    },
-    onError: () => {
-      toast.error('Failed to add all pro features');
-    },
-  });
-
-  const handleToggleProFeature = (proFeature: ProFeatureWithStatus) => {
-    updateProFeatureMutation.mutate(proFeature.id);
-  };
 
   const handleEditSubmit = (values: SubscriptionPlanFormValues) => {
     updatePlanMutation.mutate(values);
@@ -311,6 +219,13 @@ export function SubscriptionPlanDetailPage() {
     );
   }
 
+  const sortedBillingCycles = [...(plan.billingCycles || [])].sort((a, b) => {
+    const order = { monthly: 1, quarterly: 2, semi_annual: 3, yearly: 4 };
+    return (
+      (order[a.cycle as keyof typeof order] || 99) - (order[b.cycle as keyof typeof order] || 99)
+    );
+  });
+
   return (
     <div className="space-y-6">
       <Button
@@ -328,8 +243,6 @@ export function SubscriptionPlanDetailPage() {
         onSubmit={handleEditSubmit}
         isPending={updatePlanMutation.isPending}
         form={form}
-        allProFeatures={allProFeaturesData}
-        isLoadingProFeatures={allProFeaturesLoading}
       />
 
       <SetTenantSubscriptionDialog
@@ -337,8 +250,7 @@ export function SubscriptionPlanDetailPage() {
         onOpenChange={(open) => !open && setSetSubscriptionTenant(null)}
         planId={planId}
         planName={plan.name}
-        planPrice={plan.price}
-        planBillingCycle={plan.billingCycle}
+        billingCycles={sortedBillingCycles}
         tenantName={setSubscriptionTenant?.nama || ''}
         tenantSlug={setSubscriptionTenant?.slug || ''}
         existingSubscriptionId={setSubscriptionTenant?.subscriptionId}
@@ -440,29 +352,32 @@ export function SubscriptionPlanDetailPage() {
           </CardHeader>
           <CardContent className="space-y-6">
             <div>
-              <p className="text-sm text-gray-500 mb-1">Price</p>
-              <p className="text-3xl font-bold text-blue-600">
-                {formatCurrency(plan.price)}
-                <span className="text-sm font-normal text-gray-400 ml-1">
-                  /{getBillingCycleLabel(plan.billingCycle)}
-                </span>
-              </p>
-            </div>
-
-            <div>
-              <p className="text-sm text-gray-500 mb-2">Pro Features</p>
-              {plan.planProFeatures && plan.planProFeatures.length > 0 ? (
-                <ul className="space-y-2">
-                  {plan.planProFeatures.map((pf) => (
-                    <li key={pf.id} className="flex items-start gap-2 text-sm">
-                      <Check className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
-                      <span>{pf.proFeature.name}</span>
-                    </li>
+              <p className="text-sm text-gray-500 mb-3">Billing Cycles</p>
+              <Tabs
+                value={selectedBillingCycle || sortedBillingCycles[0]?.cycle}
+                onValueChange={setSelectedBillingCycle}
+                className="w-full"
+              >
+                <TabsList variant="line" className="mb-4">
+                  {sortedBillingCycles.map((bc) => (
+                    <TabsTrigger key={bc.cycle} value={bc.cycle} className="capitalize">
+                      {getBillingCycleLabel(bc.cycle)}
+                    </TabsTrigger>
                   ))}
-                </ul>
-              ) : (
-                <p className="text-sm text-gray-400 italic">No pro features linked</p>
-              )}
+                </TabsList>
+                {sortedBillingCycles.map((bc) => (
+                  <TabsContent key={bc.cycle} value={bc.cycle} className="mt-0">
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-bold text-blue-600">
+                        {formatCurrency(bc.price)}
+                      </span>
+                      <span className="text-sm text-gray-400">
+                        / {getBillingCycleLabel(bc.cycle).toLowerCase()}
+                      </span>
+                    </div>
+                  </TabsContent>
+                ))}
+              </Tabs>
             </div>
 
             <div className="pt-4 border-t">
@@ -477,112 +392,12 @@ export function SubscriptionPlanDetailPage() {
         </Card>
 
         <Separator />
-        <Tabs defaultValue="resources" className="w-full">
+        <Tabs defaultValue="tenants" className="w-full">
           <TabsList variant="line">
-            <TabsTrigger value="resources">Resources</TabsTrigger>
-            <TabsTrigger value="pro-features">Pro Features</TabsTrigger>
             <TabsTrigger value="tenants">Tenants</TabsTrigger>
             <TabsTrigger value="history">History</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="resources">
-            <div className="flex justify-end mb-4">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => addAllResourcesMutation.mutate()}
-                disabled={addAllResourcesMutation.isPending}
-              >
-                {addAllResourcesMutation.isPending ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Plus className="mr-2 h-4 w-4" />
-                )}
-                Add All
-              </Button>
-            </div>
-            {resourcesLoading ? (
-              <div className="space-y-3">
-                {[1, 2, 3, 4].map((i) => (
-                  <Skeleton key={i} className="h-12 w-full" />
-                ))}
-              </div>
-            ) : resourcesData && resourcesData.length > 0 ? (
-              <div className="space-y-2">
-                {resourcesData.map((resource) => (
-                  <div
-                    key={resource.id}
-                    className="flex items-center justify-between p-3 rounded-lg border hover:bg-gray-50"
-                  >
-                    <div className="space-y-0.5">
-                      <p className="font-medium text-sm">{resource.name}</p>
-                      {resource.description && (
-                        <p className="text-xs text-gray-500">{resource.description}</p>
-                      )}
-                    </div>
-                    <Switch
-                      checked={resource.isIncluded}
-                      onCheckedChange={() => handleToggleResource(resource)}
-                      disabled={updateResourceMutation.isPending}
-                    />
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12 text-gray-400">
-                <p className="text-sm">No resources available</p>
-              </div>
-            )}
-          </TabsContent>
-          <TabsContent value="pro-features" className="mt-4">
-            <div className="flex justify-end mb-4">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => addAllProFeaturesMutation.mutate()}
-                disabled={addAllProFeaturesMutation.isPending}
-              >
-                {addAllProFeaturesMutation.isPending ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Plus className="mr-2 h-4 w-4" />
-                )}
-                Add All
-              </Button>
-            </div>
-            {proFeaturesLoading ? (
-              <div className="space-y-3">
-                {[1, 2, 3, 4].map((i) => (
-                  <Skeleton key={i} className="h-12 w-full" />
-                ))}
-              </div>
-            ) : proFeaturesData && proFeaturesData.length > 0 ? (
-              <div className="space-y-2">
-                {proFeaturesData.map((proFeature) => (
-                  <div
-                    key={proFeature.id}
-                    className="flex items-center justify-between p-3 rounded-lg border hover:bg-gray-50"
-                  >
-                    <div className="space-y-0.5">
-                      <p className="font-medium text-sm">{proFeature.name}</p>
-                      {proFeature.description && (
-                        <p className="text-xs text-gray-500">{proFeature.description}</p>
-                      )}
-                    </div>
-                    <Switch
-                      checked={proFeature.isIncluded}
-                      onCheckedChange={() => handleToggleProFeature(proFeature)}
-                      disabled={updateProFeatureMutation.isPending}
-                    />
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12 text-gray-400">
-                <p className="text-sm">No pro features available</p>
-              </div>
-            )}
-          </TabsContent>
           <TabsContent value="tenants" className="mt-4">
             <div className="flex justify-end mb-4">
               <Button size="sm" variant="outline" onClick={() => setTenantSelectorOpen(true)}>
@@ -726,19 +541,22 @@ export function SubscriptionPlanDetailPage() {
                           Tenant
                         </th>
                         <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">
-                          Action
+                          Aksi
                         </th>
                         <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">
-                          Plan
+                          Paket
                         </th>
                         <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">
-                          Amount
+                          Billing Cycle
                         </th>
                         <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">
-                          Period
+                          Jumlah
                         </th>
                         <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">
-                          Date
+                          Periode
+                        </th>
+                        <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">
+                          Tanggal
                         </th>
                       </tr>
                     </thead>
@@ -767,6 +585,9 @@ export function SubscriptionPlanDetailPage() {
                             </span>
                           </td>
                           <td className="px-4 py-3 text-sm">{item.planName}</td>
+                          <td className="px-4 py-3 text-sm">
+                            {formatBillingCycleLabel(item.billingCycle)}
+                          </td>
                           <td className="px-4 py-3 text-sm">
                             {item.amountPaid ? formatCurrency(item.amountPaid) : '-'}
                           </td>

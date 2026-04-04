@@ -37,7 +37,6 @@ export class RbacService {
       scope: role.scope as ScopeType,
       tenantId: role.tenantId,
       isActive: role.isActive,
-      proFeatureId: role.proFeatureId,
       permissions: groupedPermissions,
     };
   }

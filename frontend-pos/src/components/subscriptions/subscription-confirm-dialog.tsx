@@ -20,7 +20,7 @@ interface SubscriptionConfirmDialogProps {
     id: string;
     name: string;
     price: string;
-    billingCycle: string;
+    cycle: string;
   };
 }
 
@@ -112,13 +112,11 @@ export function SubscriptionConfirmDialog({
 
     setIsProcessing(true);
 
-    // Close the dialog first to prevent overlay interference with Snap modal
     onOpenChange(false);
 
     try {
       const { snapToken } = await paymentsApi.createSnapToken(plan.id);
 
-      // Small delay to ensure dialog is closed
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       window.snap.pay(snapToken, {
@@ -154,16 +152,11 @@ export function SubscriptionConfirmDialog({
 
         <div className="p-4 bg-muted rounded-lg">
           <p className="font-semibold text-lg">{plan.name}</p>
-          <p className="text-sm text-muted-foreground">{formatBillingCycle(plan.billingCycle)}</p>
+          <p className="text-sm text-muted-foreground">{formatBillingCycle(plan.cycle)}</p>
           <p className="text-2xl font-bold mt-2">
             {formatCurrency(Number(plan.price))}
             <span className="text-sm font-normal text-muted-foreground">
-              /
-              {plan.billingCycle === 'monthly'
-                ? 'mo'
-                : plan.billingCycle === 'quarterly'
-                  ? 'qtr'
-                  : 'yr'}
+              /{plan.cycle === 'monthly' ? 'mo' : plan.cycle === 'quarterly' ? 'qtr' : 'yr'}
             </span>
           </p>
         </div>

@@ -123,6 +123,8 @@ export const tenantsApi = {
       isActive?: boolean;
       taxRate?: string;
       receiptFooter?: string;
+      planId?: string;
+      billingCycle?: string;
     },
     userId?: string
   ): Promise<Tenant> => {
@@ -197,7 +199,7 @@ export const tenantsApi = {
 
   createSubscription: async (
     slug: string,
-    data: { planId: string }
+    data: { planId: string; billingCycle: string }
   ): Promise<{ tenant: { id: string; nama: string; slug: string }; subscription: any }> => {
     return fetchApi<{ tenant: { id: string; nama: string; slug: string }; subscription: any }>(
       `/tenants/${slug}/subscription`,

@@ -1,17 +1,7 @@
 import type { CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
 import { DB_CONNECTION } from '@/db/db.module';
-import {
-  planProFeatures,
-  planResources,
-  proFeatures,
-  resources,
-  subscriptionHistories,
-  subscriptionPlans,
-  subscriptions,
-  tenants,
-} from '@/db/schema';
+import { subscriptionHistories, subscriptionPlans, subscriptions, tenants } from '@/db/schema';
 import type { DrizzleDB } from '@/db/type';
-import { RbacService } from '@/rbac/services/rbac.service';
 import { TenantAuthService } from '@/rbac/services/tenant-auth.service';
 import {
   ConflictException,
@@ -34,6 +24,7 @@ import {
 const BILLING_CYCLE_DAYS: Record<BillingCycle, number> = {
   monthly: 30,
   quarterly: 90,
+  semi_annual: 180,
   yearly: 365,
 };
 
@@ -42,7 +33,6 @@ export class SubscriptionsService {
   constructor(
     @Inject(DB_CONNECTION) private db: DrizzleDB,
     private readonly tenantAuth: TenantAuthService,
-    private readonly rbacService: RbacService,
   ) {}
 
   private async getTenantBySlug(slug: string) {
@@ -52,18 +42,25 @@ export class SubscriptionsService {
     return tenant;
   }
 
+  private getPriceForBillingCycle(
+    billingCycles: Array<{ cycle: string; price: string }>,
+    billingCycle: BillingCycle,
+  ): string {
+    const cycle = billingCycles.find((bc) => bc.cycle === billingCycle);
+    if (!cycle) {
+      throw new NotFoundException(`Billing cycle '${billingCycle}' not found for this plan`);
+    }
+    return cycle.price;
+  }
+
   async findAllPlans(query: SubscriptionPlanQueryDto) {
-    const { page = 1, limit = 10, isActive, billingCycle } = query;
+    const { page = 1, limit = 10, isActive } = query;
     const offset = (page - 1) * limit;
 
     const conditions: ReturnType<typeof eq>[] = [];
 
     if (isActive !== undefined) {
       conditions.push(eq(subscriptionPlans.isActive, isActive));
-    }
-
-    if (billingCycle) {
-      conditions.push(eq(subscriptionPlans.billingCycle, billingCycle));
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -74,13 +71,6 @@ export class SubscriptionsService {
         limit,
         offset,
         orderBy: [asc(subscriptionPlans.createdAt)],
-        with: {
-          planProFeatures: {
-            with: {
-              proFeature: true,
-            },
-          },
-        },
       }),
       this.db.select({ count: sql<number>`count(*)` }).from(subscriptionPlans).where(whereClause),
     ]);
@@ -101,13 +91,6 @@ export class SubscriptionsService {
   async findPlanById(id: string) {
     const plan = await this.db.query.subscriptionPlans.findFirst({
       where: eq(subscriptionPlans.id, id),
-      with: {
-        planProFeatures: {
-          with: {
-            proFeature: true,
-          },
-        },
-      },
     });
 
     if (!plan) {
@@ -115,13 +98,6 @@ export class SubscriptionsService {
     }
 
     return plan;
-  }
-
-  async findAllProFeatures() {
-    return this.db.query.proFeatures.findMany({
-      where: eq(proFeatures.isActive, true),
-      orderBy: [asc(proFeatures.name)],
-    });
   }
 
   async createPlan(data: CreateSubscriptionPlanDto) {
@@ -133,25 +109,19 @@ export class SubscriptionsService {
       throw new ConflictException('Subscription plan with this name already exists');
     }
 
-    const { proFeatureIds, ...planData } = data;
-
     const [plan] = await this.db
       .insert(subscriptionPlans)
       .values({
-        ...planData,
+        name: data.name,
+        isActive: data.isActive,
+        billingCycles: data.billingCycles.map((bc) => ({
+          cycle: bc.billingCycle,
+          price: bc.price,
+        })),
       })
       .returning();
 
-    if (proFeatureIds && proFeatureIds.length > 0) {
-      for (const proFeatureId of proFeatureIds) {
-        await this.db.insert(planProFeatures).values({
-          planId: plan.id,
-          proFeatureId,
-        });
-      }
-    }
-
-    return this.findPlanById(plan.id);
+    return plan;
   }
 
   async updatePlan(id: string, data: UpdateSubscriptionPlanDto) {
@@ -167,12 +137,26 @@ export class SubscriptionsService {
       }
     }
 
+    const updateData: Record<string, unknown> = {
+      updatedAt: new Date(),
+    };
+
+    if (data.name) {
+      updateData.name = data.name;
+    }
+    if (data.isActive !== undefined) {
+      updateData.isActive = data.isActive;
+    }
+    if (data.billingCycles) {
+      updateData.billingCycles = data.billingCycles.map((bc) => ({
+        cycle: bc.billingCycle,
+        price: bc.price,
+      }));
+    }
+
     const [plan] = await this.db
       .update(subscriptionPlans)
-      .set({
-        ...data,
-        updatedAt: new Date(),
-      })
+      .set(updateData)
       .where(eq(subscriptionPlans.id, id))
       .returning();
 
@@ -234,6 +218,8 @@ export class SubscriptionsService {
       throw new ConflictException('Cannot subscribe to an inactive plan');
     }
 
+    const price = this.getPriceForBillingCycle(plan.billingCycles, data.billingCycle);
+
     const existingSubscription = await this.db.query.subscriptions.findFirst({
       where: eq(subscriptions.tenantId, tenant.id),
     });
@@ -244,20 +230,15 @@ export class SubscriptionsService {
 
     const startedAt = new Date();
     const expiresAt = new Date(
-      startedAt.getTime() + BILLING_CYCLE_DAYS[plan.billingCycle] * 24 * 60 * 60 * 1000,
+      startedAt.getTime() + BILLING_CYCLE_DAYS[data.billingCycle] * 24 * 60 * 60 * 1000,
     );
-
-    // TODO: Add payment integration here
-    // const payment = await this.processPayment(data, plan);
-    // if (!payment.success) {
-    //   throw new BadRequestException('Payment failed');
-    // }
 
     const [subscription] = await this.db
       .insert(subscriptions)
       .values({
         tenantId: tenant.id,
-        planId: data.planId,
+        planId: plan.id,
+        billingCycle: data.billingCycle,
         status: 'active',
         startedAt,
         expiresAt,
@@ -267,9 +248,9 @@ export class SubscriptionsService {
     await this.db.insert(subscriptionHistories).values({
       tenantId: tenant.id,
       subscriptionId: subscription.id,
-      planId: data.planId,
+      planId: plan.id,
       action: 'subscribed',
-      amountPaid: plan.price,
+      amountPaid: price,
       periodStart: startedAt,
       periodEnd: expiresAt,
       performedBy: user.id,
@@ -311,22 +292,17 @@ export class SubscriptionsService {
       throw new NotFoundException('No subscription found or already cancelled');
     }
 
-    const billingCycle: BillingCycle =
-      data.billingCycle || subscription.plan?.billingCycle || 'monthly';
-    const newExpiresAt = new Date(
-      new Date().getTime() + BILLING_CYCLE_DAYS[billingCycle] * 24 * 60 * 60 * 1000,
-    );
+    const price = this.getPriceForBillingCycle(subscription.plan.billingCycles, data.billingCycle);
 
-    // TODO: Add payment integration here
-    // const payment = await this.processPayment(data, subscription.plan);
-    // if (!payment.success) {
-    //   throw new BadRequestException('Payment failed');
-    // }
+    const newExpiresAt = new Date(
+      new Date().getTime() + BILLING_CYCLE_DAYS[data.billingCycle] * 24 * 60 * 60 * 1000,
+    );
 
     const [updatedSubscription] = await this.db
       .update(subscriptions)
       .set({
         status: 'active',
+        billingCycle: data.billingCycle,
         expiresAt: newExpiresAt,
         updatedAt: new Date(),
       })
@@ -340,7 +316,7 @@ export class SubscriptionsService {
       subscriptionId: subscription.id,
       planId: subscription.planId,
       action: 'renewed',
-      amountPaid: subscription.plan?.price,
+      amountPaid: price,
       periodStart: previousExpiresAt,
       periodEnd: newExpiresAt,
       performedBy: user.id,
@@ -472,9 +448,13 @@ export class SubscriptionsService {
       throw new NotFoundException('Subscription not found or already cancelled');
     }
 
-    const billingCycle: BillingCycle = subscription.plan?.billingCycle || 'monthly';
+    const price = this.getPriceForBillingCycle(
+      subscription.plan.billingCycles,
+      subscription.billingCycle,
+    );
+
     const newExpiresAt = new Date(
-      new Date().getTime() + BILLING_CYCLE_DAYS[billingCycle] * 24 * 60 * 60 * 1000,
+      new Date().getTime() + BILLING_CYCLE_DAYS[subscription.billingCycle] * 24 * 60 * 60 * 1000,
     );
 
     const [updatedSubscription] = await this.db
@@ -494,7 +474,7 @@ export class SubscriptionsService {
       subscriptionId: subscription.id,
       planId: subscription.planId,
       action: 'renewed',
-      amountPaid: subscription.plan?.price,
+      amountPaid: price,
       periodStart: previousExpiresAt,
       periodEnd: newExpiresAt,
       performedBy: userId,
@@ -555,267 +535,6 @@ export class SubscriptionsService {
     }
   }
 
-  async checkAccess(tenantId: string, roleId: string): Promise<boolean> {
-    const role = await this.rbacService.getRoleWithPermissions(roleId);
-
-    if (!role?.proFeatureId) {
-      return true;
-    }
-
-    const subscription = await this.getActiveSubscription(tenantId);
-    return subscription !== null;
-  }
-
-  async getPlanResources(planId: string) {
-    const planResourceLinks = await this.db.query.planResources.findMany({
-      where: eq(planResources.planId, planId),
-      with: {
-        resource: true,
-      },
-    });
-
-    return planResourceLinks.filter((pr) => pr.isIncluded).map((pr) => pr.resource);
-  }
-
-  async getAllResourcesWithPlanStatus(planId: string) {
-    const allResources = await this.db.query.resources.findMany({
-      where: eq(resources.isActive, true),
-    });
-
-    const planResourcesLinks = await this.db.query.planResources.findMany({
-      where: eq(planResources.planId, planId),
-    });
-
-    const planResourcesMap = new Map(
-      planResourcesLinks.map((pr) => [pr.resourceId, pr.isIncluded]),
-    );
-
-    return allResources.map((resource) => ({
-      ...resource,
-      isIncluded: planResourcesMap.get(resource.id) ?? false,
-    }));
-  }
-
-  async getIncludedResources(planId: string) {
-    const plan = await this.findPlanById(planId);
-
-    if (plan.name === 'Free') {
-      return [];
-    }
-
-    const includedResources = await this.db.query.planResources.findMany({
-      where: and(eq(planResources.planId, planId), eq(planResources.isIncluded, true)),
-      with: {
-        resource: true,
-      },
-    });
-
-    return includedResources.map((pr) => pr.resource);
-  }
-
-  async checkResourceAccess(tenantId: string, resourceName: string): Promise<boolean> {
-    const activeSubscription = await this.getActiveSubscription(tenantId);
-
-    if (!activeSubscription || !activeSubscription.planId) {
-      return false;
-    }
-
-    const resource = await this.db.query.resources.findFirst({
-      where: eq(resources.name, resourceName),
-    });
-
-    if (!resource) {
-      return false;
-    }
-
-    const planResource = await this.db.query.planResources.findFirst({
-      where: and(
-        eq(planResources.planId, activeSubscription.planId),
-        eq(planResources.resourceId, resource.id),
-      ),
-    });
-
-    return planResource?.isIncluded ?? false;
-  }
-
-  async addResourceToPlan(planId: string, resourceId: string) {
-    const existing = await this.db.query.planResources.findFirst({
-      where: and(eq(planResources.planId, planId), eq(planResources.resourceId, resourceId)),
-    });
-
-    if (existing) {
-      await this.db
-        .update(planResources)
-        .set({ isIncluded: true, updatedAt: new Date() })
-        .where(eq(planResources.id, existing.id));
-      return existing;
-    }
-
-    const [planResource] = await this.db
-      .insert(planResources)
-      .values({
-        planId,
-        resourceId,
-        isIncluded: true,
-      })
-      .returning();
-
-    return planResource;
-  }
-
-  async removeResourceFromPlan(planId: string, resourceId: string) {
-    const existing = await this.db.query.planResources.findFirst({
-      where: and(eq(planResources.planId, planId), eq(planResources.resourceId, resourceId)),
-    });
-
-    if (!existing) {
-      return null;
-    }
-
-    const [planResource] = await this.db
-      .update(planResources)
-      .set({ isIncluded: false, updatedAt: new Date() })
-      .where(eq(planResources.id, existing.id))
-      .returning();
-
-    return planResource;
-  }
-
-  async addAllResourcesToPlan(planId: string) {
-    const allResources = await this.db.query.resources.findMany({
-      where: eq(resources.isActive, true),
-    });
-
-    for (const resource of allResources) {
-      await this.addResourceToPlan(planId, resource.id);
-    }
-
-    return this.getAllResourcesWithPlanStatus(planId);
-  }
-
-  async updatePlanResourcesBulk(
-    planId: string,
-    resourcesData: Array<{ resourceId: string; isIncluded: boolean }>,
-  ) {
-    await this.findPlanById(planId);
-
-    for (const { resourceId, isIncluded } of resourcesData) {
-      if (isIncluded) {
-        await this.addResourceToPlan(planId, resourceId);
-      } else {
-        await this.removeResourceFromPlan(planId, resourceId);
-      }
-    }
-
-    return this.getAllResourcesWithPlanStatus(planId);
-  }
-
-  async getPlanProFeatures(planId: string) {
-    const plan = await this.findPlanById(planId);
-
-    return plan.planProFeatures.map((ppf) => ppf.proFeature);
-  }
-
-  async getAllProFeaturesWithPlanStatus(planId: string) {
-    const allProFeatures = await this.db.query.proFeatures.findMany({
-      where: eq(proFeatures.isActive, true),
-    });
-
-    const planProFeaturesLinks = await this.db.query.planProFeatures.findMany({
-      where: eq(planProFeatures.planId, planId),
-    });
-
-    const planProFeaturesMap = new Set(planProFeaturesLinks.map((ppf) => ppf.proFeatureId));
-
-    return allProFeatures.map((feature) => ({
-      ...feature,
-      isIncluded: planProFeaturesMap.has(feature.id),
-    }));
-  }
-
-  async addProFeatureToPlan(planId: string, proFeatureId: string) {
-    await this.findPlanById(planId);
-
-    const existingProFeature = await this.db.query.proFeatures.findFirst({
-      where: eq(proFeatures.id, proFeatureId),
-    });
-
-    if (!existingProFeature) {
-      throw new NotFoundException('Pro feature not found');
-    }
-
-    const existing = await this.db.query.planProFeatures.findFirst({
-      where: and(
-        eq(planProFeatures.planId, planId),
-        eq(planProFeatures.proFeatureId, proFeatureId),
-      ),
-    });
-
-    if (existing) {
-      return existing;
-    }
-
-    const [planProFeature] = await this.db
-      .insert(planProFeatures)
-      .values({
-        planId,
-        proFeatureId,
-      })
-      .returning();
-
-    return planProFeature;
-  }
-
-  async removeProFeatureFromPlan(planId: string, proFeatureId: string) {
-    await this.findPlanById(planId);
-
-    const existing = await this.db.query.planProFeatures.findFirst({
-      where: and(
-        eq(planProFeatures.planId, planId),
-        eq(planProFeatures.proFeatureId, proFeatureId),
-      ),
-    });
-
-    if (!existing) {
-      return null;
-    }
-
-    await this.db.delete(planProFeatures).where(eq(planProFeatures.id, existing.id));
-
-    return { message: 'Pro feature removed from plan' };
-  }
-
-  async addAllProFeaturesToPlan(planId: string) {
-    await this.findPlanById(planId);
-
-    const allProFeatures = await this.db.query.proFeatures.findMany({
-      where: eq(proFeatures.isActive, true),
-    });
-
-    for (const feature of allProFeatures) {
-      await this.addProFeatureToPlan(planId, feature.id);
-    }
-
-    return this.getAllProFeaturesWithPlanStatus(planId);
-  }
-
-  async updatePlanProFeaturesBulk(
-    planId: string,
-    proFeaturesData: Array<{ proFeatureId: string; isIncluded: boolean }>,
-  ) {
-    await this.findPlanById(planId);
-
-    for (const { proFeatureId, isIncluded } of proFeaturesData) {
-      if (isIncluded) {
-        await this.addProFeatureToPlan(planId, proFeatureId);
-      } else {
-        await this.removeProFeatureFromPlan(planId, proFeatureId);
-      }
-    }
-
-    return this.getAllProFeaturesWithPlanStatus(planId);
-  }
-
   async getSubscriptionsByPlanId(planId: string) {
     await this.findPlanById(planId);
 
@@ -869,8 +588,8 @@ export class SubscriptionsService {
         slug: sub.tenant.slug,
       },
       plan: {
-        id: sub.plan?.id,
-        name: sub.plan?.name,
+        id: sub.plan.id,
+        name: sub.plan.name,
       },
     }));
   }
@@ -909,8 +628,9 @@ export class SubscriptionsService {
         offset,
         orderBy: [asc(subscriptionHistories.createdAt)],
         with: {
-          plan: true,
+          tenant: true,
           subscription: true,
+          plan: true,
         },
       }),
       this.db
@@ -922,7 +642,23 @@ export class SubscriptionsService {
     const total = Number(totalResult[0]?.count || 0);
 
     return {
-      data,
+      data: data.map((h) => ({
+        id: h.id,
+        tenantId: h.tenantId,
+        tenantName: h.tenant?.nama || 'Unknown',
+        tenantSlug: h.tenant?.slug || 'Unknown',
+        subscriptionId: h.subscriptionId,
+        planId: h.plan?.id,
+        planName: h.plan?.name || 'Unknown',
+        action: h.action,
+        billingCycle: h.subscription?.billingCycle,
+        amountPaid: h.amountPaid,
+        invoiceRef: h.invoiceRef,
+        periodStart: h.periodStart,
+        periodEnd: h.periodEnd,
+        performedBy: h.performedBy,
+        createdAt: h.createdAt,
+      })),
       meta: {
         page,
         limit,
@@ -959,6 +695,7 @@ export class SubscriptionsService {
         with: {
           tenant: true,
           plan: true,
+          subscription: true,
         },
       }),
       this.db
@@ -976,9 +713,10 @@ export class SubscriptionsService {
         tenantName: h.tenant.nama,
         tenantSlug: h.tenant.slug,
         subscriptionId: h.subscriptionId,
-        planId: h.planId,
+        planId: h.plan?.id,
         planName: h.plan?.name || 'Unknown',
         action: h.action,
+        billingCycle: h.subscription?.billingCycle,
         amountPaid: h.amountPaid,
         invoiceRef: h.invoiceRef,
         periodStart: h.periodStart,
@@ -1020,6 +758,7 @@ export class SubscriptionsService {
         with: {
           tenant: true,
           plan: true,
+          subscription: true,
         },
       }),
       this.db
@@ -1037,9 +776,10 @@ export class SubscriptionsService {
         tenantName: h.tenant.nama,
         tenantSlug: h.tenant.slug,
         subscriptionId: h.subscriptionId,
-        planId: h.planId,
+        planId: h.plan?.id,
         planName: h.plan?.name || 'Unknown',
         action: h.action,
+        billingCycle: h.subscription?.billingCycle,
         amountPaid: h.amountPaid,
         invoiceRef: h.invoiceRef,
         periodStart: h.periodStart,

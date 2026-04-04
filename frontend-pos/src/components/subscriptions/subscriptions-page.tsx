@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { CheckCircle2, Package, Plus, Search, Trash2 } from 'lucide-react';
+import { Package, Plus, Search, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { DeletePlanDialog } from '@/components/subscriptions/dialogs/delete-plan-dialog';
@@ -34,11 +34,13 @@ function formatCurrency(amount: string | number): string {
 function getBillingCycleLabel(cycle: string): string {
   switch (cycle) {
     case 'monthly':
-      return 'Month';
+      return 'Mo';
     case 'quarterly':
-      return 'Quarter';
+      return 'Qtr';
+    case 'semi_annual':
+      return '6 Mo';
     case 'yearly':
-      return 'Year';
+      return 'Yr';
     default:
       return cycle;
   }
@@ -48,21 +50,14 @@ export function SubscriptionsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedBillingCycle, setSelectedBillingCycle] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingPlan, setDeletingPlan] = useState<SubscriptionPlan | null>(null);
 
   const { data: plansData, isLoading } = useQuery({
-    queryKey: [
-      'subscription-plans',
-      { billingCycle: selectedBillingCycle, isActive: selectedStatus },
-    ],
+    queryKey: ['subscription-plans', { isActive: selectedStatus }],
     queryFn: async () => {
       const params: any = {};
-      if (selectedBillingCycle !== 'all') {
-        params.billingCycle = selectedBillingCycle;
-      }
       if (selectedStatus !== 'all') {
         params.isActive = selectedStatus === 'aktif';
       }
@@ -118,18 +113,6 @@ export function SubscriptionsPage() {
             className="pl-9"
           />
         </div>
-
-        <Select value={selectedBillingCycle} onValueChange={setSelectedBillingCycle}>
-          <SelectTrigger className="w-full sm:w-[180px]">
-            <SelectValue placeholder="Semua Durasi" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Semua Durasi</SelectItem>
-            <SelectItem value="monthly">Monthly</SelectItem>
-            <SelectItem value="quarterly">Quarterly</SelectItem>
-            <SelectItem value="yearly">Yearly</SelectItem>
-          </SelectContent>
-        </Select>
 
         <Select value={selectedStatus} onValueChange={setSelectedStatus}>
           <SelectTrigger className="w-full sm:w-[140px]">
@@ -206,6 +189,15 @@ function PlanCard({
   onClick?: () => void;
   onDelete?: () => void;
 }) {
+  const billingCycles = plan.billingCycles || [];
+
+  const sortedBillingCycles = [...billingCycles].sort((a, b) => {
+    const order = { monthly: 1, quarterly: 2, semi_annual: 3, yearly: 4 };
+    return (
+      (order[a.cycle as keyof typeof order] || 99) - (order[b.cycle as keyof typeof order] || 99)
+    );
+  });
+
   return (
     <Card
       className="flex flex-col justify-between py-5 cursor-pointer hover:shadow-md transition-shadow"
@@ -223,33 +215,21 @@ function PlanCard({
           )}
         </div>
 
-        <div>
-          <span className="text-2xl font-bold text-blue-500">{formatCurrency(plan.price)}</span>
-          <span className="text-sm text-gray-400 ml-1">
-            /{getBillingCycleLabel(plan.billingCycle)}
-          </span>
-        </div>
-
-        <div>
-          <p className="text-sm font-medium text-gray-700 mb-2">Pro Features:</p>
-          <ul className="space-y-1.5">
-            {plan.planProFeatures && plan.planProFeatures.length > 0 ? (
-              plan.planProFeatures.slice(0, 3).map((pf) => (
-                <li key={pf.id} className="flex items-center gap-2 text-sm text-gray-700">
-                  <CheckCircle2 className="h-4 w-4 text-blue-500 shrink-0" />
-                  {pf.proFeature.name}
-                </li>
-              ))
-            ) : (
-              <li className="text-sm text-gray-400 italic">No pro features linked</li>
+        {sortedBillingCycles.length > 0 && (
+          <div className="flex items-baseline gap-1">
+            <span className="text-2xl font-bold text-blue-500">
+              {formatCurrency(sortedBillingCycles[0].price)}
+            </span>
+            <span className="text-sm text-gray-400">
+              /{getBillingCycleLabel(sortedBillingCycles[0].cycle)}
+            </span>
+            {sortedBillingCycles.length > 1 && (
+              <span className="text-sm text-gray-400 ml-1">
+                + {sortedBillingCycles.length - 1} more
+              </span>
             )}
-            {plan.planProFeatures && plan.planProFeatures.length > 3 && (
-              <li className="text-sm text-gray-500 italic">
-                +{plan.planProFeatures.length - 3} more
-              </li>
-            )}
-          </ul>
-        </div>
+          </div>
+        )}
       </CardContent>
 
       <div className="px-6">

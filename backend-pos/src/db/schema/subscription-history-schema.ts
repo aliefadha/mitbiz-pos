@@ -19,7 +19,9 @@ export const subscriptionHistories = pgTable('subscription_histories', {
   subscriptionId: text('subscription_id').references(() => subscriptions.id, {
     onDelete: 'cascade',
   }),
-  planId: text('plan_id').references(() => subscriptionPlans.id, { onDelete: 'set null' }),
+  planId: text('plan_id').references(() => subscriptionPlans.id, {
+    onDelete: 'set null',
+  }),
   action: text('action', {
     enum: ['subscribed', 'renewed', 'changed', 'cancelled'],
   }).notNull(),
