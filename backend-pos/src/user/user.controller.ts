@@ -108,6 +108,13 @@ export class UserController {
     return { user: updatedUser };
   }
 
+  @Post('request-password-reset')
+  @Public()
+  async requestPasswordReset(@Body() body: { email: string }) {
+    const result = await this.userService.requestPasswordReset(body.email);
+    return result;
+  }
+
   @Get('check-email')
   @Public()
   @UsePipes(new ZodValidationPipe(CheckEmailSchema, 'query'))

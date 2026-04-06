@@ -111,6 +111,13 @@ async function checkEmail(email: string): Promise<{ exists: boolean }> {
   return fetchApi(`/users/check-email?email=${encodeURIComponent(email)}`);
 }
 
+async function requestPasswordReset(email: string): Promise<{ resetUrl: string | null }> {
+  return fetchApi('/users/request-password-reset', {
+    method: 'POST',
+    data: { email },
+  });
+}
+
 export const usersApi = {
   getUsers,
   getProfile,
@@ -120,4 +127,5 @@ export const usersApi = {
   deleteUser,
   updateProfile,
   checkEmail,
+  requestPasswordReset,
 };

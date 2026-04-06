@@ -18,37 +18,33 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { Tenant } from '@/lib/api/tenants';
 import type { User } from '@/lib/api/users';
+import { EditUserDialog } from './edit-user-dialog';
 
 interface UserListProps {
   users: User[];
-  tenants: Tenant[];
   searchQuery: string;
-  tenantFilter: string;
   currentPage: number;
   pageSize: number;
   totalUsers: number;
   totalPages: number;
   onSearchChange: (query: string) => void;
-  onTenantFilterChange: (value: string) => void;
   onPageChange: (page: number) => void;
   onPageSizeChange: (size: number) => void;
+  onUserUpdated?: () => void;
 }
 
 export function UserList({
   users,
-  tenants,
   searchQuery,
-  tenantFilter,
   currentPage,
   pageSize,
   totalUsers,
   totalPages,
   onSearchChange,
-  onTenantFilterChange,
   onPageChange,
   onPageSizeChange,
+  onUserUpdated,
 }: UserListProps) {
   return (
     <Card className="py-4">
@@ -63,20 +59,6 @@ export function UserList({
               className="pl-9"
             />
           </div>
-
-          <Select value={tenantFilter} onValueChange={onTenantFilterChange}>
-            <SelectTrigger className="w-full sm:w-[200px]">
-              <SelectValue placeholder="Semua Bisnis" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Semua Bisnis</SelectItem>
-              {tenants.map((tenant) => (
-                <SelectItem key={tenant.id} value={tenant.id}>
-                  {tenant.nama}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
 
         <div className="overflow-x-auto">
@@ -89,15 +71,15 @@ export function UserList({
                 <TableHead className="text-gray-600 font-medium">Email</TableHead>
                 <TableHead className="text-gray-600 font-medium">Bisnis</TableHead>
                 <TableHead className="text-gray-600 font-medium">Status</TableHead>
-                {/* <TableHead className="text-gray-600 font-medium rounded-tr-lg rounded-br-lg text-center">
+                <TableHead className="text-gray-600 font-medium rounded-tr-lg rounded-br-lg text-center">
                   Aksi
-                </TableHead> */}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {users.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-12 text-gray-400">
+                  <TableCell colSpan={6} className="text-center py-12 text-gray-400">
                     <Users className="h-10 w-10 mx-auto mb-3 opacity-30" />
                     <p className="text-sm">Belum ada user yang ditemukan</p>
                   </TableCell>
@@ -113,26 +95,11 @@ export function UserList({
                         Aktif
                       </Badge>
                     </TableCell>
-                    {/* <TableCell>
-                      <div className="flex items-center justify-center gap-1">
-                        <Button
-                          variant="outline"
-                          size="icon-sm"
-                          className="text-gray-500 hover:text-gray-700"
-                          title="Edit user"
-                        >
-                          <Edit2 className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon-sm"
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50 hover:border-red-200"
-                          title="Hapus user"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
+                    <TableCell>
+                      <div className="flex items-center justify-center">
+                        <EditUserDialog user={user} onSuccess={onUserUpdated} />
                       </div>
-                    </TableCell> */}
+                    </TableCell>
                   </TableRow>
                 ))
               )}

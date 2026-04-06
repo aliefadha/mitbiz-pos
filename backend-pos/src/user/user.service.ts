@@ -1,11 +1,12 @@
 import type { CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
 import { DB_CONNECTION } from '@/db/db.module';
-import { rolePermissions, roles, user } from '@/db/schema';
+import { account, rolePermissions, roles, user, verification } from '@/db/schema';
 import { outlets, tenants } from '@/db/schema';
 import type { DrizzleDB } from '@/db/type';
 import { auth } from '@/lib/auth';
 import { TenantAuthService } from '@/rbac/services/tenant-auth.service';
 import { BadRequestException, ForbiddenException, Inject, Injectable } from '@nestjs/common';
+import { generateId } from 'better-auth';
 import { eq, sql } from 'drizzle-orm';
 import type { CreateUserDto, UpdateUserDto } from './dto';
 
@@ -308,5 +309,32 @@ export class UserService {
       .limit(1);
 
     return !!existingUser;
+  }
+
+  async requestPasswordReset(email: string) {
+    const [existingUser] = await this.db
+      .select()
+      .from(user)
+      .where(eq(user.email, email.toLowerCase()))
+      .limit(1);
+
+    if (!existingUser) {
+      return { resetUrl: null };
+    }
+
+    const expiresAt = new Date(Date.now() + 3600 * 1000);
+    const verificationToken = generateId(24);
+
+    await this.db.insert(verification).values({
+      id: generateId(),
+      identifier: `reset-password:${verificationToken}`,
+      value: existingUser.id,
+      expiresAt,
+    });
+
+    const baseUrl = process.env.BETTER_AUTH_URL || 'https://api-pos.mitbiz.id';
+    const resetUrl = `${baseUrl}/reset-password/${verificationToken}`;
+
+    return { resetUrl };
   }
 }

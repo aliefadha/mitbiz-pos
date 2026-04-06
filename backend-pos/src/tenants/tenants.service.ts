@@ -74,14 +74,16 @@ export class TenantsService {
         limit,
         offset,
         orderBy: [asc(tenants.createdAt)],
-        columns: {
-          id: true,
-          nama: true,
-          slug: true,
-          alamat: true,
-          noHp: true,
-          isActive: true,
-          createdAt: true,
+        with: {
+          user: {
+            columns: {
+              id: true,
+              name: true,
+              email: true,
+              image: true,
+              createdAt: true,
+            },
+          },
         },
       }),
       this.db.select({ count: sql<number>`count(*)` }).from(tenants).where(whereClause),
@@ -131,6 +133,7 @@ export class TenantsService {
       noHp: tenant.noHp,
       isActive: tenant.isActive,
       createdAt: tenant.createdAt,
+      user: tenant.user,
       usersCount: usersCountMap.get(tenant.id) || 0,
       outletsCount: outletsCountMap.get(tenant.id) || 0,
     }));

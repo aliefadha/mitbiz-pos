@@ -1,4 +1,5 @@
 import type { UseFormReturn } from 'react-hook-form';
+import { ResetPasswordDialog } from '@/components/all-users/reset-password-dialog';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -164,7 +165,14 @@ export function EditUserDialog({
                 )}
               />
             </div>
-            <DialogFooter>
+            <DialogFooter className="gap-2">
+              {user && (
+                <ResetPasswordDialog user={user} onSuccess={() => {}}>
+                  <Button type="button" variant="outline">
+                    Reset Password
+                  </Button>
+                </ResetPasswordDialog>
+              )}
               <Button type="submit" disabled={isPending}>
                 {isPending ? 'Menyimpan...' : 'Simpan'}
               </Button>

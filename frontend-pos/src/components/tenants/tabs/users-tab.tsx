@@ -1,5 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Users } from 'lucide-react';
+import { EditUserDialog } from '@/components/all-users/edit-user-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -25,10 +26,16 @@ interface UsersTabProps {
 }
 
 export function UsersTab({ tenant }: UsersTabProps) {
+  const queryClient = useQueryClient();
+
   const { data: usersData, isLoading } = useQuery({
     queryKey: ['tenant-users', tenant.slug],
     queryFn: () => tenantsApi.getUsers(tenant.slug),
   });
+
+  const handleUserUpdated = () => {
+    queryClient.invalidateQueries({ queryKey: ['tenant-users', tenant.slug] });
+  };
 
   const users = usersData?.data || [];
 
@@ -61,6 +68,7 @@ export function UsersTab({ tenant }: UsersTabProps) {
             <TableHead>Email</TableHead>
             <TableHead>Role</TableHead>
             <TableHead>Bergabung</TableHead>
+            <TableHead className="text-center">Aksi</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -80,6 +88,11 @@ export function UsersTab({ tenant }: UsersTabProps) {
               </TableCell>
               <TableCell className="text-gray-500">
                 {user.createdAt ? formatDate(user.createdAt) : '—'}
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center justify-center">
+                  <EditUserDialog user={user as any} onSuccess={handleUserUpdated} />
+                </div>
               </TableCell>
             </TableRow>
           ))}

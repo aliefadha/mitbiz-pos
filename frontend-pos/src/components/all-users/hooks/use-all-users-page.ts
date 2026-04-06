@@ -1,58 +1,64 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { tenantsApi } from '@/lib/api/tenants';
-import { usersApi } from '@/lib/api/users';
+import { useSession } from '@/lib/auth-client';
 
 export function useAllUsersPage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTenantFilter, setSelectedTenantFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  const { data: usersData, isLoading: isLoadingUsers } = useQuery({
-    queryKey: ['users', currentPage, pageSize],
-    queryFn: () => usersApi.getUsers({ page: currentPage, limit: pageSize }),
-  });
+  const { data: session } = useSession();
+  const tenantId = session?.user?.tenantId;
 
-  const { data: tenantsData } = useQuery({
-    queryKey: ['tenants'],
-    queryFn: () => tenantsApi.getAll(),
+  const { data: tenantsData, isLoading: isLoadingUsers } = useQuery({
+    queryKey: ['tenants', currentPage, pageSize, tenantId],
+    queryFn: () => tenantsApi.getAll({ page: currentPage, limit: pageSize }),
   });
 
   const stats = useMemo(() => {
-    const totalUser = usersData?.meta?.total || 0;
     const totalBisnis = tenantsData?.length || 0;
+    const totalUser = tenantsData?.reduce((sum, t) => sum + (t.usersCount || 0), 0) || 0;
     return { totalUser, totalBisnis };
-  }, [usersData, tenantsData]);
+  }, [tenantsData]);
 
   const filteredUsers = useMemo(() => {
-    if (!usersData?.users) return [];
-    let users = usersData.users;
+    if (!tenantsData) return [];
+
+    let users = tenantsData.map((tenant) => ({
+      id: tenant.user?.id || tenant.id,
+      name: tenant.user?.name || '-',
+      email: tenant.user?.email || '-',
+      emailVerified: true as const,
+      image: tenant.user?.image || null,
+      createdAt: tenant.user?.createdAt || new Date(),
+      updatedAt: tenant.user?.createdAt || new Date(),
+      tenantId: tenant.id,
+      tenant: {
+        id: tenant.id,
+        nama: tenant.nama,
+      },
+      isActive: tenant.isActive,
+    }));
 
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       users = users.filter(
-        (u) => u.name.toLowerCase().includes(query) || u.email.toLowerCase().includes(query)
+        (u) =>
+          u.name.toLowerCase().includes(query) ||
+          u.email.toLowerCase().includes(query) ||
+          u.tenant?.nama.toLowerCase().includes(query)
       );
     }
 
-    if (selectedTenantFilter !== 'all') {
-      users = users.filter((u) => u.tenantId === selectedTenantFilter);
-    }
-
     return users;
-  }, [usersData, searchQuery, selectedTenantFilter]);
+  }, [tenantsData, searchQuery]);
 
-  const totalUsers = usersData?.meta?.total || 0;
-  const totalPages = usersData?.meta?.totalPages || 0;
+  const totalUsers = tenantsData?.length || 0;
+  const totalPages = 1;
 
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
-    setCurrentPage(1);
-  };
-
-  const handleTenantFilterChange = (value: string) => {
-    setSelectedTenantFilter(value);
     setCurrentPage(1);
   };
 
@@ -67,18 +73,14 @@ export function useAllUsersPage() {
 
   return {
     searchQuery,
-    selectedTenantFilter,
     currentPage,
     pageSize,
     totalUsers,
     totalPages,
     isLoadingUsers,
-    usersData,
-    tenantsData,
     stats,
     filteredUsers,
     handleSearchChange,
-    handleTenantFilterChange,
     handlePageChange,
     handlePageSizeChange,
   };

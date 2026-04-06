@@ -1,29 +1,30 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-// import { Plus } from 'lucide-react';
 import { useAllUsersPage } from '@/components/all-users/hooks/use-all-users-page';
 import { UserList } from '@/components/all-users/user-list';
 import { UserStats } from '@/components/all-users/user-stats';
-// import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { checkPermissionWithScope } from '@/lib/permissions';
 
 function AllUsersPage() {
+  const queryClient = useQueryClient();
   const {
     searchQuery,
-    selectedTenantFilter,
     currentPage,
     pageSize,
     totalUsers,
     totalPages,
     isLoadingUsers,
-    tenantsData,
     stats,
     filteredUsers,
     handleSearchChange,
-    handleTenantFilterChange,
     handlePageChange,
     handlePageSizeChange,
   } = useAllUsersPage();
+
+  const handleUserUpdated = () => {
+    queryClient.invalidateQueries({ queryKey: ['tenants'] });
+  };
 
   if (isLoadingUsers) {
     return (
@@ -46,8 +47,6 @@ function AllUsersPage() {
     );
   }
 
-  const tenants = tenantsData ?? [];
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -55,27 +54,21 @@ function AllUsersPage() {
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Manajemen User</h1>
           <p className="text-sm text-gray-500 mt-1">Kelola admin dan kasir di semua bisnis</p>
         </div>
-        {/* <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          Tambah User
-        </Button> */}
       </div>
 
       <UserStats totalUser={stats.totalUser} totalBisnis={stats.totalBisnis} />
 
       <UserList
         users={filteredUsers}
-        tenants={tenants}
         searchQuery={searchQuery}
-        tenantFilter={selectedTenantFilter}
         currentPage={currentPage}
         pageSize={pageSize}
         totalUsers={totalUsers}
         totalPages={totalPages}
         onSearchChange={handleSearchChange}
-        onTenantFilterChange={handleTenantFilterChange}
         onPageChange={handlePageChange}
         onPageSizeChange={handlePageSizeChange}
+        onUserUpdated={handleUserUpdated}
       />
     </div>
   );

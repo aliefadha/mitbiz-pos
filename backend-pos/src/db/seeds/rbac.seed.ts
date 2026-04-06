@@ -46,7 +46,14 @@ const adminPermissions = [
   { resource: 'categories', actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE] },
   {
     resource: 'transaction',
-    actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE, Action.REFUND],
+    actions: [
+      Action.CREATE,
+      Action.READ,
+      Action.UPDATE,
+      Action.DELETE,
+      Action.REFUND,
+      Action.CANCEL,
+    ],
   },
   { resource: 'outlets', actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE] },
   { resource: 'tenants', actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE] },
@@ -57,7 +64,14 @@ const adminPermissions = [
   },
   {
     resource: 'orders',
-    actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE, Action.CANCEL],
+    actions: [
+      Action.CREATE,
+      Action.READ,
+      Action.UPDATE,
+      Action.DELETE,
+      Action.CANCEL,
+      Action.REFUND,
+    ],
   },
   { resource: 'orderItems', actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE] },
   { resource: 'report', actions: [Action.READ, Action.EXPORT] },
@@ -86,7 +100,15 @@ const ownerPermissions = [
   { resource: 'categories', actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE] },
   {
     resource: 'transaction',
-    actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE, Action.REFUND],
+    actions: [
+      Action.CREATE,
+      Action.READ,
+      Action.UPDATE,
+      Action.DELETE,
+      Action.REFUND,
+      Action.CANCEL,
+      Action.REFUND,
+    ],
   },
   {
     resource: 'tenants',
@@ -100,7 +122,14 @@ const ownerPermissions = [
   },
   {
     resource: 'orders',
-    actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE, Action.CANCEL],
+    actions: [
+      Action.CREATE,
+      Action.READ,
+      Action.UPDATE,
+      Action.DELETE,
+      Action.CANCEL,
+      Action.REFUND,
+    ],
   },
   { resource: 'orderItems', actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE] },
   { resource: 'report', actions: [Action.READ, Action.EXPORT] },
@@ -114,6 +143,56 @@ const ownerPermissions = [
   { resource: 'dashboard', actions: [Action.READ] },
   { resource: 'sales', actions: [Action.READ] },
   { resource: 'roles', actions: [Action.READ, Action.CREATE, Action.UPDATE, Action.DELETE] },
+];
+
+const cashierPermissions = [
+  { resource: 'users', actions: [Action.READ] },
+  { resource: 'products', actions: [Action.READ, Action.UPDATE] },
+  { resource: 'categories', actions: [Action.READ] },
+  {
+    resource: 'transaction',
+    actions: [
+      Action.CREATE,
+      Action.READ,
+      Action.UPDATE,
+      Action.DELETE,
+      Action.REFUND,
+      Action.CANCEL,
+    ],
+  },
+  {
+    resource: 'tenants',
+    actions: [Action.READ],
+  },
+  { resource: 'outlets', actions: [Action.READ] },
+  { resource: 'stocks', actions: [Action.CREATE, Action.READ, Action.UPDATE] },
+  {
+    resource: 'stockAdjustments',
+    actions: [Action.CREATE, Action.READ, Action.UPDATE],
+  },
+  {
+    resource: 'orders',
+    actions: [
+      Action.CREATE,
+      Action.READ,
+      Action.UPDATE,
+      Action.DELETE,
+      Action.CANCEL,
+      Action.REFUND,
+    ],
+  },
+  { resource: 'orderItems', actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE] },
+  { resource: 'report', actions: [Action.READ] },
+  { resource: 'settings', actions: [Action.READ, Action.UPDATE] },
+  { resource: 'discounts', actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE] },
+  {
+    resource: 'paymentMethods',
+    actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE],
+  },
+  { resource: 'cashShifts', actions: [Action.CREATE, Action.READ, Action.UPDATE] },
+  { resource: 'dashboard', actions: [Action.READ] },
+  { resource: 'sales', actions: [Action.READ] },
+  { resource: 'roles', actions: [Action.READ] },
 ];
 
 async function seedRbac() {
@@ -160,7 +239,7 @@ async function seedRbac() {
   // Insert permissions
   const rolePermissionsMap: Record<string, typeof adminPermissions> = {
     [GLOBAL_ADMIN_ROLE_ID]: adminPermissions,
-    [TEMPLATE_OWNER_ROLE_ID]: adminPermissions,
+    [TEMPLATE_OWNER_ROLE_ID]: ownerPermissions,
     [TEMPLATE_CASHIER_ROLE_ID]: adminPermissions,
   };
 

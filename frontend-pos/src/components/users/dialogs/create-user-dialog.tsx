@@ -1,3 +1,5 @@
+import { Eye, EyeOff } from 'lucide-react';
+import { useState } from 'react';
 import type { UseFormReturn } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import {
@@ -49,6 +51,8 @@ export function CreateUserDialog({
   outlets,
   isLoadingOutlets,
 }: CreateUserDialogProps) {
+  const [showPassword, setShowPassword] = useState(false);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -95,9 +99,28 @@ export function CreateUserDialog({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="Password" {...field} />
-                    </FormControl>
+                    <div className="relative">
+                      <FormControl>
+                        <Input
+                          type={showPassword ? 'text' : 'password'}
+                          placeholder="Password"
+                          {...field}
+                        />
+                      </FormControl>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-0 top-0 h-full px-3 py-1 hover:bg-transparent"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4 text-gray-400" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-gray-400" />
+                        )}
+                      </Button>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
