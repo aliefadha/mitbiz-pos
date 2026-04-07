@@ -112,7 +112,7 @@ const ownerPermissions = [
   },
   {
     resource: 'tenants',
-    actions: [Action.UPDATE],
+    actions: [Action.READ, Action.UPDATE],
   },
   { resource: 'outlets', actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE] },
   { resource: 'stocks', actions: [Action.CREATE, Action.READ, Action.UPDATE, Action.DELETE] },
@@ -240,7 +240,7 @@ async function seedRbac() {
   const rolePermissionsMap: Record<string, typeof adminPermissions> = {
     [GLOBAL_ADMIN_ROLE_ID]: adminPermissions,
     [TEMPLATE_OWNER_ROLE_ID]: ownerPermissions,
-    [TEMPLATE_CASHIER_ROLE_ID]: adminPermissions,
+    [TEMPLATE_CASHIER_ROLE_ID]: cashierPermissions,
   };
 
   for (const [roleId, permissions] of Object.entries(rolePermissionsMap)) {
