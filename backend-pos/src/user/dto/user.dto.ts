@@ -6,7 +6,7 @@ export const CreateUserSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   roleId: z.string().min(1, 'Role ID is required'),
-  outletId: z.string().min(1, 'Invalid outlet ID').optional(),
+  outletId: z.string().optional(),
   tenantId: z.string().min(1, 'Invalid tenant ID').optional(),
   isSubscribed: z.boolean().default(false),
 });
@@ -17,7 +17,7 @@ export const UpdateUserSchema = z.object({
   name: z.string().min(1, 'Name is required').optional(),
   email: z.string().email('Invalid email address').optional(),
   roleId: z.string().min(1, 'Role ID is required').optional(),
-  outletId: z.string().min(1, 'Invalid outlet ID').optional().nullable(),
+  outletId: z.string().optional().nullable(),
 });
 
 export class UpdateUserDto extends createZodDto(UpdateUserSchema) {}

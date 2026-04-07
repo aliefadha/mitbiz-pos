@@ -76,7 +76,7 @@ export function useUsersPage() {
       name: '',
       email: '',
       password: '',
-      outletId: '',
+      outletId: undefined,
     },
   });
 
@@ -85,7 +85,7 @@ export function useUsersPage() {
       name: '',
       email: '',
       roleId: '',
-      outletId: '',
+      outletId: undefined,
     },
   });
 
@@ -366,7 +366,7 @@ export function useUsersPage() {
       name: user.name,
       email: user.email,
       roleId: user.roleId || '',
-      outletId: user.outletId || '',
+      outletId: user.outletId || undefined,
     });
     setEditUserModalOpen(true);
   };
