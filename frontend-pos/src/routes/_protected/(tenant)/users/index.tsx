@@ -11,12 +11,18 @@ import {
 import { useUsersPage } from '@/components/users/hooks/use-users-page';
 import { RoleList } from '@/components/users/role-list';
 import { UserList } from '@/components/users/user-list';
-import { checkPermissionWithScope } from '@/lib/permissions';
+import { checkAnyPermissionWithScope } from '@/lib/permissions';
 
 export const Route = createFileRoute('/_protected/(tenant)/users/')({
   component: UsersPage,
   beforeLoad: async () => {
-    await checkPermissionWithScope('users', 'read', 'tenant');
+    await checkAnyPermissionWithScope(
+      [
+        { resource: 'users', action: 'create' },
+        { resource: 'users', action: 'update' },
+      ],
+      'tenant'
+    );
   },
 });
 

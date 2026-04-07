@@ -125,7 +125,7 @@ export const menuConfig: MenuGroup[] = [
         key: '/users',
         icon: Users,
         label: 'Pengguna',
-        permissions: [{ resource: 'users', actions: ['read', 'create', 'list'] }],
+        permissions: [{ resource: 'users', actions: ['create', 'update'] }],
         scope: 'tenant',
       },
       {
