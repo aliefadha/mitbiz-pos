@@ -222,6 +222,14 @@ export class OrdersService {
     const uuid = randomUUID().split('-')[0].toUpperCase();
     const orderNumber = `ORD-${tenant.slug}-${outlet.kode}-${dateStr}-${uuid}`;
 
+    const computedSubtotal = (data.items ?? []).reduce((sum, item) => {
+      const unitPrice = parseFloat(item.hargaSatuan);
+      const unitDiskon = parseFloat(item.jumlahDiskon ?? '0');
+      return sum + (unitPrice - unitDiskon) * item.quantity;
+    }, 0);
+    const computedTotal =
+      computedSubtotal + parseFloat(data.jumlahPajak ?? '0') + parseFloat(data.jumlahDiskon ?? '0');
+
     return await this.db.transaction(async (tx) => {
       const [order] = await tx
         .insert(orders)
@@ -231,6 +239,8 @@ export class OrdersService {
           cashierId: user.id,
           cashShiftId: openShift.id,
           completedAt: data.completedAt ? new Date(data.completedAt) : undefined,
+          subtotal: computedSubtotal.toString(),
+          total: computedTotal.toString(),
         })
         .returning();
 
