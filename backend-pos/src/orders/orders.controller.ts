@@ -112,7 +112,10 @@ export class OrdersController {
 
   @Post(':id/cancel')
   @ApiOperation({ summary: 'Cancel an order' })
-  @Permission('orders', [Action.CANCEL])
+  @Permission([
+    ['orders', [Action.CANCEL]],
+    ['orders', [Action.UPDATE]],
+  ])
   @UsePipes(new ZodValidationPipe(OrderIdSchema, 'params'))
   cancel(@Param() { id }: OrderIdDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.ordersService.cancel(id, user);
@@ -120,7 +123,10 @@ export class OrdersController {
 
   @Post(':id/refund')
   @ApiOperation({ summary: 'Refund an order' })
-  @Permission('orders', [Action.REFUND])
+  @Permission([
+    ['orders', [Action.REFUND]],
+    ['orders', [Action.UPDATE]],
+  ])
   @UsePipes(new ZodValidationPipe(OrderIdSchema, 'params'))
   refund(@Param() { id }: OrderIdDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.ordersService.refund(id, user);

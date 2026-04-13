@@ -22,6 +22,7 @@ export function useProductsPage() {
     queryFn: () =>
       productsApi.getAll({
         tenantId,
+        isActive: true,
         search: searchQuery || undefined,
         categoryId: categoryFilter || undefined,
         page: currentPage,
