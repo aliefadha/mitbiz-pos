@@ -60,11 +60,17 @@ jobs:
             --service-account=projects/dulcet-outlook-479500-k3/serviceAccounts/cloudbuild@dulcet-outlook-479500-k3.iam.gserviceaccount.com \
             --gcs-log-dir=gs://dulcet-outlook-479500-k3_cloudbuild/logs
 
+      - name: Copy deploy scripts to VM
+        env:
+          SSH_PASS: ${{ secrets.VM_SSH_PASSWORD }}
+        run: |
+          sshpass -p "$SSH_PASS" scp -o StrictHostKeyChecking=no -r ./deploy ${{ secrets.VM_SSH_USER }}@${{ secrets.VM_EXTERNAL_IP }}:/opt/mitbiz-deploy
+
       - name: Deploy to Compute Engine via SSH
         env:
           SSH_PASS: ${{ secrets.VM_SSH_PASSWORD }}
         run: |
-          sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no ${{ secrets.VM_SSH_USER }}@${{ secrets.VM_EXTERNAL_IP }} "sudo apt-get update && sudo apt-get install -y sshpass && cd /opt/mitbiz-deploy && ./deploy.sh backend '${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_NAME }}' '${{ github.sha }}' '${{ env.REGION }}' '${{ env.PROJECT_ID }}'"
+          sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no ${{ secrets.VM_SSH_USER }}@${{ secrets.VM_EXTERNAL_IP }} "cd /opt/mitbiz-deploy && ./deploy.sh backend '${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_NAME }}' '${{ github.sha }}' '${{ env.REGION }}' '${{ env.PROJECT_ID }}'"
 
       - name: Show deployment info
         run: |
