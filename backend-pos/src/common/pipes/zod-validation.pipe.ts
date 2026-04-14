@@ -31,10 +31,9 @@ export class ZodValidationPipe implements PipeTransform {
       return this.schema.parse(value);
     } catch (error) {
       if (error instanceof zod.ZodError) {
-        const validationError = fromZodError(error);
+        const messages = error.issues.map((e) => e.message).join('; ');
         throw new BadRequestException({
-          message: 'Validation failed',
-          errors: validationError.details,
+          message: messages || 'Validation failed',
         });
       }
       throw new BadRequestException('Invalid input data');
