@@ -68,6 +68,7 @@ jobs:
         env:
           SSH_PASS: ${{ secrets.VM_SSH_PASSWORD }}
         run: |
+          sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no ${{ secrets.VM_SSH_USER }}@${{ secrets.VM_EXTERNAL_IP }} "sudo mkdir -p /opt/mitbiz-deploy && sudo chown -R ${{ secrets.VM_SSH_USER }} /opt/mitbiz-deploy"
           sshpass -p "$SSH_PASS" scp -o StrictHostKeyChecking=no -r ./deploy ${{ secrets.VM_SSH_USER }}@${{ secrets.VM_EXTERNAL_IP }}:/opt/mitbiz-deploy
 
       - name: Deploy to Compute Engine via SSH
