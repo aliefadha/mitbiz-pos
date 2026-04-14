@@ -71,7 +71,7 @@ jobs:
         env:
           SSH_PASS: ${{ secrets.VM_SSH_PASSWORD }}
         run: |
-          sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no ${{ secrets.VM_SSH_USER }}@${{ secrets.VM_EXTERNAL_IP }} "cd /opt/mitbiz-deploy && ./deploy.sh backend '${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_NAME }}' '${{ github.sha }}' '${{ env.REGION }}' '${{ env.PROJECT_ID }}'"
+          sshpass -p "$SSH_PASS" ssh -o StrictHostKeyChecking=no ${{ secrets.VM_SSH_USER }}@${{ secrets.VM_EXTERNAL_IP }} "cd /opt/mitbiz-deploy/deploy && ./deploy.sh backend '${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}/${{ env.IMAGE_NAME }}' '${{ github.sha }}' '${{ env.REGION }}' '${{ env.PROJECT_ID }}'"
 
       - name: Show deployment info
         run: |
