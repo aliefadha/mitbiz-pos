@@ -332,7 +332,7 @@ export class TenantsService {
       await tx.insert(outlets).values({
         tenantId: tenant.id,
         nama: 'Toko Utama',
-        kode: 'OUT-001',
+        kode: 'OUT1',
         isActive: true,
       });
 

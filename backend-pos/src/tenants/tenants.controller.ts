@@ -58,6 +58,7 @@ export class TenantsController {
   @Permission([
     ['tenants', [Action.READ]],
     ['orders', [Action.CREATE]],
+    ['settings', [Action.UPDATE]],
   ])
   findById(@Param() { id }: TenantIdDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.tenantsService.findById(id, user);
@@ -93,7 +94,10 @@ export class TenantsController {
   @UsePipes(new ZodValidationPipe(TenantIdSchema, 'params'))
   @UsePipes(new ZodValidationPipe(UpdateTenantSchema))
   @UseInterceptors(new FileUploadInterceptor({ fieldName: 'image', dest: './uploads/tenants' }))
-  @Permission('tenants', [Action.UPDATE])
+  @Permission([
+    ['tenants', [Action.UPDATE]],
+    ['settings', [Action.UPDATE]],
+  ])
   update(
     @Param() { id }: TenantIdDto,
     @Body() data: UpdateTenantDto,
@@ -106,7 +110,10 @@ export class TenantsController {
   @Delete('id/:id/image')
   @ApiOperation({ summary: 'Delete tenant image' })
   @UsePipes(new ZodValidationPipe(TenantIdSchema, 'params'))
-  @Permission('tenants', [Action.UPDATE])
+  @Permission([
+    ['tenants', [Action.UPDATE]],
+    ['settings', [Action.UPDATE]],
+  ])
   deleteImage(@Param() { id }: TenantIdDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.tenantsService.deleteImage(id, user);
   }
