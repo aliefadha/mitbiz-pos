@@ -18,9 +18,11 @@ if [ -z "${IMAGE}" ]; then
     exit 1
 fi
 
-# Ensure data directory exists
+# Ensure data directory exists with proper permissions
 mkdir -p "${DATA_DIR}/backend-uploads"
 mkdir -p "${DATA_DIR}/frontend-uploads"
+mkdir -p "${DATA_DIR}/backend-uploads/tenants"
+chmod -R 777 "${DATA_DIR}"
 
 echo "Pulling image..."
 docker pull "${IMAGE}:${TAG}"
