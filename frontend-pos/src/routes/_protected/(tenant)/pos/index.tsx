@@ -94,13 +94,13 @@ function PosPage() {
     change: number;
     notes: string;
     nama: string;
-    tipe: 'dine_in' | 'take_away';
+    tipe: 'dine_in' | 'take_away' | undefined;
   } | null>(null);
   const [amountPaid, setAmountPaid] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
   const [nomorAntrian, setNomorAntrian] = useState<string>('');
   const [customerName, setCustomerName] = useState<string>('');
-  const [orderType, setOrderType] = useState<'dine_in' | 'take_away'>('dine_in');
+  const [orderType, setOrderType] = useState<'dine_in' | 'take_away' | undefined>(undefined);
   const [selectedDiscountIds, setSelectedDiscountIds] = useState<string[]>([]);
   const [closeShiftOpen, setCloseShiftOpen] = useState(false);
   const [jumlahTutup, setJumlahTutup] = useState<string>('');
@@ -246,7 +246,7 @@ function PosPage() {
         change,
         notes,
         nama: customerName,
-        tipe: orderType,
+        tipe: orderType ?? undefined,
       });
       setCart([]);
       setCheckoutOpen(false);
@@ -255,7 +255,6 @@ function PosPage() {
       setNotes('');
       setNomorAntrian('');
       setCustomerName('');
-      setOrderType('dine_in');
       setSelectedDiscountIds([]);
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
@@ -494,7 +493,7 @@ function PosPage() {
       nomorAntrian: nomorAntrian || null,
       completedAt: new Date().toISOString(),
       nama: customerName || null,
-      tipe: orderType,
+      ...(tenantData?.settings?.enableOrderTipe && orderType ? { tipe: orderType } : {}),
       bayar: amountPaid || '0',
       kembali: String(change > 0 ? change : 0),
       items: orderItems,
@@ -584,7 +583,6 @@ function PosPage() {
                 setNotes('');
                 setNomorAntrian('');
                 setCustomerName('');
-                setOrderType('dine_in');
                 setSelectedDiscountIds([]);
                 setEditingOpenBillId(null);
                 setSuccessOpen(true);
@@ -708,7 +706,6 @@ function PosPage() {
               setNotes('');
               setNomorAntrian('');
               setCustomerName('');
-              setOrderType('dine_in');
               setCheckoutOpen(true);
               if (isSheet) setMobileCartOpen(false);
             }}
@@ -1183,7 +1180,7 @@ function PosPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Nomor Antrian</label>
+                    <label className="text-sm font-medium">Nomor Antrian </label>
                     <Input
                       value={nomorAntrian}
                       onChange={(e) => setNomorAntrian(e.target.value)}
@@ -1192,7 +1189,7 @@ function PosPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Nama Pelanggan (Opsional)</label>
+                    <label className="text-sm font-medium">Nama Pelanggan</label>
                     <Input
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
@@ -1505,7 +1502,7 @@ function PosPage() {
                   <CurrencyInput placeholder="0" value={jumlahTutup} onChange={setJumlahTutup} />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Catatan (Opsional)</label>
+                  <label className="text-sm font-medium">Catatan</label>
                   <Input
                     placeholder="Masukkan catatan"
                     value={shiftNotes}
