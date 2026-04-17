@@ -26,6 +26,7 @@ export async function seedTenant(adminUserId: string) {
       timezone: 'Asia/Jakarta',
       taxRate: 10,
       receiptFooter: 'Terima kasih telah berbelanja di Mitbiz POS',
+      enableOrderTipe: true,
     },
     image: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400',
     alamat: 'Jakarta, Indonesia',

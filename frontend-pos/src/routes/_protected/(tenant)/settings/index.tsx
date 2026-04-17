@@ -19,9 +19,10 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePermissions } from '@/hooks/use-auth';
-import { type TenantSettings, tenantsApi } from '@/lib/api/tenants';
+import { tenantsApi } from '@/lib/api/tenants';
 import { usersApi } from '@/lib/api/users';
 import { authClient } from '@/lib/auth-client';
 import { checkPermissionWithScope } from '@/lib/permissions';
@@ -34,6 +35,7 @@ const settingsFormSchema = z.object({
   noHp: z.string().optional(),
   taxRate: z.number().min(0).max(100),
   receiptFooter: z.string().optional(),
+  enableOrderTipe: z.boolean(),
 });
 
 const akunFormSchema = z.object({
@@ -325,6 +327,7 @@ function SettingsPage() {
       noHp: '',
       taxRate: 0,
       receiptFooter: '',
+      enableOrderTipe: false,
     },
   });
 
@@ -336,6 +339,13 @@ function SettingsPage() {
 
   const updateSettingsMutation = useMutation({
     mutationFn: async (data: z.infer<typeof settingsFormSchema>) => {
+      const settings = {
+        taxRate: data.taxRate,
+        receiptFooter: data.receiptFooter,
+        currency: tenant?.settings?.currency || 'IDR',
+        timezone: tenant?.settings?.timezone || 'Asia/Jakarta',
+        enableOrderTipe: data.enableOrderTipe,
+      };
       if (selectedImage) {
         const formData = new FormData();
         formData.append('nama', data.nama);
@@ -345,6 +355,7 @@ function SettingsPage() {
         formData.append('taxRate', String(data.taxRate));
         formData.append('receiptFooter', data.receiptFooter || '');
         formData.append('image', selectedImage);
+        formData.append('settings', JSON.stringify(settings));
         if (imageMarkedForDeletion) {
           formData.append('deleteImage', 'true');
         }
@@ -358,6 +369,7 @@ function SettingsPage() {
         formData.append('noHp', data.noHp || '');
         formData.append('taxRate', String(data.taxRate));
         formData.append('receiptFooter', data.receiptFooter || '');
+        formData.append('settings', JSON.stringify(settings));
         formData.append('deleteImage', 'true');
         return tenantsApi.updateWithImage(tenant!.id, formData);
       }
@@ -366,12 +378,7 @@ function SettingsPage() {
         slug: data.slug,
         alamat: data.alamat,
         noHp: data.noHp,
-        settings: {
-          taxRate: data.taxRate,
-          receiptFooter: data.receiptFooter,
-          currency: tenant?.settings?.currency || 'IDR',
-          timezone: tenant?.settings?.timezone || 'Asia/Jakarta',
-        } as TenantSettings,
+        settings,
       });
     },
     onSuccess: () => {
@@ -395,6 +402,7 @@ function SettingsPage() {
         noHp: tenant.noHp || '',
         taxRate: tenant.settings?.taxRate || 0,
         receiptFooter: tenant.settings?.receiptFooter || '',
+        enableOrderTipe: tenant.settings?.enableOrderTipe ?? false,
       });
       if (tenant.image && !imagePreview) {
         const imageUrl = tenant.image.startsWith('http')
@@ -586,7 +594,7 @@ function SettingsPage() {
 
                 {tenant?.settings && (
                   <Card>
-                    <CardContent className="pt-6">
+                    <CardContent>
                       <div className="flex items-center gap-2 mb-4">
                         <Settings className="h-5 w-5" />
                         <h5 className="text-base font-semibold">Pengaturan Sistem</h5>
@@ -626,6 +634,27 @@ function SettingsPage() {
                                 />
                               </FormControl>
                               <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="enableOrderTipe"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                              <div className="space-y-0.5">
+                                <FormLabel>Jenis Pesanan</FormLabel>
+                                <p className="text-sm text-muted-foreground">
+                                  Aktifkan untuk memilih jenis pesanan (Dine In / Take Away)
+                                </p>
+                              </div>
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                  disabled={!canUpdate}
+                                />
+                              </FormControl>
                             </FormItem>
                           )}
                         />

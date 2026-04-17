@@ -307,6 +307,7 @@ export class TenantsService {
       taxRate: data.taxRate !== undefined ? Number(data.taxRate) : (data.settings?.taxRate ?? 0),
       receiptFooter:
         data.receiptFooter ?? data.settings?.receiptFooter ?? 'Terima kasih telah berbelanja',
+      enableOrderTipe: data.settings?.enableOrderTipe ?? false,
     };
 
     return await this.db.transaction(async (tx) => {
@@ -486,7 +487,11 @@ export class TenantsService {
       }
     }
 
-    const existingSettings = existingTenant.settings || { taxRate: 0, receiptFooter: '' };
+    const existingSettings = existingTenant.settings || {
+      taxRate: 0,
+      receiptFooter: '',
+      enableOrderTipe: false,
+    };
     const settings = {
       taxRate:
         data.settings?.taxRate !== undefined
@@ -496,6 +501,7 @@ export class TenantsService {
             : existingSettings.taxRate,
       receiptFooter:
         data.settings?.receiptFooter ?? data.receiptFooter ?? existingSettings.receiptFooter,
+      enableOrderTipe: data.settings?.enableOrderTipe ?? existingSettings.enableOrderTipe,
     };
 
     const shouldDeleteImage = data.deleteImage === 'true';

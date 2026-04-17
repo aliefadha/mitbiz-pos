@@ -1,4 +1,4 @@
-import { Globe, Package, TrendingUp } from 'lucide-react';
+import { CheckCircle, Globe, Package, TrendingUp, XCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Tenant } from '@/lib/api/tenants';
 
@@ -29,6 +29,15 @@ export function SettingsTab({ tenant }: SettingsTabProps) {
       icon: <Package className="h-4 w-4 text-purple-500" />,
       label: 'Footer Struk',
       value: settings?.receiptFooter || 'Terima kasih telah berbelanja',
+    },
+    {
+      icon: settings?.enableOrderTipe ? (
+        <CheckCircle className="h-4 w-4 text-green-500" />
+      ) : (
+        <XCircle className="h-4 w-4 text-red-500" />
+      ),
+      label: 'Jenis Pesanan',
+      value: settings?.enableOrderTipe ? 'Aktif' : 'Nonaktif',
     },
   ];
 

@@ -10,6 +10,7 @@ import { z } from 'zod';
 const TenantSettingsSchema = z.object({
   taxRate: z.number().min(0).max(100).default(0),
   receiptFooter: z.string().default('Terima kasih telah berbelanja'),
+  enableOrderTipe: z.boolean().default(false),
 });
 
 export const BillingCycleSchema = z.enum(['monthly', 'quarterly', 'semi_annual', 'yearly']);

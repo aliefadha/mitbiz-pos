@@ -1,6 +1,5 @@
-import { MapPin, Pencil, Phone } from 'lucide-react';
+import { MapPin, Phone } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Tenant } from '@/lib/api/tenants';
 
@@ -60,11 +59,6 @@ export function TenantDetailHeader({ tenant }: TenantDetailHeaderProps) {
               </p>
             </div>
           </div>
-
-          <Button variant="outline" size="sm" className="gap-1.5">
-            <Pencil className="h-3.5 w-3.5" />
-            Edit
-          </Button>
         </div>
       </CardContent>
     </Card>

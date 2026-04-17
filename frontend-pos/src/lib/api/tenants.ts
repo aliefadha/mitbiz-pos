@@ -5,6 +5,7 @@ export interface TenantSettings {
   timezone: string;
   taxRate: number;
   receiptFooter?: string;
+  enableOrderTipe?: boolean;
 }
 
 export interface User {

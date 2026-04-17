@@ -17,10 +17,12 @@ export const tenants = pgTable('tenants', {
     .$type<{
       taxRate: number;
       receiptFooter: string;
+      enableOrderTipe?: boolean;
     }>()
     .default({
       taxRate: 0,
       receiptFooter: 'Terima kasih telah berbelanja',
+      enableOrderTipe: false,
     }),
   image: text('image'),
   alamat: text('alamat'),

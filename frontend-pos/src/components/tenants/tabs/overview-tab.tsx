@@ -1,4 +1,4 @@
-import { Calendar, Globe, Mail, MapPin, Phone, Settings } from 'lucide-react';
+import { Calendar, Globe, Mail, MapPin, Phone } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Tenant } from '@/lib/api/tenants';
 
@@ -60,29 +60,6 @@ export function OverviewTab({ tenant }: OverviewTabProps) {
                 </div>
               </div>
             ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="py-4 gap-0">
-        <CardContent>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-gray-900">Pengaturan</h3>
-            <Settings className="h-4 w-4 text-gray-400" />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-gray-50 rounded-xl p-3">
-              <p className="text-xs text-gray-400 mb-0.5">Pajak</p>
-              <p className="text-lg font-bold text-gray-900">
-                {tenant.settings?.taxRate !== undefined ? `${tenant.settings.taxRate}%` : '0%'}
-              </p>
-            </div>
-            <div className="bg-gray-50 rounded-xl p-3">
-              <p className="text-xs text-gray-400 mb-0.5">Mata Uang</p>
-              <p className="text-lg font-bold text-gray-900">
-                {tenant.settings?.currency || 'IDR'}
-              </p>
-            </div>
           </div>
         </CardContent>
       </Card>
