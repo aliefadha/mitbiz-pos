@@ -1200,33 +1200,35 @@ function PosPage() {
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Tipe Pesanan</label>
-                    <div className="flex gap-4">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="orderType"
-                          value="dine_in"
-                          checked={orderType === 'dine_in'}
-                          onChange={() => setOrderType('dine_in')}
-                          className="rounded border-gray-300"
-                        />
-                        <span className="text-sm">Makan di Tempat</span>
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="orderType"
-                          value="take_away"
-                          checked={orderType === 'take_away'}
-                          onChange={() => setOrderType('take_away')}
-                          className="rounded border-gray-300"
-                        />
-                        <span className="text-sm">Bawa Pulang</span>
-                      </label>
+                  {tenantData?.settings?.enableOrderTipe && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Tipe Pesanan</label>
+                      <div className="flex gap-4">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="orderType"
+                            value="dine_in"
+                            checked={orderType === 'dine_in'}
+                            onChange={() => setOrderType('dine_in')}
+                            className="rounded border-gray-300"
+                          />
+                          <span className="text-sm">Makan di Tempat</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="orderType"
+                            value="take_away"
+                            checked={orderType === 'take_away'}
+                            onChange={() => setOrderType('take_away')}
+                            className="rounded border-gray-300"
+                          />
+                          <span className="text-sm">Bawa Pulang</span>
+                        </label>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
               <DialogFooter className="mt-4 flex-col sm:flex-row gap-2">
