@@ -33,7 +33,7 @@ export const CreateOrderSchema = z.object({
   nomorAntrian: z.string().optional().nullable(),
   completedAt: z.string().optional().nullable(),
   nama: z.string().optional(),
-  tipe: OrderTypeSchema,
+  tipe: OrderTypeSchema.optional(),
   bayar: z.string().optional().default('0'),
   kembali: z.string().optional().default('0'),
   items: z.array(CreateOrderItemSchema).optional(),
