@@ -40,15 +40,15 @@ export const categoriesApi = {
     return fetchApi<Category>(`/categories/${id}`);
   },
 
-  create: async (data: CreateCategoryDto): Promise<Category> => {
-    return fetchApi<Category>('/categories', {
+  create: async (data: CreateCategoryDto): Promise<void> => {
+    return fetchApi<void>('/categories', {
       method: 'POST',
       data,
     });
   },
 
-  update: async (id: string, data: UpdateCategoryDto): Promise<Category> => {
-    return fetchApi<Category>(`/categories/${id}`, {
+  update: async (id: string, data: UpdateCategoryDto): Promise<void> => {
+    return fetchApi<void>(`/categories/${id}`, {
       method: 'PUT',
       data,
     });

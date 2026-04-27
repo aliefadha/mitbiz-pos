@@ -7,6 +7,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   Param,
   Post,
   Put,
@@ -54,31 +55,34 @@ export class CategoriesController {
   }
 
   @Post()
+  @HttpCode(204)
   @ApiOperation({ summary: 'Create a new category' })
   @UsePipes(new ZodValidationPipe(CreateCategorySchema))
   @Permission('categories', [Action.CREATE])
-  create(@Body() data: CreateCategoryDto, @CurrentUser() user: CurrentUserWithRole) {
-    return this.categoriesService.create(data, user);
+  async create(@Body() data: CreateCategoryDto, @CurrentUser() user: CurrentUserWithRole) {
+    await this.categoriesService.create(data, user);
   }
 
   @Put(':id')
+  @HttpCode(204)
   @ApiOperation({ summary: 'Update a category' })
   @UsePipes(new ZodValidationPipe(CategoryIdSchema, 'params'))
   @UsePipes(new ZodValidationPipe(UpdateCategorySchema))
   @Permission('categories', [Action.UPDATE])
-  update(
+  async update(
     @Param() { id }: CategoryIdDto,
     @Body() data: UpdateCategoryDto,
     @CurrentUser() user: CurrentUserWithRole,
   ) {
-    return this.categoriesService.update(id, data, user);
+    await this.categoriesService.update(id, data, user);
   }
 
   @Delete(':id')
+  @HttpCode(204)
   @ApiOperation({ summary: 'Delete a category' })
   @UsePipes(new ZodValidationPipe(CategoryIdSchema, 'params'))
   @Permission('categories', [Action.DELETE])
-  remove(@Param() { id }: CategoryIdDto, @CurrentUser() user: CurrentUserWithRole) {
-    return this.categoriesService.remove(id, user);
+  async remove(@Param() { id }: CategoryIdDto, @CurrentUser() user: CurrentUserWithRole) {
+    await this.categoriesService.remove(id, user);
   }
 }

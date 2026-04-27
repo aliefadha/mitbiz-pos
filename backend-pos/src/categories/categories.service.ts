@@ -2,10 +2,11 @@ import type { CurrentUserWithRole } from '@/common/decorators/current-user.decor
 import { DB_CONNECTION } from '@/db/db.module';
 import { categories } from '@/db/schema/category-schema';
 import { products } from '@/db/schema/product-schema';
+import { tenants } from '@/db/schema/tenant-schema';
 import type { DrizzleDB } from '@/db/type';
 import { TenantAuthService } from '@/rbac/services/tenant-auth.service';
 import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { SQL, and, count, desc, eq, inArray, like, sql } from 'drizzle-orm';
+import { SQL, and, count, desc, eq, ilike, sql } from 'drizzle-orm';
 import { CategoryQueryDto, CreateCategoryDto, UpdateCategoryDto } from './dto';
 
 @Injectable()
@@ -40,7 +41,7 @@ export class CategoriesService {
     }
 
     if (search) {
-      conditions.push(like(categories.nama, `%${search}%`));
+      conditions.push(ilike(categories.nama, `%${search}%`));
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -52,7 +53,10 @@ export class CategoriesService {
       })
       .from(products)
       .where(
-        and(tenantId ? eq(products.tenantId, tenantId) : undefined, eq(products.isActive, true)),
+        and(
+          filterTenantId ? eq(products.tenantId, filterTenantId) : undefined,
+          eq(products.isActive, true),
+        ),
       )
       .groupBy(products.categoryId)
       .as('product_counts');
@@ -67,7 +71,7 @@ export class CategoriesService {
           isActive: categories.isActive,
           createdAt: categories.createdAt,
           updatedAt: categories.updatedAt,
-          productsCount: sql<number>`COALESCE(${productCountSubquery.count}, 0)`,
+          productsCount: sql<number>`COALESCE(${productCountSubquery.count}, 0)::integer`,
         })
         .from(categories)
         .leftJoin(productCountSubquery, eq(categories.id, productCountSubquery.categoryId))
@@ -92,63 +96,110 @@ export class CategoriesService {
   }
 
   async findById(id: string, user: CurrentUserWithRole) {
-    const category = await this.db.query.categories.findFirst({
-      where: eq(categories.id, id),
-      with: {
-        tenant: true,
-      },
-    });
+    // Simple existence check first
+    const category = await this.db
+      .select({ tenantId: categories.tenantId })
+      .from(categories)
+      .where(eq(categories.id, id))
+      .limit(1);
 
-    if (!category) {
+    if (!category || category.length === 0) {
       throw new NotFoundException(`Category with ID ${id} not found`);
     }
 
     // Check tenant access (permission already checked by guard)
-    const hasAccess = await this.tenantAuth.canAccessTenant(user, category.tenantId);
+    const hasAccess = await this.tenantAuth.canAccessTenant(user, category[0].tenantId);
     if (!hasAccess) {
       throw new ForbiddenException('You do not have access to this category');
     }
 
-    return category;
+    // Enriched query with joins
+    const productCountSubquery = this.db
+      .select({
+        categoryId: products.categoryId,
+        count: count().as('count'),
+      })
+      .from(products)
+      .where(and(eq(products.categoryId, id), eq(products.isActive, true)))
+      .groupBy(products.categoryId)
+      .as('product_counts');
+
+    const result = await this.db
+      .select({
+        id: categories.id,
+        tenantId: categories.tenantId,
+        nama: categories.nama,
+        deskripsi: categories.deskripsi,
+        isActive: categories.isActive,
+        createdAt: categories.createdAt,
+        updatedAt: categories.updatedAt,
+        productsCount: sql<number>`COALESCE(${productCountSubquery.count}, 0)::integer`,
+        tenantIdRef: tenants.id,
+        tenantNama: tenants.nama,
+        tenantSlug: tenants.slug,
+        tenantIsActive: tenants.isActive,
+        tenantCreatedAt: tenants.createdAt,
+        tenantUpdatedAt: tenants.updatedAt,
+      })
+      .from(categories)
+      .leftJoin(tenants, eq(categories.tenantId, tenants.id))
+      .leftJoin(productCountSubquery, eq(categories.id, productCountSubquery.categoryId))
+      .where(eq(categories.id, id))
+      .limit(1);
+
+    const row = result[0];
+
+    return {
+      id: row.id,
+      tenantId: row.tenantId,
+      nama: row.nama,
+      deskripsi: row.deskripsi,
+      isActive: row.isActive,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      productsCount: row.productsCount,
+      tenant: row.tenantIdRef
+        ? {
+            id: row.tenantIdRef,
+            nama: row.tenantNama,
+            slug: row.tenantSlug,
+            isActive: row.tenantIsActive,
+            createdAt: row.tenantCreatedAt,
+            updatedAt: row.tenantUpdatedAt,
+          }
+        : null,
+    };
   }
 
-  async create(data: CreateCategoryDto, user: CurrentUserWithRole) {
+  async create(data: CreateCategoryDto, user: CurrentUserWithRole): Promise<void> {
     // Validate tenant access (permission already checked by guard)
     await this.tenantAuth.validateTenantOperation(user, data.tenantId);
 
-    const [category] = await this.db.insert(categories).values(data).returning();
-
-    return category;
+    await this.db.insert(categories).values(data);
   }
 
-  async update(id: string, data: UpdateCategoryDto, user: CurrentUserWithRole) {
+  async update(id: string, data: UpdateCategoryDto, user: CurrentUserWithRole): Promise<void> {
     // findById already validates tenant access
-    const existingCategory = await this.findById(id, user);
+    await this.findById(id, user);
 
-    const [category] = await this.db
+    await this.db
       .update(categories)
       .set({
         ...data,
         updatedAt: new Date(),
       })
-      .where(eq(categories.id, id))
-      .returning();
-
-    return category;
+      .where(eq(categories.id, id));
   }
 
-  async remove(id: string, user: CurrentUserWithRole) {
-    const existingCategory = await this.findById(id, user);
+  async remove(id: string, user: CurrentUserWithRole): Promise<void> {
+    await this.findById(id, user);
 
-    const [category] = await this.db
+    await this.db
       .update(categories)
       .set({
         isActive: false,
         updatedAt: new Date(),
       })
-      .where(eq(categories.id, id))
-      .returning();
-
-    return { ...category, ...existingCategory };
+      .where(eq(categories.id, id));
   }
 }

@@ -31,6 +31,10 @@ export async function fetchApi<T>(endpoint: string, options: FetchOptions = {}):
     throw new Error(error.message || error.error?.message || `HTTP ${response.status}`);
   }
 
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
   const data = await response.json();
   if (!data.success) {
     throw new Error(data.message || data.error?.message || 'Request failed');
