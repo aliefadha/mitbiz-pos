@@ -9,7 +9,7 @@ interface ForbiddenPageProps {
 }
 
 export function ForbiddenPage({ resource }: ForbiddenPageProps) {
-  const { user } = useAuth();
+  const { scope } = useAuth();
   const logoutMutation = useLogout();
 
   const handleLogout = () => {
@@ -51,7 +51,7 @@ export function ForbiddenPage({ resource }: ForbiddenPageProps) {
 
           {/* Action buttons */}
           <div className="flex flex-col w-full gap-2">
-            <Link to={user?.roleScope === 'global' ? '/admin' : '/dashboard'} className="w-full">
+            <Link to={scope === 'global' ? '/admin' : '/dashboard'} className="w-full">
               <Button className="h-11 w-full rounded-lg bg-blue-600 text-sm font-semibold text-white shadow-md transition-all hover:bg-blue-700 hover:shadow-lg">
                 <Home className="mr-2 h-4 w-4" />
                 Beranda

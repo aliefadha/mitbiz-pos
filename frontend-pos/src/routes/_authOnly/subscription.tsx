@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { type BillingCycle, subscriptionPlansApi } from '@/lib/api/subscriptions';
 import { tenantsApi } from '@/lib/api/tenants';
 import { signOut } from '@/lib/auth-client';
+import { getUserScope } from '@/lib/permissions';
 
 function formatCurrency(amount: string | number): string {
   const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
@@ -27,7 +28,9 @@ export const Route = createFileRoute('/_authOnly/subscription')({
   beforeLoad: async ({ context }) => {
     const { user } = context.session;
 
-    if (user.roleScope === 'global') {
+    const roleScope = await getUserScope();
+
+    if (roleScope === 'global') {
       throw redirect({ to: '/admin' });
     }
 

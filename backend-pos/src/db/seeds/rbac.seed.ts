@@ -236,6 +236,10 @@ async function seedRbac() {
     console.log(`✓ Inserted role: ${role.name}`);
   }
 
+  // Fetch all resources to build name→id map
+  const allResources = await db.select().from(resources);
+  const resourceMap = new Map(allResources.map((r) => [r.name, r.id]));
+
   // Insert permissions
   const rolePermissionsMap: Record<string, typeof adminPermissions> = {
     [GLOBAL_ADMIN_ROLE_ID]: adminPermissions,
@@ -245,11 +249,17 @@ async function seedRbac() {
 
   for (const [roleId, permissions] of Object.entries(rolePermissionsMap)) {
     for (const perm of permissions) {
+      const resourceId = resourceMap.get(perm.resource);
+      if (!resourceId) {
+        console.warn(`⚠️ Resource not found: ${perm.resource}, skipping permission`);
+        continue;
+      }
       for (const action of perm.actions) {
         await db
           .insert(rolePermissions)
           .values({
             roleId,
+            resourceId,
             resource: perm.resource,
             action,
           })

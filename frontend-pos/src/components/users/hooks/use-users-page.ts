@@ -197,7 +197,7 @@ export function useUsersPage() {
 
   const groupedPermissions = useMemo(() => {
     if (!permissionsData) return [];
-    return groupPermissions(permissionsData);
+    return groupPermissions(permissionsData.permissions);
   }, [permissionsData]);
 
   const permissionMap = useMemo(() => {

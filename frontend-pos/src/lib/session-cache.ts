@@ -9,7 +9,6 @@ interface SessionUser {
   name?: string;
   image?: string;
   roleId?: string;
-  roleScope?: string;
   tenantId?: string;
   outletId?: string;
   createdAt?: Date;
@@ -90,6 +89,30 @@ export function setCachedPermissions(roleId: string, permissions: Permission[]):
 export function clearPermissionsCache(): void {
   permissionsCache.clear();
   permissionsCacheTimestamp.clear();
+}
+
+// Scope caching (tied to roleId, same TTL as permissions)
+const scopeCache: Map<string, string | null> = new Map();
+const scopeCacheTimestamp: Map<string, number> = new Map();
+
+export function getCachedScope(roleId: string): string | null | undefined {
+  if (!roleId) return undefined;
+
+  const cached = scopeCache.get(roleId);
+  const timestamp = scopeCacheTimestamp.get(roleId);
+
+  if (timestamp === undefined) return undefined;
+  if (Date.now() - timestamp > PERMISSIONS_CACHE_TTL) {
+    scopeCache.delete(roleId);
+    scopeCacheTimestamp.delete(roleId);
+    return undefined;
+  }
+  return cached;
+}
+
+export function setCachedScope(roleId: string, scope: string | null): void {
+  scopeCache.set(roleId, scope);
+  scopeCacheTimestamp.set(roleId, Date.now());
 }
 
 export function useSessionWithCache() {

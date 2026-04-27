@@ -52,8 +52,13 @@ export interface SetPermissionsDto {
   permissions: { resource: string; action: string }[];
 }
 
-export async function getRolePermissions(roleId: string): Promise<PermissionItem[]> {
-  return fetchApi<PermissionItem[]>(`/roles/${roleId}/permissions`);
+export interface RolePermissionsResponse {
+  permissions: PermissionItem[];
+  roleScope: string | null;
+}
+
+export async function getRolePermissions(roleId: string): Promise<RolePermissionsResponse> {
+  return fetchApi<RolePermissionsResponse>(`/roles/${roleId}/permissions`);
 }
 
 /**

@@ -2,9 +2,8 @@ import { db } from '@/db';
 import * as schema from '@/db/schema/auth-schema';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { customSession, openAPI } from 'better-auth/plugins';
+import { openAPI } from 'better-auth/plugins';
 import { emailService } from './email.service';
-import { findUserRoles } from './user.service';
 
 // Fix: BETTER_AUTH_URL now uses actual Cloud Run URL
 // Testing env-vars-file deployment
@@ -63,21 +62,7 @@ export const auth = betterAuth({
   //   expiresIn: 24 * 60 * 60,
   //   autoSignInAfterVerification: false,
   // },
-  plugins: [
-    openAPI(),
-    customSession(async ({ user, session }) => {
-      const role = await findUserRoles(session.userId);
-      return {
-        user: {
-          ...user,
-          roleId: role?.id ?? null,
-          roleName: role?.name ?? null,
-          roleScope: role?.scope ?? null,
-        },
-        session,
-      };
-    }),
-  ],
+  plugins: [openAPI()],
   user: {
     additionalFields: {
       roleId: {

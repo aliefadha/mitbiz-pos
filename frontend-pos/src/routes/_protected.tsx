@@ -1,6 +1,7 @@
 import { createFileRoute, redirect } from '@tanstack/react-router';
 import { AppLayout } from '@/components/app-layout';
 import { tenantsApi } from '@/lib/api/tenants';
+import { getUserScope } from '@/lib/permissions';
 import { getSessionWithCache } from '@/lib/session-cache';
 
 export const Route = createFileRoute('/_protected')({
@@ -13,7 +14,9 @@ export const Route = createFileRoute('/_protected')({
 
     const { user } = session;
 
-    if (user.roleScope === 'global') {
+    const roleScope = await getUserScope();
+
+    if (roleScope === 'global') {
       return { session };
     }
 

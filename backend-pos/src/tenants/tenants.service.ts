@@ -426,6 +426,7 @@ export class TenantsService {
         await tx.insert(rolePermissions).values(
           templateOwnerPermissions.map((perm) => ({
             roleId: newOwnerRole.id,
+            resourceId: perm.resourceId,
             resource: perm.resource,
             action: perm.action,
           })),
@@ -457,6 +458,7 @@ export class TenantsService {
         await tx.insert(rolePermissions).values(
           templateCashierPermissions.map((perm) => ({
             roleId: newCashierRole.id,
+            resourceId: perm.resourceId,
             resource: perm.resource,
             action: perm.action,
           })),

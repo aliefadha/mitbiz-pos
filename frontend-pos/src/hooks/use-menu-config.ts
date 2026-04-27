@@ -4,10 +4,10 @@ import { useAuth } from '@/contexts/auth-context';
 import { usePermissions } from '@/hooks/use-auth';
 
 export function useMenuConfig(): MenuGroup[] {
-  const { user } = useAuth();
+  const { scope } = useAuth();
   const { hasPermission } = usePermissions();
 
-  const userScope = user?.roleScope;
+  const userScope = scope;
 
   const filteredMenuConfig = useMemo(() => {
     return menuConfig

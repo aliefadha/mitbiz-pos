@@ -1,6 +1,11 @@
 import { createFileRoute, redirect } from '@tanstack/react-router';
 import { authClient } from '@/lib/auth-client';
-import { checkAnyPermission, checkPermission, type PermissionCheck } from '@/lib/permissions';
+import {
+  checkAnyPermission,
+  checkPermission,
+  getUserScope,
+  type PermissionCheck,
+} from '@/lib/permissions';
 
 const TENANT_ROUTE_PRIORITY: PermissionCheck[] = [
   { resource: 'dashboard', action: 'read' },
@@ -28,7 +33,9 @@ export const Route = createFileRoute('/')({
       throw redirect({ to: '/login' });
     }
 
-    if (session.user.roleScope === 'global') {
+    const roleScope = await getUserScope();
+
+    if (roleScope === 'global') {
       throw redirect({ to: '/admin' });
     }
 

@@ -1,6 +1,6 @@
 import type { CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
 import { DB_CONNECTION } from '@/db/db.module';
-import { account, rolePermissions, roles, user, verification } from '@/db/schema';
+import { account, resources, rolePermissions, roles, user, verification } from '@/db/schema';
 import { outlets, tenants } from '@/db/schema';
 import type { DrizzleDB } from '@/db/type';
 import { auth } from '@/lib/auth';
@@ -193,8 +193,14 @@ export class UserService {
     let permissions: UserRoleAndPermissions['permissions'] = [];
     if (role?.id) {
       permissions = await this.db
-        .select()
+        .select({
+          id: rolePermissions.id,
+          roleId: rolePermissions.roleId,
+          resource: resources.name,
+          action: rolePermissions.action,
+        })
         .from(rolePermissions)
+        .innerJoin(resources, eq(rolePermissions.resourceId, resources.id))
         .where(eq(rolePermissions.roleId, role.id));
     }
 

@@ -72,6 +72,7 @@ export async function seedTenant(adminUserId: string) {
       await db.insert(rolePermissions).values(
         templateOwnerPermissions.map((perm) => ({
           roleId: newOwnerRole.id,
+          resourceId: perm.resourceId,
           resource: perm.resource,
           action: perm.action,
         })),
@@ -103,6 +104,7 @@ export async function seedTenant(adminUserId: string) {
       await db.insert(rolePermissions).values(
         templateCashierPermissions.map((perm) => ({
           roleId: newCashierRole.id,
+          resourceId: perm.resourceId,
           resource: perm.resource,
           action: perm.action,
         })),

@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { tenantsApi } from '@/lib/api/tenants';
 import { signOut } from '@/lib/auth-client';
+import { getUserScope } from '@/lib/permissions';
 
 const createTenantSchema = z.object({
   nama: z.string().min(1, 'Nama bisnis wajib diisi').max(255, 'Nama bisnis maksimal 255 karakter'),
@@ -226,7 +227,8 @@ function CreateTenantOnboardingPage() {
 export const Route = createFileRoute('/_onboarding/onboarding/create-tenant')({
   component: CreateTenantOnboardingPage,
   beforeLoad: async ({ context }) => {
-    const { roleScope, tenantId } = context.session.user;
+    const roleScope = await getUserScope();
+    const { tenantId } = context.session.user;
     if (roleScope === 'global' || tenantId) {
       throw redirect({ to: '/' });
     }

@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { Card, CardContent } from './ui/card';
 
 export function NotFoundPage() {
-  const { user } = useAuth();
+  const { scope } = useAuth();
 
   return (
     <div className="relative flex h-screen w-full items-center justify-center overflow-hidden bg-linear-to-br from-[#0a1e5c] via-[#0d2a6e] to-[#1a4fa0] px-6 font-sans">
@@ -38,7 +38,7 @@ export function NotFoundPage() {
 
           {/* Action buttons */}
           <div className="flex flex-col w-full gap-2">
-            <Link to={user?.roleScope === 'global' ? '/admin' : '/dashboard'} className="w-full">
+            <Link to={scope === 'global' ? '/admin' : '/dashboard'} className="w-full">
               <Button className="h-11 w-full rounded-lg bg-blue-600 text-sm font-semibold text-white shadow-md transition-all hover:bg-blue-700 hover:shadow-lg">
                 <Home className="mr-2 h-4 w-4" />
                 Beranda

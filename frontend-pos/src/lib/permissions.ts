@@ -1,6 +1,12 @@
 import { redirect } from '@tanstack/react-router';
 import { getRolePermissions, groupPermissions } from './api/roles';
-import { getCachedPermissions, getSessionWithCache, setCachedPermissions } from './session-cache';
+import {
+  getCachedPermissions,
+  getCachedScope,
+  getSessionWithCache,
+  setCachedPermissions,
+  setCachedScope,
+} from './session-cache';
 
 export type UserScope = 'global' | 'tenant' | undefined;
 
@@ -31,17 +37,20 @@ export async function checkPermission(
   }
 
   const roleId = (session.user as unknown as { roleId?: string })?.roleId;
-  const scope = (session.user as unknown as { roleScope?: UserScope })?.roleScope;
 
   if (!roleId) {
-    return { allowed: false, scope };
+    return { allowed: false, scope: undefined };
   }
 
   let groupedPermissions = getCachedPermissions(roleId);
-  if (!groupedPermissions) {
-    const permissionsData = await getRolePermissions(roleId);
+  let scope = getCachedScope(roleId);
+
+  if (!groupedPermissions || scope === undefined) {
+    const { permissions: permissionsData, roleScope } = await getRolePermissions(roleId);
     groupedPermissions = groupPermissions(permissionsData);
     setCachedPermissions(roleId, groupedPermissions);
+    setCachedScope(roleId, roleScope);
+    scope = roleScope;
   }
 
   const permission = groupedPermissions.find(
@@ -51,12 +60,12 @@ export async function checkPermission(
   );
 
   if (!permission) {
-    return { allowed: false, scope };
+    return { allowed: false, scope: scope as UserScope };
   }
 
   const hasPermission = permission.actions.some((a) => a.toLowerCase() === action.toLowerCase());
 
-  return { allowed: hasPermission, scope };
+  return { allowed: hasPermission, scope: scope as UserScope };
 }
 
 /**
@@ -72,17 +81,20 @@ export async function checkAnyPermission(
   }
 
   const roleId = (session.user as unknown as { roleId?: string })?.roleId;
-  const scope = (session.user as unknown as { roleScope?: UserScope })?.roleScope;
 
   if (!roleId) {
-    return { allowed: false, scope };
+    return { allowed: false, scope: undefined };
   }
 
   let groupedPermissions = getCachedPermissions(roleId);
-  if (!groupedPermissions) {
-    const permissionsData = await getRolePermissions(roleId);
+  let scope = getCachedScope(roleId);
+
+  if (!groupedPermissions || scope === undefined) {
+    const { permissions: permissionsData, roleScope } = await getRolePermissions(roleId);
     groupedPermissions = groupPermissions(permissionsData);
     setCachedPermissions(roleId, groupedPermissions);
+    setCachedScope(roleId, roleScope);
+    scope = roleScope;
   }
 
   // Check if user has ANY of the specified permissions
@@ -102,9 +114,8 @@ export async function checkAnyPermission(
     );
   });
 
-  return { allowed: hasAny, scope };
+  return { allowed: hasAny, scope: scope as UserScope };
 }
-
 /**
  * Check if user has ALL of the specified permissions
  */
@@ -118,17 +129,20 @@ export async function checkAllPermissions(
   }
 
   const roleId = (session.user as unknown as { roleId?: string })?.roleId;
-  const scope = (session.user as unknown as { roleScope?: UserScope })?.roleScope;
 
   if (!roleId) {
-    return { allowed: false, scope };
+    return { allowed: false, scope: undefined };
   }
 
   let groupedPermissions = getCachedPermissions(roleId);
-  if (!groupedPermissions) {
-    const permissionsData = await getRolePermissions(roleId);
+  let scope = getCachedScope(roleId);
+
+  if (!groupedPermissions || scope === undefined) {
+    const { permissions: permissionsData, roleScope } = await getRolePermissions(roleId);
     groupedPermissions = groupPermissions(permissionsData);
     setCachedPermissions(roleId, groupedPermissions);
+    setCachedScope(roleId, roleScope);
+    scope = roleScope;
   }
 
   // Check if user has ALL of the specified permissions
@@ -149,7 +163,7 @@ export async function checkAllPermissions(
     );
   });
 
-  return { allowed: hasAll, scope };
+  return { allowed: hasAll, scope: scope as UserScope };
 }
 
 /**
@@ -307,4 +321,25 @@ export class ForbiddenError extends Error {
     this.resource = resource;
     this.name = 'ForbiddenError';
   }
+}
+
+/**
+ * Get the current user's scope from cache or API.
+ * Use this in route beforeLoad when you only need scope, not permissions.
+ */
+export async function getUserScope(): Promise<UserScope> {
+  const session = await getSessionWithCache();
+  if (!session) return undefined;
+
+  const roleId = (session.user as unknown as { roleId?: string })?.roleId;
+  if (!roleId) return undefined;
+
+  let scope = getCachedScope(roleId);
+  if (scope === undefined) {
+    const { roleScope } = await getRolePermissions(roleId);
+    setCachedScope(roleId, roleScope);
+    scope = roleScope ?? undefined;
+  }
+
+  return scope as UserScope;
 }

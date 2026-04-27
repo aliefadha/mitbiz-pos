@@ -1,5 +1,5 @@
 import { db } from '@/db';
-import { outlets, rolePermissions, roles } from '@/db/schema';
+import { outlets, resources, rolePermissions, roles } from '@/db/schema';
 import { Injectable } from '@nestjs/common';
 import { and, eq } from 'drizzle-orm';
 import { Action, Resource, RoleWithPermissions, ScopeType } from '../types/rbac.types';
@@ -14,8 +14,12 @@ export class RbacService {
     }
 
     const permissions = await db
-      .select()
+      .select({
+        resource: resources.name,
+        action: rolePermissions.action,
+      })
       .from(rolePermissions)
+      .innerJoin(resources, eq(rolePermissions.resourceId, resources.id))
       .where(eq(rolePermissions.roleId, roleId));
 
     const groupedPermissions = permissions.reduce(
@@ -43,8 +47,12 @@ export class RbacService {
 
   async getRolePermissions(roleId: string): Promise<{ resource: string; actions: Action[] }[]> {
     const permissions = await db
-      .select()
+      .select({
+        resource: resources.name,
+        action: rolePermissions.action,
+      })
       .from(rolePermissions)
+      .innerJoin(resources, eq(rolePermissions.resourceId, resources.id))
       .where(eq(rolePermissions.roleId, roleId));
 
     return permissions.reduce(

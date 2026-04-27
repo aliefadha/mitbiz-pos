@@ -17,8 +17,6 @@ export interface User {
   name?: string;
   image?: string;
   roleId?: string;
-  roleName?: string;
-  roleScope?: UserScope;
   tenantId?: string;
   outletId?: string;
   isSubscribed?: boolean;
@@ -53,14 +51,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const roleId = user?.roleId;
 
   // Fetch role permissions when user has a roleId
-  const { data: rolePermissionsData, isLoading: isPermissionsLoading } = useQuery<
-    PermissionItem[] | null
-  >({
+  const { data: rolePermissionsData, isLoading: isPermissionsLoading } = useQuery<{
+    permissions: PermissionItem[];
+    roleScope: UserScope;
+  } | null>({
     queryKey: ['role-permissions', roleId],
     queryFn: async () => {
       if (!roleId) return null;
       const result = await usersApi.getMyRoleAndPermissions();
-      return result.permissions ?? [];
+      return {
+        permissions: result.permissions ?? [],
+        roleScope: (result.role?.scope as UserScope) ?? undefined,
+      };
     },
     enabled: !!roleId && !!user,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -75,8 +77,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Transform flat permissions to grouped format
   const permissions = useMemo(() => {
-    if (!rolePermissionsData) return [];
-    return groupPermissions(rolePermissionsData);
+    if (!rolePermissionsData?.permissions) return [];
+    return groupPermissions(rolePermissionsData.permissions);
   }, [rolePermissionsData]);
 
   // Helper to check if user has specific permission
@@ -123,10 +125,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [hasAnyPermission]
   );
 
-  // Extract scope from user.roleScope (provided by backend customSession)
+  // Extract scope from the permissions API response
   const scope = useMemo<UserScope>(() => {
-    return user?.roleScope;
-  }, [user?.roleScope]);
+    return rolePermissionsData?.roleScope ?? undefined;
+  }, [rolePermissionsData?.roleScope]);
 
   const value: AuthContextType = {
     user: user ?? null,
