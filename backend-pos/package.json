@@ -15,11 +15,14 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/src/main",
     "lint": "biome lint",
-    "test": "jest",
+    "test": "jest --runInBand",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
+    "test:db:up": "docker compose -f docker-compose.test.yml up -d",
+    "test:db:down": "docker compose -f docker-compose.test.yml down",
+    "test:db:push": "drizzle-kit push --force",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
@@ -86,6 +89,13 @@
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "setupFiles": ["<rootDir>/../test/setup.ts"],
+    "transformIgnorePatterns": ["node_modules/(?!(better-auth|better-call|@thallesp|@faker-js)/)"],
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/$1",
+      "^better-auth(.*)$": "<rootDir>/../test/mocks/empty.js",
+      "^better-call(.*)$": "<rootDir>/../test/mocks/empty.js"
     },
     "collectCoverageFrom": ["**/*.(t|j)s"],
     "coverageDirectory": "../coverage",

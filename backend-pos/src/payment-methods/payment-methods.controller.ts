@@ -7,6 +7,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   Param,
   Post,
   Put,
@@ -54,31 +55,34 @@ export class PaymentMethodsController {
   }
 
   @Post()
+  @HttpCode(204)
   @ApiOperation({ summary: 'Create a new payment method' })
   @UsePipes(new ZodValidationPipe(CreatePaymentMethodSchema))
   @Permission('paymentMethods', [Action.CREATE])
-  create(@Body() data: CreatePaymentMethodDto, @CurrentUser() user: CurrentUserWithRole) {
-    return this.paymentMethodsService.create(data, user);
+  async create(@Body() data: CreatePaymentMethodDto, @CurrentUser() user: CurrentUserWithRole) {
+    await this.paymentMethodsService.create(data, user);
   }
 
   @Put(':id')
+  @HttpCode(204)
   @ApiOperation({ summary: 'Update a payment method' })
   @UsePipes(new ZodValidationPipe(PaymentMethodIdSchema, 'params'))
   @UsePipes(new ZodValidationPipe(UpdatePaymentMethodSchema))
   @Permission('paymentMethods', [Action.UPDATE])
-  update(
+  async update(
     @Param() { id }: PaymentMethodIdDto,
     @Body() data: UpdatePaymentMethodDto,
     @CurrentUser() user: CurrentUserWithRole,
   ) {
-    return this.paymentMethodsService.update(id, data, user);
+    await this.paymentMethodsService.update(id, data, user);
   }
 
   @Delete(':id')
+  @HttpCode(204)
   @ApiOperation({ summary: 'Delete a payment method' })
   @UsePipes(new ZodValidationPipe(PaymentMethodIdSchema, 'params'))
   @Permission('paymentMethods', [Action.DELETE])
-  remove(@Param() { id }: PaymentMethodIdDto, @CurrentUser() user: CurrentUserWithRole) {
-    return this.paymentMethodsService.remove(id, user);
+  async remove(@Param() { id }: PaymentMethodIdDto, @CurrentUser() user: CurrentUserWithRole) {
+    await this.paymentMethodsService.remove(id, user);
   }
 }

@@ -1,10 +1,11 @@
 import type { CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
 import { DB_CONNECTION } from '@/db/db.module';
 import { paymentMethods } from '@/db/schema/payment-method-schema';
+import { tenants } from '@/db/schema/tenant-schema';
 import type { DrizzleDB } from '@/db/type';
 import { TenantAuthService } from '@/rbac/services/tenant-auth.service';
 import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { SQL, and, desc, eq, like, sql } from 'drizzle-orm';
+import { SQL, and, desc, eq, ilike, sql } from 'drizzle-orm';
 import { CreatePaymentMethodDto, PaymentMethodQueryDto, UpdatePaymentMethodDto } from './dto';
 
 @Injectable()
@@ -39,14 +40,21 @@ export class PaymentMethodsService {
     }
 
     if (search) {
-      conditions.push(like(paymentMethods.nama, `%${search}%`));
+      conditions.push(ilike(paymentMethods.nama, `%${search}%`));
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
     const [data, totalResult] = await Promise.all([
       this.db
-        .select()
+        .select({
+          id: paymentMethods.id,
+          tenantId: paymentMethods.tenantId,
+          nama: paymentMethods.nama,
+          isActive: paymentMethods.isActive,
+          createdAt: paymentMethods.createdAt,
+          updatedAt: paymentMethods.updatedAt,
+        })
         .from(paymentMethods)
         .where(whereClause)
         .limit(limit)
@@ -69,63 +77,95 @@ export class PaymentMethodsService {
   }
 
   async findById(id: string, user: CurrentUserWithRole) {
-    const paymentMethod = await this.db.query.paymentMethods.findFirst({
-      where: eq(paymentMethods.id, id),
-      with: {
-        tenant: true,
-      },
-    });
+    // Simple existence check first
+    const paymentMethod = await this.db
+      .select({ tenantId: paymentMethods.tenantId })
+      .from(paymentMethods)
+      .where(eq(paymentMethods.id, id))
+      .limit(1);
 
-    if (!paymentMethod) {
+    if (!paymentMethod || paymentMethod.length === 0) {
       throw new NotFoundException(`Payment method with ID ${id} not found`);
     }
 
     // Check tenant access (permission already checked by guard)
-    const hasAccess = await this.tenantAuth.canAccessTenant(user, paymentMethod.tenantId);
+    const hasAccess = await this.tenantAuth.canAccessTenant(user, paymentMethod[0].tenantId);
     if (!hasAccess) {
       throw new ForbiddenException('You do not have access to this payment method');
     }
 
-    return paymentMethod;
+    // Enriched query with joins
+    const result = await this.db
+      .select({
+        id: paymentMethods.id,
+        tenantId: paymentMethods.tenantId,
+        nama: paymentMethods.nama,
+        isActive: paymentMethods.isActive,
+        createdAt: paymentMethods.createdAt,
+        updatedAt: paymentMethods.updatedAt,
+        tenantIdRef: tenants.id,
+        tenantNama: tenants.nama,
+        tenantSlug: tenants.slug,
+        tenantIsActive: tenants.isActive,
+        tenantCreatedAt: tenants.createdAt,
+        tenantUpdatedAt: tenants.updatedAt,
+      })
+      .from(paymentMethods)
+      .leftJoin(tenants, eq(paymentMethods.tenantId, tenants.id))
+      .where(eq(paymentMethods.id, id))
+      .limit(1);
+
+    const row = result[0];
+
+    return {
+      id: row.id,
+      tenantId: row.tenantId,
+      nama: row.nama,
+      isActive: row.isActive,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      tenant: row.tenantIdRef
+        ? {
+            id: row.tenantIdRef,
+            nama: row.tenantNama,
+            slug: row.tenantSlug,
+            isActive: row.tenantIsActive,
+            createdAt: row.tenantCreatedAt,
+            updatedAt: row.tenantUpdatedAt,
+          }
+        : null,
+    };
   }
 
-  async create(data: CreatePaymentMethodDto, user: CurrentUserWithRole) {
+  async create(data: CreatePaymentMethodDto, user: CurrentUserWithRole): Promise<void> {
     // Validate tenant access (permission already checked by guard)
     await this.tenantAuth.validateTenantOperation(user, data.tenantId);
 
-    const [paymentMethod] = await this.db.insert(paymentMethods).values(data).returning();
-
-    return paymentMethod;
+    await this.db.insert(paymentMethods).values(data);
   }
 
-  async update(id: string, data: UpdatePaymentMethodDto, user: CurrentUserWithRole) {
+  async update(id: string, data: UpdatePaymentMethodDto, user: CurrentUserWithRole): Promise<void> {
     // findById already validates tenant access
     await this.findById(id, user);
 
-    const [paymentMethod] = await this.db
+    await this.db
       .update(paymentMethods)
       .set({
         ...data,
         updatedAt: new Date(),
       })
-      .where(eq(paymentMethods.id, id))
-      .returning();
-
-    return paymentMethod;
+      .where(eq(paymentMethods.id, id));
   }
 
-  async remove(id: string, user: CurrentUserWithRole) {
-    const existingPaymentMethod = await this.findById(id, user);
+  async remove(id: string, user: CurrentUserWithRole): Promise<void> {
+    await this.findById(id, user);
 
-    const [paymentMethod] = await this.db
+    await this.db
       .update(paymentMethods)
       .set({
         isActive: false,
         updatedAt: new Date(),
       })
-      .where(eq(paymentMethods.id, id))
-      .returning();
-
-    return { ...paymentMethod, ...existingPaymentMethod };
+      .where(eq(paymentMethods.id, id));
   }
 }
