@@ -33,7 +33,7 @@ Pre-commit hook runs `npm run check -w backend-pos -w frontend-pos`. Commits mus
 - **Stack**: NestJS, Drizzle ORM, PostgreSQL, Better Auth
 - **Dev server**: `npm run start:dev` → port 3001 (or `PORT` env var)
 - **Build**: `npm run build` runs `biome check && nest build`
-- **Test**: Jest (`npm run test`). E2E tests use `test/jest-e2e.json`
+- **Test**: Vitest (`npm run test`). E2E tests use `test/jest-e2e.json`
 - **Lint/Format**: Biome v1 (different version from frontend)
 - **Database**:
   - Requires PostgreSQL. Local dev uses Docker Compose (`docker-compose up -d` in `backend-pos/`) which starts Postgres on **5435** and Mailpit on **8025**
@@ -50,3 +50,17 @@ Pre-commit hook runs `npm run check -w backend-pos -w frontend-pos`. Commits mus
 - Both workspaces use Biome, **not** ESLint/Prettier.
 - Frontend and backend use different Biome versions and slightly different rule sets—do not assume configs are identical.
 - Prefer single quotes, 2-space indent, 100 char line width (enforced by Biome).
+
+## Agent skills
+
+### Issue tracker
+
+Issues and PRDs live as markdown files under `.scratch/`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default canonical labels (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context repo — one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.

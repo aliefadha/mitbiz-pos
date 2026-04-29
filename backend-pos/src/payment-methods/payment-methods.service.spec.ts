@@ -4,6 +4,7 @@ import { DB_CONNECTION } from '@/db/db.module';
 import { TenantAuthService } from '@/rbac/services/tenant-auth.service';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { vi } from 'vitest';
 import { TestDb, ensureSchemaPushed } from '../../test/helpers/database.helper';
 import { createPaymentMethod, createTenant } from '../../test/helpers/fixtures.helper';
 import type { CreatePaymentMethodDto, UpdatePaymentMethodDto } from './dto';
@@ -11,10 +12,10 @@ import { PaymentMethodsService } from './payment-methods.service';
 
 function createMockTenantAuth() {
   return {
-    canAccessTenant: jest.fn().mockResolvedValue(true),
-    getEffectiveTenantId: jest.fn().mockResolvedValue(null),
-    validateQueryTenantId: jest.fn().mockResolvedValue(undefined),
-    validateTenantOperation: jest.fn().mockResolvedValue(undefined),
+    canAccessTenant: vi.fn().mockResolvedValue(true),
+    getEffectiveTenantId: vi.fn().mockResolvedValue(null),
+    validateQueryTenantId: vi.fn().mockResolvedValue(undefined),
+    validateTenantOperation: vi.fn().mockResolvedValue(undefined),
   };
 }
 
@@ -80,16 +81,26 @@ describe('PaymentMethodsService', () => {
       expect(result.meta).toEqual({ page: 1, limit: 10, total: 1, totalPages: 1 });
     });
 
-    it('should use query tenantId instead of effective when provided', async () => {
-      await createTenant(testDb.db!, { id: 'tenant-2', slug: 'tenant-2' });
-      await createPaymentMethod(testDb.db!, { id: 'pm-1', tenantId: 'tenant-2' });
+    it('should filter by query tenantId when user queries their own tenant', async () => {
+      await createPaymentMethod(testDb.db!, { id: 'pm-1', tenantId: 'tenant-1', nama: 'Cash' });
       tenantAuth.validateQueryTenantId.mockResolvedValue(undefined);
 
-      const result = await service.findAll({ tenantId: 'tenant-2' }, user);
+      const result = await service.findAll({ tenantId: 'tenant-1' }, user);
 
-      expect(tenantAuth.validateQueryTenantId).toHaveBeenCalledWith(user, 'tenant-2');
+      expect(tenantAuth.validateQueryTenantId).toHaveBeenCalledWith(user, 'tenant-1');
       expect(result.data).toHaveLength(1);
       expect(result.data[0].id).toBe('pm-1');
+    });
+
+    it('should throw ForbiddenException when user queries a different tenant', async () => {
+      tenantAuth.validateQueryTenantId.mockRejectedValue(
+        new ForbiddenException('You do not have access to this tenant'),
+      );
+
+      await expect(service.findAll({ tenantId: 'tenant-2' }, user)).rejects.toThrow(
+        ForbiddenException,
+      );
+      expect(tenantAuth.validateQueryTenantId).toHaveBeenCalledWith(user, 'tenant-2');
     });
 
     it('should handle pagination offset correctly', async () => {

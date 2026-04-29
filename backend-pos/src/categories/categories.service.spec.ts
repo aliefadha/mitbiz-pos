@@ -4,6 +4,7 @@ import { DB_CONNECTION } from '@/db/db.module';
 import { TenantAuthService } from '@/rbac/services/tenant-auth.service';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { vi } from 'vitest';
 import { TestDb, ensureSchemaPushed } from '../../test/helpers/database.helper';
 import { createCategory, createTenant } from '../../test/helpers/fixtures.helper';
 import { CategoriesService } from './categories.service';
@@ -11,10 +12,10 @@ import type { CreateCategoryDto, UpdateCategoryDto } from './dto';
 
 function createMockTenantAuth() {
   return {
-    canAccessTenant: jest.fn().mockResolvedValue(true),
-    getEffectiveTenantId: jest.fn().mockResolvedValue(null),
-    validateQueryTenantId: jest.fn().mockResolvedValue(undefined),
-    validateTenantOperation: jest.fn().mockResolvedValue(undefined),
+    canAccessTenant: vi.fn().mockResolvedValue(true),
+    getEffectiveTenantId: vi.fn().mockResolvedValue(null),
+    validateQueryTenantId: vi.fn().mockResolvedValue(undefined),
+    validateTenantOperation: vi.fn().mockResolvedValue(undefined),
   };
 }
 

@@ -1,5 +1,6 @@
 import { CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
 import { Test, TestingModule } from '@nestjs/testing';
+import { vi } from 'vitest';
 import { ScopeType } from '../types/rbac.types';
 import { RbacService } from './rbac.service';
 import { TenantAuthService } from './tenant-auth.service';
@@ -15,7 +16,7 @@ describe('TenantAuthService', () => {
         {
           provide: RbacService,
           useValue: {
-            getRoleWithPermissions: jest.fn(),
+            getRoleWithPermissions: vi.fn(),
           },
         },
       ],
@@ -96,7 +97,7 @@ describe('TenantAuthService', () => {
         email: 'fallback@example.com',
         roleId: 'role-1',
       };
-      jest.spyOn(rbacService, 'getRoleWithPermissions').mockResolvedValue({
+      vi.spyOn(rbacService, 'getRoleWithPermissions').mockResolvedValue({
         id: 'role-1',
         name: 'Cashier',
         scope: ScopeType.TENANT,
@@ -116,7 +117,7 @@ describe('TenantAuthService', () => {
         email: 'inactive@example.com',
         roleId: 'role-inactive',
       };
-      jest.spyOn(rbacService, 'getRoleWithPermissions').mockResolvedValue(null);
+      vi.spyOn(rbacService, 'getRoleWithPermissions').mockResolvedValue(null);
 
       const result = await service.canAccessTenant(user, 'any-tenant');
 
@@ -129,7 +130,7 @@ describe('TenantAuthService', () => {
         email: 'global-fallback@example.com',
         roleId: 'role-global',
       };
-      jest.spyOn(rbacService, 'getRoleWithPermissions').mockResolvedValue({
+      vi.spyOn(rbacService, 'getRoleWithPermissions').mockResolvedValue({
         id: 'role-global',
         name: 'Super Admin',
         scope: ScopeType.GLOBAL,
