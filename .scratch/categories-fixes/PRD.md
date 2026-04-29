@@ -1,5 +1,7 @@
 # PRD: Categories Module Fixes and API Standardization
 
+**Status:** `completed`
+
 ## Problem Statement
 
 The Categories module has several bugs and inconsistencies that affect data correctness, API contract uniformity, and cross-tenant data isolation:

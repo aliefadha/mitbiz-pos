@@ -1,3 +1,7 @@
+# PRD: Align Payment Methods with Categories Pattern
+
+**Status:** `completed`
+
 ## Problem Statement
 
 The `payment-methods` module was implemented independently and diverges from the established pattern in the `categories` module across query style, mutation return types, search semantics, controller HTTP codes, and test structure. Every future CRUD module risks repeating this inconsistency.

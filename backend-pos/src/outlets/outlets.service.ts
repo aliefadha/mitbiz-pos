@@ -1,6 +1,7 @@
 import type { CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
 import { DB_CONNECTION } from '@/db/db.module';
 import { outlets } from '@/db/schema';
+import { tenants } from '@/db/schema/tenant-schema';
 import type { DrizzleDB } from '@/db/type';
 import { TenantAuthService } from '@/rbac/services/tenant-auth.service';
 import {
@@ -10,7 +11,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { SQL, and, desc, eq, like, sql } from 'drizzle-orm';
+import { SQL, and, desc, eq, ilike, sql } from 'drizzle-orm';
 import { CreateOutletDto, OutletQueryDto, UpdateOutletDto } from './dto';
 
 @Injectable()
@@ -45,23 +46,31 @@ export class OutletsService {
     }
 
     if (search) {
-      conditions.push(like(outlets.nama, `%${search}%`));
+      conditions.push(ilike(outlets.nama, `%${search}%`));
     }
 
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
     const tenantCondition = filterTenantId ? eq(outlets.tenantId, filterTenantId) : undefined;
 
     const [data, totalResult, statsResult] = await Promise.all([
       this.db
-        .select()
+        .select({
+          id: outlets.id,
+          tenantId: outlets.tenantId,
+          nama: outlets.nama,
+          kode: outlets.kode,
+          alamat: outlets.alamat,
+          noHp: outlets.noHp,
+          isActive: outlets.isActive,
+          createdAt: outlets.createdAt,
+          updatedAt: outlets.updatedAt,
+        })
         .from(outlets)
-        .where(conditions.length > 0 ? and(...conditions) : undefined)
+        .where(whereClause)
         .limit(limit)
         .offset(offset)
         .orderBy(desc(outlets.createdAt)),
-      this.db
-        .select({ count: sql<number>`count(*)` })
-        .from(outlets)
-        .where(conditions.length > 0 ? and(...conditions) : undefined),
+      this.db.select({ count: sql<number>`count(*)` }).from(outlets).where(whereClause),
       this.db
         .select({
           total: sql<number>`count(*)`,
@@ -92,27 +101,73 @@ export class OutletsService {
   }
 
   async findById(id: string, user: CurrentUserWithRole) {
-    const outlet = await this.db.query.outlets.findFirst({
-      where: eq(outlets.id, id),
-      with: {
-        tenant: true,
-      },
-    });
+    // Simple existence check first
+    const outlet = await this.db
+      .select({ tenantId: outlets.tenantId })
+      .from(outlets)
+      .where(eq(outlets.id, id))
+      .limit(1);
 
-    if (!outlet) {
+    if (!outlet || outlet.length === 0) {
       throw new NotFoundException(`Outlet with ID ${id} not found`);
     }
 
     // Check tenant access (permission already checked by guard)
-    const hasAccess = await this.tenantAuth.canAccessTenant(user, outlet.tenantId);
+    const hasAccess = await this.tenantAuth.canAccessTenant(user, outlet[0].tenantId);
     if (!hasAccess) {
       throw new ForbiddenException('You do not have access to this outlet');
     }
 
-    return outlet;
+    // Enriched query with joins
+    const result = await this.db
+      .select({
+        id: outlets.id,
+        tenantId: outlets.tenantId,
+        nama: outlets.nama,
+        kode: outlets.kode,
+        alamat: outlets.alamat,
+        noHp: outlets.noHp,
+        isActive: outlets.isActive,
+        createdAt: outlets.createdAt,
+        updatedAt: outlets.updatedAt,
+        tenantIdRef: tenants.id,
+        tenantNama: tenants.nama,
+        tenantSlug: tenants.slug,
+        tenantIsActive: tenants.isActive,
+        tenantCreatedAt: tenants.createdAt,
+        tenantUpdatedAt: tenants.updatedAt,
+      })
+      .from(outlets)
+      .leftJoin(tenants, eq(outlets.tenantId, tenants.id))
+      .where(eq(outlets.id, id))
+      .limit(1);
+
+    const row = result[0];
+
+    return {
+      id: row.id,
+      tenantId: row.tenantId,
+      nama: row.nama,
+      kode: row.kode,
+      alamat: row.alamat,
+      noHp: row.noHp,
+      isActive: row.isActive,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      tenant: row.tenantIdRef
+        ? {
+            id: row.tenantIdRef,
+            nama: row.tenantNama,
+            slug: row.tenantSlug,
+            isActive: row.tenantIsActive,
+            createdAt: row.tenantCreatedAt,
+            updatedAt: row.tenantUpdatedAt,
+          }
+        : null,
+    };
   }
 
-  async create(data: CreateOutletDto, user: CurrentUserWithRole) {
+  async create(data: CreateOutletDto, user: CurrentUserWithRole): Promise<void> {
     // Validate tenant access (permission already checked by guard)
     await this.tenantAuth.validateTenantOperation(user, data.tenantId);
 
@@ -126,12 +181,10 @@ export class OutletsService {
       throw new ConflictException(`Outlet with kode ${data.kode} already exists`);
     }
 
-    const [outlet] = await this.db.insert(outlets).values(data).returning();
-
-    return outlet;
+    await this.db.insert(outlets).values(data);
   }
 
-  async update(id: string, data: UpdateOutletDto, user: CurrentUserWithRole) {
+  async update(id: string, data: UpdateOutletDto, user: CurrentUserWithRole): Promise<void> {
     // findById already validates tenant access
     const existingOutlet = await this.findById(id, user);
 
@@ -152,30 +205,24 @@ export class OutletsService {
       }
     }
 
-    const [outlet] = await this.db
+    await this.db
       .update(outlets)
       .set({
         ...data,
         updatedAt: new Date(),
       })
-      .where(eq(outlets.id, id))
-      .returning();
-
-    return outlet;
+      .where(eq(outlets.id, id));
   }
 
-  async remove(id: string, user: CurrentUserWithRole) {
-    const existingOutlet = await this.findById(id, user);
+  async remove(id: string, user: CurrentUserWithRole): Promise<void> {
+    await this.findById(id, user);
 
-    const [outlet] = await this.db
+    await this.db
       .update(outlets)
       .set({
         isActive: false,
         updatedAt: new Date(),
       })
-      .where(eq(outlets.id, id))
-      .returning();
-
-    return { ...outlet, ...existingOutlet };
+      .where(eq(outlets.id, id));
   }
 }

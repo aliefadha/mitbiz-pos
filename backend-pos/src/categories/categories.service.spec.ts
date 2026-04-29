@@ -1,12 +1,14 @@
 import { resolve } from 'node:path';
 import type { CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
 import { DB_CONNECTION } from '@/db/db.module';
+import { categories } from '@/db/schema/category-schema';
 import { TenantAuthService } from '@/rbac/services/tenant-auth.service';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { eq } from 'drizzle-orm';
 import { vi } from 'vitest';
 import { TestDb, ensureSchemaPushed } from '../../test/helpers/database.helper';
-import { createCategory, createTenant } from '../../test/helpers/fixtures.helper';
+import { createCategory, createProduct, createTenant } from '../../test/helpers/fixtures.helper';
 import { CategoriesService } from './categories.service';
 import type { CreateCategoryDto, UpdateCategoryDto } from './dto';
 
@@ -125,6 +127,46 @@ describe('CategoriesService', () => {
       expect(result.data).toEqual([]);
       expect(result.meta.total).toBe(0);
     });
+
+    it('should search case-insensitively', async () => {
+      await createCategory(testDb.db!, { id: 'cat-1', tenantId: 'tenant-1', nama: 'Food' });
+      await createCategory(testDb.db!, { id: 'cat-2', tenantId: 'tenant-1', nama: 'FOOD' });
+      await createCategory(testDb.db!, { id: 'cat-3', tenantId: 'tenant-1', nama: 'Drinks' });
+      tenantAuth.getEffectiveTenantId.mockResolvedValue('tenant-1');
+
+      const result = await service.findAll({ search: 'food' }, user);
+
+      expect(result.data).toHaveLength(2);
+      expect(result.data.map((c) => c.id).sort()).toEqual(['cat-1', 'cat-2']);
+    });
+
+    it('should return correct productsCount per tenant', async () => {
+      await createTenant(testDb.db!, { id: 'tenant-2', slug: 'tenant-2' });
+      await createCategory(testDb.db!, { id: 'cat-1', tenantId: 'tenant-1', nama: 'Food' });
+      await createCategory(testDb.db!, { id: 'cat-2', tenantId: 'tenant-2', nama: 'Beverages' });
+      await createProduct(testDb.db!, { tenantId: 'tenant-1', categoryId: 'cat-1' });
+      await createProduct(testDb.db!, { tenantId: 'tenant-1', categoryId: 'cat-1' });
+      await createProduct(testDb.db!, { tenantId: 'tenant-2', categoryId: 'cat-2' });
+      tenantAuth.getEffectiveTenantId.mockResolvedValue('tenant-1');
+
+      const result = await service.findAll({}, user);
+
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].id).toBe('cat-1');
+      expect(result.data[0].productsCount).toBe(2);
+    });
+
+    it('should isolate categories by resolved tenant', async () => {
+      await createTenant(testDb.db!, { id: 'tenant-2', slug: 'tenant-2' });
+      await createCategory(testDb.db!, { id: 'cat-1', tenantId: 'tenant-1', nama: 'Food' });
+      await createCategory(testDb.db!, { id: 'cat-2', tenantId: 'tenant-2', nama: 'Beverages' });
+      tenantAuth.getEffectiveTenantId.mockResolvedValue('tenant-1');
+
+      const result = await service.findAll({}, user);
+
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].id).toBe('cat-1');
+    });
   });
 
   describe('findById', () => {
@@ -214,6 +256,16 @@ describe('CategoriesService', () => {
       const result = await service.remove('cat-1', user);
 
       expect(result).toBeUndefined();
+    });
+
+    it('should set isActive to false in the database', async () => {
+      await createCategory(testDb.db!, { id: 'cat-1', tenantId: 'tenant-1', isActive: true });
+      tenantAuth.canAccessTenant.mockResolvedValue(true);
+
+      await service.remove('cat-1', user);
+
+      const rows = await testDb.db!.select().from(categories).where(eq(categories.id, 'cat-1'));
+      expect(rows[0].isActive).toBe(false);
     });
 
     it('should throw NotFoundException when removing nonexistent category', async () => {

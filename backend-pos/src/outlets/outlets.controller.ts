@@ -7,6 +7,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   Param,
   Post,
   Put,
@@ -55,31 +56,34 @@ export class OutletsController {
   }
 
   @Post()
+  @HttpCode(204)
   @ApiOperation({ summary: 'Create a new outlet' })
   @UsePipes(new ZodValidationPipe(CreateOutletSchema))
   @Permission('outlets', [Action.CREATE])
-  create(@Body() data: CreateOutletDto, @CurrentUser() user: CurrentUserWithRole) {
-    return this.outletsService.create(data, user);
+  async create(@Body() data: CreateOutletDto, @CurrentUser() user: CurrentUserWithRole) {
+    await this.outletsService.create(data, user);
   }
 
   @Put(':id')
+  @HttpCode(204)
   @ApiOperation({ summary: 'Update an outlet' })
   @UsePipes(new ZodValidationPipe(OutletIdSchema, 'params'))
   @UsePipes(new ZodValidationPipe(UpdateOutletSchema))
   @Permission('outlets', [Action.UPDATE])
-  update(
+  async update(
     @Param() { id }: OutletIdDto,
     @Body() data: UpdateOutletDto,
     @CurrentUser() user: CurrentUserWithRole,
   ) {
-    return this.outletsService.update(id, data, user);
+    await this.outletsService.update(id, data, user);
   }
 
   @Delete(':id')
+  @HttpCode(204)
   @ApiOperation({ summary: 'Delete an outlet' })
   @UsePipes(new ZodValidationPipe(OutletIdSchema, 'params'))
   @Permission('outlets', [Action.DELETE])
-  remove(@Param() { id }: OutletIdDto, @CurrentUser() user: CurrentUserWithRole) {
-    return this.outletsService.remove(id, user);
+  async remove(@Param() { id }: OutletIdDto, @CurrentUser() user: CurrentUserWithRole) {
+    await this.outletsService.remove(id, user);
   }
 }
