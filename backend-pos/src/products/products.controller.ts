@@ -7,6 +7,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   Param,
   Post,
   Put,
@@ -55,31 +56,34 @@ export class ProductsController {
   }
 
   @Post()
+  @HttpCode(204)
   @ApiOperation({ summary: 'Create a new product' })
   @Permission('products', [Action.CREATE])
   @UsePipes(new ZodValidationPipe(CreateProductSchema))
-  create(@Body() data: CreateProductDto, @CurrentUser() user: CurrentUserWithRole) {
-    return this.productsService.create(data, user);
+  async create(@Body() data: CreateProductDto, @CurrentUser() user: CurrentUserWithRole) {
+    await this.productsService.create(data, user);
   }
 
   @Put(':id')
+  @HttpCode(204)
   @ApiOperation({ summary: 'Update a product' })
   @Permission('products', [Action.UPDATE])
   @UsePipes(new ZodValidationPipe(ProductIdSchema, 'params'))
   @UsePipes(new ZodValidationPipe(UpdateProductSchema))
-  update(
+  async update(
     @Param() { id }: ProductIdDto,
     @Body() data: UpdateProductDto,
     @CurrentUser() user: CurrentUserWithRole,
   ) {
-    return this.productsService.update(id, data, user);
+    await this.productsService.update(id, data, user);
   }
 
   @Delete(':id')
+  @HttpCode(204)
   @ApiOperation({ summary: 'Delete a product' })
   @Permission('products', [Action.DELETE])
   @UsePipes(new ZodValidationPipe(ProductIdSchema, 'params'))
-  remove(@Param() { id }: ProductIdDto, @CurrentUser() user: CurrentUserWithRole) {
-    return this.productsService.remove(id, user);
+  async remove(@Param() { id }: ProductIdDto, @CurrentUser() user: CurrentUserWithRole) {
+    await this.productsService.remove(id, user);
   }
 }
