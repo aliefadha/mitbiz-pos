@@ -45,14 +45,6 @@ Pre-commit hook runs `npm run check -w backend-pos -w frontend-pos`. Commits mus
 - **Static files**: Uploads served from `/uploads/` path. `bodyParser` is disabled in `main.ts` (important for multer/file uploads)
 - **API docs**: Swagger UI at `/api/docs`, Scalar at `/api/reference`
 
-## Deployment
-
-- **Target**: GCP Compute Engine (VM via SSH)
-- **Trigger**: Push to `main` deploys the changed workspace(s) via GitHub Actions
-- **Flow**: Cloud Build → Artifact Registry → SSH pull & restart on VM
-- **Configs**: `cloudbuild-configs/` (Cloud Build YAML), `deploy/` (VM compose, nginx, deploy scripts)
-- Do not modify deploy secrets or GCP project IDs in workflow files.
-
 ## Style & Conventions
 
 - Both workspaces use Biome, **not** ESLint/Prettier.
