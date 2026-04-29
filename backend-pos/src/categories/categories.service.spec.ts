@@ -93,6 +93,17 @@ describe('CategoriesService', () => {
       expect(result.data[0].id).toBe('cat-1');
     });
 
+    it('should throw ForbiddenException when user queries a different tenant', async () => {
+      tenantAuth.validateQueryTenantId.mockRejectedValue(
+        new ForbiddenException('You do not have access to this tenant'),
+      );
+
+      await expect(service.findAll({ tenantId: 'tenant-2' }, user)).rejects.toThrow(
+        ForbiddenException,
+      );
+      expect(tenantAuth.validateQueryTenantId).toHaveBeenCalledWith(user, 'tenant-2');
+    });
+
     it('should handle pagination offset correctly', async () => {
       // Create 25 categories
       for (let i = 0; i < 25; i++) {
