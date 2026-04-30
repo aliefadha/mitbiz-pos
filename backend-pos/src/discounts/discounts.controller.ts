@@ -7,6 +7,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   Param,
   Post,
   Put,
@@ -49,36 +50,40 @@ export class DiscountsController {
   @ApiOperation({ summary: 'Get discount by ID' })
   @UsePipes(new ZodValidationPipe(DiscountIdSchema, 'params'))
   @Permission('discounts', [Action.READ])
+  @Permission('orders', [Action.CREATE])
   findById(@Param() { id }: DiscountIdDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.discountsService.findById(id, user);
   }
 
   @Post()
+  @HttpCode(204)
   @ApiOperation({ summary: 'Create a new discount' })
   @UsePipes(new ZodValidationPipe(CreateDiscountSchema))
   @Permission('discounts', [Action.CREATE])
-  create(@Body() data: CreateDiscountDto, @CurrentUser() user: CurrentUserWithRole) {
-    return this.discountsService.create(data, user);
+  async create(@Body() data: CreateDiscountDto, @CurrentUser() user: CurrentUserWithRole) {
+    await this.discountsService.create(data, user);
   }
 
   @Put(':id')
+  @HttpCode(204)
   @ApiOperation({ summary: 'Update a discount' })
   @UsePipes(new ZodValidationPipe(DiscountIdSchema, 'params'))
   @UsePipes(new ZodValidationPipe(UpdateDiscountSchema))
   @Permission('discounts', [Action.UPDATE])
-  update(
+  async update(
     @Param() { id }: DiscountIdDto,
     @Body() data: UpdateDiscountDto,
     @CurrentUser() user: CurrentUserWithRole,
   ) {
-    return this.discountsService.update(id, data, user);
+    await this.discountsService.update(id, data, user);
   }
 
   @Delete(':id')
+  @HttpCode(204)
   @ApiOperation({ summary: 'Delete a discount' })
   @UsePipes(new ZodValidationPipe(DiscountIdSchema, 'params'))
   @Permission('discounts', [Action.DELETE])
-  remove(@Param() { id }: DiscountIdDto, @CurrentUser() user: CurrentUserWithRole) {
-    return this.discountsService.remove(id, user);
+  async remove(@Param() { id }: DiscountIdDto, @CurrentUser() user: CurrentUserWithRole) {
+    await this.discountsService.remove(id, user);
   }
 }

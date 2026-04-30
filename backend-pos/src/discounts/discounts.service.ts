@@ -1,10 +1,14 @@
+import { randomUUID } from 'node:crypto';
 import type { CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
 import { DB_CONNECTION } from '@/db/db.module';
 import { discountProducts, discounts } from '@/db/schema/discount-schema';
+import { outlets } from '@/db/schema/outlet-schema';
+import { products } from '@/db/schema/product-schema';
+import { tenants } from '@/db/schema/tenant-schema';
 import type { DrizzleDB } from '@/db/type';
 import { TenantAuthService } from '@/rbac/services/tenant-auth.service';
 import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { SQL, and, asc, eq, inArray, like, or, sql } from 'drizzle-orm';
+import { SQL, and, asc, eq, ilike, inArray, or, sql } from 'drizzle-orm';
 import { CreateDiscountDto, DiscountQueryDto, UpdateDiscountDto } from './dto';
 
 @Injectable()
@@ -15,7 +19,7 @@ export class DiscountsService {
   ) {}
 
   async findAll(query: DiscountQueryDto, user: CurrentUserWithRole) {
-    const { page = 1, limit = 10, search, isActive = true, tenantId } = query;
+    const { page = 1, limit = 10, search, isActive = true, tenantId, outletId } = query;
     const offset = (page - 1) * limit;
 
     // Validate that query tenantId matches user's allowed tenant
@@ -39,7 +43,11 @@ export class DiscountsService {
     }
 
     if (search) {
-      conditions.push(like(discounts.nama, `%${search}%`));
+      conditions.push(ilike(discounts.nama, `%${search}%`));
+    }
+
+    if (outletId) {
+      conditions.push(eq(discounts.outletId, outletId));
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -69,65 +77,147 @@ export class DiscountsService {
   }
 
   async findById(id: string, user: CurrentUserWithRole) {
-    const discount = await this.db.query.discounts.findFirst({
-      where: eq(discounts.id, id),
-      with: {
-        tenant: true,
-        products: {
-          with: {
-            product: true,
-          },
-        },
-      },
-    });
+    // Step 1: minimal existence check
+    const discount = await this.db
+      .select({ tenantId: discounts.tenantId })
+      .from(discounts)
+      .where(eq(discounts.id, id))
+      .limit(1);
 
-    if (!discount) {
+    if (!discount || discount.length === 0) {
       throw new NotFoundException(`Discount with ID ${id} not found`);
     }
 
-    // Check tenant access (permission already checked by guard)
-    const hasAccess = await this.tenantAuth.canAccessTenant(user, discount.tenantId);
+    // Step 2: tenant access check (permission already checked by guard)
+    const hasAccess = await this.tenantAuth.canAccessTenant(user, discount[0].tenantId);
     if (!hasAccess) {
       throw new ForbiddenException('You do not have access to this discount');
     }
 
-    return discount;
+    // Step 3: enriched query with explicit joins
+    const result = await this.db
+      .select({
+        id: discounts.id,
+        tenantId: discounts.tenantId,
+        outletId: discounts.outletId,
+        nama: discounts.nama,
+        rate: discounts.rate,
+        scope: discounts.scope,
+        level: discounts.level,
+        isActive: discounts.isActive,
+        createdAt: discounts.createdAt,
+        updatedAt: discounts.updatedAt,
+        tenantIdRef: tenants.id,
+        tenantNama: tenants.nama,
+        tenantSlug: tenants.slug,
+        tenantIsActive: tenants.isActive,
+        tenantCreatedAt: tenants.createdAt,
+        tenantUpdatedAt: tenants.updatedAt,
+        outletIdRef: outlets.id,
+        outletNama: outlets.nama,
+        outletKode: outlets.kode,
+        outletIsActive: outlets.isActive,
+        outletCreatedAt: outlets.createdAt,
+        outletUpdatedAt: outlets.updatedAt,
+      })
+      .from(discounts)
+      .leftJoin(tenants, eq(discounts.tenantId, tenants.id))
+      .leftJoin(outlets, eq(discounts.outletId, outlets.id))
+      .where(eq(discounts.id, id))
+      .limit(1);
+
+    const row = result[0];
+
+    // Query associated products separately
+    const productRows = await this.db
+      .select({
+        id: products.id,
+        tenantId: products.tenantId,
+        sku: products.sku,
+        nama: products.nama,
+        deskripsi: products.deskripsi,
+        categoryId: products.categoryId,
+        hargaBeli: products.hargaBeli,
+        hargaJual: products.hargaJual,
+        unit: products.unit,
+        minStockLevel: products.minStockLevel,
+        enableMinStock: products.enableMinStock,
+        enableStockTracking: products.enableStockTracking,
+        isActive: products.isActive,
+        createdAt: products.createdAt,
+        updatedAt: products.updatedAt,
+      })
+      .from(discountProducts)
+      .innerJoin(products, eq(discountProducts.productId, products.id))
+      .where(eq(discountProducts.discountId, id));
+
+    return {
+      id: row.id,
+      tenantId: row.tenantId,
+      outletId: row.outletId,
+      nama: row.nama,
+      rate: row.rate,
+      scope: row.scope,
+      level: row.level,
+      isActive: row.isActive,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      tenant: row.tenantIdRef
+        ? {
+            id: row.tenantIdRef,
+            nama: row.tenantNama,
+            slug: row.tenantSlug,
+            isActive: row.tenantIsActive,
+            createdAt: row.tenantCreatedAt,
+            updatedAt: row.tenantUpdatedAt,
+          }
+        : null,
+      outlet: row.outletIdRef
+        ? {
+            id: row.outletIdRef,
+            nama: row.outletNama,
+            kode: row.outletKode,
+            isActive: row.outletIsActive,
+            createdAt: row.outletCreatedAt,
+            updatedAt: row.outletUpdatedAt,
+          }
+        : null,
+      products: productRows,
+    };
   }
 
-  async create(data: CreateDiscountDto, user: CurrentUserWithRole) {
+  async create(data: CreateDiscountDto, user: CurrentUserWithRole): Promise<void> {
     const { productIds, ...discountData } = data;
 
     // Validate tenant access (permission already checked by guard)
     await this.tenantAuth.validateTenantOperation(user, data.tenantId);
 
-    const [discount] = await this.db.insert(discounts).values(discountData).returning();
+    const id = randomUUID();
+    await this.db.insert(discounts).values({ ...discountData, id });
 
     // Insert into join table if productIds provided
     if (productIds && productIds.length > 0) {
       await this.db.insert(discountProducts).values(
         productIds.map((productId) => ({
-          discountId: discount.id,
+          discountId: id,
           productId,
         })),
       );
     }
-
-    return discount;
   }
 
-  async update(id: string, data: UpdateDiscountDto, user: CurrentUserWithRole) {
+  async update(id: string, data: UpdateDiscountDto, user: CurrentUserWithRole): Promise<void> {
     const { productIds, ...discountData } = data;
     // findById already validates tenant access
-    const existingDiscount = await this.findById(id, user);
+    await this.findById(id, user);
 
-    const [discount] = await this.db
+    await this.db
       .update(discounts)
       .set({
         ...discountData,
         updatedAt: new Date(),
       })
-      .where(eq(discounts.id, id))
-      .returning();
+      .where(eq(discounts.id, id));
 
     // Update product associations if productIds provided
     if (productIds !== undefined) {
@@ -144,22 +234,17 @@ export class DiscountsService {
         );
       }
     }
-
-    return discount;
   }
 
-  async remove(id: string, user: CurrentUserWithRole) {
-    const existingDiscount = await this.findById(id, user);
+  async remove(id: string, user: CurrentUserWithRole): Promise<void> {
+    await this.findById(id, user);
 
-    const [discount] = await this.db
+    await this.db
       .update(discounts)
       .set({
         isActive: false,
         updatedAt: new Date(),
       })
-      .where(eq(discounts.id, id))
-      .returning();
-
-    return { ...discount, ...existingDiscount };
+      .where(eq(discounts.id, id));
   }
 }
