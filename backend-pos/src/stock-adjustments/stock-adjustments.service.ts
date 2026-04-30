@@ -1,5 +1,7 @@
+import { randomUUID } from 'node:crypto';
 import type { CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
 import { DB_CONNECTION } from '@/db/db.module';
+import { user as users } from '@/db/schema/auth-schema';
 import { outlets } from '@/db/schema/outlet-schema';
 import { products } from '@/db/schema/product-schema';
 import { stockAdjustments } from '@/db/schema/stock-adjustment-schema';
@@ -98,30 +100,102 @@ export class StockAdjustmentsService {
   }
 
   async findById(id: string, user: CurrentUserWithRole) {
-    const adjustment = await this.db.query.stockAdjustments.findFirst({
-      where: eq(stockAdjustments.id, id),
-      with: {
-        product: true,
-        outlet: true,
-        user: true,
-      },
-    });
+    // Step 1: minimal existence check
+    const result = await this.db
+      .select({ id: stockAdjustments.id, outletId: stockAdjustments.outletId })
+      .from(stockAdjustments)
+      .where(eq(stockAdjustments.id, id))
+      .limit(1);
 
-    if (!adjustment) {
+    if (!result || result.length === 0) {
       throw new NotFoundException(`Stock adjustment with ID ${id} not found`);
     }
 
-    // Check tenant access via outlet's tenant (permission already checked by guard)
-    const hasAccess = await this.tenantAuth.canAccessTenant(user, adjustment.outlet.tenantId);
+    // Step 2: tenant access check via outlet
+    const outletRow = await this.db
+      .select({ tenantId: outlets.tenantId })
+      .from(outlets)
+      .where(eq(outlets.id, result[0].outletId))
+      .limit(1);
+
+    const hasAccess = await this.tenantAuth.canAccessTenant(user, outletRow[0].tenantId);
     if (!hasAccess) {
       throw new ForbiddenException('You do not have access to this stock adjustment');
     }
 
-    return adjustment;
+    // Step 3: enriched query with explicit joins
+    const enriched = await this.db
+      .select()
+      .from(stockAdjustments)
+      .leftJoin(products, eq(stockAdjustments.productId, products.id))
+      .leftJoin(outlets, eq(stockAdjustments.outletId, outlets.id))
+      .where(eq(stockAdjustments.id, id))
+      .limit(1);
+
+    const row = enriched[0];
+
+    // Query user separately to avoid parameter shadowing
+    const userRow = await this.db
+      .select()
+      .from(users)
+      .where(eq(users.id, row.stock_adjustments.adjustedBy))
+      .limit(1);
+
+    return {
+      ...row.stock_adjustments,
+      product: row.products
+        ? {
+            id: row.products.id,
+            nama: row.products.nama,
+            sku: row.products.sku,
+            tenantId: row.products.tenantId,
+            categoryId: row.products.categoryId,
+            hargaBeli: row.products.hargaBeli,
+            hargaJual: row.products.hargaJual,
+            unit: row.products.unit,
+            minStockLevel: row.products.minStockLevel,
+            enableMinStock: row.products.enableMinStock,
+            enableStockTracking: row.products.enableStockTracking,
+            isActive: row.products.isActive,
+            createdAt: row.products.createdAt,
+            updatedAt: row.products.updatedAt,
+          }
+        : null,
+      outlet: row.outlets
+        ? {
+            id: row.outlets.id,
+            nama: row.outlets.nama,
+            kode: row.outlets.kode,
+            alamat: row.outlets.alamat,
+            noHp: row.outlets.noHp,
+            tenantId: row.outlets.tenantId,
+            isActive: row.outlets.isActive,
+            createdAt: row.outlets.createdAt,
+            updatedAt: row.outlets.updatedAt,
+          }
+        : null,
+      user: userRow[0]
+        ? {
+            id: userRow[0].id,
+            name: userRow[0].name,
+            email: userRow[0].email,
+            emailVerified: userRow[0].emailVerified,
+            image: userRow[0].image,
+            createdAt: userRow[0].createdAt,
+            updatedAt: userRow[0].updatedAt,
+            roleId: userRow[0].roleId,
+            tenantId: userRow[0].tenantId,
+            banned: userRow[0].banned,
+            banReason: userRow[0].banReason,
+            banExpires: userRow[0].banExpires,
+            outletId: userRow[0].outletId,
+          }
+        : null,
+    };
   }
 
-  async create(data: CreateStockAdjustmentDto, user: CurrentUserWithRole) {
-    // Verify product exists
+  async create(data: CreateStockAdjustmentDto, user: CurrentUserWithRole): Promise<void> {
+    // Verify product exists and is active
     const product = await this.db.query.products.findFirst({
       where: eq(products.id, data.productId),
     });
@@ -130,13 +204,21 @@ export class StockAdjustmentsService {
       throw new NotFoundException(`Product with ID ${data.productId} not found`);
     }
 
-    // Verify outlet exists
+    if (!product.isActive) {
+      throw new ForbiddenException('Product is inactive');
+    }
+
+    // Verify outlet exists and is active
     const outlet = await this.db.query.outlets.findFirst({
       where: eq(outlets.id, data.outletId),
     });
 
     if (!outlet) {
       throw new NotFoundException(`Outlet with ID ${data.outletId} not found`);
+    }
+
+    if (!outlet.isActive) {
+      throw new ForbiddenException('Outlet is inactive');
     }
 
     // Validate tenant access via outlet (permission already checked by guard)
@@ -147,12 +229,11 @@ export class StockAdjustmentsService {
       throw new ForbiddenException('Product and outlet do not belong to the same tenant');
     }
 
-    const adjustmentData = {
+    await this.db.insert(stockAdjustments).values({
+      id: randomUUID(),
       ...data,
       adjustedBy: user.id,
-    };
-
-    const [adjustment] = await this.db.insert(stockAdjustments).values(adjustmentData).returning();
+    });
 
     const existingStock = await this.db.query.productStocks.findFirst({
       where: and(
@@ -162,21 +243,25 @@ export class StockAdjustmentsService {
     });
 
     if (existingStock) {
-      await this.db
-        .update(productStocks)
-        .set({
-          quantity: existingStock.quantity + data.quantity,
-          updatedAt: new Date(),
-        })
-        .where(eq(productStocks.id, existingStock.id));
-    } else {
+      const newQuantity = existingStock.quantity + data.quantity;
+      if (newQuantity >= 0) {
+        await this.db
+          .update(productStocks)
+          .set({
+            quantity: newQuantity,
+            updatedAt: new Date(),
+          })
+          .where(eq(productStocks.id, existingStock.id));
+      }
+      // If newQuantity < 0, skip stock update — keep as-is
+    } else if (data.quantity >= 0) {
       await this.db.insert(productStocks).values({
+        id: randomUUID(),
         productId: data.productId,
         outletId: data.outletId,
         quantity: data.quantity,
       });
     }
-
-    return adjustment;
+    // If no stock exists and adjustment is negative, skip stock creation
   }
 }

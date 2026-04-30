@@ -1,5 +1,5 @@
 import { relations, sql } from 'drizzle-orm';
-import { integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 import { outlets } from './outlet-schema';
 import { products } from './product-schema';
 import { tenants } from './tenant-schema';
@@ -13,6 +13,8 @@ export const productStocks = pgTable('product_stocks', {
     .references(() => outlets.id)
     .notNull(),
   quantity: integer('quantity').default(0).notNull(),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 

@@ -8,7 +8,8 @@ export const CreateStockSchema = z.object({
 });
 
 export const UpdateStockSchema = z.object({
-  quantity: z.number().int().min(0),
+  quantity: z.number().int().min(0).optional(),
+  isActive: z.boolean().optional(),
 });
 
 export const StockIdSchema = z.object({
@@ -33,6 +34,10 @@ export const StockQuerySchema = z.object({
   productId: z.string().min(1).optional(),
   outletId: z.string().min(1).optional(),
   tenantId: z.string().min(1).optional(),
+  isActive: z
+    .string()
+    .transform((val) => val === 'true')
+    .optional(),
 });
 
 export class CreateStockDto extends createZodDto(CreateStockSchema) {}

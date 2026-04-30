@@ -2,7 +2,17 @@ import { CurrentUser, type CurrentUserWithRole } from '@/common/decorators/curre
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
 import { Action, Permission, PermissionGuard, ScopeGuard, TenantScope } from '@/rbac';
-import { Body, Controller, Get, Param, Post, Query, UseGuards, UsePipes } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+  UsePipes,
+} from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   CreateStockAdjustmentDto,
@@ -22,23 +32,30 @@ export class StockAdjustmentsController {
   @Get()
   @ApiOperation({ summary: 'Get all stock adjustments' })
   @UsePipes(new ZodValidationPipe(StockAdjustmentQuerySchema, 'query'))
-  @Permission('stockAdjustments', [Action.READ])
+  @Permission([
+    ['stockAdjustments', [Action.READ]],
+    ['orders', [Action.CREATE]],
+  ])
   findAll(@Query() query: StockAdjustmentQueryDto, @CurrentUser() user: CurrentUserWithRole) {
     return this.stockAdjustmentsService.findAll(query, user);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get stock adjustment by ID' })
-  @Permission('stockAdjustments', [Action.READ])
+  @Permission([
+    ['stockAdjustments', [Action.READ]],
+    ['orders', [Action.CREATE]],
+  ])
   findById(@Param('id') id: string, @CurrentUser() user: CurrentUserWithRole) {
     return this.stockAdjustmentsService.findById(id, user);
   }
 
   @Post()
+  @HttpCode(204)
   @ApiOperation({ summary: 'Create a new stock adjustment' })
   @UsePipes(new ZodValidationPipe(CreateStockAdjustmentSchema))
   @Permission('stockAdjustments', [Action.CREATE])
-  create(@Body() data: CreateStockAdjustmentDto, @CurrentUser() user: CurrentUserWithRole) {
-    return this.stockAdjustmentsService.create(data, user);
+  async create(@Body() data: CreateStockAdjustmentDto, @CurrentUser() user: CurrentUserWithRole) {
+    await this.stockAdjustmentsService.create(data, user);
   }
 }

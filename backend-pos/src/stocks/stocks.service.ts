@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import type { CurrentUserWithRole } from '@/common/decorators/current-user.decorator';
 import { getProductIdsByTenant } from '@/common/utils/tenant-filter';
 import { DB_CONNECTION } from '@/db/db.module';
@@ -25,7 +26,7 @@ export class StocksService {
   ) {}
 
   async findAll(query: StockQueryDto, user: CurrentUserWithRole) {
-    const { page = 1, limit = 10, productId, outletId, tenantId } = query;
+    const { page = 1, limit = 10, productId, outletId, tenantId, isActive = true } = query;
     const offset = (page - 1) * limit;
 
     // Validate that query tenantId matches user's allowed tenant
@@ -37,6 +38,10 @@ export class StocksService {
     const effectiveTenantId = await this.tenantAuth.getEffectiveTenantId(user);
 
     const conditions: SQL<unknown>[] = [];
+
+    if (isActive !== undefined) {
+      conditions.push(eq(productStocks.isActive, isActive));
+    }
 
     if (productId) {
       conditions.push(eq(productStocks.productId, productId));
@@ -125,7 +130,31 @@ export class StocksService {
   }
 
   async findById(id: string, user: CurrentUserWithRole) {
+    // Step 1: minimal existence check
     const result = await this.db
+      .select({ id: productStocks.id, productId: productStocks.productId })
+      .from(productStocks)
+      .where(eq(productStocks.id, id))
+      .limit(1);
+
+    if (!result || result.length === 0) {
+      throw new NotFoundException(`Stock with ID ${id} not found`);
+    }
+
+    // Step 2: tenant access check via product
+    const productRow = await this.db
+      .select({ tenantId: products.tenantId })
+      .from(products)
+      .where(eq(products.id, result[0].productId))
+      .limit(1);
+
+    const hasAccess = await this.tenantAuth.canAccessTenant(user, productRow[0].tenantId);
+    if (!hasAccess) {
+      throw new ForbiddenException('You do not have access to this stock');
+    }
+
+    // Step 3: enriched query with explicit joins
+    const enriched = await this.db
       .select()
       .from(productStocks)
       .leftJoin(products, eq(productStocks.productId, products.id))
@@ -134,13 +163,9 @@ export class StocksService {
       .where(eq(productStocks.id, id))
       .limit(1);
 
-    const row = result[0];
+    const row = enriched[0];
 
-    if (!row) {
-      throw new NotFoundException(`Stock with ID ${id} not found`);
-    }
-
-    const stock = {
+    return {
       ...row.product_stocks,
       product: row.products
         ? {
@@ -165,17 +190,6 @@ export class StocksService {
           }
         : null,
     };
-
-    // Check tenant access via product's tenant (permission already checked by guard)
-    if (!stock.product) {
-      throw new NotFoundException('Product not found for this stock');
-    }
-    const hasAccess = await this.tenantAuth.canAccessTenant(user, stock.product.tenantId);
-    if (!hasAccess) {
-      throw new ForbiddenException('You do not have access to this stock');
-    }
-
-    return stock;
   }
 
   async findByProductAndOutlet(productId: string, outletId: string) {
@@ -221,8 +235,8 @@ export class StocksService {
     };
   }
 
-  async create(data: CreateStockDto, user: CurrentUserWithRole) {
-    // Verify product exists
+  async create(data: CreateStockDto, user: CurrentUserWithRole): Promise<void> {
+    // Verify product exists and is active
     const product = await this.db.query.products.findFirst({
       where: eq(products.id, data.productId),
     });
@@ -231,16 +245,24 @@ export class StocksService {
       throw new NotFoundException(`Product with ID ${data.productId} not found`);
     }
 
+    if (!product.isActive) {
+      throw new ForbiddenException('Product is inactive');
+    }
+
     // Validate tenant access via product's tenant (permission already checked by guard)
     await this.tenantAuth.validateTenantOperation(user, product.tenantId);
 
-    // Verify outlet exists and belongs to same tenant
+    // Verify outlet exists, is active, and belongs to same tenant
     const outlet = await this.db.query.outlets.findFirst({
       where: eq(outlets.id, data.outletId),
     });
 
     if (!outlet) {
       throw new NotFoundException(`Outlet with ID ${data.outletId} not found`);
+    }
+
+    if (!outlet.isActive) {
+      throw new ForbiddenException('Outlet is inactive');
     }
 
     if (outlet.tenantId !== product.tenantId) {
@@ -253,57 +275,35 @@ export class StocksService {
       throw new ConflictException(`Stock telah dibuat`);
     }
 
-    const [stock] = await this.db.insert(productStocks).values(data).returning();
-
-    return stock;
+    await this.db.insert(productStocks).values({
+      id: randomUUID(),
+      ...data,
+    });
   }
 
-  async update(id: string, data: UpdateStockDto, user: CurrentUserWithRole) {
+  async update(id: string, data: UpdateStockDto, user: CurrentUserWithRole): Promise<void> {
     // findById already validates tenant access via product's tenant
     await this.findById(id, user);
 
-    const [stock] = await this.db
+    await this.db
       .update(productStocks)
       .set({
         ...data,
         updatedAt: new Date(),
       })
-      .where(eq(productStocks.id, id))
-      .returning();
-
-    return stock;
+      .where(eq(productStocks.id, id));
   }
 
-  async remove(id: string, user: CurrentUserWithRole) {
+  async remove(id: string, user: CurrentUserWithRole): Promise<void> {
     // findById already validates tenant access via product's tenant
     await this.findById(id, user);
 
-    const [deletedStock] = await this.db
-      .delete(productStocks)
-      .where(eq(productStocks.id, id))
-      .returning();
-
-    return deletedStock;
-  }
-
-  async adjustQuantity(id: string, adjustment: number, user: CurrentUserWithRole) {
-    // findById already validates tenant access via product's tenant
-    const stock = await this.findById(id, user);
-    const newQuantity = stock.quantity + adjustment;
-
-    if (newQuantity < 0) {
-      throw new Error('Insufficient stock');
-    }
-
-    const [updatedStock] = await this.db
+    await this.db
       .update(productStocks)
       .set({
-        quantity: newQuantity,
+        isActive: false,
         updatedAt: new Date(),
       })
-      .where(eq(productStocks.id, id))
-      .returning();
-
-    return updatedStock;
+      .where(eq(productStocks.id, id));
   }
 }
